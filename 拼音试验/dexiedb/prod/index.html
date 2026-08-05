@@ -2195,6 +2195,11 @@ async function fillOrderDraft(data) {
 // ===== 单据草稿区逻辑 =====
 
 async function identifyCustomer(customerName) {
+  var urlCuId = new URLSearchParams(location.search).get('cu_id');
+  if (urlCuId && selectedCustomerId) {
+    console.log('[cu_id] URL 指定客户模式，跳过语音客户识别：', customerName);
+    return;
+  }
   if (!customerName || !customerName.trim()) {
     currentCustomer = null;
     document.getElementById('customerName').textContent = '未提供客户名称';
@@ -5644,6 +5649,29 @@ async function exportProductExcel() {
   }
 }
 
+async function _autoSelectCustomerByUrl() {
+  if (selectedCustomerId) return;
+  var cuId = new URLSearchParams(location.search).get('cu_id');
+  if (!cuId) return;
+  var customerMap = await getLSCustomerMap();
+  var c = customerMap[String(cuId)];
+  if (!c) {
+    console.warn('[cu_id] URL 指定的客户 cu_id=' + cuId + ' 未在本地数据中找到');
+    showToast('URL 指定的客户未找到，请先同步数据', 'warning');
+    return;
+  }
+  selectedCustomerId = c.id;
+  currentCustomer = [{ id: c.id, name: c.name, similarity: 100, address: c.address || '', contact: c.contact || '' }];
+  showCustomerCard({ id: c.id, name: c.name, address: c.address || '', contact: c.contact || '' }, 'confirmed');
+  var cardEl = document.getElementById('customerCard');
+  if (cardEl) {
+    cardEl.onclick = null;
+    cardEl.style.cursor = 'default';
+    cardEl.title = '当前客户由 URL 参数指定';
+  }
+  console.log('[cu_id] URL 指定客户已选定：', c.id, c.name);
+}
+
 PinyinMatch.init().then(function() {
   refreshPinyinStatus();
   initCozeSDK();
@@ -5665,7 +5693,7 @@ PinyinMatch.init().then(function() {
         onLog: function (msg) { console.log('[auto-sync]', msg); },
         onToast: function (msg, type) { showToast('自动同步：' + msg, type); }
       }
-    }).then(function (r) {
+    }).then(async function (r) {
 
       if (typeof PinyinMatch.invalidateCustomerCache === 'function') PinyinMatch.invalidateCustomerCache();
       if (typeof PinyinMatch.invalidateProductCache === 'function') PinyinMatch.invalidateProductCache();
@@ -5673,10 +5701,12 @@ PinyinMatch.init().then(function() {
       if (!r.skipped) {
         showToast('数据已自动同步', 'success');
       }
-    }).catch(function (e) {
+      await _autoSelectCustomerByUrl();
+    }).catch(async function (e) {
       console.warn('[auto-sync] failed:', e);
 
       refreshPinyinStatus();
+      await _autoSelectCustomerByUrl();
     });
   }, 2000);
 });

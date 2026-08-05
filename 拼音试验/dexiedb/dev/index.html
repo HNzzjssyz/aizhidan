@@ -2207,6 +2207,12 @@ async function fillOrderDraft(data) {
 // ===== 单据草稿区逻辑 =====
 
 async function identifyCustomer(customerName) {
+  // 如果 URL 指定了 cu_id 且客户已选定，跳过语音识别的客户匹配
+  var urlCuId = new URLSearchParams(location.search).get('cu_id');
+  if (urlCuId && selectedCustomerId) {
+    console.log('[cu_id] URL 指定客户模式，跳过语音客户识别：', customerName);
+    return;
+  }
   if (!customerName || !customerName.trim()) {
     currentCustomer = null;
     document.getElementById('customerName').textContent = '未提供客户名称';
@@ -5693,6 +5699,33 @@ async function exportProductExcel() {
   }
 }
 
+// URL 参数 ?cu_id=xxx：自动选定客户，跳过客户识别（用于指定客户视图内启动）
+// 调用时机：数据同步完成后（确保 customerMap 已就绪）
+// 多次调用安全：已选定则跳过
+async function _autoSelectCustomerByUrl() {
+  if (selectedCustomerId) return;  // 已有选定客户，不覆盖
+  var cuId = new URLSearchParams(location.search).get('cu_id');
+  if (!cuId) return;
+  var customerMap = await getLSCustomerMap();
+  var c = customerMap[String(cuId)];
+  if (!c) {
+    console.warn('[cu_id] URL 指定的客户 cu_id=' + cuId + ' 未在本地数据中找到');
+    showToast('URL 指定的客户未找到，请先同步数据', 'warning');
+    return;
+  }
+  selectedCustomerId = c.id;
+  currentCustomer = [{ id: c.id, name: c.name, similarity: 100, address: c.address || '', contact: c.contact || '' }];
+  showCustomerCard({ id: c.id, name: c.name, address: c.address || '', contact: c.contact || '' }, 'confirmed');
+  // 客户识别区域只读：禁用点击、隐藏候选弹窗入口
+  var cardEl = document.getElementById('customerCard');
+  if (cardEl) {
+    cardEl.onclick = null;
+    cardEl.style.cursor = 'default';
+    cardEl.title = '当前客户由 URL 参数指定';
+  }
+  console.log('[cu_id] URL 指定客户已选定：', c.id, c.name);
+}
+
 PinyinMatch.init().then(function() {
   refreshPinyinStatus();
   initCozeSDK();
@@ -5717,7 +5750,7 @@ PinyinMatch.init().then(function() {
         onLog: function (msg) { console.log('[auto-sync]', msg); },
         onToast: function (msg, type) { showToast('自动同步：' + msg, type); }
       }
-    }).then(function (r) {
+    }).then(async function (r) {
       // 不论 skipped 与否，刷新一次状态（即使跳过，也能让"刚刚"等显示更新）
       if (typeof PinyinMatch.invalidateCustomerCache === 'function') PinyinMatch.invalidateCustomerCache();
       if (typeof PinyinMatch.invalidateProductCache === 'function') PinyinMatch.invalidateProductCache();
@@ -5725,10 +5758,14 @@ PinyinMatch.init().then(function() {
       if (!r.skipped) {
         showToast('数据已自动同步', 'success');
       }
-    }).catch(function (e) {
+      // URL 参数 ?cu_id=xxx：自动选定客户，跳过客户识别
+      await _autoSelectCustomerByUrl();
+    }).catch(async function (e) {
       console.warn('[auto-sync] failed:', e);
       // 即使失败也刷新一次（确保状态显示最新）
       refreshPinyinStatus();
+      // 同步失败也尝试一次（用本地已有数据）
+      await _autoSelectCustomerByUrl();
     });
   }, 2000);
 });
