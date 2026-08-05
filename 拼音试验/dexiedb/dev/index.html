@@ -1529,6 +1529,8 @@ var nextProductId = 100;
 var cozeClient = null;
 var cozeAccessToken = null;
 var lastDetectedJSON = '';
+var _lastProcessedText = ''; // handleClipboardText 短期去重：上次处理的文本
+var _lastProcessedTime = 0; // handleClipboardText 短期去重：上次处理的时间戳
 
 // ===== AgentConfig 智能体配置模块 =====
 
@@ -1860,12 +1862,161 @@ async function initCozeSDK() {
     document.getElementById('apiStatus').textContent = '已连接 ✅';
     document.getElementById('apiStatus').style.color = '#16a34a';
 
+    // 启动 Coze SDK 输出自动捕获（JSON 输出完成后自动处理，无需手动复制）
+    _setupCozeAutoCapture();
+
   } catch (e) {
     console.error('Coze SDK 初始化失败:', e);
     document.getElementById('apiStatus').textContent = '启动失败: ' + e.message;
     document.getElementById('apiStatus').style.color = '#e5484d';
     showToast('智能体启动失败: ' + e.message);
   }
+}
+
+// ===== Coze SDK 输出自动捕获（JSON 输出完成后自动处理，无需手动复制） =====
+var _cozeObserver = null;
+var _cozeStreamTimer = null;
+var _cozeGracePeriodEnd = 0; // 宽限期结束时间戳，期内不处理任何消息
+var _lastFirstMsgText = ''; // 上次扫描时最新消息（idx=0）的文本，用于检测新消息
+var _baselineSet = false; // 基线是否已设置
+
+function _setupCozeAutoCapture() {
+  if (_cozeObserver) return;
+
+  function _tryBind() {
+    var cozePanel = document.querySelector('.coze-chat-sdk');
+    if (!cozePanel) {
+      console.log('[auto-capture] 未找到 Coze SDK 面板，1秒后重试');
+      setTimeout(_tryBind, 1000);
+      return;
+    }
+
+    console.log('[auto-capture] 已绑定 Coze SDK 面板');
+
+    _cozeObserver = new MutationObserver(function(mutations) {
+      var shouldScan = false;
+      for (var i = 0; i < mutations.length; i++) {
+        if (mutations[i].type === 'childList' || mutations[i].type === 'characterData') {
+          shouldScan = true;
+          break;
+        }
+      }
+      if (shouldScan) {
+        _scanCozeMessages(cozePanel);
+      }
+    });
+
+    _cozeObserver.observe(cozePanel, {
+      childList: true,
+      subtree: true,
+      characterData: true
+    });
+
+    // 设置5秒宽限期：Coze SDK 异步加载历史消息期间，不处理任何消息
+    _cozeGracePeriodEnd = Date.now() + 5000;
+    console.log('[auto-capture] 宽限期已启动，持续5秒');
+  }
+
+  setTimeout(_tryBind, 800);
+}
+
+function _scanCozeMessages(panel) {
+  // 宽限期内不处理
+  if (Date.now() < _cozeGracePeriodEnd) return;
+
+  clearTimeout(_cozeStreamTimer);
+  _cozeStreamTimer = setTimeout(function() {
+    var freshGroups = panel.querySelectorAll('.message-group-wrapper');
+    if (freshGroups.length === 0) return;
+
+    // 最新消息（DOM倒序：idx=0是最新）
+    var currentFirstText = freshGroups[0].innerText || '';
+
+    // 首次扫描（宽限期后）：设基线，不处理
+    if (!_baselineSet) {
+      _baselineSet = true;
+      _lastFirstMsgText = currentFirstText;
+      console.log('[auto-capture] 基线已设置');
+      return;
+    }
+
+    // 最新消息没变 → 不触发（滚动加载历史、点击等）
+    if (currentFirstText === _lastFirstMsgText) return;
+
+    // 最新消息变了 → 有新消息
+    _lastFirstMsgText = currentFirstText;
+
+    // 检查最新消息是否是订单JSON
+    var candidates = _extractJSONCandidates(currentFirstText);
+    for (var ci = candidates.length - 1; ci >= 0; ci--) {
+      var json = candidates[ci];
+      if (_isCompleteOrderJSON(json)) {
+        console.log('[auto-capture] ✅ 最新消息是订单JSON，长度:', json.length);
+        showToast('✅ 智能体返回订单数据，自动填充中...', 'success');
+        handleClipboardText(json);
+        return;
+      }
+    }
+    console.log('[auto-capture] 最新消息不是订单JSON，跳过');
+  }, 800);
+}
+
+function _extractJSONCandidates(text) {
+  var candidates = [];
+  var braceStart = -1;
+  var depth = 0;
+  var inString = false;
+  var escape = false;
+
+  for (var i = 0; i < text.length; i++) {
+    var ch = text[i];
+    if (escape) { escape = false; continue; }
+    if (ch === '\\') { escape = true; continue; }
+    if (ch === '"') { inString = !inString; continue; }
+    if (inString) continue;
+
+    if (ch === '{') {
+      if (depth === 0) braceStart = i;
+      depth++;
+    } else if (ch === '}') {
+      depth--;
+      if (depth === 0 && braceStart !== -1) {
+        var jsonStr = text.substring(braceStart, i + 1);
+        if (jsonStr.length > 20) {
+          candidates.push(jsonStr);
+        }
+        braceStart = -1;
+      }
+    }
+  }
+  return candidates;
+}
+
+function _isCompleteOrderJSON(str) {
+  if (!str || str.length < 20) return false;
+  if (str[0] !== '{' || str[str.length - 1] !== '}') return false;
+
+  var depth = 0;
+  var inStr = false;
+  var esc = false;
+  for (var i = 0; i < str.length; i++) {
+    var c = str[i];
+    if (esc) { esc = false; continue; }
+    if (c === '\\') { esc = true; continue; }
+    if (c === '"') { inStr = !inStr; continue; }
+    if (inStr) continue;
+    if (c === '{') depth++;
+    else if (c === '}') depth--;
+  }
+  if (depth !== 0) return false;
+
+  return str.indexOf('"customer"') !== -1 ||
+         str.indexOf('"customer_name"') !== -1 ||
+         str.indexOf('"customerName"') !== -1 ||
+         str.indexOf('"客户"') !== -1 ||
+         str.indexOf('"products"') !== -1 ||
+         str.indexOf('"items"') !== -1 ||
+         str.indexOf('"产品"') !== -1;
 }
 
 function isInCozeSDKArea(el) {
@@ -1941,6 +2092,9 @@ function isOrderJSON(text) {
 }
 
 function tryReadClipboard() {
+  // 方案一：Coze DOM 监听已绑定时，屏蔽剪贴板轮询（避免双重监听冲突导致闪动）
+  // 测试稳定后可删除剪贴板轮询相关代码，目前用屏蔽方式保留降级能力
+  if (_cozeObserver) { return; }
   if (!document.hasFocus()) { console.log('[clipboard] 拦截：页面无焦点'); return; }
   if (!navigator.clipboard || !navigator.clipboard.readText) { console.log('[clipboard] 拦截：剪贴板 API 不可用'); return; }
   navigator.clipboard.readText().then(function(text) {
@@ -2015,14 +2169,14 @@ async function handleClipboardText(text) {
   var jsonStr = PinyinMatch.extractOrderJSON(text);
   if (!jsonStr) return;
 
-  if (text === lastDetectedJSON) return;
-  lastDetectedJSON = text;
+  // 短期去重：3秒内相同内容跳过（防止DOM变化重复处理），超过3秒允许重复（用户主动重发）
+  if (text === _lastProcessedText && Date.now() - _lastProcessedTime < 3000) return;
+  _lastProcessedText = text;
+  _lastProcessedTime = Date.now();
 
   var t0 = performance.now();
   try {
-    showMatchingLoading();
-    await new Promise(function(resolve) { setTimeout(resolve, 30); });
-    // 第 1 步：标准化 JSON
+    // 第 1 步：标准化 JSON（先标准化，再决定是否触发UI变化）
     var normalized;
     try {
       normalized = PinyinMatch.normalizeOrderJSON(jsonStr);
@@ -2031,6 +2185,13 @@ async function handleClipboardText(text) {
       showToast('订单JSON标准化失败：' + (e1 && e1.message ? e1.message : '格式不规范'), 'error', 5000);
       return;
     }
+    // 追加模式：产品为空时不做任何变化（保留已有数据，如AI对非订单输入返回空products）
+    if (!normalized.products || normalized.products.length === 0) {
+      console.log('[订单JSON] 产品为空，跳过（追加模式保留已有数据）');
+      return;
+    }
+    showMatchingLoading();
+    await new Promise(function(resolve) { setTimeout(resolve, 30); });
     // 第 2 步：产品匹配
     var matchedProducts;
     try {
@@ -2185,9 +2346,11 @@ async function fillOrderDraft(data) {
     extraFields.style.display = 'none';
   }
 
-  currentProducts = data.products.map(function(p, i) {
+  // 追加模式：新产品追加到已有列表末尾，而非替换
+  var startIndex = currentProducts.length;
+  var newItems = data.products.map(function(p, i) {
     var item = Object.assign({}, p, {
-      index: i + 1,
+      index: startIndex + i + 1,
       id: p.matchedId,
       selected: false,
       discount: (typeof p.discount === 'number' && p.discount > 0 && p.discount <= 100) ? p.discount : 100,
@@ -2195,7 +2358,9 @@ async function fillOrderDraft(data) {
     });
     return item;
   });
-  for (var fi = 0; fi < currentProducts.length; fi++) {
+  currentProducts = currentProducts.concat(newItems);
+  // 只填充新增的已确认产品
+  for (var fi = startIndex; fi < currentProducts.length; fi++) {
     if (currentProducts[fi].status === 'confirmed') {
       await fillProductStandardData(currentProducts[fi]);
     }
@@ -2214,6 +2379,11 @@ async function identifyCustomer(customerName) {
     return;
   }
   if (!customerName || !customerName.trim()) {
+    // 追加模式：已有客户则保留，不因新JSON客户名为空而清空
+    if (currentCustomer && currentCustomer.length > 0) {
+      console.log('[客户] 新JSON无客户名，保留已有客户');
+      return;
+    }
     currentCustomer = null;
     document.getElementById('customerName').textContent = '未提供客户名称';
     document.getElementById('customerMeta').textContent = '可在左侧手动搜索或新建';
@@ -3827,7 +3997,6 @@ function resetForm() {
   selectedCustomerId = null;
   editingProductIndex = null;
   creatingProductIndex = null;
-  lastDetectedJSON = '';
   _resetPriceCache();
   var progressDiv = document.getElementById('matchProgress');
   if (progressDiv) progressDiv.remove();
@@ -3840,6 +4009,9 @@ function resetForm() {
   } else {
     lastClipboardContent = '';
   }
+
+  // 如果 URL 指定了 cu_id，重新选定客户
+  _autoSelectCustomerByUrl();
 }
 
 // ===== 创建订单（contract_api）=====
@@ -5706,11 +5878,39 @@ async function _autoSelectCustomerByUrl() {
   if (selectedCustomerId) return;  // 已有选定客户，不覆盖
   var cuId = new URLSearchParams(location.search).get('cu_id');
   if (!cuId) return;
-  var customerMap = await getLSCustomerMap();
-  var c = customerMap[String(cuId)];
+  // 简单校验 cuId 为数字（防止 SQL 注入）
+  if (!/^\d+$/.test(cuId)) {
+    console.warn('[cu_id] 无效的 cu_id 参数:', cuId);
+    showToast('URL 指定的客户 ID 无效', 'warning');
+    return;
+  }
+  // 直接通过 API 查询客户信息，不依赖本地缓存
+  var c = null;
+  try {
+    console.log('[cu_id] 通过 API 查询客户 cu_id=' + cuId);
+    var resp = await fetch('/system/api.xt', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        cmd: 'load_data', dtname: 'customer', field: 'id,cu_name', where: 'id=' + cuId, flag: 1
+      })
+    });
+    if (resp.ok) {
+      var data = await resp.json();
+      var list = [];
+      if (data && data.ok === 1 && data.data) list = data.data;
+      else if (Array.isArray(data)) list = data;
+      else if (data && data.data && Array.isArray(data.data)) list = data.data;
+      if (list.length > 0) {
+        c = { id: list[0].id, name: list[0].cu_name || list[0].name || '' };
+      }
+    }
+  } catch (e) {
+    console.error('[cu_id] API 查询失败:', e);
+  }
   if (!c) {
-    console.warn('[cu_id] URL 指定的客户 cu_id=' + cuId + ' 未在本地数据中找到');
-    showToast('URL 指定的客户未找到，请先同步数据', 'warning');
+    console.warn('[cu_id] 未找到客户 cu_id=' + cuId);
+    showToast('URL 指定的客户未找到', 'warning');
     return;
   }
   selectedCustomerId = c.id;
@@ -5739,6 +5939,8 @@ PinyinMatch.init().then(function() {
       refreshPinyinStatus();
     }
   });
+  // cu_id 查询不依赖本地同步，立即执行
+  _autoSelectCustomerByUrl();
   // 页面进入后：自动按阈值同步（默认 1 小时）
   // - 首次访问（无 sync_time）→ 首次全量
   // - 数据陈旧（> 1h）→ 增量/全量自动判断
@@ -5750,7 +5952,7 @@ PinyinMatch.init().then(function() {
         onLog: function (msg) { console.log('[auto-sync]', msg); },
         onToast: function (msg, type) { showToast('自动同步：' + msg, type); }
       }
-    }).then(async function (r) {
+    }).then(function (r) {
       // 不论 skipped 与否，刷新一次状态（即使跳过，也能让"刚刚"等显示更新）
       if (typeof PinyinMatch.invalidateCustomerCache === 'function') PinyinMatch.invalidateCustomerCache();
       if (typeof PinyinMatch.invalidateProductCache === 'function') PinyinMatch.invalidateProductCache();
@@ -5758,14 +5960,10 @@ PinyinMatch.init().then(function() {
       if (!r.skipped) {
         showToast('数据已自动同步', 'success');
       }
-      // URL 参数 ?cu_id=xxx：自动选定客户，跳过客户识别
-      await _autoSelectCustomerByUrl();
-    }).catch(async function (e) {
+    }).catch(function (e) {
       console.warn('[auto-sync] failed:', e);
       // 即使失败也刷新一次（确保状态显示最新）
       refreshPinyinStatus();
-      // 同步失败也尝试一次（用本地已有数据）
-      await _autoSelectCustomerByUrl();
     });
   }, 2000);
 });
