@@ -1,0 +1,1727 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智能创建引擎 - 项目规划文档</title>
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-deep: #0c0e14;
+  --bg-surface: #13151d;
+  --bg-card: #1a1d28;
+  --bg-elevated: #222636;
+  --border-subtle: rgba(255,255,255,0.06);
+  --text-primary: #e8ecf4;
+  --text-secondary: #8b93a8;
+  --text-muted: #565e74;
+  --accent-blue: #6391ff;
+  --accent-blue-dim: rgba(99,145,255,0.12);
+  --accent-green: #34d399;
+  --accent-green-dim: rgba(52,211,153,0.12);
+  --accent-amber: #fbbf24;
+  --accent-amber-dim: rgba(251,191,36,0.12);
+  --accent-rose: #f472b6;
+  --accent-rose-dim: rgba(244,114,182,0.12);
+  --accent-violet: #a78bfa;
+  --accent-violet-dim: rgba(167,139,250,0.12);
+  --accent-cyan: #22d3ee;
+  --accent-cyan-dim: rgba(34,211,238,0.12);
+  --radius-md: 12px;
+  --radius-lg: 16px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'DM Sans', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  line-height: 1.7;
+}
+
+.doc-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 48px 32px 80px;
+}
+
+.doc-hero {
+  text-align: center;
+  padding: 60px 0 48px;
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: 48px;
+}
+
+.doc-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--accent-violet-dim);
+  color: var(--accent-violet);
+  margin-bottom: 20px;
+  letter-spacing: 0.5px;
+}
+
+.doc-hero h1 {
+  font-size: 38px;
+  font-weight: 900;
+  letter-spacing: -1px;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, var(--accent-blue), var(--accent-violet), var(--accent-rose));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.doc-hero p {
+  font-size: 16px;
+  color: var(--text-secondary);
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.doc-meta {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 24px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.doc-meta span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.toc {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 24px 28px;
+  margin-bottom: 48px;
+}
+
+.toc-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toc-list {
+  list-style: none;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 32px;
+}
+
+.toc-list a {
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  padding: 4px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: color 0.2s;
+}
+
+.toc-list a:hover { color: var(--accent-blue); }
+
+.toc-list a .toc-num {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  width: 22px;
+  flex-shrink: 0;
+}
+
+.section {
+  margin-bottom: 64px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 24px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.section-num {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.section-num.blue { background: var(--accent-blue-dim); color: var(--accent-blue); }
+.section-num.green { background: var(--accent-green-dim); color: var(--accent-green); }
+.section-num.amber { background: var(--accent-amber-dim); color: var(--accent-amber); }
+.section-num.rose { background: var(--accent-rose-dim); color: var(--accent-rose); }
+.section-num.violet { background: var(--accent-violet-dim); color: var(--accent-violet); }
+.section-num.cyan { background: var(--accent-cyan-dim); color: var(--accent-cyan); }
+
+.section-title {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.section p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  line-height: 1.8;
+}
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  margin-bottom: 16px;
+}
+
+.card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.card-title i { font-size: 18px; }
+
+.card p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.8;
+  margin-bottom: 0;
+}
+
+.value-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin: 16px 0;
+}
+
+.value-item {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  text-align: center;
+}
+
+.value-item-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  margin: 0 auto 12px;
+}
+
+.value-item h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.value-item p {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 0;
+}
+
+.advantage-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.advantage-item {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.advantage-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.advantage-content h5 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.advantage-content p {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.7;
+  margin-bottom: 0;
+}
+
+.feature-list {
+  list-style: none;
+  margin: 12px 0;
+}
+
+.feature-list li {
+  font-size: 13px;
+  color: var(--text-secondary);
+  padding: 10px 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  line-height: 1.7;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.feature-list li:last-child { border-bottom: none; }
+
+.feature-list li i {
+  font-size: 16px;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.feature-list li i.ri-check-line { color: var(--accent-green); }
+.feature-list li i.ri-arrow-right-s-line { color: var(--accent-blue); }
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+}
+
+.data-table th {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--bg-elevated);
+}
+
+.data-table th:first-child { border-radius: 8px 0 0 0; }
+.data-table th:last-child { border-radius: 0 8px 0 0; }
+
+.data-table td {
+  font-size: 13px;
+  color: var(--text-secondary);
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  vertical-align: top;
+}
+
+.data-table tr:last-child td { border-bottom: none; }
+
+.data-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+.tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.tag-blue { background: var(--accent-blue-dim); color: var(--accent-blue); }
+.tag-green { background: var(--accent-green-dim); color: var(--accent-green); }
+.tag-amber { background: var(--accent-amber-dim); color: var(--accent-amber); }
+.tag-rose { background: var(--accent-rose-dim); color: var(--accent-rose); }
+.tag-violet { background: var(--accent-violet-dim); color: var(--accent-violet); }
+.tag-cyan { background: var(--accent-cyan-dim); color: var(--accent-cyan); }
+.tag-gray { background: rgba(255,255,255,0.05); color: var(--text-muted); }
+
+.step-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 16px 0;
+}
+
+.step-item {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.step-num {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
+  background: var(--accent-blue-dim);
+  color: var(--accent-blue);
+}
+
+.step-content {
+  flex: 1;
+  padding-top: 4px;
+}
+
+.step-content h5 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.step-content p {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 0;
+}
+
+.code-block {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  margin: 12px 0;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.8;
+  overflow-x: auto;
+}
+
+.code-block .keyword { color: var(--accent-violet); }
+.code-block .string { color: var(--accent-green); }
+.code-block .comment { color: var(--text-muted); font-style: italic; }
+.code-block .type { color: var(--accent-blue); }
+.code-block .prop { color: var(--accent-amber); }
+.code-block .number { color: var(--accent-rose); }
+.code-block .brace { color: var(--text-secondary); }
+
+.json-viewer {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  margin: 12px 0;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 12px;
+  line-height: 1.8;
+  overflow-x: auto;
+}
+
+.json-key { color: var(--accent-blue); }
+.json-string { color: var(--accent-green); }
+.json-number { color: var(--accent-amber); }
+.json-boolean { color: var(--accent-rose); }
+.json-null { color: var(--text-muted); }
+.json-comment { color: var(--text-muted); font-style: italic; display: block; margin: 8px 0; }
+
+.form-preview {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  margin: 12px 0;
+}
+
+.form-section {
+  margin-bottom: 20px;
+}
+
+.form-section:last-child { margin-bottom: 0; }
+
+.form-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.form-field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.form-field.full { grid-template-columns: 1fr; }
+
+.form-field label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.form-field .field-value {
+  font-size: 13px;
+  color: var(--text-primary);
+  padding: 8px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+}
+
+.form-field .field-value.placeholder {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.form-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.form-table th {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--bg-card);
+}
+
+.form-table td {
+  color: var(--text-secondary);
+  padding: 10px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.form-table tr:last-child td { border-bottom: none; }
+
+.protocol-flow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 20px 0;
+  flex-wrap: wrap;
+}
+
+.protocol-node {
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.protocol-node.user { background: var(--accent-blue-dim); border-color: rgba(99,145,255,0.3); color: var(--accent-blue); }
+.protocol-node.agent { background: var(--accent-violet-dim); border-color: rgba(167,139,250,0.3); color: var(--accent-violet); }
+.protocol-node.engine { background: var(--accent-green-dim); border-color: rgba(52,211,153,0.3); color: var(--accent-green); }
+.protocol-node.form { background: var(--accent-amber-dim); border-color: rgba(251,191,36,0.3); color: var(--accent-amber); }
+
+.protocol-arrow {
+  font-size: 18px;
+  color: var(--text-muted);
+}
+
+.compare-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 16px 0;
+}
+
+.compare-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 20px;
+}
+
+.compare-card h5 {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.compare-card p {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.7;
+  margin-bottom: 0;
+}
+
+.module-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.module-tab {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+}
+
+.module-tab:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
+
+.module-tab.active {
+  background: var(--accent-blue-dim);
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+}
+
+.module-content {
+  display: none;
+}
+
+.module-content.active { display: block; }
+
+.highlight-box {
+  background: linear-gradient(135deg, var(--accent-blue-dim), var(--accent-violet-dim));
+  border: 1px solid rgba(99,145,255,0.2);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  margin: 16px 0;
+}
+
+.highlight-box h5 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.highlight-box p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin-bottom: 0;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.status-badge.required { background: rgba(244,63,94,0.12); color: #f43f5e; }
+.status-badge.optional { background: rgba(99,145,255,0.12); color: var(--accent-blue); }
+.status-badge.auto { background: var(--accent-green-dim); color: var(--accent-green); }
+
+@media (max-width: 768px) {
+  .value-grid { grid-template-columns: 1fr; }
+  .compare-grid { grid-template-columns: 1fr; }
+  .form-field-row { grid-template-columns: 1fr; }
+  .toc-list { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="doc-container">
+
+  <div class="doc-hero">
+    <div class="doc-hero-badge"><i class="ri-rocket-2-line"></i> 项目规划文档 v1.0</div>
+    <h1>智能创建引擎 · 项目规划</h1>
+    <p>统一交互框架 + 专属智能体 —— 将智能制单逻辑泛化为通用的智能创建各类业务数据模型的完整规划</p>
+    <div class="doc-meta">
+      <span><i class="ri-calendar-line"></i> 2026-05-13</span>
+      <span><i class="ri-user-line"></i> 数据值守团队</span>
+      <span><i class="ri-file-list-3-line"></i> 规划文档</span>
+    </div>
+  </div>
+
+  <div class="toc">
+    <div class="toc-title"><i class="ri-list-ordered"></i> 目录</div>
+    <ul class="toc-list">
+      <li><a href="#s1"><span class="toc-num">01</span> 项目定义与愿景</a></li>
+      <li><a href="#s2"><span class="toc-num">02</span> 核心价值主张</a></li>
+      <li><a href="#s3"><span class="toc-num">03</span> 设计优势</a></li>
+      <li><a href="#s4"><span class="toc-num">04</span> 模块分类说明</a></li>
+      <li><a href="#s5"><span class="toc-num">05</span> 表单字段模板</a></li>
+      <li><a href="#s6"><span class="toc-num">06</span> 标准JSON协议</a></li>
+      <li><a href="#s7"><span class="toc-num">07</span> 智能体扩展方案</a></li>
+    </ul>
+  </div>
+
+  <!-- 01 项目定义 -->
+  <div class="section" id="s1">
+    <div class="section-header">
+      <div class="section-num violet">01</div>
+      <h2 class="section-title">项目定义与愿景</h2>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="ri-compass-3-line" style="color:var(--accent-violet);"></i> 项目定义</div>
+      <p>智能创建引擎是一套通用的业务数据智能创建框架，通过自然语言处理和智能体技术，将传统手动录入表单的方式升级为"对话即创建"的智能交互模式。用户只需用自然语言描述业务需求，系统即可自动识别关键实体、匹配已有数据、填充表单草稿，最终完成业务数据的快速创建。</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="ri-lightbulb-line" style="color:var(--accent-amber);"></i> 解决的核心问题</div>
+      <ul class="feature-list">
+        <li><i class="ri-close-line" style="color:#f87171;"></i> <strong>手动录入繁琐</strong>：传统表单需要逐字段填写，客户名、产品名等需要从下拉列表中查找选择</li>
+        <li><i class="ri-close-line" style="color:#f87171;"></i> <strong>AI过度发散</strong>：通用大模型对话随意性大，输出格式不统一，难以与企业业务系统对接</li>
+        <li><i class="ri-close-line" style="color:#f87171;"></i> <strong>规则适配难</strong>：不同企业有不同的分类体系、价格策略、业务规则，通用方案难以满足</li>
+        <li><i class="ri-close-line" style="color:#f87171;"></i> <strong>信息收集成本高</strong>：创建客户档案需要收集大量信息，人工沟通成本高</li>
+      </ul>
+    </div>
+
+    <div class="highlight-box">
+      <h5>🎯 项目愿景</h5>
+      <p>搭建一套可扩展的通用智能业务创建框架，通过标准化JSON协议实现框架与智能体解耦，将传统手动录入工作交由智能体完成，让销售人员从繁琐行政事务中解放，聚焦核心业务。</p>
+    </div>
+  </div>
+
+  <!-- 02 核心价值 -->
+  <div class="section" id="s2">
+    <div class="section-header">
+      <div class="section-num green">02</div>
+      <h2 class="section-title">核心价值主张</h2>
+    </div>
+
+    <p>智能创建引擎为企业和用户带来三大核心价值：</p>
+
+    <div class="value-grid">
+      <div class="value-item">
+        <div class="value-item-icon" style="background:var(--accent-blue-dim);color:var(--accent-blue);">
+          <i class="ri-puzzle-line"></i>
+        </div>
+        <h4>框架与智能体解耦</h4>
+        <p>通过标准化JSON协议，实现前端框架与后端智能体的完全解耦，可灵活扩展智能体的各类能力</p>
+      </div>
+      <div class="value-item">
+        <div class="value-item-icon" style="background:var(--accent-green-dim);color:var(--accent-green);">
+          <i class="ri-speed-line"></i>
+        </div>
+        <h4>效率大幅提升</h4>
+        <p>将繁琐的手动录入、信息收集工作交由智能体完成，用户操作从分钟级降至秒级</p>
+      </div>
+      <div class="value-item">
+        <div class="value-item-icon" style="background:var(--accent-violet-dim);color:var(--accent-violet);">
+          <i class="ri-gradienter-line"></i>
+        </div>
+        <h4>企业级适配</h4>
+        <p>支持按租户加载分类字典、价格策略、业务规则，适配不同企业的个性化需求</p>
+      </div>
+    </div>
+
+    <div class="compare-grid">
+      <div class="compare-card">
+        <h5><i class="ri-file-edit-line" style="color:var(--accent-rose);"></i> 传统方式</h5>
+        <p>手动选择客户 → 手动搜索产品 → 逐行录入数量规格 → 核对价格 → 确认提交，平均耗时 3-5 分钟/单</p>
+      </div>
+      <div class="compare-card">
+        <h5><i class="ri-robot-line" style="color:var(--accent-green);"></i> 智能创建</h5>
+        <p>语音/文本输入需求 → 智能体自动识别 → 拼音匹配填充 → 一键确认提交，平均耗时 10-15 秒/单</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 03 设计优势 -->
+  <div class="section" id="s3">
+    <div class="section-header">
+      <div class="section-num amber">03</div>
+      <h2 class="section-title">设计优势</h2>
+    </div>
+
+    <div class="advantage-list">
+      <div class="advantage-item">
+        <div class="advantage-num" style="background:var(--accent-blue-dim);color:var(--accent-blue);">1</div>
+        <div class="advantage-content">
+          <h5>渐进式集成已有研究成果</h5>
+          <p>无需从零开始，可复用已有的智能体研究成果，通过标准协议逐步接入框架，降低开发风险</p>
+        </div>
+      </div>
+      <div class="advantage-item">
+        <div class="advantage-num" style="background:var(--accent-green-dim);color:var(--accent-green);">2</div>
+        <div class="advantage-content">
+          <h5>专属智能体独立优化</h5>
+          <p>每个业务场景对应独立智能体，可独立打磨Prompt和知识库，精准度互不干扰，避免单一智能体的复杂度膨胀</p>
+        </div>
+      </div>
+      <div class="advantage-item">
+        <div class="advantage-num" style="background:var(--accent-violet-dim);color:var(--accent-violet);">3</div>
+        <div class="advantage-content">
+          <h5>三级拼音字头匹配</h5>
+          <p>支持产品品名、型号、SKU、技术参数的拼音索引，支持不同输入排序习惯，显著提升识别命中率</p>
+        </div>
+      </div>
+      <div class="advantage-item">
+        <div class="advantage-num" style="background:var(--accent-rose-dim);color:var(--accent-rose);">4</div>
+        <div class="advantage-content">
+          <h5>外部数据源自动补全</h5>
+          <p>创建客户时识别企业名称后，可调用智能体集成天眼查等外部API，自动拉取工商信息完成档案补全</p>
+        </div>
+      </div>
+      <div class="advantage-item">
+        <div class="advantage-num" style="background:var(--accent-cyan-dim);color:var(--accent-cyan);">5</div>
+        <div class="advantage-content">
+          <h5>多模态输入支持</h5>
+          <p>支持语音输入、文本输入、图片/文件上传、剪贴板粘贴等多种输入方式，适应不同使用场景</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 04 模块分类 -->
+  <div class="section" id="s4">
+    <div class="section-header">
+      <div class="section-num rose">04</div>
+      <h2 class="section-title">模块分类说明</h2>
+    </div>
+
+    <p>项目按业务场景分为两大模块类型，采用统一的智能体协议但表单结构有所不同：</p>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>模块类型</th>
+          <th>覆盖场景</th>
+          <th>表单结构</th>
+          <th>核心识别逻辑</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="tag tag-blue">制单模块</span></td>
+          <td>销售订单、采购订单、报价单</td>
+          <td>表头主体 + 子产品明细</td>
+          <td>客户/供应商名称 + 产品信息（品名/型号/规格整合）</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-violet">单表模块</span></td>
+          <td>客户建档、销售商机、项目创建</td>
+          <td>扁平字段表单</td>
+          <td>自然语言提取后拆分填充到各字段</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="compare-grid" style="margin-top:20px;">
+      <div class="compare-card">
+        <h5><i class="ri-file-list-3-line" style="color:var(--accent-blue);"></i> 制单模块特征</h5>
+        <p>包含主实体（客户/供应商）+ 明细行（产品/物料），字段结构化程度高，匹配逻辑以实体检索为主，输出为多行明细表格</p>
+      </div>
+      <div class="compare-card">
+        <h5><i class="ri-user-star-line" style="color:var(--accent-violet);"></i> 单表模块特征</h5>
+        <p>单一对象，字段以属性为主（名称、联系方式、地址、分类等），匹配逻辑以查重+补全为主，输出为扁平字段表单</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 05 表单字段模板 -->
+  <div class="section" id="s5">
+    <div class="section-header">
+      <div class="section-num cyan">05</div>
+      <h2 class="section-title">表单字段模板</h2>
+    </div>
+
+    <div class="module-tabs">
+      <button class="module-tab active" onclick="switchModule('order')">销售订单</button>
+      <button class="module-tab" onclick="switchModule('quote')">报价单</button>
+      <button class="module-tab" onclick="switchModule('purchase')">采购订单</button>
+      <button class="module-tab" onclick="switchModule('customer')">客户建档</button>
+      <button class="module-tab" onclick="switchModule('opportunity')">销售商机</button>
+    </div>
+
+    <!-- 销售订单 -->
+    <div class="module-content active" id="module-order">
+      <div class="card">
+        <div class="card-title"><i class="ri-file-list-3-line" style="color:var(--accent-blue);"></i> 销售订单字段模板</div>
+        <div class="form-preview">
+          <div class="form-section">
+            <div class="form-section-title"><i class="ri-user-line"></i> 表头信息</div>
+            <div class="form-field-row">
+              <div class="form-field">
+                <label>客户名称 <span class="status-badge required">必填</span></label>
+                <div class="field-value">深圳华创科技有限公司</div>
+              </div>
+              <div class="form-field">
+                <label>订单编号 <span class="status-badge auto">自动</span></label>
+                <div class="field-value placeholder">系统自动生成</div>
+              </div>
+            </div>
+            <div class="form-field-row">
+              <div class="form-field">
+                <label>联系人</label>
+                <div class="field-value">李明</div>
+              </div>
+              <div class="form-field">
+                <label>联系电话</label>
+                <div class="field-value">0755-86543210</div>
+              </div>
+            </div>
+            <div class="form-field-row">
+              <div class="form-field full">
+                <label>收货地址</label>
+                <div class="field-value">深圳市南山区科技园路88号</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="form-section-title"><i class="ri-shopping-bag-line"></i> 产品明细</div>
+            <table class="form-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>产品名称 <span class="status-badge required">必填</span></th>
+                  <th>规格型号</th>
+                  <th>数量 <span class="status-badge required">必填</span></th>
+                  <th>单位</th>
+                  <th>单价</th>
+                  <th>金额</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1</td>
+                  <td>A3打印纸</td>
+                  <td>70g/500张</td>
+                  <td>100</td>
+                  <td>箱</td>
+                  <td>¥45.00</td>
+                  <td>¥4,500.00</td>
+                </tr>
+                <tr>
+                  <td>2</td>
+                  <td>激光墨盒</td>
+                  <td>HP 680黑色</td>
+                  <td>20</td>
+                  <td>个</td>
+                  <td>¥120.00</td>
+                  <td>¥2,400.00</td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr style="background:var(--bg-card);">
+                  <td colspan="5"></td>
+                  <td style="font-weight:600;color:var(--text-primary);">合计</td>
+                  <td style="font-weight:700;color:var(--accent-green);">¥6,900.00</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <div class="form-section">
+            <div class="form-section-title"><i class="ri-information-line"></i> 其他信息</div>
+            <div class="form-field-row">
+              <div class="form-field">
+                <label>交货日期</label>
+                <div class="field-value">2026-05-20</div>
+              </div>
+              <div class="form-field">
+                <label>付款方式</label>
+                <div class="field-value">月结30天</div>
+              </div>
+            </div>
+            <div class="form-field-row">
+              <div class="form-field full">
+                <label>备注</label>
+                <div class="field-value">客户要求分批交货</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="code-block" style="margin-top:16px;">
+<span class="comment">// 销售订单 - 智能体输出字段映射</span>
+<span class="keyword">const</span> orderFields = {
+  <span class="prop">header</span>: {
+    <span class="prop">customerName</span>: <span class="string">"客户名称"</span>,      <span class="comment">// 必填，拼音匹配</span>
+    <span class="prop">contact</span>:       <span class="string">"联系人"</span>,        <span class="comment">// 可选</span>
+    <span class="prop">phone</span>:         <span class="string">"联系电话"</span>,      <span class="comment">// 可选</span>
+    <span class="prop">address</span>:        <span class="string">"收货地址"</span>,      <span class="comment">// 可选</span>
+  },
+  <span class="prop">details</span>: [{
+    <span class="prop">productName</span>: <span class="string">"产品名称"</span>,   <span class="comment">// 必填，整合品名/型号/规格</span>
+    <span class="prop">qty</span>:          <span class="string">"数量"</span>,       <span class="comment">// 必填，数字</span>
+    <span class="prop">unit</span>:         <span class="string">"单位"</span>,      <span class="comment">// 可选</span>
+    <span class="prop">price</span>:        <span class="string">"单价"</span>,      <span class="comment">// 可选，默认取标准价</span>
+  }],
+  <span class="prop">meta</span>: {
+    <span class="prop">deliveryDate</span>: <span class="string">"交货日期"</span>,  <span class="comment">// 可选，日期格式</span>
+    <span class="prop">payment</span>:      <span class="string">"付款方式"</span>,  <span class="comment">// 可选</span>
+    <span class="prop">remark</span>:       <span class="string">"备注"</span>,      <span class="comment">// 可选</span>
+  }
+}
+        </div>
+      </div>
+    </div>
+
+    <!-- 报价单 -->
+    <div class="module-content" id="module-quote">
+      <div class="card">
+        <div class="card-title"><i class="ri-price-tag-3-line" style="color:var(--accent-amber);"></i> 报价单字段模板</div>
+        <div class="form-preview">
+          <div class="form-section">
+            <div class="form-section-title"><i class="ri-user-line"></i> 客户信息</div>
+            <div class="form-field-row">
+              <div class="form-field">
+                <label>客户名称 <span class="status-badge required">必填</span></label>
+                <div class="field-value">上海利达化工有限公司</div>
+              </div>
+              <div class="form-field">
+                <label>联系人</label>
+                <div class="field-value">王芳</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="form-section-title"><i class="ri-price-tag-3-line"></i> 报价明细</div>
+            <table class="form-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>产品名称</th>
+                  <th>规格型号</th>
+                  <th>数量</th>
+                  <th>单位</th>
+                  <th>报价</th>
+                  <th>折扣</th>
+                  <th>小计</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1</td>
+                  <td>PE原料</td>
+                  <td>HDPE 5000S</td>
+                  <td>10</td>
+                  <td>吨</td>
+                  <td>¥8,200.00</td>
+                  <td>95折</td>
+                  <td>¥77,900.00</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="form-section">
+            <div class="form-section-title"><i class="ri-file-list-3-line"></i> 报价信息</div>
+            <div class="form-field-row">
+              <div class="form-field">
+                <label>报价有效期 <span class="status-badge required">必填</span></label>
+                <div class="field-value">2026-06-13</div>
+              </div>
+              <div class="form-field">
+                <label>付款方式</label>
+                <div class="field-value">预付30%+发货前付清</div>
+              </div>
+            </div>
+            <div class="form-field-row">
+              <div class="form-field full">
+                <label>备注</label>
+                <div class="field-value">含运费，提供质检报告</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="code-block" style="margin-top:16px;">
+<span class="comment">// 报价单 - 智能体输出字段映射</span>
+<span class="keyword">const</span> quoteFields = {
+  <span class="prop">header</span>: {
+    <span class="prop">customerName</span>: <span class="string">"客户名称"</span>,   <span class="comment">// 必填</span>
+    <span class="prop">contact</span>:       <span class="string">"联系人"</span>,     <span class="comment">// 可选</span>
+  },
+  <span class="prop">details</span>: [{
+    <span class="prop">productName</span>: <span class="string">"产品名称"</span>,  <span class="comment">// 必填</span>
+    <span class="prop">spec</span>:         <span class="string">"规格型号"</span>,  <span class="comment">// 可选</span>
+    <span class="prop">qty</span>:          <span class="string">"数量"</span>,      <span class="comment">// 必填</span>
+    <span class="prop">price</span>:        <span class="string">"报价"</span>,      <span class="comment">// 必填，需显式报价</span>
+    <span class="prop">discount</span>:     <span class="string">"折扣"</span>,      <span class="comment">// 可选</span>
+  }],
+  <span class="prop">meta</span>: {
+    <span class="prop">validUntil</span>: <span class="string">"报价有效期"</span>,  <span class="comment">// 必填，日期</span>
+    <span class="prop">payment</span>:    <span class="string">"付款方式"</span>,    <span class="comment">// 可选</span>
+    <span class="prop">remark</span>:     <span class="string">"备注"</span>,       <span class="comment">// 可选</span>
+  }
+}
+        </div>
+      </div>
+    </div>
+
+    <!-- 采购订单 -->
+    <div class="module-content" id="module-purchase">
+      <div class="card">
+        <div class="card-title"><i class="ri-shopping-cart-2-line" style="color:var(--accent-green);"></i> 采购订单字段模板</div>
+        <div class="form-preview">
+          <div class="form-section">
+            <div class="form-section-title"><i class="ri-store-2-line"></i> 供应商信息</div>
+            <div class="form-field-row">
+              <div class="form-field">
+                <label>供应商名称 <span class="status-badge required">必填</span></label>
+                <div class="field-value">华东化工集团</div>
+              </div>
+              <div class="form-field">
+                <label>联系人</label>
+                <div class="field-value">陈建国</div>
+              </div>
+            </div>
+            <div class="form-field-row">
+              <div class="form-field">
+                <label>联系电话</label>
+                <div class="field-value">0571-87654321</div>
+              </div>
+              <div class="form-field">
+                <label>供货地址</label>
+                <div class="field-value">杭州市萧山区化工园区168号</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="form-section-title"><i class="ri-archive-line"></i> 物料明细</div>
+            <table class="form-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>物料名称</th>
+                  <th>规格型号</th>
+                  <th>数量</th>
+                  <th>单位</th>
+                  <th>单价</th>
+                  <th>金额</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1</td>
+                  <td>PE原料</td>
+                  <td>HDPE 5000S</td>
+                  <td>10</td>
+                  <td>吨</td>
+                  <td>¥7,800.00</td>
+                  <td>¥78,000.00</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="form-section">
+            <div class="form-section-title"><i class="ri-truck-line"></i> 交货信息</div>
+            <div class="form-field-row">
+              <div class="form-field">
+                <label>交货日期</label>
+                <div class="field-value">2026-06-01</div>
+              </div>
+              <div class="form-field">
+                <label>交货仓库</label>
+                <div class="field-value">原料仓A区</div>
+              </div>
+            </div>
+            <div class="form-field-row">
+              <div class="form-field full">
+                <label>备注</label>
+                <div class="field-value">需附出厂检验报告</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="code-block" style="margin-top:16px;">
+<span class="comment">// 采购订单 - 智能体输出字段映射</span>
+<span class="keyword">const</span> purchaseFields = {
+  <span class="prop">header</span>: {
+    <span class="prop">supplierName</span>: <span class="string">"供应商名称"</span>,  <span class="comment">// 必填，拼音匹配</span>
+    <span class="prop">contact</span>:      <span class="string">"联系人"</span>,       <span class="comment">// 可选</span>
+    <span class="prop">phone</span>:        <span class="string">"联系电话"</span>,     <span class="comment">// 可选</span>
+    <span class="prop">address</span>:      <span class="string">"供货地址"</span>,     <span class="comment">// 可选</span>
+  },
+  <span class="prop">details</span>: [{
+    <span class="prop">materialName</span>: <span class="string">"物料名称"</span>,  <span class="comment">// 必填，整合品名/规格</span>
+    <span class="prop">spec</span>:         <span class="string">"规格型号"</span>,    <span class="comment">// 可选</span>
+    <span class="prop">qty</span>:           <span class="string">"数量"</span>,        <span class="comment">// 必填</span>
+    <span class="prop">unit</span>:          <span class="string">"单位"</span>,       <span class="comment">// 可选</span>
+    <span class="prop">price</span>:         <span class="string">"单价"</span>,       <span class="comment">// 可选</span>
+  }],
+  <span class="prop">meta</span>: {
+    <span class="prop">deliveryDate</span>: <span class="string">"交货日期"</span>,    <span class="comment">// 可选</span>
+    <span class="prop">warehouse</span>:     <span class="string">"交货仓库"</span>,     <span class="comment">// 可选</span>
+    <span class="prop">remark</span>:        <span class="string">"备注"</span>,        <span class="comment">// 可选</span>
+  }
+}
+        </div>
+      </div>
+    </div>
+
+    <!-- 客户建档 -->
+    <div class="module-content" id="module-customer">
+      <div class="card">
+        <div class="card-title"><i class="ri-user-star-line" style="color:var(--accent-rose);"></i> 客户建档字段模板</div>
+        <div class="form-preview">
+          <div class="form-section">
+            <div class="form-section-title"><i class="ri-briefcase-line"></i> 基本信息</div>
+            <div class="form-field-row">
+              <div class="form-field">
+                <label>客户名称 <span class="status-badge required">必填</span></label>
+                <div class="field-value">深圳华创科技有限公司</div>
+              </div>
+              <div class="form-field">
+                <label>客户类型 <span class="status-badge optional">字典</span></label>
+                <div class="field-value">企业客户</div>
+              </div>
+            </div>
+            <div class="form-field-row">
+              <div class="form-field">
+                <label>所属行业 <span class="status-badge optional">字典</span></label>
+                <div class="field-value">制造业</div>
+              </div>
+              <div class="form-field">
+                <label>信用等级 <span class="status-badge optional">字典</span></label>
+                <div class="field-value">A级</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="form-section-title"><i class="ri-contacts-line"></i> 联系信息</div>
+            <div class="form-field-row">
+              <div class="form-field">
+                <label>联系人</label>
+                <div class="field-value">李明</div>
+              </div>
+              <div class="form-field">
+                <label>职务</label>
+                <div class="field-value">采购经理</div>
+              </div>
+            </div>
+            <div class="form-field-row">
+              <div class="form-field">
+                <label>联系电话</label>
+                <div class="field-value">0755-86543210</div>
+              </div>
+              <div class="form-field">
+                <label>电子邮箱</label>
+                <div class="field-value">liming@huachuang.com</div>
+              </div>
+            </div>
+            <div class="form-field-row">
+              <div class="form-field full">
+                <label>地址</label>
+                <div class="field-value">深圳市南山区科技园路88号</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="form-section-title"><i class="ri-money-money-circle-line"></i> 财务信息</div>
+            <div class="form-field-row">
+              <div class="form-field">
+                <label>统一社会信用代码</label>
+                <div class="field-value">91440300MA5XXXXXX</div>
+              </div>
+              <div class="form-field">
+                <label>开户银行</label>
+                <div class="field-value">招商银行深圳分行</div>
+              </div>
+            </div>
+            <div class="form-field-row">
+              <div class="form-field full">
+                <label>银行账号</label>
+                <div class="field-value">6225XXXXXXXX8888</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="highlight-box">
+          <h5>💡 自动补全能力</h5>
+          <p>识别到企业名称后，智能体可自动调用天眼查等外部API，获取工商信息完成档案补全，减少人工录入</p>
+        </div>
+
+        <div class="code-block" style="margin-top:16px;">
+<span class="comment">// 客户建档 - 智能体输出字段映射</span>
+<span class="keyword">const</span> customerFields = {
+  <span class="prop">basic</span>: {
+    <span class="prop">name</span>:      <span class="string">"客户名称"</span>,      <span class="comment">// 必填，拼音匹配（查重）</span>
+    <span class="prop">type</span>:      <span class="string">"客户类型"</span>,      <span class="comment">// 字典匹配</span>
+    <span class="prop">industry</span>:  <span class="string">"所属行业"</span>,      <span class="comment">// 字典匹配</span>
+    <span class="prop">creditLevel</span>: <span class="string">"信用等级"</span>,    <span class="comment">// 字典匹配</span>
+  },
+  <span class="prop">contact</span>: {
+    <span class="prop">person</span>:    <span class="string">"联系人"</span>,        <span class="comment">// 可选</span>
+    <span class="prop">position</span>:  <span class="string">"职务"</span>,         <span class="comment">// 可选</span>
+    <span class="prop">phone</span>:      <span class="string">"联系电话"</span>,      <span class="comment">// 可选</span>
+    <span class="prop">email</span>:     <span class="string">"电子邮箱"</span>,     <span class="comment">// 可选</span>
+    <span class="prop">address</span>:   <span class="string">"地址"</span>,         <span class="comment">// 可选</span>
+  },
+  <span class="prop">finance</span>: {
+    <span class="prop">creditCode</span>: <span class="string">"统一社会信用代码"</span>, <span class="comment">// 可选，自动获取</span>
+    <span class="prop">bank</span>:       <span class="string">"开户银行"</span>,       <span class="comment">// 可选</span>
+    <span class="prop">account</span>:    <span class="string">"银行账号"</span>,      <span class="comment">// 可选</span>
+  }
+}
+        </div>
+      </div>
+    </div>
+
+    <!-- 销售商机 -->
+    <div class="module-content" id="module-opportunity">
+      <div class="card">
+        <div class="card-title"><i class="ri-funds-line" style="color:var(--accent-violet);"></i> 销售商机字段模板</div>
+        <div class="form-preview">
+          <div class="form-section">
+            <div class="form-section-title"><i class="ri-line-chart-line"></i> 商机信息</div>
+            <div class="form-field-row">
+              <div class="form-field">
+                <label>商机名称 <span class="status-badge required">必填</span></label>
+                <div class="field-value">华创科技办公用品采购项目</div>
+              </div>
+              <div class="form-field">
+                <label>关联客户 <span class="status-badge required">必填</span></label>
+                <div class="field-value">深圳华创科技有限公司</div>
+              </div>
+            </div>
+            <div class="form-field-row">
+              <div class="form-field">
+                <label>商机金额 <span class="status-badge required">必填</span></label>
+                <div class="field-value">¥500,000.00</div>
+              </div>
+              <div class="form-field">
+                <label>预计签单日期</label>
+                <div class="field-value">2026-06-30</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="form-section-title"><i class="ri-git-branch-line"></i> 销售阶段 <span class="status-badge optional">字典</span></div>
+            <div class="form-field-row">
+              <div class="form-field">
+                <label>当前阶段</label>
+                <div class="field-value">需求确认</div>
+              </div>
+              <div class="form-field">
+                <label>赢单概率</label>
+                <div class="field-value">60%</div>
+              </div>
+            </div>
+            <div class="form-field-row">
+              <div class="form-field full">
+                <label>销售负责人</label>
+                <div class="field-value">张伟</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="form-section-title"><i class="ri-file-list-3-line"></i> 其他信息</div>
+            <div class="form-field-row">
+              <div class="form-field full">
+                <label>需求描述</label>
+                <div class="field-value">客户计划采购一批办公用品，包括打印纸、墨盒、文件夹等，预计金额50万左右</div>
+              </div>
+            </div>
+            <div class="form-field-row">
+              <div class="form-field full">
+                <label>备注</label>
+                <div class="field-value">客户已有长期合作意向，需重点跟进</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="code-block" style="margin-top:16px;">
+<span class="comment">// 销售商机 - 智能体输出字段映射</span>
+<span class="keyword">const</span> opportunityFields = {
+  <span class="prop">basic</span>: {
+    <span class="prop">name</span>:      <span class="string">"商机名称"</span>,      <span class="comment">// 必填</span>
+    <span class="prop">customer</span>:  <span class="string">"关联客户"</span>,      <span class="comment">// 必填，拼音匹配</span>
+    <span class="prop">amount</span>:     <span class="string">"商机金额"</span>,     <span class="comment">// 必填，数字</span>
+    <span class="prop">closeDate</span>:  <span class="string">"预计签单日期"</span>,  <span class="comment">// 可选，日期</span>
+  },
+  <span class="prop">sales</span>: {
+    <span class="prop">stage</span>:      <span class="string">"当前阶段"</span>,      <span class="comment">// 字典匹配</span>
+    <span class="prop">probability</span>: <span class="string">"赢单概率"</span>,    <span class="comment">// 根据阶段自动计算</span>
+    <span class="prop">owner</span>:      <span class="string">"销售负责人"</span>,    <span class="comment">// 可选</span>
+  },
+  <span class="prop">meta</span>: {
+    <span class="prop">description</span>: <span class="string">"需求描述"</span>,    <span class="comment">// 可选</span>
+    <span class="prop">remark</span>:      <span class="string">"备注"</span>,         <span class="comment">// 可选</span>
+  }
+}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 06 JSON协议 -->
+  <div class="section" id="s6">
+    <div class="section-header">
+      <div class="section-num blue">06</div>
+      <h2 class="section-title">标准JSON交互协议</h2>
+    </div>
+
+    <p>智能体与框架之间通过标准JSON协议通信，实现完全解耦。框架仅关心输出格式，不关心智能体内部实现。</p>
+
+    <div class="protocol-flow">
+      <div class="protocol-node user"><i class="ri-user-line"></i> 用户输入</div>
+      <span class="protocol-arrow">→</span>
+      <div class="protocol-node agent"><i class="ri-robot-line"></i> 智能体识别</div>
+      <span class="protocol-arrow">→</span>
+      <div class="protocol-node engine"><i class="ri-search-line"></i> 拼音匹配引擎</div>
+      <span class="protocol-arrow">→</span>
+      <div class="protocol-node form"><i class="ri-file-edit-line"></i> 表单填充</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="ri-code-s-slash-line" style="color:var(--accent-blue);"></i> 标准输出协议 (AgentOutput)</div>
+      <div class="json-viewer">
+<span class="json-comment">// 智能体输出结构（所有智能体必须遵循）</span>
+{
+  <span class="json-key">"agent_type"</span>: <span class="json-string">"order"</span>,           <span class="json-comment">// agent | quote | purchase | customer | opportunity</span>
+  <span class="json-key">"session_id"</span>: <span class="json-string">"uuid-xxx"</span>,       <span class="json-comment">// 会话ID，用于关联上下文</span>
+  <span class="json-key">"confidence"</span>: <span class="json-number">0.95</span>,             <span class="json-comment">// 整体置信度 0-1</span>
+  <span class="json-key">"raw_text"</span>: <span class="json-string">"深圳华创要A3打印纸100箱"</span>, <span class="json-comment">// 原始输入</span>
+
+  <span class="json-key">"entities"</span>: [                           <span class="json-comment">// 识别出的实体列表</span>
+    {
+      <span class="json-key">"role"</span>: <span class="json-string">"subject"</span>,            <span class="json-comment">// subject | detail | meta</span>
+      <span class="json-key">"type"</span>: <span class="json-string">"customer"</span>,          <span class="json-comment">// customer | supplier | product | material | ...</span>
+      <span class="json-key">"name"</span>: <span class="json-string">"深圳华创科技"</span>,       <span class="json-comment">// 实体原始名称</span>
+      <span class="json-key">"pinyin"</span>: <span class="json-string">"szhcjs"</span>,            <span class="json-comment">// 拼音（首字母，用于匹配）</span>
+      <span class="json-key">"attrs"</span>: {                          <span class="json-comment">// 实体属性</span>
+        <span class="json-key">"fullName"</span>: <span class="json-string">"深圳华创科技有限公司"</span>
+      }
+    },
+    {
+      <span class="json-key">"role"</span>: <span class="json-string">"detail"</span>,
+      <span class="json-key">"type"</span>: <span class="json-string">"product"</span>,
+      <span class="json-key">"name"</span>: <span class="json-string">"A3打印纸"</span>,
+      <span class="json-key">"pinyin"</span>: <span class="json-string">"a3dyz"</span>,
+      <span class="json-key">"attrs"</span>: {
+        <span class="json-key">"spec"</span>: <span class="json-string">"70g/500张"</span>,
+        <span class="json-key">"qty"</span>: <span class="json-number">100</span>,
+        <span class="json-key">"unit"</span>: <span class="json-string">"箱"</span>
+      }
+    }
+  ],
+
+  <span class="json-key">"form_data"</span>: {                           <span class="json-comment">// 表单填充数据（智能体直接输出）</span>
+    <span class="json-key">"header"</span>: {
+      <span class="json-key">"customerName"</span>: <span class="json-string">"深圳华创科技有限公司"</span>
+    },
+    <span class="json-key">"details"</span>: [
+      {
+        <span class="json-key">"productName"</span>: <span class="json-string">"A3打印纸"</span>,
+        <span class="json-key">"spec"</span>: <span class="json-string">"70g/500张"</span>,
+        <span class="json-key">"qty"</span>: <span class="json-number">100</span>,
+        <span class="json-key">"unit"</span>: <span class="json-string">"箱"</span>
+      }
+    ],
+    <span class="json-key">"meta"</span>: {}
+  },
+
+  <span class="json-key">"suggestions"</span>: [                         <span class="json-comment">// 追问建议（可选）</span>
+    <span class="json-string">"请问交货日期是什么时候？"</span>,
+    <span class="json-string">"需要指定付款方式吗？"</span>
+  ],
+
+  <span class="json-key">"status"</span>: <span class="json-string">"success"</span>,              <span class="json-comment">// success | partial | failed</span>
+  <span class="json-key">"message"</span>: <span class="json-string">"识别成功"</span>
+}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="ri-exchange-line" style="color:var(--accent-green);"></i> 匹配引擎响应 (MatchResult)</div>
+      <div class="json-viewer">
+<span class="json-comment">// 拼音匹配引擎返回结果</span>
+{
+  <span class="json-key">"entity"</span>: {
+    <span class="json-key">"name"</span>: <span class="json-string">"深圳华创科技有限公司"</span>,
+    <span class="json-key">"pinyin"</span>: <span class="json-string">"szhcjsgs"</span>
+  },
+  <span class="json-key">"matches"</span>: [                              <span class="json-comment">// 匹配候选列表</span>
+    {
+      <span class="json-key">"id"</span>: <span class="json-string">"CUST_001"</span>,
+      <span class="json-key">"name"</span>: <span class="json-string">"深圳华创科技有限公司"</span>,
+      <span class="json-key">"score"</span>: <span class="json-number">0.98</span>,            <span class="json-comment">// 匹配度 0-1</span>
+      <span class="json-key">"source"</span>: <span class="json-string">"internal"</span>         <span class="json-comment">// internal | external（天眼查等）</span>
+    },
+    {
+      <span class="json-key">"id"</span>: <span class="json-string">"CUST_002"</span>,
+      <span class="json-key">"name"</span>: <span class="json-string">"深圳华创科技集团"</span>,
+      <span class="json-key">"score"</span>: <span class="json-number">0.85</span>,
+      <span class="json-key">"source"</span>: <span class="json-string">"internal"</span>
+    }
+  ],
+  <span class="json-key">"selected"</span>: <span class="json-number">0</span>                   <span class="json-comment">// 用户选择的索引，-1表示未选</span>
+}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="ri-database-2-line" style="color:var(--accent-violet);"></i> 字典数据协议 (DictData)</div>
+      <p>企业自定义分类字典，按租户加载，确保不同企业可适配各自的分类体系：</p>
+      <div class="json-viewer">
+<span class="json-comment">// 字典数据类型定义</span>
+{
+  <span class="json-key">"tenant_id"</span>: <span class="json-string">"T001"</span>,
+  <span class="json-key">"dict_type"</span>: <span class="json-string">"customer_type"</span>,   <span class="json-comment">// 字典类型</span>
+  <span class="json-key">"items"</span>: [
+    { <span class="json-key">"code"</span>: <span class="json-string">"ENT"</span>, <span class="json-key">"name"</span>: <span class="json-string">"企业客户"</span>, <span class="json-key">"pinyin"</span>: <span class="json-string">"qykh"</span> },
+    { <span class="json-key">"code"</span>: <span class="json-string">"PER"</span>, <span class="json-key">"name"</span>: <span class="json-string">"个人客户"</span>, <span class="json-key">"pinyin"</span>: <span class="json-string">"grkh"</span> },
+    { <span class="json-key">"code"</span>: <span class="json-string">"VIP"</span>, <span class="json-key">"name"</span>: <span class="json-string">"VIP客户"</span>, <span class="json-key">"pinyin"</span>: <span class="json-string">"vipkh"</span> }
+  ]
+}
+      </div>
+    </div>
+
+    <div class="step-flow" style="margin-top:24px;">
+      <div class="step-item">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <h5>用户输入</h5>
+          <p>用户通过语音或文本输入业务需求，如"深圳华创要A3打印纸100箱"</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <h5>智能体识别</h5>
+          <p>专属智能体解析输入，提取实体（客户名、产品名、数量），输出标准JSON</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <h5>拼音匹配</h5>
+          <p>框架层调用拼音匹配引擎，将识别结果与系统已有数据匹配，返回候选列表</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <h5>表单填充</h5>
+          <p>用户确认匹配结果后，自动填充表单草稿，可逐字段修改</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">5</div>
+        <div class="step-content">
+          <h5>提交创建</h5>
+          <p>用户确认无误后，调用业务API完成数据创建</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 07 智能体扩展 -->
+  <div class="section" id="s7">
+    <div class="section-header">
+      <div class="section-num green">07</div>
+      <h2 class="section-title">智能体扩展方案</h2>
+    </div>
+
+    <p>新增一个业务场景只需4步配置，无需改动框架核心代码。整个流程以配置为主，开发为辅。</p>
+
+    <div class="step-flow">
+      <div class="step-item">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <h5>创建专属智能体</h5>
+          <p>在扣子平台创建新智能体，编写Prompt定义实体提取规则，配置知识库，发布获取botId</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <h5>定义表单模板</h5>
+          <p>在框架中注册新场景的表单模板（JSON Schema），定义字段、布局、校验规则</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <h5>实现业务适配器</h5>
+          <p>实现 BusinessAdapter 接口，包括实体匹配、数据校验、提交创建三个方法</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <h5>注册到路由器</h5>
+          <p>在智能体路由器中注册新场景配置（名称、图标、颜色、botId、适配器）</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="ri-code-s-slash-line" style="color:var(--accent-amber);"></i> 注册配置示例</div>
+      <div class="code-block">
+<span class="comment">// 在 agentConfig 中新增一项即可扩展新场景</span>
+<span class="keyword">const</span> agentConfig = {
+  <span class="comment">// ... 已有智能体</span>
+
+  <span class="prop">newScenario</span>: {
+    <span class="prop">name</span>:        <span class="string">'智能XXX'</span>,           <span class="comment">// 左侧导航显示名称</span>
+    <span class="prop">desc</span>:        <span class="string">'场景描述'</span>,           <span class="comment">// 副标题</span>
+    <span class="prop">chatName</span>:    <span class="string">'XXX智能体'</span>,          <span class="comment">// 对话区智能体名称</span>
+    <span class="prop">icon</span>:       <span class="string">'ri-xxx-line'</span>,       <span class="comment">// Remix Icon 名称</span>
+    <span class="prop">color</span>:      <span class="string">'blue'</span>,             <span class="comment">// 主题色</span>
+    <span class="prop">botId</span>:     <span class="string">'73428668****'</span>,    <span class="comment">// 扣子平台botId</span>
+    <span class="prop">quickActions</span>: [<span class="string">'示例输入1'</span>, <span class="string">'示例输入2'</span>],  <span class="comment">// 快捷操作</span>
+    <span class="prop">formTemplate</span>: () => <span class="string">'表单HTML模板'</span>,    <span class="comment">// 表单渲染函数</span>
+    <span class="prop">adapter</span>:     <span class="keyword">new</span> <span class="type">NewScenarioAdapter</span>()  <span class="comment">// 业务适配器实例</span>
+  }
+}
+      </div>
+    </div>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>智能体</th>
+          <th>botId</th>
+          <th>表单模板</th>
+          <th>状态</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>制单智能体</td>
+          <td><span class="tag tag-gray">待配置</span></td>
+          <td>订单表单</td>
+          <td><span class="tag tag-green">已上线</span></td>
+        </tr>
+        <tr>
+          <td>采购智能体</td>
+          <td><span class="tag tag-gray">待配置</span></td>
+          <td>采购表单</td>
+          <td><span class="tag tag-amber">Beta</span></td>
+        </tr>
+        <tr>
+          <td>报价智能体</td>
+          <td><span class="tag tag-gray">待配置</span></td>
+          <td>报价表单</td>
+          <td><span class="tag tag-amber">Beta</span></td>
+        </tr>
+        <tr>
+          <td>客户建档智能体</td>
+          <td><span class="tag tag-gray">待配置</span></td>
+          <td>客户表单</td>
+          <td><span class="tag tag-gray">规划中</span></td>
+        </tr>
+        <tr>
+          <td>销售机会智能体</td>
+          <td><span class="tag tag-gray">待配置</span></td>
+          <td>商机表单</td>
+          <td><span class="tag tag-gray">规划中</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+function switchModule(moduleId) {
+  document.querySelectorAll('.module-tab').forEach(tab => {
+    tab.classList.toggle('active', tab.textContent.includes({
+      'order': '销售订单',
+      'quote': '报价单',
+      'purchase': '采购',
+      'customer': '客户',
+      'opportunity': '商机'
+    }[moduleId]));
+  });
+  document.querySelectorAll('.module-content').forEach(content => {
+    content.classList.toggle('active', content.id === 'module-' + moduleId);
+  });
+}
+
+document.querySelectorAll('.module-tab').forEach(tab => {
+  tab.addEventListener('click', function() {
+    const moduleMap = {
+      '销售订单': 'order',
+      '报价单': 'quote',
+      '采购订单': 'purchase',
+      '客户建档': 'customer',
+      '销售商机': 'opportunity'
+    };
+    const text = this.textContent;
+    const moduleId = moduleMap[text];
+    if (moduleId) switchModule(moduleId);
+  });
+});
+</script>
+
+</body>
+</html>

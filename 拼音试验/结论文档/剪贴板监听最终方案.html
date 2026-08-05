@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Coze 智能体 · 剪贴板监听最终方案</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --panel: #1e293b;
+    --panel-light: #334155;
+    --text: #e2e8f0;
+    --text-dim: #94a3b8;
+    --accent: #38bdf8;
+    --accent2: #fbbf24;
+    --good: #4ade80;
+    --bad: #f87171;
+    --warn: #fb923c;
+    --code-bg: #0b1220;
+    --border: #334155;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    padding: 40px 20px;
+  }
+  .container { max-width: 1080px; margin: 0 auto; }
+  header {
+    text-align: center;
+    margin-bottom: 50px;
+    padding-bottom: 30px;
+    border-bottom: 2px solid var(--border);
+  }
+  header h1 {
+    font-size: 2.2em;
+    margin: 0 0 10px 0;
+    color: var(--accent);
+    letter-spacing: 1px;
+  }
+  header .subtitle { color: var(--text-dim); font-size: 1em; }
+  header .meta {
+    margin-top: 15px;
+    font-size: 0.85em;
+    color: var(--text-dim);
+  }
+  h2 {
+    font-size: 1.55em;
+    color: var(--accent);
+    border-left: 4px solid var(--accent);
+    padding-left: 14px;
+    margin: 50px 0 18px 0;
+  }
+  h3 {
+    font-size: 1.2em;
+    color: var(--accent2);
+    margin: 28px 0 10px 0;
+  }
+  h4 {
+    font-size: 1em;
+    color: var(--good);
+    margin: 20px 0 8px 0;
+  }
+  p, li { color: var(--text); }
+  code {
+    background: var(--code-bg);
+    color: #fde68a;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: "SF Mono", Monaco, "Cascadia Code", monospace;
+    font-size: 0.9em;
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    border-radius: 6px;
+    padding: 16px 20px;
+    overflow-x: auto;
+    font-size: 0.85em;
+    line-height: 1.5;
+  }
+  pre code { background: none; color: var(--text); padding: 0; }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 26px;
+    margin: 16px 0;
+  }
+  .panel.warning { border-left: 4px solid var(--bad); }
+  .panel.tip     { border-left: 4px solid var(--good); }
+  .panel.info    { border-left: 4px solid var(--accent); }
+  .panel.q       { border-left: 4px solid var(--warn); }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 0.9em;
+  }
+  th, td {
+    text-align: left;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+  }
+  th { background: var(--panel-light); color: var(--accent); }
+  tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+  .step {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 26px;
+    margin: 18px 0;
+    position: relative;
+  }
+  .step .num {
+    position: absolute;
+    top: -14px;
+    left: 20px;
+    background: var(--bad);
+    color: #0f172a;
+    font-weight: bold;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.85em;
+  }
+  .step.fix .num { background: var(--good); }
+  .step .title { font-weight: bold; color: var(--accent2); margin-bottom: 8px; font-size: 1.05em; }
+  .step .symptom { color: var(--bad); }
+  .step .cause   { color: var(--warn); }
+  .step .fix     { color: var(--good); }
+  ul, ol { padding-left: 24px; }
+  li { margin: 4px 0; }
+  .flow {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin: 16px 0;
+    font-family: "SF Mono", Monaco, monospace;
+    font-size: 0.9em;
+  }
+  .flow .arrow { color: var(--accent); margin: 0 6px; }
+  .flow .node  { color: var(--accent2); }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75em;
+    font-weight: bold;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  .badge.bad  { background: var(--bad); color: #0f172a; }
+  .badge.fix  { background: var(--good); color: #0f172a; }
+  .badge.warn { background: var(--warn); color: #0f172a; }
+  .badge.info { background: var(--accent); color: #0f172a; }
+  footer {
+    margin-top: 60px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 0.85em;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <h1>剪贴板监听最终方案</h1>
+  <div class="subtitle">智能制单 · dexiedb · Coze 智能体在右侧时的剪贴板捕获</div>
+  <div class="meta">
+    模块：<code>dexiedb/index.html</code> &nbsp;|&nbsp; 行号：约 <code>1913-1976</code>（prod / dev 一致）
+  </div>
+</header>
+
+<!-- ========== 一、背景与目标 ========== -->
+<h2>一、背景与目标</h2>
+<div class="panel info">
+  <p>在智能制单界面，Coze 智能体对话窗口位于页面右侧（iframe 嵌入）。最终用户工作流是：</p>
+  <ol>
+    <li>在右侧 Coze 对话框里描述采购需求（如"我要给 〖飞奥德〗 下单：金士顿 CF 8G 5 个"）；</li>
+    <li>Coze 智能体生成结构化 JSON；</li>
+    <li>用户点击 Coze 输出上的"复制"按钮，把 JSON 复制到系统剪贴板；</li>
+    <li>左侧智能制单面板<strong>自动捕获</strong>该 JSON，识别为有效订单后启动客户/产品匹配、价格计算、下单流程。</li>
+  </ol>
+  <p>整个过程<strong>不允许"用户切回左侧再按 Ctrl+V"这种打断</strong>，必须做到复制即触发。</p>
+</div>
+
+<!-- ========== 二、关键挑战 ========== -->
+<h2>二、关键挑战</h2>
+<table>
+  <tr><th>挑战</th><th>说明</th></tr>
+  <tr>
+    <td>复制源是 Coze iframe</td>
+    <td>Coze 是第三方 iframe，<code>copy</code> 事件不冒泡到父页；<code>paste</code> 事件也只在父页有焦点时触发。</td>
+  </tr>
+  <tr>
+    <td>Clipboard API 的读取时机</td>
+    <td><code>navigator.clipboard.readText()</code> 只在<strong>页面获得焦点</strong>且<strong>用户授权后</strong>可用，且必须<strong>用户手势后立即调用</strong>，否则 PENDING。</td>
+  </tr>
+  <tr>
+    <td>静默式自动捕获</td>
+    <td>不能在每次轮询都弹 toast / 干扰用户；3 秒轮询本身就意味着同一个内容会被读到多次。</td>
+  </tr>
+  <tr>
+    <td>JSON 误识别</td>
+    <td>用户可能复制其它任何内容（链接、密码、文件路径……），必须先做"是不是订单 JSON"的预判。</td>
+  </tr>
+</table>
+
+<!-- ========== 三、最终方案概览 ========== -->
+<h2>三、最终方案概览</h2>
+<div class="flow">
+  <span class="node">页面加载</span>
+  <span class="arrow">→</span>
+  <span class="node">setInterval(tryReadClipboard, 3000)</span>
+  <span class="arrow">→</span>
+  <span class="node">窗口获焦 / 切回前台</span>
+  <span class="arrow">→</span>
+  <span class="node">延时 200/800/1500 ms 再读 3 次</span>
+  <span class="arrow">→</span>
+  <span class="node">用户主动 paste 到结果区</span>
+  <span class="arrow">→</span>
+  <span class="node">tryReadClipboard(text)</span>
+  <span class="arrow">→</span>
+  <span class="node">4 道闸门</span>
+  <span class="arrow">→</span>
+  <span class="node">handleClipboardText(text)</span>
+</div>
+
+<div class="panel tip">
+  <p><span class="badge fix">核心</span> 三条触发路径（轮询 / 焦点 / paste）最终<strong>汇入同一个 <code>tryReadClipboard</code> 函数</strong>，由它统一做 4 道闸门过滤。</p>
+</div>
+
+<!-- ========== 四、4 道闸门 ========== -->
+<h2>四、4 道闸门：tryReadClipboard 的内部过滤</h2>
+<pre><code>function tryReadClipboard() {
+  // 闸门 1：页面无焦点 → 不读
+  if (!document.hasFocus()) {
+    console.log('[clipboard] 拦截：页面无焦点');
+    return;
+  }
+  // 闸门 2：Clipboard API 不可用 → 跳过
+  if (!navigator.clipboard || !navigator.clipboard.readText) {
+    console.log('[clipboard] 拦截：剪贴板 API 不可用');
+    return;
+  }
+  navigator.clipboard.readText().then(function(text) {
+    // 闸门 3：剪贴板没变 → 静默跳过（轮询常态）
+    if (text === lastClipboardContent) {
+      console.log('[clipboard] 拦截：剪贴板未变');
+      return;
+    }
+    // 闸门 4：是已经处理过的同一段 JSON → 静默跳过
+    if (text === lastDetectedJSON) {
+      console.log('[clipboard] 拦截：是已处理过的 JSON');
+      return;
+    }
+    // 闸门 5：不是订单 JSON → 静默跳过
+    if (!isOrderJSON(text)) {
+      console.log('[clipboard] 拦截：不是订单 JSON');
+      return;
+    }
+    console.log('[clipboard] 通过：开始处理');
+    lastClipboardContent = text;
+    handleClipboardText(text);
+  }).catch(function(e) {
+    console.log('[clipboard] 异常：', e);
+  });
+}</code></pre>
+
+<table>
+  <tr><th>闸门</th><th>作用</th><th>失败行为</th></tr>
+  <tr><td>1. <code>document.hasFocus()</code></td><td>避免在用户操作 Coze iframe 时误触发</td><td>静默 <code>return</code>，不弹任何提示</td></tr>
+  <tr><td>2. Clipboard API 存在性</td><td>兼容老浏览器 / Safari 非 https</td><td>静默 <code>return</code></td></tr>
+  <tr><td>3. 剪贴板未变 <code>lastClipboardContent</code></td><td>3 秒轮询的常态拦截</td><td>静默 <code>return</code>（不提示）</td></tr>
+  <tr><td>4. 已处理过的 JSON <code>lastDetectedJSON</code></td><td>防止同一次复制在多路径下被重复处理</td><td>静默 <code>return</code></td></tr>
+  <tr><td>5. <code>isOrderJSON()</code> 预判</td><td>只接受订单 JSON，过滤杂七杂八的复制</td><td>静默 <code>return</code></td></tr>
+</table>
+
+<div class="panel info">
+  <p><span class="badge info">设计要点</span> 5 道闸门一律静默（仅 <code>console.log</code> 给开发者看），<strong>不向用户弹任何提示</strong>。理由详见第六节。</p>
+</div>
+
+<!-- ========== 五、订单 JSON 预判 ========== -->
+<h2>五、订单 JSON 预判：isOrderJSON</h2>
+<p>为避免把任意复制内容（如网址、命令、密码）当成订单处理，需要先做"是不是订单 JSON"的预判。实现非常轻量——只检查常见订单字段的特征子串：</p>
+<pre><code>function isOrderJSON(text) {
+  if (!text || text.length < 10) return false;
+  if (text.indexOf('{') === -1) return false;
+  // 命中任一"订单特征字段"即视为候选订单 JSON
+  return text.indexOf('"customer_name"') !== -1 ||
+         text.indexOf('"customerName"') !== -1 ||
+         text.indexOf('"customer"') !== -1 ||
+         text.indexOf('"客户"') !== -1 ||
+         text.indexOf('"doc_type"') !== -1 ||
+         text.indexOf('"products"') !== -1 ||
+         text.indexOf('"items"') !== -1 ||
+         text.indexOf('"产品"') !== -1;
+}</code></pre>
+
+<p>这是<strong>粗筛</strong>，不是为了"严格解析"。真正的提取由 <code>PinyinMatch.extractOrderJSON</code> 完成（详见结论文档 <code>监听chat sdk的可行方案.html</code>）。</p>
+
+<!-- ========== 六、为何不弹"重复提示" ========== -->
+<h2>六、为何重复时静默过滤，而不弹"重复复制"提示</h2>
+<div class="panel q">
+  <p><span class="badge warn">问题</span> 一开始的需求是"重复复制时给个黄色 toast 提醒"，但调试中发现：</p>
+</div>
+
+<h3>6.1 现象：3 秒轮询下任何标记都会被反复消耗</h3>
+<p>监听采用 <code>setInterval(tryReadClipboard, 3000)</code>。每次轮询都会重新调用 <code>navigator.clipboard.readText()</code>，只要剪贴板内容没变就反复进入"未变"分支。</p>
+<ul>
+  <li>第一次轮询：text 变 → 通过 → 标记 <code>lastDupNoticed = true</code></li>
+  <li>第二次轮询（3 秒后）：text 仍然 = lastClipboardContent → 走"未变"分支 → 已无法在那一帧做"重复判断"</li>
+  <li>如果用 lastDupNoticed 计数 / 节流：额度会立刻被用完</li>
+</ul>
+
+<h3>6.2 多种节流方案全部回退</h3>
+<table>
+  <tr><th>方案</th><th>问题</th><th>结论</th></tr>
+  <tr>
+    <td>布尔标记 <code>lastDupNoticed</code> + 60s 解锁</td>
+    <td>用户说"60 秒兜底没看懂"，且这种节流对"短时间内多次复制不同 JSON"的场景不友好</td>
+    <td>回退</td>
+  </tr>
+  <tr>
+    <td>toast "重复复制"提示 + 计数</td>
+    <td>用户测试后反馈"功能不稳，提示逻辑颠倒"</td>
+    <td>回退</td>
+  </tr>
+  <tr>
+    <td>toast "已处理" 提示</td>
+    <td>3 秒轮询每轮都触发，提示被轰炸</td>
+    <td>回退</td>
+  </tr>
+  <tr>
+    <td>改用 paste 事件触发</td>
+    <td>Coze iframe 内的复制不会触发父页 paste</td>
+    <td>不可行</td>
+  </tr>
+</table>
+
+<h3>6.3 结论：识别到重复即静默过滤</h3>
+<p>最终采用最朴素的"两次去重"：</p>
+<ul>
+  <li><code>lastClipboardContent</code>：闸门 3，挡住"剪贴板本身没动"的常态轮询。</li>
+  <li><code>lastDetectedJSON</code>：闸门 4，挡住"已经处理过的同一段 JSON"。</li>
+</ul>
+<p>两道闸门都在 <code>tryReadClipboard</code> 入口静默 <code>return</code>，<strong>不抛错、不弹 toast、不写入业务状态</strong>。用户感受就是"复制了 → 立刻处理；再复制同样的 → 没反应（符合预期）"。</p>
+
+<div class="panel tip">
+  <p><span class="badge fix">经验</span> 当一个监听是 3 秒级轮询、且触发条件天然会去重时，<strong>不要试图再加一层用户提示</strong>。提示会让 3 秒节拍变成噪音。静默过滤是这种场景下唯一可接受的体验。</p>
+</div>
+
+<!-- ========== 七、最终代码（含注释） ========== -->
+<h2>七、最终代码（dexiedb/prod/index.html 1913-1976 行，dev 同源）</h2>
+<pre><code>// ===== 剪贴板监听逻辑 =====
+
+// 状态：上一次读到的剪贴板原始文本（闸门 3 用）
+var lastClipboardContent = '';
+// 状态：轮询 timer 句柄
+var clipboardPollTimer = null;
+
+// 1) 订单 JSON 粗筛：命中任一"订单特征字段"即视为候选
+function isOrderJSON(text) {
+  if (!text || text.length < 10) return false;
+  if (text.indexOf('{') === -1) return false;
+  return text.indexOf('"customer_name"') !== -1 ||
+         text.indexOf('"customerName"') !== -1 ||
+         text.indexOf('"customer"') !== -1 ||
+         text.indexOf('"客户"') !== -1 ||
+         text.indexOf('"doc_type"') !== -1 ||
+         text.indexOf('"products"') !== -1 ||
+         text.indexOf('"items"') !== -1 ||
+         text.indexOf('"产品"') !== -1;
+}
+
+// 2) 核心：5 道闸门。命中即静默 return；只有完整通过才调用 handleClipboardText
+function tryReadClipboard() {
+  if (!document.hasFocus()) { console.log('[clipboard] 拦截：页面无焦点'); return; }
+  if (!navigator.clipboard || !navigator.clipboard.readText) {
+    console.log('[clipboard] 拦截：剪贴板 API 不可用');
+    return;
+  }
+  navigator.clipboard.readText().then(function(text) {
+    if (text === lastClipboardContent) { console.log('[clipboard] 拦截：剪贴板未变'); return; }
+    if (text === lastDetectedJSON)     { console.log('[clipboard] 拦截：是已处理过的 JSON'); return; }
+    if (!isOrderJSON(text))            { console.log('[clipboard] 拦截：不是订单 JSON'); return; }
+    console.log('[clipboard] 通过：开始处理');
+    lastClipboardContent = text;
+    handleClipboardText(text);
+  }).catch(function(e) { console.log('[clipboard] 异常：', e); });
+}
+
+// 3) 路径 A：用户在结果区手动 paste（兜底）
+var resultArea = document.getElementById('resultSection');
+if (resultArea) {
+  resultArea.addEventListener('paste', function(e) {
+    var text = (e.clipboardData || window.clipboardData).getData('text');
+    if (text && isOrderJSON(text)) {
+      lastClipboardContent = text;
+      handleClipboardText(text);
+    }
+  });
+}
+
+// 4) 路径 B：窗口获焦时延时读 3 次（200 / 800 / 1500ms），覆盖 Coze 复制→焦点切回这段真空期
+window.addEventListener('focus', function() {
+  setTimeout(tryReadClipboard, 200);
+  setTimeout(tryReadClipboard, 800);
+  setTimeout(tryReadClipboard, 1500);
+});
+
+// 5) 路径 C：可见性变化时启动/停止轮询
+document.addEventListener('visibilitychange', function() {
+  if (!document.hidden) {
+    setTimeout(tryReadClipboard, 300);              // 立即补一刀
+    if (!clipboardPollTimer) {
+      clipboardPollTimer = setInterval(tryReadClipboard, 3000);  // 启动 3 秒轮询
+    }
+  } else {
+    if (clipboardPollTimer) {
+      clearInterval(clipboardPollTimer);
+      clipboardPollTimer = null;                     // 离开页面就停，省电
+    }
+  }
+});
+
+// 6) 启动轮询
+clipboardPollTimer = setInterval(tryReadClipboard, 3000);
+
+// 7) 初始化 lastClipboardContent = 当前剪贴板（首次加载时剪贴板里可能已经有 JSON，避免首轮就触发）
+if (navigator.clipboard && navigator.clipboard.readText) {
+  navigator.clipboard.readText().then(function(text) {
+    if (text) lastClipboardContent = text;
+  }).catch(function() {});
+}</code></pre>
+
+<!-- ========== 八、可复用骨架 ========== -->
+<h2>八、可复用骨架（抽离 5 个钩子，方便后续项目直接套用）</h2>
+<p>把剪贴板监听抽成 5 个<strong>职责清晰</strong>的钩子，复制到任何新项目时只需替换其中 3 个：</p>
+<table>
+  <tr><th>钩子</th><th>职责</th><th>本项目实现</th><th>复用时替换？</th></tr>
+  <tr>
+    <td><code>isCandidate(text)</code></td>
+    <td>判断剪贴板内容是否值得处理</td>
+    <td><code>isOrderJSON</code>（订单特征字段）</td>
+    <td>✅ 必须替换</td>
+  </tr>
+  <tr>
+    <td><code>handle(text)</code></td>
+    <td>真正执行业务的入口</td>
+    <td><code>handleClipboardText</code>（解析→匹配→渲染）</td>
+    <td>✅ 必须替换</td>
+  </tr>
+  <tr>
+    <td><code>extractInnerJSON(text)</code></td>
+    <td>从原始文本里抠出标准 JSON（去 markdown 包裹 / 找首个 {...}）</td>
+    <td><code>PinyinMatch.extractOrderJSON</code></td>
+    <td>✅ 必须替换</td>
+  </tr>
+  <tr>
+    <td><code>onReset()</code></td>
+    <td>何时清空"已处理"标记，让用户能再次触发同段 JSON</td>
+    <td>用户点"清空/重新开始"时 <code>lastDetectedJSON = ''</code></td>
+    <td>⚪ 可选</td>
+  </tr>
+  <tr>
+    <td><code>isActive()</code></td>
+    <td>本次是否要尝试读取（替代硬编码的 <code>document.hasFocus()</code>）</td>
+    <td><code>document.hasFocus()</code></td>
+    <td>⚪ 可选</td>
+  </tr>
+</table>
+
+<h3>8.1 通用骨架（可直接拷贝）</h3>
+<pre><code>/**
+ * 通用剪贴板监听骨架
+ * 用法：替换 3 个 ✅ 钩子即可适配任意业务
+ */
+var ClipboardWatcher = (function() {
+  // === 状态 ===
+  var lastRaw = '';      // 闸门：上次读到的原始文本
+  var lastHandled = '';  // 闸门：上次完整处理过的文本
+  var pollTimer = null;
+  var POLL_MS = 3000;
+
+  // === 钩子 1：是否值得处理（粗筛）===
+  function isCandidate(text) {
+    // ✅ 必须替换：例如判断"是否含某业务特征字段"
+    return text && text.length >= 10 && text.indexOf('{') !== -1;
+  }
+
+  // === 钩子 2：抽 JSON 子串 ===
+  function extractInnerJSON(text) {
+    // ✅ 必须替换：用业务自己的 JSON 提取策略
+    return text;
+  }
+
+  // === 钩子 3：真正执行业务 ===
+  function handle(text) {
+    // ✅ 必须替换：业务入口
+    console.log('已处理剪贴板内容，长度=', text.length);
+  }
+
+  // === 钩子 4（可选）：何时重置"已处理"标记 ===
+  function onReset() { lastHandled = ''; lastRaw = ''; }
+
+  // === 钩子 5（可选）：本次是否要尝试读取 ===
+  function isActive() { return document.hasFocus(); }
+
+  // === 核心：5 道闸门 ===
+  function tryRead() {
+    if (!isActive())        { console.log('[cw] skip: not active'); return; }
+    if (!navigator.clipboard || !navigator.clipboard.readText) {
+      console.log('[cw] skip: API unavailable'); return;
+    }
+    navigator.clipboard.readText().then(function(text) {
+      if (text === lastRaw)     { console.log('[cw] skip: raw unchanged'); return; }
+      if (text === lastHandled) { console.log('[cw] skip: already handled'); return; }
+      if (!isCandidate(text))   { console.log('[cw] skip: not candidate'); return; }
+      console.log('[cw] accept, length=', text.length);
+      lastRaw = text;
+      handle(extractInnerJSON(text) || text);
+    }).catch(function(e) { console.log('[cw] error:', e); });
+  }
+
+  // === 启动 / 停止 ===
+  function start() {
+    if (pollTimer) return;
+    // 路径 1：3 秒轮询
+    pollTimer = setInterval(tryRead, POLL_MS);
+    // 路径 2：窗口获焦时连续读 3 次
+    window.addEventListener('focus', function() {
+      setTimeout(tryRead, 200);
+      setTimeout(tryRead, 800);
+      setTimeout(tryRead, 1500);
+    });
+    // 路径 3：可见性变化
+    document.addEventListener('visibilitychange', function() {
+      if (!document.hidden) {
+        setTimeout(tryRead, 300);
+        if (!pollTimer) pollTimer = setInterval(tryRead, POLL_MS);
+      } else {
+        if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+      }
+    });
+    // 路径 4：用户主动 paste
+    var resultArea = document.getElementById('resultSection');
+    if (resultArea) {
+      resultArea.addEventListener('paste', function(e) {
+        var text = (e.clipboardData || window.clipboardData).getData('text');
+        if (text && isCandidate(text)) {
+          lastRaw = text;
+          handle(extractInnerJSON(text) || text);
+        }
+      });
+    }
+    // 初始化：把当前剪贴板内容存进 lastRaw，避免首轮误触发
+    if (navigator.clipboard && navigator.clipboard.readText) {
+      navigator.clipboard.readText().then(function(text) {
+        if (text) lastRaw = text;
+      }).catch(function() {});
+    }
+  }
+
+  function stop() {
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+  }
+
+  return { start: start, stop: stop, reset: onReset, tryRead: tryRead };
+})();
+
+// === 启动 ===
+ClipboardWatcher.start();</code></pre>
+
+<!-- ========== 九、调试日志约定 ========== -->
+<h2>九、调试日志约定</h2>
+<p>5 道闸门一律打 <code>console.log('[clipboard] 拦截：xxx')</code>，方便在 F12 Console 里追"为什么这次没触发"：</p>
+<table>
+  <tr><th>日志</th><th>含义</th></tr>
+  <tr><td><code>[clipboard] 拦截：页面无焦点</code></td><td>用户操作在 Coze iframe，父页失焦</td></tr>
+  <tr><td><code>[clipboard] 拦截：剪贴板 API 不可用</code></td><td>浏览器不兼容或非 https</td></tr>
+  <tr><td><code>[clipboard] 拦截：剪贴板未变</code></td><td>3 秒轮询常态，<strong>不是 bug</strong></td></tr>
+  <tr><td><code>[clipboard] 拦截：是已处理过的 JSON</code></td><td>用户再次复制同一段 JSON，<strong>已静默过滤</strong></td></tr>
+  <tr><td><code>[clipboard] 拦截：不是订单 JSON</code></td><td>用户复制了别的内容（如网址），<strong>符合预期</strong></td></tr>
+  <tr><td><code>[clipboard] 通过：开始处理</code></td><td>真正进入业务</td></tr>
+  <tr><td><code>[clipboard] 异常：...</code></td><td>Clipboard API 抛错（权限被拒、文档失焦等）</td></tr>
+</table>
+
+<!-- ========== 十、易踩的坑 ========== -->
+<h2>十、易踩的坑</h2>
+<table>
+  <tr><th>坑</th><th>原因</th><th>规避</th></tr>
+  <tr>
+    <td>Coze iframe 内复制不触发父页 copy/paste 事件</td>
+    <td>事件不会跨 iframe 冒泡</td>
+    <td>用轮询 + 主动 readText，不依赖事件</td>
+  </tr>
+  <tr>
+    <td>用户点 Coze 复制按钮时父页失焦，toast 不弹</td>
+    <td>toast 实现监听 <code>document.hasFocus()</code></td>
+    <td>监听器入口先 <code>hasFocus()</code> 判断，非焦点直接 return</td>
+  </tr>
+  <tr>
+    <td>首次启动时剪贴板里已有 JSON，首轮误触发</td>
+    <td>没有 <code>lastClipboardContent</code> 初始值</td>
+    <td>页面加载时立即 readText 一次，把当前内容写入 lastRaw</td>
+  </tr>
+  <tr>
+    <td>3 秒轮询被 console 警告轰炸</td>
+    <td>开发时开 DevTools，Clipboard API 在非焦点时抛 <code>NotAllowedError</code></td>
+    <td>.catch 静默；只 console.log 一次即可</td>
+  </tr>
+  <tr>
+    <td>用户清空结果后再次复制同一段 JSON 不触发</td>
+    <td><code>lastDetectedJSON</code> 仍命中</td>
+    <td>"清空/重新开始" 按钮里调 <code>lastDetectedJSON = ''</code></td>
+  </tr>
+</table>
+
+<!-- ========== 十一、相关文件 ========== -->
+<h2>十一、相关文件</h2>
+<table>
+  <tr><th>文件</th><th>作用</th></tr>
+  <tr><td><code>dexiedb/prod/index.html</code> 1913-1976 行</td><td>剪贴板监听实现（最终发布版）</td></tr>
+  <tr><td><code>dexiedb/dev/index.html</code> 1943-2006 行</td><td>同上（与 prod 同步）</td></tr>
+  <tr><td><code>dexiedb/index.html</code> 1943-2006 行</td><td>本地开发版（与 prod / dev 同步）</td></tr>
+  <tr><td><code>结论文档/监听chat sdk的可行方案.html</code></td><td>Coze ChatSDK 嵌入方案（早期方案）</td></tr>
+  <tr><td><code>结论文档/Coze智能体如何嵌入到网页项目【结项总结】.html</code></td><td>Coze 嵌入总览</td></tr>
+</table>
+
+<footer>
+  文档版本：v1.0 &nbsp;|&nbsp; 维护：智能制单 / dexiedb
+</footer>
+
+</div>
+</body>
+</html>

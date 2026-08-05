@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coze SDK DOM 探测</title>
+<script src="https://lf-cdn.coze.cn/obj/unpkg/flow-platform/chat-app-sdk/1.2.0-beta.19/libs/cn/index.js"></script>
+<style>
+body { font-family: sans-serif; padding: 20px; }
+#log { background: #1e1e1e; color: #0f0; padding: 16px; font-family: monospace; font-size: 12px; white-space: pre-wrap; max-height: 400px; overflow-y: auto; margin-top: 20px; border-radius: 8px; }
+button { padding: 8px 16px; margin: 4px; cursor: pointer; }
+</style>
+</head>
+<body>
+<h1>Coze SDK DOM 探测工具</h1>
+<button onclick="probeSDK()">探测 SDK DOM</button>
+<button onclick="findFileInputs()">查找文件上传 input</button>
+<button onclick="findContentEditables()">查找可编辑元素</button>
+<button onclick="findAllIframes()">查找所有 iframe</button>
+<button onclick="probeShadowRoots()">探测 Shadow DOM</button>
+<div id="log"></div>
+<script>
+function log(msg) {
+  document.getElementById('log').textContent += msg + '\n';
+}
+
+function probeSDK() {
+  document.getElementById('log').textContent = '';
+  log('=== 探测 SDK DOM ===');
+  
+  var cozeEl = document.querySelector('[class*="coze"]');
+  if (cozeEl) {
+    log('找到 coze 元素: ' + cozeEl.tagName + '.' + cozeEl.className);
+    log('  父元素: ' + cozeEl.parentElement?.tagName);
+    log('  子元素数: ' + cozeEl.children.length);
+  } else {
+    log('未找到 coze class 元素');
+  }
+  
+  var allDivs = document.querySelectorAll('div[id]');
+  log('\n所有有 id 的 div:');
+  allDivs.forEach(function(d) {
+    if (d.id.indexOf('coze') !== -1 || d.id.indexOf('chat') !== -1 || d.id.indexOf('sdk') !== -1) {
+      log('  ' + d.id + ' (children: ' + d.children.length + ')');
+    }
+  });
+  
+  log('\nbody 直接子元素:');
+  document.body.childNodes.forEach(function(n) {
+    if (n.nodeType === 1) {
+      log('  ' + n.tagName + (n.id ? '#' + n.id : '') + (n.className ? '.' + n.className : ''));
+    }
+  });
+}
+
+function findFileInputs() {
+  document.getElementById('log').textContent = '';
+  log('=== 查找文件上传 input ===');
+  
+  var inputs = document.querySelectorAll('input[type="file"]');
+  log('找到 ' + inputs.length + ' 个 file input:');
+  inputs.forEach(function(inp, i) {
+    log('  [' + i + '] accept=' + inp.accept + ' multiple=' + inp.multiple);
+    log('       id=' + inp.id + ' class=' + inp.className);
+    log('       parent=' + inp.parentElement?.tagName + '.' + inp.parentElement?.className);
+    log('       display=' + getComputedStyle(inp).display + ' visibility=' + getComputedStyle(inp).visibility);
+  });
+  
+  if (inputs.length === 0) {
+    log('未找到 file input，可能在 iframe 或 Shadow DOM 中');
+  }
+}
+
+function findContentEditables() {
+  document.getElementById('log').textContent = '';
+  log('=== 查找可编辑元素 ===');
+  
+  var editables = document.querySelectorAll('[contenteditable="true"], [contenteditable=""]');
+  log('找到 ' + editables.length + ' 个 contenteditable 元素:');
+  editables.forEach(function(el, i) {
+    log('  [' + i + '] ' + el.tagName + '.' + el.className);
+    log('       text: ' + el.textContent?.substring(0, 50));
+    log('       parent=' + el.parentElement?.tagName + '.' + el.parentElement?.className);
+  });
+  
+  var textareas = document.querySelectorAll('textarea');
+  log('\n找到 ' + textareas.length + ' 个 textarea:');
+  textareas.forEach(function(el, i) {
+    log('  [' + i + '] placeholder=' + el.placeholder + ' class=' + el.className);
+  });
+}
+
+function findAllIframes() {
+  document.getElementById('log').textContent = '';
+  log('=== 查找所有 iframe ===');
+  
+  var iframes = document.querySelectorAll('iframe');
+  log('找到 ' + iframes.length + ' 个 iframe:');
+  iframes.forEach(function(f, i) {
+    log('  [' + i + '] src=' + f.src?.substring(0, 80));
+    log('       id=' + f.id + ' class=' + f.className);
+    log('       width=' + f.width + ' height=' + f.height);
+    try {
+      log('       contentDocument: ' + (f.contentDocument ? '可访问' : '不可访问'));
+    } catch(e) {
+      log('       contentDocument: 跨域不可访问');
+    }
+  });
+}
+
+function probeShadowRoots() {
+  document.getElementById('log').textContent = '';
+  log('=== 探测 Shadow DOM ===');
+  
+  function findShadowRoots(el, depth) {
+    if (depth > 5) return;
+    if (el.shadowRoot) {
+      log('  找到 Shadow Root 在: ' + el.tagName + '.' + el.className);
+      log('    子元素数: ' + el.shadowRoot.children.length);
+      var fileInputs = el.shadowRoot.querySelectorAll('input[type="file"]');
+      if (fileInputs.length > 0) {
+        log('    Shadow DOM 中有 ' + fileInputs.length + ' 个 file input!');
+      }
+    }
+    if (el.children) {
+      for (var i = 0; i < el.children.length; i++) {
+        findShadowRoots(el.children[i], depth + 1);
+      }
+    }
+  }
+  
+  findShadowRoots(document.body, 0);
+}
+
+var cozeClient = new CozeWebSDK.WebChatClient({
+  config: {
+    bot_id: '7638933573109792777',
+    isIframe: false,
+  },
+  auth: {
+    type: 'token',
+    token: 'pat_zwWR14W4YEjLnqpD2BhItuhzKhC4VYH52oWfwYoeiB2Y9JuKBR1g1TfRzFDTbWQe',
+    onRefreshToken: function () {
+      return 'pat_zwWR14W4YEjLnqpD2BhItuhzKhC4VYH52oWfwYoeiB2Y9JuKBR1g1TfRzFDTbWQe';
+    }
+  },
+  ui: {
+    base: { lang: 'zh-CN' },
+    chatBot: { title: '智能制单助手', uploadable: true },
+  }
+});
+
+setTimeout(function() {
+  cozeClient.showChatBot();
+  log('SDK 已初始化，请点击上方按钮探测 DOM');
+}, 1000);
+</script>
+</body>
+</html>

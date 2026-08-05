@@ -1,0 +1,78 @@
+# 报价单入参说明（智能制单页面）
+
+## 字段决策表
+
+| 字段 | 类型 | 必填 | 处理方式 | 取值来源 |
+|------|------|------|----------|----------|
+| `title` | string | 是 | 自动生成 | 格式：`{客户名}-{日期}-报价` |
+| `date` | string | 是 | 自动赋值 | 当天（YYYY-MM-DD） |
+| `cu_id` | string | 是 | 直接传入 | 页面已确认的客户名 |
+| `number` | string | 否 | 留空 | 空字符串，由系统自动生成 |
+| `price` | number | 否 | 自动计算 | `明细金额合计` |
+| `type` | string | 否 | 不用赋值 | — |
+| `who` | string | 否 | 不用赋值 | — |
+| `memo` | string | 否 | 不用赋值 | — |
+| `money_type` | string | 否 | 不用赋值 | — |
+| `money_rate` | number | 否 | 不用赋值 | — |
+| `sname` | string | 否 | 不用赋值 | — |
+| `tax_rate` | number | 否 | 不用赋值 | 系统自动按 0 计算 |
+
+## 入参示例
+
+```json
+{
+  "cmd": "create_data",
+  "dtname": "price",
+  "required_skip": 0,
+  "list": "[{
+    \"number\": \"\",
+    \"title\": \"梦蝶北京-2026-06-03-报价\",
+    \"date\": \"2026-06-03\",
+    \"cu_id\": \"梦蝶北京\",
+    \"price\": 2400,
+    \"subdata\": [
+      {\"pro_id\": 15537, \"num\": 10, \"price\": 20, \"tax_rate\": 20},
+      {\"pro_id\": 4, \"num\": 5, \"price\": 200, \"tax_rate\": 20}
+    ]
+  }]"
+}
+```
+
+## 子表入参
+
+| 字段 | 类型 | 必填 | 取值 |
+|------|------|------|------|
+| `pro_id` | int | 是 | 产品ID（来自匹配结果 `matchedId` 或新建产品 `id`） |
+| `num` | number | 是 | 产品数量（来自产品项 `qty`） |
+| `price` | number | 是 | 产品单价（来自产品项 `price`） |
+| `tax_rate` | number | 否 | 不赋值，传 `0` 或省略 |
+| `money` | number | 否 | 留空，让系统按公式自动计算：`num * price` |
+
+## 字段值来源映射
+
+```javascript
+// 主表字段
+title = `${customerName}-${today}-报价`
+date = new Date().toISOString().slice(0, 10)  // YYYY-MM-DD
+cu_id = customerName
+number = ''   // 留空自动生成
+price = totalAmount  // 由明细合计
+
+// 子表字段
+subdata = currentProducts
+  .filter(p => p.status === 'confirmed' || p.status === 'new')
+  .map(p => ({
+    pro_id: p.matchedId || p.id,
+    num: Number(p.qty) || 0,
+    price: Number(p.price) || 0,
+    tax_rate: 0,        // 不传具体值
+    money: 0            // 让系统自动计算
+  }))
+```
+
+## 注意事项
+
+1. **只传必要字段** — `type/who/memo/money_type/money_rate/sname/tax_rate` 等都不要赋值，减少接口参数噪音
+2. **新建产品（status==='new'）** — 需要先用 `create_data dtname=product` 创建产品，获取真实 `id` 后再传 `pro_id`
+3. **title 自动生成规则** — 当前固定为 `{客户名}-{日期}-报价`，后续如需个性化可改为用户输入
+4. **金额处理** — 留空 `money` 字段，让后端按 `(1 + tax_rate/100) * num * price` 计算

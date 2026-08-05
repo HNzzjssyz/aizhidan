@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>剪贴板监听跨区通信方案 — 智能制单</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Noto+Sans+SC:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-primary: #0c0e12;
+  --bg-secondary: #13161c;
+  --bg-card: #181c24;
+  --bg-card-hover: #1e2330;
+  --border: #2a2f3a;
+  --border-light: #353b4a;
+  --text-primary: #e8e6e1;
+  --text-secondary: #9a9b9e;
+  --text-muted: #5f6168;
+  --accent: #3ecfa5;
+  --accent-light: #6eecc8;
+  --accent-dim: #1f7a5e;
+  --accent-glow: rgba(62, 207, 165, 0.12);
+  --accent2: #f0a050;
+  --accent2-dim: rgba(240, 160, 80, 0.12);
+  --success: #4ade80;
+  --success-dim: rgba(74, 222, 128, 0.10);
+  --warning: #fb923c;
+  --warning-dim: rgba(251, 146, 60, 0.10);
+  --info: #60a5fa;
+  --info-dim: rgba(96, 165, 250, 0.10);
+  --danger: #f87171;
+  --danger-dim: rgba(248, 113, 113, 0.10);
+  --purple: #a78bfa;
+  --purple-dim: rgba(167, 139, 250, 0.12);
+  --serif: 'Noto Serif SC', serif;
+  --sans: 'Noto Sans SC', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; scrollbar-width: thin; scrollbar-color: var(--border) var(--bg-primary); }
+body { background: var(--bg-primary); color: var(--text-primary); font-family: var(--sans); font-size: 15px; line-height: 1.75; -webkit-font-smoothing: antialiased; }
+::selection { background: var(--accent); color: var(--bg-primary); }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(12, 14, 18, 0.85); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); }
+nav .nav-inner { max-width: 1200px; margin: 0 auto; padding: 0 40px; display: flex; align-items: center; justify-content: space-between; height: 56px; }
+nav .nav-brand { font-family: var(--serif); font-weight: 700; font-size: 16px; color: var(--accent); letter-spacing: 0.5px; }
+nav .nav-links { display: flex; gap: 6px; flex-wrap: wrap; }
+nav .nav-links a { color: var(--text-secondary); text-decoration: none; font-size: 12.5px; font-weight: 500; padding: 6px 12px; border-radius: 6px; transition: all 0.2s ease; }
+nav .nav-links a:hover, nav .nav-links a.active { color: var(--accent); background: var(--accent-glow); }
+
+.hero { min-height: 100vh; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; padding: 80px 40px; }
+.hero::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(ellipse at 30% 20%, rgba(62, 207, 165, 0.06) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, rgba(240, 160, 80, 0.04) 0%, transparent 50%); animation: heroGlow 20s ease-in-out infinite alternate; }
+@keyframes heroGlow { 0% { transform: translate(0, 0) rotate(0deg); } 100% { transform: translate(-5%, 3%) rotate(3deg); } }
+.hero-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(42, 47, 58, 0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(42, 47, 58, 0.3) 1px, transparent 1px); background-size: 60px 60px; mask-image: radial-gradient(ellipse at center, black 20%, transparent 70%); -webkit-mask-image: radial-gradient(ellipse at center, black 20%, transparent 70%); }
+.hero-content { position: relative; text-align: center; max-width: 800px; }
+.hero-badge { display: inline-flex; align-items: center; gap: 8px; background: var(--accent-glow); border: 1px solid var(--accent-dim); color: var(--accent); font-size: 11.5px; font-weight: 600; padding: 6px 16px; border-radius: 20px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 32px; animation: fadeInUp 0.8s ease both; }
+.hero-badge .dot { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; animation: pulse 2s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+.hero h1 { font-family: var(--serif); font-size: clamp(32px, 5vw, 52px); font-weight: 900; line-height: 1.2; margin-bottom: 20px; animation: fadeInUp 0.8s ease 0.15s both; }
+.hero h1 .accent { color: var(--accent); }
+.hero .subtitle { font-size: 16.5px; color: var(--text-secondary); line-height: 1.85; max-width: 620px; margin: 0 auto 36px; animation: fadeInUp 0.8s ease 0.25s both; }
+.hero-meta { display: flex; justify-content: center; gap: 28px; animation: fadeInUp 0.8s ease 0.4s both; }
+.hero-meta .meta-item { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.hero-meta .meta-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; }
+.hero-meta .meta-value { font-family: var(--mono); font-size: 12.5px; color: var(--text-secondary); }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: translateY(0); } }
+
+.container { max-width: 1200px; margin: 0 auto; padding: 0 40px; }
+section { padding: 90px 0; position: relative; }
+.section-header { margin-bottom: 48px; }
+.section-number { font-family: var(--mono); font-size: 11.5px; color: var(--accent); font-weight: 500; letter-spacing: 2px; margin-bottom: 10px; display: block; }
+.section-title { font-family: var(--serif); font-size: clamp(26px, 3.5vw, 38px); font-weight: 700; line-height: 1.25; margin-bottom: 14px; }
+.section-desc { font-size: 15px; color: var(--text-secondary); max-width: 640px; line-height: 1.8; }
+.divider { width: 100%; height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); }
+
+.card-grid { display: grid; gap: 18px; }
+.card-grid-2 { grid-template-columns: repeat(2, 1fr); }
+.card-grid-3 { grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 900px) { .card-grid-2, .card-grid-3 { grid-template-columns: 1fr; } }
+
+.card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 26px; transition: all 0.3s ease; position: relative; overflow: hidden; }
+.card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--accent), transparent); opacity: 0; transition: opacity 0.3s ease; }
+.card:hover { border-color: var(--border-light); background: var(--bg-card-hover); transform: translateY(-2px); }
+.card:hover::before { opacity: 1; }
+.card-icon { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 19px; margin-bottom: 16px; }
+.card-icon.accent { background: var(--accent-glow); color: var(--accent); }
+.card-icon.accent2 { background: var(--accent2-dim); color: var(--accent2); }
+.card-icon.info { background: var(--info-dim); color: var(--info); }
+.card-icon.warning { background: var(--warning-dim); color: var(--warning); }
+.card-icon.danger { background: var(--danger-dim); color: var(--danger); }
+.card-icon.success { background: var(--success-dim); color: var(--success); }
+.card-icon.purple { background: var(--purple-dim); color: var(--purple); }
+.card h3 { font-family: var(--serif); font-size: 17px; font-weight: 700; margin-bottom: 8px; line-height: 1.4; }
+.card p { color: var(--text-secondary); font-size: 13px; line-height: 1.75; }
+
+.tag { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 4px; font-size: 10.5px; font-weight: 600; letter-spacing: 0.5px; }
+.tag-accent { background: var(--accent-glow); color: var(--accent); }
+.tag-accent2 { background: var(--accent2-dim); color: var(--accent2); }
+.tag-info { background: var(--info-dim); color: var(--info); }
+.tag-warning { background: var(--warning-dim); color: var(--warning); }
+.tag-danger { background: var(--danger-dim); color: var(--danger); }
+.tag-success { background: var(--success-dim); color: var(--success); }
+.tag-purple { background: var(--purple-dim); color: var(--purple); }
+
+.feature-detail { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 32px; margin-bottom: 22px; }
+.feature-detail .feature-header { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+.feature-detail .feature-num { font-family: var(--mono); font-size: 30px; font-weight: 700; color: var(--accent); opacity: 0.35; line-height: 1; }
+.feature-detail h3 { font-family: var(--serif); font-size: 20px; font-weight: 700; }
+.feature-detail .feature-body { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+@media (max-width: 900px) { .feature-detail .feature-body { grid-template-columns: 1fr; } }
+.feature-detail .feature-col h4 { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+.feature-detail .feature-col ul { list-style: none; display: flex; flex-direction: column; gap: 7px; }
+.feature-detail .feature-col li { font-size: 13px; color: var(--text-secondary); padding-left: 16px; position: relative; line-height: 1.65; }
+.feature-detail .feature-col li::before { content: '▸'; position: absolute; left: 0; color: var(--accent); font-size: 10px; }
+
+.callout { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px 26px; display: flex; gap: 14px; margin: 22px 0; }
+.callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 2px; }
+.callout-body h4 { font-size: 13.5px; font-weight: 600; margin-bottom: 5px; }
+.callout-body p { font-size: 12.5px; color: var(--text-secondary); line-height: 1.7; }
+.callout.warning { border-left: 3px solid var(--warning); }
+.callout.info { border-left: 3px solid var(--info); }
+.callout.success { border-left: 3px solid var(--success); }
+.callout.danger { border-left: 3px solid var(--danger); }
+.callout.accent { border-left: 3px solid var(--accent); }
+
+.flow-diagram { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 40px 28px; overflow-x: auto; }
+.flow-row { display: flex; align-items: stretch; gap: 0; margin-bottom: 24px; }
+.flow-row:last-child { margin-bottom: 0; }
+.flow-node { background: var(--bg-secondary); border: 1px solid var(--border); padding: 18px 22px; min-width: 160px; text-align: center; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
+.flow-node:first-child { border-radius: var(--radius) 0 0 var(--radius); }
+.flow-node:last-child { border-radius: 0 var(--radius) var(--radius) 0; }
+.flow-node:not(:last-child)::after { content: '→'; position: absolute; right: -14px; top: 50%; transform: translateY(-50%); z-index: 2; color: var(--accent); font-size: 18px; font-weight: 700; background: var(--bg-primary); width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 1px solid var(--border); }
+.flow-node .node-icon { font-size: 24px; }
+.flow-node .node-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+.flow-node .node-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.flow-node .node-desc { font-size: 11px; color: var(--text-secondary); }
+.flow-node.highlight { border-color: var(--accent-dim); background: rgba(62, 207, 165, 0.05); }
+.flow-node.highlight .node-title { color: var(--accent); }
+.flow-node.highlight2 { border-color: var(--accent2-dim); background: rgba(240, 160, 80, 0.05); }
+.flow-node.highlight2 .node-title { color: var(--accent2); }
+
+.flow-bridge { display: flex; align-items: center; justify-content: center; padding: 12px 0; }
+.flow-bridge-label { background: var(--accent-glow); border: 1px solid var(--accent-dim); color: var(--accent); padding: 8px 24px; border-radius: 20px; font-size: 12px; font-weight: 600; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; }
+.flow-bridge-label i { font-size: 16px; }
+
+.code-block { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 20px; font-family: var(--mono); font-size: 12px; line-height: 1.7; color: var(--text-secondary); overflow-x: auto; margin-top: 16px; }
+.code-block .kw { color: var(--accent); }
+.code-block .str { color: var(--success); }
+.code-block .cmt { color: var(--text-muted); }
+.code-block .num { color: var(--accent2); }
+
+.proto-layout { display: grid; grid-template-columns: 1fr 400px; gap: 16px; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--bg-secondary); }
+@media (max-width: 900px) { .proto-layout { grid-template-columns: 1fr; } }
+.proto-left { background: var(--bg-card); padding: 24px; border-right: 1px solid var(--border); }
+.proto-right { background: #1a1d24; padding: 24px; }
+.proto-label { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 16px; display: flex; align-items: center; gap: 6px; }
+.proto-label i { font-size: 14px; }
+.proto-field { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 8px; font-size: 12px; }
+.proto-field .field-label { color: var(--text-muted); min-width: 60px; font-weight: 500; }
+.proto-field .field-value { color: var(--text-primary); font-weight: 600; }
+.proto-field .field-value.empty { color: var(--text-muted); font-weight: 400; font-style: italic; }
+.proto-field.filled { border-color: var(--accent-dim); background: rgba(62, 207, 165, 0.05); }
+.proto-field.filled .field-value { color: var(--accent); }
+.proto-chat-msg { padding: 10px 14px; border-radius: 10px; font-size: 12px; margin-bottom: 8px; line-height: 1.5; }
+.proto-chat-msg.agent { background: rgba(62, 207, 165, 0.08); border: 1px solid var(--accent-dim); color: var(--text-secondary); }
+.proto-chat-msg.user { background: var(--accent-dim); color: var(--text-primary); text-align: right; }
+.proto-copy-btn { display: inline-flex; align-items: center; gap: 4px; margin-top: 6px; padding: 3px 10px; background: var(--accent-glow); border: 1px solid var(--accent-dim); border-radius: 4px; color: var(--accent); font-size: 10px; font-weight: 600; cursor: pointer; }
+
+.animate-in { opacity: 0; transform: translateY(18px); transition: opacity 0.6s ease, transform 0.6s ease; }
+.animate-in.visible { opacity: 1; transform: translateY(0); }
+
+footer { padding: 40px 0; border-top: 1px solid var(--border); text-align: center; }
+footer p { font-size: 12px; color: var(--text-muted); }
+footer .footer-brand { font-family: var(--serif); font-weight: 700; color: var(--accent); }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <div class="nav-brand">智能制单 · 剪贴板通信方案</div>
+    <div class="nav-links">
+      <a href="#overview">方案总览</a>
+      <a href="#flow">数据流</a>
+      <a href="#clipboard">剪贴板机制</a>
+      <a href="#prototype">页面原型</a>
+      <a href="#json">JSON 协议</a>
+      <a href="#impl">实现要点</a>
+    </div>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <div class="hero-badge"><span class="dot"></span>ARCHITECTURE</div>
+    <h1>剪贴板监听<br><span class="accent">跨区通信方案</span></h1>
+    <p class="subtitle">右侧 Coze 智能体对话 → 复制 JSON → 剪贴板监听 → 左侧自动填充 → 后台匹配查询<br>零侵入、零依赖的跨 iframe 通信方案</p>
+    <div class="hero-meta">
+      <div class="meta-item">
+        <span class="meta-label">通信方式</span>
+        <span class="meta-value">Clipboard API</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">SDK</span>
+        <span class="meta-value">Coze Chat SDK</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">日期</span>
+        <span class="meta-value">2026-05-13</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="overview">
+  <div class="container">
+    <div class="section-header animate-in">
+      <span class="section-number">01</span>
+      <h2 class="section-title">方案总览</h2>
+      <p class="section-desc">固定左右布局，右侧复用 Coze Chat SDK，左侧为制单业务区，通过剪贴板监听实现跨区通信。</p>
+    </div>
+
+    <div class="card-grid card-grid-3 animate-in">
+      <div class="card">
+        <div class="card-icon accent">📋</div>
+        <h3>固定左右布局</h3>
+        <p>左侧：制单业务区（客户信息、产品明细、匹配结果、操作按钮）。右侧：Coze 智能体对话区（Chat SDK iframe）。</p>
+        <div style="margin-top:12px;display:flex;gap:6px;">
+          <span class="tag tag-accent">左：业务</span>
+          <span class="tag tag-accent2">右：对话</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-icon accent2">🔗</div>
+        <h3>剪贴板跨区通信</h3>
+        <p>Coze SDK 以 iframe 嵌入，主页面无法直接访问 iframe 内部 DOM。通过监听剪贴板实现零侵入通信：用户复制 JSON → 主页面捕获 → 自动填充。</p>
+        <div style="margin-top:12px;display:flex;gap:6px;">
+          <span class="tag tag-accent2">零侵入</span>
+          <span class="tag tag-info">跨 iframe</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-icon info">🤖</div>
+        <h3>Coze Chat SDK</h3>
+        <p>直接复用 Coze 封装好的 Chat SDK，无需自行开发对话界面。智能体返回结构化 JSON，用户一键复制触发左侧填充。</p>
+        <div style="margin-top:12px;display:flex;gap:6px;">
+          <span class="tag tag-info">官方 SDK</span>
+          <span class="tag tag-success">零开发</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout accent animate-in" style="margin-top:24px;">
+      <div class="callout-icon">🎯</div>
+      <div class="callout-body">
+        <h4>核心设计原则</h4>
+        <p><strong>最小改动</strong>：复用 Coze Chat SDK，不修改智能体逻辑。<strong>用户主动触发</strong>：复制操作由用户主动发起，不涉及自动抓取 iframe 内容。<strong>格式约定</strong>：智能体 Prompt 约定输出 JSON 格式，前端通过正则提取。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="flow">
+  <div class="container">
+    <div class="section-header animate-in">
+      <span class="section-number">02</span>
+      <h2 class="section-title">端到端数据流</h2>
+      <p class="section-desc">从用户输入到单据生成的完整数据流，剪贴板是左右两侧通信的桥梁。</p>
+    </div>
+
+    <h3 class="animate-in" style="font-family:var(--serif);font-size:20px;font-weight:700;margin-bottom:20px;">主数据流</h3>
+    <div class="flow-diagram animate-in">
+      <div class="flow-row">
+        <div class="flow-node">
+          <div class="node-icon">🎙️</div>
+          <div class="node-label">输入</div>
+          <div class="node-title">语音/文本输入</div>
+          <div class="node-desc">用户在右侧对话区描述业务信息</div>
+        </div>
+        <div class="flow-node highlight2">
+          <div class="node-icon">🤖</div>
+          <div class="node-label">右侧</div>
+          <div class="node-title">Coze 智能体</div>
+          <div class="node-desc">LLM 提取 → 结构化 JSON</div>
+        </div>
+        <div class="flow-node highlight">
+          <div class="node-icon">📋</div>
+          <div class="node-label">桥梁</div>
+          <div class="node-title">剪贴板复制</div>
+          <div class="node-desc">用户复制 JSON 内容</div>
+        </div>
+        <div class="flow-node highlight">
+          <div class="node-icon">👂</div>
+          <div class="node-label">左侧</div>
+          <div class="node-title">剪贴板监听</div>
+          <div class="node-desc">捕获内容 → JSON 解析</div>
+        </div>
+        <div class="flow-node">
+          <div class="node-icon">📝</div>
+          <div class="node-label">左侧</div>
+          <div class="node-title">表单填充</div>
+          <div class="node-desc">客户/产品/金额自动填入</div>
+        </div>
+        <div class="flow-node">
+          <div class="node-icon">🔍</div>
+          <div class="node-label">后端</div>
+          <div class="node-title">匹配查询</div>
+          <div class="node-desc">客户库/产品库拼音匹配</div>
+        </div>
+      </div>
+    </div>
+
+    <h3 class="animate-in" style="font-family:var(--serif);font-size:20px;font-weight:700;margin:40px 0 20px;">剪贴板通信桥接细节</h3>
+    <div class="flow-diagram animate-in">
+      <div class="flow-row">
+        <div class="flow-node highlight2" style="min-width:200px;">
+          <div class="node-icon">🤖</div>
+          <div class="node-label">右侧 · Coze iframe</div>
+          <div class="node-title">智能体返回 JSON</div>
+          <div class="node-desc">在 iframe 内渲染对话气泡</div>
+        </div>
+        <div class="flow-node highlight" style="min-width:200px;">
+          <div class="node-icon">👆</div>
+          <div class="node-label">用户操作</div>
+          <div class="node-title">选中 + Ctrl+C</div>
+          <div class="node-desc">或点击"复制JSON"按钮</div>
+        </div>
+        <div class="flow-node highlight" style="min-width:200px;">
+          <div class="node-icon">📋</div>
+          <div class="node-label">系统剪贴板</div>
+          <div class="node-title">JSON 文本暂存</div>
+          <div class="node-desc">操作系统级剪贴板</div>
+        </div>
+        <div class="flow-node" style="min-width:200px;">
+          <div class="node-icon">👂</div>
+          <div class="node-label">左侧 · 主页面</div>
+          <div class="node-title">copy/paste 事件</div>
+          <div class="node-desc">+ clipboard.readText 轮询</div>
+        </div>
+      </div>
+
+      <div class="flow-bridge">
+        <div class="flow-bridge-label"><i class="ri-arrow-down-line"></i> JSON 解析与表单填充</div>
+      </div>
+
+      <div class="flow-row">
+        <div class="flow-node" style="min-width:180px;">
+          <div class="node-icon">🔎</div>
+          <div class="node-label">Step 1</div>
+          <div class="node-title">正则提取 JSON</div>
+          <div class="node-desc">从文本中匹配 JSON 结构</div>
+        </div>
+        <div class="flow-node" style="min-width:180px;">
+          <div class="node-icon">✅</div>
+          <div class="node-label">Step 2</div>
+          <div class="node-title">Schema 校验</div>
+          <div class="node-desc">验证 doc_type / customer / products</div>
+        </div>
+        <div class="flow-node" style="min-width:180px;">
+          <div class="node-icon">📝</div>
+          <div class="node-label">Step 3</div>
+          <div class="node-title">字段填充</div>
+          <div class="node-desc">客户/产品/金额写入表单</div>
+        </div>
+        <div class="flow-node" style="min-width:180px;">
+          <div class="node-icon">🔍</div>
+          <div class="node-label">Step 4</div>
+          <div class="node-title">提交匹配</div>
+          <div class="node-desc">后台查询客户库/产品库</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="clipboard">
+  <div class="container">
+    <div class="section-header animate-in">
+      <span class="section-number">03</span>
+      <h2 class="section-title">剪贴板监听机制</h2>
+      <p class="section-desc">三层监听策略，确保在不同浏览器和场景下都能可靠捕获剪贴板内容。</p>
+    </div>
+
+    <div class="feature-detail animate-in">
+      <div class="feature-header">
+        <span class="feature-num">01</span>
+        <h3>三层监听策略</h3>
+      </div>
+      <div class="feature-body">
+        <div class="feature-col">
+          <h4>Layer 1：copy 事件</h4>
+          <ul>
+            <li>监听 document 的 copy 事件</li>
+            <li>通过 window.getSelection() 获取选中文本</li>
+            <li>适用于：页面内任何区域的复制操作</li>
+            <li>局限：无法捕获 iframe 内的复制（跨域限制）</li>
+          </ul>
+        </div>
+        <div class="feature-col">
+          <h4>Layer 2：paste 事件</h4>
+          <ul>
+            <li>监听 document 的 paste 事件</li>
+            <li>通过 clipboardData.getData('text') 获取粘贴内容</li>
+            <li>适用于：用户在左侧区域粘贴内容</li>
+            <li>局限：需要用户主动粘贴到左侧区域</li>
+          </ul>
+        </div>
+      </div>
+      <div class="feature-body" style="margin-top:20px;">
+        <div class="feature-col">
+          <h4>Layer 3：clipboard.readText 轮询</h4>
+          <ul>
+            <li>每秒调用 navigator.clipboard.readText() 读取剪贴板</li>
+            <li>与上次内容比对，检测变化</li>
+            <li>适用于：捕获所有来源的复制（包括 iframe 内）</li>
+            <li>前提：需要 Secure Context（localhost 或 HTTPS）</li>
+            <li>权限：首次需用户授权剪贴板读取权限</li>
+          </ul>
+        </div>
+        <div class="feature-col">
+          <h4>三层策略互补关系</h4>
+          <ul>
+            <li><strong>copy 事件</strong>：即时响应，零延迟</li>
+            <li><strong>paste 事件</strong>：用户主动粘贴时触发</li>
+            <li><strong>readText 轮询</strong>：兜底方案，捕获 iframe 内复制</li>
+            <li>三层叠加，覆盖所有复制场景</li>
+            <li>去重机制：记录上次内容，避免重复处理</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="feature-detail animate-in">
+      <div class="feature-header">
+        <span class="feature-num">02</span>
+        <h3>JSON 提取算法</h3>
+      </div>
+      <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">从剪贴板文本中提取制单 JSON，支持多种格式包裹。</p>
+      <div class="code-block">
+<span class="cmt">// 按优先级尝试多种提取模式</span>
+<span class="kw">const</span> patterns = [
+  /```json\s*([\s\S]*?)```/,          <span class="cmt">// Markdown 代码块包裹</span>
+  /```\s*([\s\S]*?)```/,               <span class="cmt">// 无语言标记代码块</span>
+  /(\{[\s\S]*"doc_type"[\s\S]*\})/,    <span class="cmt">// 含 doc_type 字段的 JSON</span>
+  /(\{[\s\S]*"customer_name"[\s\S]*\})/,<span class="cmt">// 含 customer_name 字段</span>
+  /(\{[\s\S]*"products"[\s\S]*\})/     <span class="cmt">// 含 products 字段</span>
+];
+
+<span class="kw">for</span> (<span class="kw">const</span> pattern <span class="kw">of</span> patterns) {
+  <span class="kw">const</span> match = text.match(pattern);
+  <span class="kw">if</span> (match && match[<span class="num">1</span>]) {
+    <span class="kw">try</span> {
+      <span class="kw">const</span> obj = JSON.parse(match[<span class="num">1</span>].trim());
+      <span class="kw">if</span> (obj.doc_type || obj.customer_name || obj.products)
+        <span class="kw">return</span> obj;  <span class="cmt">// 命中制单 JSON</span>
+    } <span class="kw">catch</span> (e) { <span class="kw">continue</span>; }
+  }
+}
+      </div>
+    </div>
+
+    <div class="callout warning animate-in">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body">
+        <h4>Secure Context 要求</h4>
+        <p>Layer 3 的 <code>navigator.clipboard.readText()</code> 需要 Secure Context：<strong>localhost</strong> 或 <strong>HTTPS</strong>。直接打开本地 HTML 文件（file:// 协议）不支持此 API。开发时务必通过 <code>python3 -m http.server 8080</code> 启动本地服务器访问。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="prototype">
+  <div class="container">
+    <div class="section-header animate-in">
+      <span class="section-number">04</span>
+      <h2 class="section-title">页面原型</h2>
+      <p class="section-desc">固定左右布局，右侧 Coze 对话区，左侧制单业务区，剪贴板为通信桥梁。</p>
+    </div>
+
+    <div class="proto-layout animate-in">
+      <div class="proto-left">
+        <div class="proto-label"><i class="ri-file-list-3-line"></i> 左侧 · 制单业务区</div>
+
+        <div class="proto-field filled">
+          <span class="field-label">单据类型</span>
+          <span class="field-value">销售订单</span>
+        </div>
+        <div class="proto-field filled">
+          <span class="field-label">客户名称</span>
+          <span class="field-value">深圳华创科技有限公司</span>
+        </div>
+        <div class="proto-field filled">
+          <span class="field-label">付款方式</span>
+          <span class="field-value">月结30天</span>
+        </div>
+        <div class="proto-field filled">
+          <span class="field-label">备注</span>
+          <span class="field-value">本周五前发货</span>
+        </div>
+
+        <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border);">
+          <div class="proto-label" style="margin-bottom:10px;"><i class="ri-shopping-bag-line"></i> 产品明细</div>
+          <div style="font-size:11px;color:var(--text-muted);display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:4px;padding:6px 10px;background:var(--bg-secondary);border-radius:4px;margin-bottom:6px;">
+            <span>产品</span><span>数量</span><span>单价</span><span>金额</span>
+          </div>
+          <div style="font-size:12px;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:4px;padding:8px 10px;background:rgba(62,207,165,0.05);border:1px solid var(--accent-dim);border-radius:4px;margin-bottom:4px;color:var(--accent);">
+            <span>A3打印纸</span><span>100箱</span><span>¥280</span><span>¥28,000</span>
+          </div>
+          <div style="font-size:12px;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:4px;padding:8px 10px;background:rgba(62,207,165,0.05);border:1px solid var(--accent-dim);border-radius:4px;margin-bottom:4px;color:var(--accent);">
+            <span>A4打印纸</span><span>200箱</span><span>¥180</span><span>¥36,000</span>
+          </div>
+          <div style="font-size:12px;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:4px;padding:8px 10px;background:rgba(62,207,165,0.05);border:1px solid var(--accent-dim);border-radius:4px;margin-bottom:4px;color:var(--accent);">
+            <span>无线鼠标</span><span>50个</span><span>¥35</span><span>¥1,750</span>
+          </div>
+        </div>
+
+        <div style="margin-top:16px;padding:12px;background:var(--success-dim);border:1px solid rgba(74,222,128,0.2);border-radius:8px;font-size:12px;color:var(--success);">
+          ✓ 匹配成功 — 客户匹配度 98%，3 条产品已确认
+        </div>
+      </div>
+
+      <div class="proto-right">
+        <div class="proto-label" style="color:var(--accent2);"><i class="ri-robot-2-line"></i> 右侧 · Coze 智能体对话区</div>
+
+        <div class="proto-chat-msg agent">
+          你好！我是智能制单助手。请告诉我客户和产品信息。
+        </div>
+        <div class="proto-chat-msg user">
+          深圳华创科技要A3打印纸100箱每箱280元，A4打印纸200箱每箱180元，无线鼠标50个每个35元
+        </div>
+        <div class="proto-chat-msg agent">
+          已识别制单需求，结构化数据如下：
+          <pre style="background:#0c0e12;padding:8px;border-radius:6px;font-size:10px;margin-top:6px;color:#e8e6e1;line-height:1.5;overflow-x:auto;">{
+  "doc_type": "销售订单",
+  "customer_name": "深圳华创科技有限公司",
+  "products": [
+    {"name":"A3打印纸","qty":100,"price":280},
+    {"name":"A4打印纸","qty":200,"price":180},
+    {"name":"无线鼠标","qty":50,"price":35}
+  ]
+}</pre>
+          <div class="proto-copy-btn">📋 点击复制 JSON</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout info animate-in" style="margin-top:24px;">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        <h4>交互流程说明</h4>
+        <p>1. 用户在右侧对话区输入或语音描述业务信息<br>2. Coze 智能体返回结构化 JSON（含 doc_type、customer_name、products）<br>3. 用户点击"复制 JSON"按钮或手动选中复制<br>4. 左侧监听到剪贴板变化 → 解析 JSON → 自动填充表单<br>5. 填充完成后自动提交后台匹配查询 → 显示匹配结果</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="json">
+  <div class="container">
+    <div class="section-header animate-in">
+      <span class="section-number">05</span>
+      <h2 class="section-title">JSON 通信协议</h2>
+      <p class="section-desc">Coze 智能体与前端页面之间的 JSON 格式约定，是剪贴板通信的核心契约。</p>
+    </div>
+
+    <div class="feature-detail animate-in">
+      <div class="feature-header">
+        <span class="feature-num">01</span>
+        <h3>智能体输出 JSON Schema</h3>
+      </div>
+      <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">智能体 Prompt 约定输出以下 JSON 结构，前端按此 Schema 解析填充。</p>
+      <div class="code-block">
+{
+  <span class="str">"doc_type"</span>: <span class="str">"销售订单 | 报价单 | 出库单"</span>,     <span class="cmt">// 单据类型（必填）</span>
+  <span class="str">"customer_name"</span>: <span class="str">"深圳华创科技有限公司"</span>,  <span class="cmt">// 客户名称（必填）</span>
+  <span class="str">"customer_pinyin"</span>: <span class="str">"shen_zhen_hua_chuang_ke_ji_you_xian_gong_si"</span>, <span class="cmt">// 客户拼音（必填，用于后台查询）</span>
+  <span class="str">"payment_term"</span>: <span class="str">"月结30天"</span>,              <span class="cmt">// 付款方式（可选）</span>
+  <span class="str">"remark"</span>: <span class="str">"本周五前发货"</span>,                    <span class="cmt">// 备注（可选）</span>
+  <span class="str">"products"</span>: [                                    <span class="cmt">// 产品明细（必填 ≥1）</span>
+    {
+      <span class="str">"name"</span>: <span class="str">"A3打印纸"</span>,                        <span class="cmt">// 产品名称（必填）</span>
+      <span class="str">"pinyin"</span>: <span class="str">"A3_da_yin_zhi"</span>,                <span class="cmt">// 产品拼音（必填，用于后台查询）</span>
+      <span class="str">"spec"</span>: <span class="str">"70g 500张/包"</span>,                   <span class="cmt">// 规格型号（可选）</span>
+      <span class="str">"spec_pinyin"</span>: <span class="str">"70g_500zhang_bao"</span>,           <span class="cmt">// 规格拼音（可选）</span>
+      <span class="str">"qty"</span>: <span class="num">100</span>,                                  <span class="cmt">// 数量（必填）</span>
+      <span class="str">"unit"</span>: <span class="str">"箱"</span>,                               <span class="cmt">// 单位（可选）</span>
+      <span class="str">"price"</span>: <span class="num">280</span>                                 <span class="cmt">// 单价（可选）</span>
+    }
+  ]
+}
+      </div>
+    </div>
+
+    <div class="feature-detail animate-in">
+      <div class="feature-header">
+        <span class="feature-num">02</span>
+        <h3>智能体 Prompt 约定</h3>
+      </div>
+      <div class="feature-body">
+        <div class="feature-col">
+          <h4>输出格式要求</h4>
+          <ul>
+            <li>必须输出合法 JSON，用 ```json 代码块包裹</li>
+            <li>doc_type、customer_name、products 为必填字段</li>
+            <li>无法确定的字段填 null，不猜测</li>
+            <li>金额自动计算：qty × price = 行金额</li>
+            <li>JSON 后附带简短自然语言确认</li>
+          </ul>
+        </div>
+        <div class="feature-col">
+          <h4>前端解析容错</h4>
+          <ul>
+            <li>支持 ```json 包裹和裸 JSON 两种格式</li>
+            <li>只校验 doc_type / customer_name / products 三字段</li>
+            <li>products 至少含 name 和 qty</li>
+            <li>缺失的可选字段使用默认值</li>
+            <li>解析失败时提示用户重新复制</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="impl">
+  <div class="container">
+    <div class="section-header animate-in">
+      <span class="section-number">06</span>
+      <h2 class="section-title">实现要点</h2>
+      <p class="section-desc">将方案落地到现有项目代码中的关键实现细节。</p>
+    </div>
+
+    <div class="feature-detail animate-in">
+      <div class="feature-header">
+        <span class="feature-num">01</span>
+        <h3>Coze Chat SDK 嵌入</h3>
+      </div>
+      <div class="feature-body">
+        <div class="feature-col">
+          <h4>SDK 加载</h4>
+          <ul>
+            <li>在 &lt;head&gt; 中加载 Coze Chat SDK 脚本</li>
+            <li>CDN：lf-cdn.coze.cn（国内节点）</li>
+            <li>版本：1.2.0-beta.8（当前最新）</li>
+            <li>需配置 botId 和 PAT Token</li>
+          </ul>
+        </div>
+        <div class="feature-col">
+          <h4>初始化代码</h4>
+          <ul>
+            <li>new CozeWebSDK.WebChatClient() 创建实例</li>
+            <li>config.botId：智能体 ID</li>
+            <li>auth.type: 'token'，auth.token: PAT</li>
+            <li>ui.base.lang: 'zh-CN'</li>
+            <li>ui.asstBtn.isNeed: false（隐藏浮动按钮）</li>
+          </ul>
+        </div>
+      </div>
+      <div class="code-block">
+<span class="cmt">// Coze Chat SDK 初始化</span>
+<span class="kw">const</span> cozeWebSDK = <span class="kw">new</span> CozeWebSDK.WebChatClient({
+  config: {
+    botId: <span class="str">'YOUR_BOT_ID'</span>,
+    isIframe: <span class="kw">false</span>,
+  },
+  auth: {
+    type: <span class="str">'token'</span>,
+    token: <span class="str">'YOUR_PAT_TOKEN'</span>,
+    onRefreshToken: <span class="kw">async</span> () => <span class="str">'YOUR_PAT_TOKEN'</span>,
+  },
+  ui: {
+    base: { lang: <span class="str">'zh-CN'</span> },
+    asstBtn: { isNeed: <span class="kw">false</span> },
+  }
+});
+      </div>
+    </div>
+
+    <div class="feature-detail animate-in">
+      <div class="feature-header">
+        <span class="feature-num">02</span>
+        <h3>剪贴板监听核心代码</h3>
+      </div>
+      <div class="code-block">
+<span class="cmt">// Layer 1: copy 事件 — 即时响应</span>
+document.addEventListener(<span class="str">'copy'</span>, <span class="kw">function</span>(e) {
+  <span class="kw">const</span> selection = window.getSelection().toString();
+  <span class="kw">if</span> (selection) {
+    setTimeout(() => handleClipboardText(selection), <span class="num">100</span>);
+  }
+});
+
+<span class="cmt">// Layer 2: paste 事件 — 用户主动粘贴</span>
+document.addEventListener(<span class="str">'paste'</span>, <span class="kw">function</span>(e) {
+  <span class="kw">const</span> text = e.clipboardData.getData(<span class="str">'text'</span>);
+  <span class="kw">if</span> (text) {
+    setTimeout(() => handleClipboardText(text), <span class="num">100</span>);
+  }
+});
+
+<span class="cmt">// Layer 3: clipboard.readText 轮询 — 兜底方案</span>
+<span class="kw">let</span> lastClipboardContent = <span class="str">''</span>;
+setInterval(<span class="kw">function</span>() {
+  <span class="kw">if</span> (navigator.clipboard && navigator.clipboard.readText) {
+    navigator.clipboard.readText().then(<span class="kw">function</span>(text) {
+      <span class="kw">if</span> (text && text !== lastClipboardContent && text.length > <span class="num">10</span>) {
+        lastClipboardContent = text;
+        handleClipboardText(text);
+      }
+    }).catch(() => {});
+  }
+}, <span class="num">1000</span>);
+      </div>
+    </div>
+
+    <div class="feature-detail animate-in">
+      <div class="feature-header">
+        <span class="feature-num">03</span>
+        <h3>与现有方案D代码的整合</h3>
+      </div>
+      <div class="feature-body">
+        <div class="feature-col">
+          <h4>替换内容</h4>
+          <ul>
+            <li>删除方案D中的模拟对话区 HTML 和 JS</li>
+            <li>删除 sendChatMessage / addChatBubble 等模拟函数</li>
+            <li>删除 mockData 及相关模拟逻辑</li>
+            <li>右侧替换为 Coze Chat SDK iframe</li>
+          </ul>
+        </div>
+        <div class="feature-col">
+          <h4>保留内容</h4>
+          <ul>
+            <li>左侧制单业务区完整保留（客户卡片、产品列表、匹配弹窗）</li>
+            <li>showMatchProgress / fillOrderDraft 逻辑保留</li>
+            <li>客户候选弹窗、产品候选弹窗保留</li>
+            <li>语音录音 + Coze 语音转文字 API 保留</li>
+          </ul>
+        </div>
+      </div>
+      <div class="callout info" style="margin-top:16px;">
+        <div class="callout-icon">🔗</div>
+        <div class="callout-body">
+          <h4>整合后的数据流变化</h4>
+          <p><strong>方案D原流程</strong>：模拟对话 → sendChatMessage → mockData 匹配 → showMatchProgress → fillOrderDraft<br>
+          <strong>剪贴板方案流程</strong>：Coze SDK 对话 → 用户复制 JSON → 剪贴板监听 → extractJSON → fillOrderDraft<br><br>
+          核心变化：<strong>数据入口从模拟函数变为剪贴板监听</strong>，左侧填充逻辑（fillOrderDraft）完全不变。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="feature-detail animate-in">
+      <div class="feature-header">
+        <span class="feature-num">04</span>
+        <h3>开发任务清单</h3>
+      </div>
+      <div class="feature-body">
+        <div class="feature-col">
+          <h4>Step 1：Coze SDK 嵌入</h4>
+          <ul>
+            <li>在 coze.cn 创建/配置智能体</li>
+            <li>配置 Prompt 约定 JSON 输出格式</li>
+            <li>发布 Chat SDK 渠道</li>
+            <li>获取 botId，生成 PAT Token</li>
+            <li>在页面中加载 SDK 并初始化</li>
+          </ul>
+        </div>
+        <div class="feature-col">
+          <h4>Step 2：剪贴板监听集成</h4>
+          <ul>
+            <li>实现三层监听（copy / paste / readText）</li>
+            <li>实现 JSON 提取算法（多模式正则匹配）</li>
+            <li>实现 Schema 校验和字段映射</li>
+            <li>对接 fillOrderDraft 填充逻辑</li>
+            <li>添加监听状态指示和日志</li>
+          </ul>
+        </div>
+      </div>
+      <div class="feature-body" style="margin-top:20px;">
+        <div class="feature-col">
+          <h4>Step 3：匹配查询对接</h4>
+          <ul>
+            <li>填充完成后自动提交后台匹配</li>
+            <li>客户库拼音匹配查询</li>
+            <li>产品库分层匹配查询</li>
+            <li>匹配结果回填到左侧业务区</li>
+          </ul>
+        </div>
+        <div class="feature-col">
+          <h4>Step 4：端到端验证</h4>
+          <ul>
+            <li>Coze 对话 → JSON 输出验证</li>
+            <li>复制 → 监听 → 填充全流程验证</li>
+            <li>多产品场景验证</li>
+            <li>异常场景验证（格式错误、字段缺失）</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<footer>
+  <div class="container">
+    <p><span class="footer-brand">智能制单项目</span> — 剪贴板监听跨区通信方案</p>
+    <p style="margin-top:6px;">技术方案文档 · 2026-05-13</p>
+  </div>
+</footer>
+
+<script>
+const navLinks = document.querySelectorAll('nav .nav-links a');
+const sections = document.querySelectorAll('section[id]');
+function updateActiveNav() {
+  let current = '';
+  sections.forEach(s => { if (window.scrollY >= s.offsetTop - 100) current = s.id; });
+  navLinks.forEach(l => { l.classList.remove('active'); if (l.getAttribute('href') === '#' + current) l.classList.add('active'); });
+}
+window.addEventListener('scroll', updateActiveNav);
+updateActiveNav();
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+document.querySelectorAll('.animate-in').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>

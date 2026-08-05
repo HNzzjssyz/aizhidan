@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI智能制单系统 - 开发规划 TODO</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;color:#1e293b;background:#f1f5f9;line-height:1.7;font-size:15px}
+.container{max-width:960px;margin:0 auto;padding:0 24px}
+.header{background:linear-gradient(135deg,#0f0c29 0%,#302b63 40%,#24243e 100%);color:#fff;padding:60px 0 50px;text-align:center;position:relative;overflow:hidden}
+.header::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at 30% 50%,rgba(99,102,241,.35) 0%,transparent 50%),radial-gradient(ellipse at 70% 50%,rgba(236,72,153,.25) 0%,transparent 50%);animation:pulse 6s ease-in-out infinite}
+.header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#6366f1,#ec4899,#f59e0b,#6366f1);background-size:300% 100%;animation:shimmer 4s linear infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}
+@keyframes shimmer{0%{background-position:0% 50%}100%{background-position:300% 50%}}
+.header h1{font-size:2.2em;font-weight:800;margin-bottom:10px;position:relative;letter-spacing:2px;background:linear-gradient(135deg,#fff,#e0e7ff,#fbcfe8,#fff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 2px 8px rgba(99,102,241,.3))}
+.header .subtitle{font-size:1.1em;color:#e0e7ff;position:relative;text-shadow:0 0 20px rgba(99,102,241,.4)}
+.section{background:#fff;border-radius:12px;padding:36px 40px;margin:24px 0;box-shadow:0 2px 12px rgba(0,0,0,.04)}
+.section h2{font-size:1.5em;color:#1e40af;margin-bottom:20px;padding-bottom:10px;border-bottom:3px solid #2563eb;display:flex;align-items:center;gap:10px}
+.section h2 .icon{font-size:1.2em}
+.section h3{font-size:1.15em;color:#1e40af;margin:24px 0 12px;padding-left:12px;border-left:4px solid #2563eb}
+.section h4{font-size:1.05em;color:#334155;margin:16px 0 8px;font-weight:600}
+p{margin-bottom:12px;color:#475569}
+.todo-item{border:1px solid #e2e8f0;border-radius:10px;padding:20px 24px;margin:14px 0;position:relative;transition:border-color .2s,box-shadow .2s}
+.todo-item:hover{border-color:#93c5fd;box-shadow:0 4px 16px rgba(37,99,235,.08)}
+.todo-item .todo-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.todo-item .todo-id{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:#2563eb;color:#fff;border-radius:50%;font-size:.85em;font-weight:700;flex-shrink:0}
+.todo-item .todo-title{font-size:1.05em;font-weight:700;color:#1e293b}
+.todo-item .todo-priority{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.78em;font-weight:600;margin-left:8px}
+.todo-item .todo-priority.high{background:#fee2e2;color:#dc2626}
+.todo-item .todo-priority.medium{background:#fef3c7;color:#d97706}
+.todo-item .todo-priority.low{background:#dbeafe;color:#2563eb}
+.todo-item .todo-status{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.78em;font-weight:600;margin-left:4px}
+.todo-item .todo-status.pending{background:#f1f5f9;color:#64748b}
+.todo-item .todo-status.in-progress{background:#fef3c7;color:#d97706}
+.todo-item .todo-status.done{background:#dcfce7;color:#16a34a}
+.todo-item .todo-body{padding-left:42px;color:#475569;font-size:.93em}
+.todo-item .todo-body ul,.todo-item .todo-body ol{padding-left:20px;margin:6px 0}
+.todo-item .todo-body li{margin:4px 0}
+.todo-item .todo-body code{background:#eff6ff;color:#1e40af;padding:1px 6px;border-radius:4px;font-size:.88em}
+.highlight-box{border-radius:8px;padding:16px 20px;margin:16px 0;display:flex;align-items:flex-start;gap:10px;font-size:.93em}
+.highlight-box .hi-icon{font-size:18px;flex-shrink:0;margin-top:1px}
+.hi-info{background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af}
+.hi-warning{background:#fffbeb;border:1px solid #fde68a;color:#b45309}
+.hi-danger{background:#fef2f2;border:1px solid #fecaca;color:#dc2626}
+.hi-success{background:#f0fdf4;border:1px solid #bbf7d0;color:#16a34a}
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:.93em}
+th,td{border:1px solid #e5e7eb;padding:10px 14px;text-align:left}
+th{background:#eff6ff;color:#1e40af;font-weight:600;white-space:nowrap}
+tr:nth-child(even) td{background:#f9fafb}
+pre{background:#1e293b;color:#e2e8f0;padding:16px 20px;border-radius:8px;overflow-x:auto;font-size:13px;line-height:1.6;margin:12px 0}
+code{font-family:"SF Mono","Fira Code",Consolas,monospace}
+.deps{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0;padding-left:42px}
+.deps .dep-tag{display:inline-block;padding:2px 10px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:6px;font-size:.8em;color:#64748b}
+.deps .dep-tag a{color:#2563eb;text-decoration:none}
+.divider{text-align:center;margin:40px 0 32px;position:relative}
+.divider::before{content:"";position:absolute;top:50%;left:0;right:0;height:1px;background:#d1d5db}
+.divider span{position:relative;background:#f1f5f9;padding:0 20px;color:#6b7280;font-size:14px;font-weight:600}
+.footer{text-align:center;padding:30px 0;color:#94a3b8;font-size:.85em}
+@media(max-width:640px){
+.header h1{font-size:1.6em}
+.section{padding:20px 16px}
+.todo-item{padding:14px 16px}
+.todo-item .todo-body{padding-left:0}
+.deps{padding-left:0}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+<div class="container">
+<h1>AI智能制单系统 - 开发规划</h1>
+<p class="subtitle">拼音模块改造 &amp; 匹配后操作接口 · TODO 清单</p>
+</div>
+</div>
+
+<div class="container">
+
+<!-- ==================== 板块一 ==================== -->
+
+<div class="section">
+<h2><span class="icon">🔧</span>板块一：拼音模块改造</h2>
+
+<p>当前拼音数据存储在 localStorage 中，存在容量限制（5MB）、无法跨设备共享、数据易丢失等问题。需要改造为建表存储，并完善增量更新机制。</p>
+
+<div class="highlight-box hi-warning">
+<span class="hi-icon">⚠️</span>
+<span><strong>现状问题：</strong>localStorage 容量上限约 5MB，客户+产品数据量增大后容易溢出；数据仅存于当前浏览器，无法跨设备/跨用户共享；增量更新依赖 <code>amstamp</code>/<code>modstm</code> 字段，但未使用 <code>deflag</code> 标记删除记录，可能导致已删除数据仍残留在本地。</span>
+</div>
+
+<h3>1.1 将 localStorage 替换为建表存储</h3>
+
+<div class="todo-item">
+<div class="todo-header">
+<span class="todo-id">1.1.1</span>
+<span class="todo-title">设计数据库表结构</span>
+<span class="todo-priority high">高优先</span>
+<span class="todo-status pending">待开发</span>
+</div>
+<div class="todo-body">
+<p>将当前 localStorage 的 6 个 key 转化为数据库表：</p>
+<table>
+<thead>
+<tr><th>原 localStorage Key</th><th>目标表名</th><th>核心字段</th></tr>
+</thead>
+<tbody>
+<tr><td><code>pinyin_tool_customers</code></td><td><code>t_pinyin_customer</code></td><td>id, name, pinyin, pinyin_abbr, amstamp, deflag</td></tr>
+<tr><td><code>pinyin_tool_products</code></td><td><code>t_pinyin_product</code></td><td>id, name, model, spec, pinyin, pinyin_abbr, modstm, deflag</td></tr>
+<tr><td><code>pinyin_tool_customer_pinyin</code></td><td>合并到 <code>t_pinyin_customer</code></td><td>pinyin, pinyin_abbr 字段直接存入客户表</td></tr>
+<tr><td><code>pinyin_tool_product_pinyin</code></td><td>合并到 <code>t_pinyin_product</code></td><td>pinyin, pinyin_abbr 字段直接存入产品表</td></tr>
+<tr><td><code>pinyin_tool_sync_time</code></td><td><code>t_pinyin_sync_log</code></td><td>id, sync_type(full/incremental), sync_time, record_count</td></tr>
+<tr><td><code>pinyin_tool_incremental_time</code></td><td>合并到 <code>t_pinyin_sync_log</code></td><td>最新一条记录的 sync_time 即为增量基准</td></tr>
+</tbody>
+</table>
+<div class="highlight-box hi-info">
+<span class="hi-icon">💡</span>
+<span><strong>设计要点：</strong>拼音数据（pinyin/pinyin_abbr）直接合并到客户/产品表中，不再单独存储。原方案客户和拼音是两个独立对象，合并后查询更高效，避免 JOIN 操作。</span>
+</div>
+</div>
+</div>
+
+<div class="todo-item">
+<div class="todo-header">
+<span class="todo-id">1.1.2</span>
+<span class="todo-title">开发后端建表和 CRUD 接口</span>
+<span class="todo-priority high">高优先</span>
+<span class="todo-status pending">待开发</span>
+</div>
+<div class="todo-body">
+<p>基于 <code>/system/api.xt</code> 现有接口规范，新增以下接口：</p>
+<table>
+<thead>
+<tr><th>接口</th><th>cmd</th><th>说明</th></tr>
+</thead>
+<tbody>
+<tr><td>建表</td><td><code>create_table</code></td><td>创建 <code>t_pinyin_customer</code>、<code>t_pinyin_product</code>、<code>t_pinyin_sync_log</code></td></tr>
+<tr><td>全量写入</td><td><code>batch_insert</code></td><td>全量获取后批量写入客户/产品+拼音数据</td></tr>
+<tr><td>增量更新</td><td><code>batch_upsert</code></td><td>增量获取后按 id 更新或插入记录</td></tr>
+<tr><td>查询全部</td><td><code>load_data</code></td><td>制单页面加载时查询客户/产品+拼音数据</td></tr>
+<tr><td>删除标记</td><td><code>update_data</code></td><td>根据 deflag 标记删除本地记录</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<div class="todo-item">
+<div class="todo-header">
+<span class="todo-id">1.1.3</span>
+<span class="todo-title">改造前端数据读写层</span>
+<span class="todo-priority high">高优先</span>
+<span class="todo-status pending">待开发</span>
+</div>
+<div class="todo-body">
+<p>将 <code>getStore()</code>/<code>setStore()</code> 从 localStorage 操作替换为 API 调用：</p>
+<ul>
+<li><code>pinyin_match.js</code> 中的 <code>getStore()</code> → 改为调用后端查询接口</li>
+<li><code>get_cus_pro.html</code> 中的 <code>setStore()</code> → 改为调用后端写入接口</li>
+<li><code>index.html</code> 中的 <code>getLSCustomers()</code>/<code>getLSProducts()</code> → 改为 API 调用</li>
+<li>移除 <code>storage</code> 事件监听，改为轮询或 WebSocket 通知数据变更</li>
+</ul>
+<div class="highlight-box hi-info">
+<span class="hi-icon">💡</span>
+<span><strong>兼容策略：</strong>可保留 localStorage 作为离线缓存层，API 优先、localStorage 降级。在线时从 API 读取并更新缓存，离线时从缓存读取。</span>
+</div>
+</div>
+<div class="deps">
+<span class="dep-tag">依赖: <a href="#1.1.1">1.1.1</a></span>
+<span class="dep-tag">依赖: <a href="#1.1.2">1.1.2</a></span>
+</div>
+</div>
+
+<div class="todo-item">
+<div class="todo-header">
+<span class="todo-id">1.1.4</span>
+<span class="todo-title">数据迁移：localStorage → 数据库</span>
+<span class="todo-priority medium">中优先</span>
+<span class="todo-status pending">待开发</span>
+</div>
+<div class="todo-body">
+<p>提供一键迁移功能，将现有 localStorage 中的数据导入数据库：</p>
+<ul>
+<li>在 <code>get_cus_pro.html</code> 中新增"迁移到数据库"按钮</li>
+<li>读取 localStorage 中的 6 个 key，调用批量写入接口</li>
+<li>迁移完成后提示用户，可选择清空 localStorage</li>
+<li>迁移过程需做数据校验（记录数对比、拼音完整性检查）</li>
+</ul>
+</div>
+<div class="deps">
+<span class="dep-tag">依赖: <a href="#1.1.2">1.1.2</a></span>
+<span class="dep-tag">依赖: <a href="#1.1.3">1.1.3</a></span>
+</div>
+</div>
+
+<h3>1.2 添加 deflag 删除标记参数</h3>
+
+<div class="todo-item">
+<div class="todo-header">
+<span class="todo-id">1.2.1</span>
+<span class="todo-title">API 请求添加 deflag 参数</span>
+<span class="todo-priority high">高优先</span>
+<span class="todo-status pending">待开发</span>
+</div>
+<div class="todo-body">
+<p>当前全量/增量获取请求中<strong>没有</strong> <code>deflag</code> 参数，无法识别已删除的记录。需要：</p>
+<ol>
+<li>在全量获取参数中添加 <code>deflag</code> 字段，用于过滤已删除记录：
+<pre><code>// 客户请求
+{ cmd: 'load_data', dtname: 'customer', field: 'id,cu_name,amstamp,deflag', flag: 1 }
+
+// 产品请求
+{ cmd: 'load_data', dtname: 'product', field: 'id,pro_name,model,spec,modstm,deflag', flag: 1 }</code></pre>
+</li>
+<li>在增量获取参数中同样添加 <code>deflag</code> 字段</li>
+<li>前端处理逻辑：
+<ul>
+<li><code>deflag = 0</code>（或空值）：正常记录，写入/更新本地</li>
+<li><code>deflag = 1</code>（或非零值）：已删除记录，从本地数据库中删除对应记录</li>
+</ul>
+</li>
+</ol>
+<div class="highlight-box hi-danger">
+<span class="hi-icon">🔴</span>
+<span><strong>关键：</strong>增量更新时必须处理 deflag=1 的记录，否则本地会出现"幽灵数据"——后台已删除的产品仍然出现在匹配结果中。</span>
+</div>
+</div>
+</div>
+
+<div class="todo-item">
+<div class="todo-header">
+<span class="todo-id">1.2.2</span>
+<span class="todo-title">增量更新时同步删除 deflag=1 的记录</span>
+<span class="todo-priority high">高优先</span>
+<span class="todo-status pending">待开发</span>
+</div>
+<div class="todo-body">
+<p>增量获取返回的数据中，需根据 deflag 值区分处理：</p>
+<pre><code>增量返回数据.forEach(function(record) {
+  if (record.deflag == 1) {
+    // 从本地数据库删除该记录
+    deleteFromLocalDB(record.id);
+  } else {
+    // 更新或插入该记录
+    upsertToLocalDB(record);
+  }
+});</code></pre>
+<p>同时需要删除对应的拼音索引数据。</p>
+</div>
+<div class="deps">
+<span class="dep-tag">依赖: <a href="#1.1.2">1.1.2</a></span>
+<span class="dep-tag">依赖: <a href="#1.2.1">1.2.1</a></span>
+</div>
+</div>
+
+<h3>1.3 精准落实增量更新</h3>
+
+<div class="todo-item">
+<div class="todo-header">
+<span class="todo-id">1.3.1</span>
+<span class="todo-title">修正增量时间戳逻辑</span>
+<span class="todo-priority high">高优先</span>
+<span class="todo-status pending">待开发</span>
+</div>
+<div class="todo-body">
+<p>当前增量更新存在以下问题：</p>
+<ul>
+<li><strong>时间戳精度问题：</strong>使用 <code>new Date().toISOString()</code> 生成时间戳，但服务器数据库的时间可能与客户端不同步</li>
+<li><strong>严格大于遗漏：</strong><code>WHERE amstamp > 'lastTime'</code> 使用严格大于，如果同一秒内有新记录可能遗漏</li>
+<li><strong>双时间戳冗余：</strong><code>SYNC_TIME</code> 和 <code>INCREMENTAL_TIME</code> 始终同步更新，功能重复</li>
+</ul>
+<p>改进方案：</p>
+<ol>
+<li>增量获取后，使用<strong>服务器返回的最新时间戳</strong>（而非客户端时间）作为下次增量基准</li>
+<li>增量条件改为 <code>>=</code>，并在客户端去重（已处理的 ID 跳过）</li>
+<li>合并 <code>SYNC_TIME</code> 和 <code>INCREMENTAL_TIME</code> 为统一的 <code>LAST_SYNC_TIME</code></li>
+</ol>
+</div>
+</div>
+
+<div class="todo-item">
+<div class="todo-header">
+<span class="todo-id">1.3.2</span>
+<span class="todo-title">增量拼音生成优化</span>
+<span class="todo-priority medium">中优先</span>
+<span class="todo-status pending">待开发</span>
+</div>
+<div class="todo-body">
+<p>当前增量拼音生成逻辑：</p>
+<ul>
+<li>仅对新增/更新的 ID 生成拼音 ✅</li>
+<li>合并到已有拼音数据中 ✅</li>
+<li><strong>未处理删除记录的拼音清理</strong> ❌</li>
+</ul>
+<p>改进：增量更新时，如果记录 deflag=1，需同步删除该记录的拼音数据。</p>
+</div>
+<div class="deps">
+<span class="dep-tag">依赖: <a href="#1.2.2">1.2.2</a></span>
+</div>
+</div>
+
+<div class="todo-item">
+<div class="todo-header">
+<span class="todo-id">1.3.3</span>
+<span class="todo-title">增量更新完整性校验</span>
+<span class="todo-priority medium">中优先</span>
+<span class="todo-status pending">待开发</span>
+</div>
+<div class="todo-body">
+<p>增量更新后增加数据完整性校验：</p>
+<ul>
+<li>校验本地记录总数与服务器返回的记录数是否一致</li>
+<li>校验拼音覆盖率（有拼音的记录数 / 总记录数）</li>
+<li>如果覆盖率低于阈值（如 95%），提示用户执行全量同步</li>
+<li>记录每次同步的日志（时间、类型、记录数、耗时）</li>
+</ul>
+</div>
+<div class="deps">
+<span class="dep-tag">依赖: <a href="#1.1.1">1.1.1</a></span>
+<span class="dep-tag">依赖: <a href="#1.3.1">1.3.1</a></span>
+</div>
+</div>
+
+</div>
+
+<!-- ==================== 板块二 ==================== -->
+
+<div class="divider"><span>板块二：匹配后操作接口</span></div>
+
+<div class="section">
+<h2><span class="icon">🚀</span>板块二：匹配后操作接口</h2>
+
+<p>当前系统在匹配完成后，<strong>创建产品和创建订单都仅在前端本地操作</strong>，没有调用后端 API 将数据真正写入业务系统。需要补全这些接口，实现从"匹配"到"落库"的完整闭环。</p>
+
+<div class="highlight-box hi-danger">
+<span class="hi-icon">🔴</span>
+<span><strong>现状问题：</strong><code>saveNewProduct()</code> 只在 <code>currentProducts</code> 数组中标记 <code>status='new'</code>，<code>generateOrder()</code> 只弹出统计弹窗。两者都<strong>没有调用后端 API</strong>，数据不会写入业务系统。</span>
+</div>
+
+<h3>2.1 创建产品接口</h3>
+
+<div class="todo-item">
+<div class="todo-header">
+<span class="todo-id">2.1.1</span>
+<span class="todo-title">开发后端创建产品 API</span>
+<span class="todo-priority high">高优先</span>
+<span class="todo-status pending">待开发</span>
+</div>
+<div class="todo-body">
+<p>新增创建产品接口，将前端新建的产品信息写入业务系统产品表：</p>
+<pre><code>// 请求参数
+{
+  cmd: 'create_data',
+  dtname: 'product',
+  data: {
+    pro_name: '产品名称',     // 必填
+    model: 'SKU编码',         // 可选
+    spec: '规格型号',         // 可选
+    unit: '个',              // 可选，默认'个'
+    category: '其他',        // 可选
+    remark: '备注'           // 可选
+  }
+}
+
+// 返回
+{
+  code: 0,
+  data: { id: 123, pro_name: '产品名称', ... }  // 返回新建记录的完整数据（含自动生成的id）
+}</code></pre>
+</div>
+</div>
+
+<div class="todo-item">
+<div class="todo-header">
+<span class="todo-id">2.1.2</span>
+<span class="todo-title">改造 saveNewProduct() 调用后端 API</span>
+<span class="todo-priority high">高优先</span>
+<span class="todo-status pending">待开发</span>
+</div>
+<div class="todo-body">
+<p>改造 <code>saveNewProduct()</code> 函数（当前位于 <code>index.html:1846-1876</code>）：</p>
+<ol>
+<li>收集表单数据，调用创建产品 API</li>
+<li>API 返回成功后，用返回的 <code>id</code> 更新 <code>currentProducts</code> 中的产品记录</li>
+<li>自动为新创建的产品生成拼音索引，写入本地数据库</li>
+<li>更新匹配状态为 <code>confirmed</code>，<code>matchType</code> 为 <code>new</code></li>
+<li>API 失败时，保留前端标记但提示用户"产品创建失败，请稍后重试"</li>
+</ol>
+</div>
+<div class="deps">
+<span class="dep-tag">依赖: <a href="#2.1.1">2.1.1</a></span>
+<span class="dep-tag">依赖: <a href="#1.1.3">1.1.3</a></span>
+</div>
+</div>
+
+<h3>2.2 创建订单接口</h3>
+
+<div class="todo-item">
+<div class="todo-header">
+<span class="todo-id">2.2.1</span>
+<span class="todo-title">开发后端创建订单 API</span>
+<span class="todo-priority high">高优先</span>
+<span class="todo-status pending">待开发</span>
+</div>
+<div class="todo-body">
+<p>新增创建订单接口，将确认后的订单数据写入业务系统订单表：</p>
+<pre><code>// 请求参数
+{
+  cmd: 'create_order',
+  data: {
+    customer_id: 123,           // 匹配后的客户ID
+    customer_name: '客户名称',
+    contact: '联系人',          // recv 字段
+    address: '收货地址',        // addr 字段
+    items: [
+      {
+        product_id: 456,        // 匹配后的产品ID
+        product_name: '产品名称',
+        model: '型号',
+        spec: '规格',
+        qty: 10,
+        unit: '箱',
+        unit_price: 100.00,
+        amount: 1000.00,
+        remark: '备注'
+      }
+    ],
+    total_amount: 3000.00,
+    source: 'ai_order'          // 标记来源为AI制单
+  }
+}
+
+// 返回
+{
+  code: 0,
+  data: { order_id: 'ORD-20260517-001', ... }  // 返回订单号
+}</code></pre>
+</div>
+</div>
+
+<div class="todo-item">
+<div class="todo-header">
+<span class="todo-id">2.2.2</span>
+<span class="todo-title">改造 generateOrder() 调用后端 API</span>
+<span class="todo-priority high">高优先</span>
+<span class="todo-status pending">待开发</span>
+</div>
+<div class="todo-body">
+<p>改造 <code>generateOrder()</code> 函数（当前位于 <code>index.html:2209-2229</code>）：</p>
+<ol>
+<li>收集所有已确认的产品数据，组装订单请求参数</li>
+<li>区分已匹配产品（<code>status='confirmed'</code>）和新建产品（<code>status='new'</code>）</li>
+<li>新建产品需先调用创建产品 API，获取 <code>product_id</code> 后再组装订单</li>
+<li>调用创建订单 API</li>
+<li>成功：显示订单号，标记订单已提交</li>
+<li>失败：提示错误信息，保留草稿数据供用户修改后重试</li>
+</ol>
+<div class="highlight-box hi-warning">
+<span class="hi-icon">⚠️</span>
+<span><strong>事务性：</strong>创建订单时如果包含新建产品，需确保"创建产品→获取ID→创建订单"的原子性。如果创建订单失败，已创建的产品不应回滚（产品已入库是合理的）。</span>
+</div>
+</div>
+<div class="deps">
+<span class="dep-tag">依赖: <a href="#2.1.1">2.1.1</a></span>
+<span class="dep-tag">依赖: <a href="#2.1.2">2.1.2</a></span>
+<span class="dep-tag">依赖: <a href="#2.2.1">2.2.1</a></span>
+</div>
+</div>
+
+<h3>2.3 匹配后自动回写</h3>
+
+<div class="todo-item">
+<div class="todo-header">
+<span class="todo-id">2.3.1</span>
+<span class="todo-title">匹配确认后回写客户匹配关系</span>
+<span class="todo-priority medium">中优先</span>
+<span class="todo-status pending">待开发</span>
+</div>
+<div class="todo-body">
+<p>当用户确认客户匹配后，可选择性将匹配关系回写到业务系统，便于后续统计和优化：</p>
+<ul>
+<li>记录"原始名称 → 匹配客户ID"的映射关系</li>
+<li>用于分析语音识别准确率和匹配命中率</li>
+<li>可选功能，不影响主流程</li>
+</ul>
+</div>
+</div>
+
+<div class="todo-item">
+<div class="todo-header">
+<span class="todo-id">2.3.2</span>
+<span class="todo-title">新建产品自动同步拼音索引</span>
+<span class="todo-priority medium">中优先</span>
+<span class="todo-status pending">待开发</span>
+</div>
+<div class="todo-body">
+<p>创建产品成功后，自动完成以下操作：</p>
+<ol>
+<li>调用 <code>generatePinyinForText()</code> 为新产品生成拼音索引</li>
+<li>将拼音数据写入本地数据库（<code>t_pinyin_product</code>）</li>
+<li>后续匹配时新产品即可被拼音搜索到</li>
+</ol>
+</div>
+<div class="deps">
+<span class="dep-tag">依赖: <a href="#1.1.2">1.1.2</a></span>
+<span class="dep-tag">依赖: <a href="#2.1.2">2.1.2</a></span>
+</div>
+</div>
+
+</div>
+
+<!-- ==================== 总览 ==================== -->
+
+<div class="divider"><span>开发优先级总览</span></div>
+
+<div class="section">
+<h2><span class="icon">📊</span>开发优先级与依赖关系</h2>
+
+<h3>Phase 1 — 基础设施（必须先完成）</h3>
+<table>
+<thead>
+<tr><th>编号</th><th>任务</th><th>优先级</th><th>前置依赖</th></tr>
+</thead>
+<tbody>
+<tr><td>1.1.1</td><td>设计数据库表结构</td><td><span class="todo-priority high" style="display:inline">高</span></td><td>无</td></tr>
+<tr><td>1.1.2</td><td>开发后端建表和 CRUD 接口</td><td><span class="todo-priority high" style="display:inline">高</span></td><td>1.1.1</td></tr>
+<tr><td>1.2.1</td><td>API 请求添加 deflag 参数</td><td><span class="todo-priority high" style="display:inline">高</span></td><td>无</td></tr>
+</tbody>
+</table>
+
+<h3>Phase 2 — 核心改造</h3>
+<table>
+<thead>
+<tr><th>编号</th><th>任务</th><th>优先级</th><th>前置依赖</th></tr>
+</thead>
+<tbody>
+<tr><td>1.1.3</td><td>改造前端数据读写层</td><td><span class="todo-priority high" style="display:inline">高</span></td><td>1.1.1, 1.1.2</td></tr>
+<tr><td>1.2.2</td><td>增量更新时同步删除 deflag=1 记录</td><td><span class="todo-priority high" style="display:inline">高</span></td><td>1.1.2, 1.2.1</td></tr>
+<tr><td>1.3.1</td><td>修正增量时间戳逻辑</td><td><span class="todo-priority high" style="display:inline">高</span></td><td>1.1.2</td></tr>
+<tr><td>2.1.1</td><td>开发后端创建产品 API</td><td><span class="todo-priority high" style="display:inline">高</span></td><td>无</td></tr>
+<tr><td>2.2.1</td><td>开发后端创建订单 API</td><td><span class="todo-priority high" style="display:inline">高</span></td><td>无</td></tr>
+</tbody>
+</table>
+
+<h3>Phase 3 — 集成与优化</h3>
+<table>
+<thead>
+<tr><th>编号</th><th>任务</th><th>优先级</th><th>前置依赖</th></tr>
+</thead>
+<tbody>
+<tr><td>1.1.4</td><td>数据迁移：localStorage → 数据库</td><td><span class="todo-priority medium" style="display:inline">中</span></td><td>1.1.2, 1.1.3</td></tr>
+<tr><td>1.3.2</td><td>增量拼音生成优化</td><td><span class="todo-priority medium" style="display:inline">中</span></td><td>1.2.2</td></tr>
+<tr><td>1.3.3</td><td>增量更新完整性校验</td><td><span class="todo-priority medium" style="display:inline">中</span></td><td>1.1.1, 1.3.1</td></tr>
+<tr><td>2.1.2</td><td>改造 saveNewProduct() 调用后端 API</td><td><span class="todo-priority high" style="display:inline">高</span></td><td>2.1.1, 1.1.3</td></tr>
+<tr><td>2.2.2</td><td>改造 generateOrder() 调用后端 API</td><td><span class="todo-priority high" style="display:inline">高</span></td><td>2.1.1, 2.1.2, 2.2.1</td></tr>
+<tr><td>2.3.1</td><td>匹配确认后回写客户匹配关系</td><td><span class="todo-priority medium" style="display:inline">中</span></td><td>1.1.2</td></tr>
+<tr><td>2.3.2</td><td>新建产品自动同步拼音索引</td><td><span class="todo-priority medium" style="display:inline">中</span></td><td>1.1.2, 2.1.2</td></tr>
+</tbody>
+</table>
+
+</div>
+
+<div class="footer">
+<p>AI智能制单系统 · 开发规划 TODO · 2026-05-17</p>
+</div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,1640 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>库存流水增量同步方案 — 含删除检测算法</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" style="text/css">
+<style>
+:root {
+  --bg: #f5f3ef;
+  --surface: #ffffff;
+  --surface-alt: #faf9f7;
+  --primary: #1a3a4a;
+  --primary-light: #2a5a6a;
+  --accent: #c45d3e;
+  --accent-hover: #a84e33;
+  --text: #1e293b;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --border: #e2e0dc;
+  --border-light: #f0eeea;
+  --positive: #059669;
+  --negative: #dc2626;
+  --warning: #d97706;
+  --warning-light: rgba(217,119,6,0.08);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+  --radius: 8px;
+  --radius-lg: 12px;
+  --font: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --mono: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.8;
+  min-height: 100vh;
+}
+
+/* ===== Header ===== */
+.page-header {
+  background: linear-gradient(135deg, var(--primary) 0%, #0f2a36 100%);
+  color: #fff;
+  padding: 48px 0 40px;
+  text-align: center;
+}
+
+.page-header .badge {
+  display: inline-block;
+  background: rgba(196,93,62,0.2);
+  color: #f6a98a;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 20px;
+  margin-bottom: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.page-header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.page-header .subtitle {
+  font-size: 14px;
+  color: rgba(255,255,255,0.55);
+  font-weight: 300;
+}
+
+/* ===== Container ===== */
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 40px 28px 80px;
+}
+
+/* ===== Cards ===== */
+.card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: 32px 36px;
+  margin-bottom: 28px;
+}
+
+.card h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--primary);
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.card h2 .icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.card h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 24px 0 12px;
+}
+
+.card h4 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 18px 0 10px;
+}
+
+.card p {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.card ul, .card ol {
+  padding-left: 20px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.card ul li, .card ol li {
+  margin-bottom: 6px;
+}
+
+/* ===== Flow Diagram ===== */
+.flow-diagram {
+  background: #1a2332;
+  border-radius: var(--radius);
+  padding: 24px 28px;
+  margin: 16px 0;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.6;
+  color: #c9d1d9;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.flow-diagram .comment { color: #6b7280; }
+.flow-diagram .highlight { background: rgba(196,93,62,0.2); display: inline-block; width: 100%; margin: 0 -28px; padding: 0 28px; color: #f6a98a; }
+.flow-diagram .green { color: #4ade80; }
+.flow-diagram .yellow { color: #fbbf24; }
+.flow-diagram .red { color: #f87171; }
+.flow-diagram .blue { color: #60a5fa; }
+.flow-diagram .purple { color: #c084fc; }
+.flow-diagram .arrow { color: #6b7280; }
+
+/* ===== Vertical Flow ===== */
+.vertical-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 16px 0;
+}
+
+.vflow-step {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+}
+
+.vflow-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 80px;
+  flex-shrink: 0;
+}
+
+.vflow-dot {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+  z-index: 1;
+}
+
+.vflow-line {
+  width: 2px;
+  flex: 1;
+  background: var(--border);
+  min-height: 24px;
+}
+
+.vflow-content {
+  flex: 1;
+  background: var(--surface-alt);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  margin-bottom: 12px;
+}
+
+.vflow-content h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 8px;
+}
+
+.vflow-content p {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.vflow-tags {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.vflow-tag {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 500;
+}
+
+.tag-time { background: rgba(5,150,105,0.1); color: var(--positive); }
+.tag-api { background: rgba(26,58,74,0.1); color: var(--primary); }
+.tag-data { background: rgba(196,93,62,0.1); color: var(--accent); }
+
+/* ===== Code Blocks ===== */
+pre {
+  background: #1a2332;
+  color: #e2e8f0;
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.75;
+  overflow-x: auto;
+  margin: 14px 0 16px;
+}
+
+pre .comment { color: #6b7f99; font-style: italic; }
+pre .keyword { color: #c792ea; }
+pre .string { color: #c3e88d; }
+pre .number { color: #f78c6c; }
+pre .func { color: #82aaff; }
+pre .operator { color: #89ddff; }
+pre .variable { color: #f07178; }
+pre .type { color: #ffcb6b; }
+pre .param { color: #e2e8f0; }
+pre .highlight { background: rgba(196,93,62,0.15); display: inline-block; width: 100%; margin: 0 -24px; padding: 0 24px; }
+pre .hl-green { background: rgba(5,150,105,0.12); }
+pre .hl-yellow { background: rgba(217,119,6,0.12); }
+
+/* ===== Tables ===== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin: 12px 0;
+}
+
+table th {
+  background: var(--surface-alt);
+  font-weight: 600;
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 2px solid var(--border);
+  color: var(--text);
+  white-space: nowrap;
+}
+
+table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-light);
+  color: var(--text-secondary);
+  vertical-align: top;
+}
+
+table tr:last-child td { border-bottom: none; }
+
+table td:last-child { text-align: right; font-family: var(--mono); font-size: 12px; }
+
+/* ===== Info Boxes ===== */
+.key-point {
+  background: rgba(5,150,105,0.06);
+  border-left: 3px solid var(--positive);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 12px 16px;
+  margin: 14px 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.key-point strong { color: var(--positive); }
+
+.warn-point {
+  background: var(--warning-light);
+  border-left: 3px solid var(--warning);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 12px 16px;
+  margin: 14px 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.warn-point strong { color: var(--warning); }
+
+.formula-box {
+  background: rgba(26,58,74,0.04);
+  border-left: 3px solid var(--primary);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 14px 18px;
+  margin: 14px 0;
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.8;
+}
+
+.formula-box .label {
+  font-family: var(--font);
+  font-weight: 600;
+  color: var(--primary);
+  margin-right: 8px;
+}
+
+/* ===== Algorithm Visualization ===== */
+.algo-viz {
+  background: var(--surface-alt);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin: 14px 0;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-x: auto;
+}
+
+.algo-viz .level {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.algo-viz .level-label {
+  width: 80px;
+  flex-shrink: 0;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.algo-viz .bars {
+  display: flex;
+  gap: 2px;
+}
+
+.algo-viz .bar {
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  color: #fff;
+  font-weight: 600;
+  border-radius: 2px;
+  min-width: 30px;
+}
+
+.algo-viz .bar-full { background: var(--primary); }
+.algo-viz .bar-diff { background: var(--warning); }
+.algo-viz .bar-ok { background: var(--positive); }
+.algo-viz .bar-empty { background: var(--border); color: var(--text-muted); }
+.algo-viz .bar-del { background: var(--negative); }
+
+/* ===== Comparison Grid ===== */
+.compare-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin: 16px 0;
+}
+
+.compare-item {
+  background: var(--surface-alt);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  padding: 16px;
+  text-align: center;
+}
+
+.compare-item .c-num {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--primary);
+  font-family: var(--mono);
+}
+
+.compare-item .c-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.compare-item .c-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+/* ===== Section Divider ===== */
+.section-divider {
+  text-align: center;
+  margin: 40px 0 28px;
+  position: relative;
+}
+
+.section-divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--border);
+}
+
+.section-divider span {
+  position: relative;
+  background: var(--bg);
+  padding: 0 20px;
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* ===== Footer ===== */
+.page-footer {
+  text-align: center;
+  padding: 24px;
+  color: var(--text-muted);
+  font-size: 12px;
+  border-top: 1px solid var(--border-light);
+  margin-top: 40px;
+}
+
+@media (max-width: 640px) {
+  .container { padding: 24px 14px 60px; }
+  .card { padding: 20px 16px; }
+  .compare-grid { grid-template-columns: 1fr; }
+  .flow-diagram { font-size: 10px; }
+}
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div class="badge">技术方案文档</div>
+  <h1>库存流水增量同步方案</h1>
+  <p class="subtitle">含删除检测 — 分段二分查找算法 · 三层架构 · 效率优化</p>
+</div>
+
+<div class="container">
+
+  <!-- ========== 概述 ========== -->
+  <div class="card">
+    <h2><span class="icon" style="background:rgba(26,58,74,0.1);color:var(--primary)">📋</span> 一、问题背景与核心挑战</h2>
+
+    <p>库存流水同步面临三重挑战：<strong>新增数据</strong>（入库、出库）需要拉取、<strong>更新数据</strong>（成本修改、数量变更）需要同步、<strong>删除数据</strong>需要检测并清理本地冗余记录。</p>
+
+    <p>其中删除数据的检测是最复杂的环节，因为系统存在两层删除机制：</p>
+
+    <ul>
+      <li><strong>软删除</strong>（dflag=1）：记录保留在数据表中，可通过 <code>dflag=1 AND modstm &gt; lastSync</code> 查询检测</li>
+      <li><strong>硬删除</strong>（DELETE）：记录从数据表中彻底消失，无任何痕迹，无法通过查询检测已不存在的 ID</li>
+    </ul>
+
+    <div class="warn-point">
+      <strong>核心矛盾</strong>：硬删除后，服务器上没有任何信息能告诉你"这条记录曾经存在且被删除了"。因此，纯时间戳方案无法检测硬删除，<strong>必须引入全量 ID 比对</strong>机制。
+    </div>
+
+    <h3>方案目标</h3>
+
+    <div class="compare-grid">
+      <div class="compare-item">
+        <div class="c-num">&lt;1s</div>
+        <div class="c-label">快速预检</div>
+        <div class="c-desc">打开页面自动执行，快速判断是否有变化</div>
+      </div>
+      <div class="compare-item">
+        <div class="c-num">3~8s</div>
+        <div class="c-label">日常同步</div>
+        <div class="c-desc">用户点击同步后完成，包含删除检测</div>
+      </div>
+      <div class="compare-item">
+        <div class="c-num">&lt;15%</div>
+        <div class="c-label">差异阈值</div>
+        <div class="c-desc">超过此阈值直接触发全量同步提示</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 三层架构总览 ========== -->
+  <div class="card">
+    <h2><span class="icon" style="background:rgba(5,150,105,0.1);color:var(--positive)">🏗️</span> 二、三层增量同步架构</h2>
+
+    <p>整体采用三层架构，由轻到重、由快到准、逐层递进：</p>
+
+    <div class="flow-diagram">┌─────────────────────────────────────────────────────────────────────────────┐
+│                    增量同步三层架构 — 总览                                    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  用户打开页面                                                                │
+│      │                                                                     │
+│      ▼                                                                     │
+│  ┌─────────────────────────────────────────────────────────────────┐        │
+│  │  第一层：快速预检（2 次 API，&lt;1s）                                  │        │
+│  │                                                                   │        │
+│  │  serverCount + serverMaxId  vs  localCount + localMaxId           │        │
+│  │                                                                   │        │
+│  │  ├── 一致 ──────────────────→  「已是最新」✅，结束               │        │
+│  │  │                                                                   │        │
+│  │  └── 不一致 ───────────────→ 进入第二层                           │        │
+│  └─────────────────────────────────────────────────────────────────┘        │
+│                              │                                                 │
+│                              ▼                                                 │
+│  ┌─────────────────────────────────────────────────────────────────┐        │
+│  │  第二层：时间戳增量 + 分段二分删除检测（用户点击同步时）            │        │
+│  │                                                                   │        │
+│  │  ① 新增+更新：creatstm/modstm &gt; lastSync  → bulkPut             │        │
+│  │  ①.⑤ 执行数据增量：dtime &gt; lastUpdateTimestamp → bulkPut          │        │
+│  │  ② 删除检测：分段 COUNT + 二分查找定位删除 ID  → bulkDelete       │        │
+│  │  ③ 库存快照：全量覆盖                                             │        │
+│  │                                                                   │        │
+│  │  日常耗时：3~8s     最坏耗时：15~20s                               │        │
+│  └─────────────────────────────────────────────────────────────────┘        │
+│                              │                                                 │
+│                              ▼                                                 │
+│  ┌─────────────────────────────────────────────────────────────────┐        │
+│  │  第三层：定期全量校准（7天 / 用户手动）                            │        │
+│  │                                                                   │        │
+│  │  全量 ID 比对 + 全量数据重拉 ──→ 消除一切漂移                     │        │
+│  │  耗时：15~30s（低频，不影响日常体验）                            │        │
+│  └─────────────────────────────────────────────────────────────────┘        │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘</div>
+
+    <div class="key-point">
+      <strong>设计原则</strong>：日常使用中，用户感知到的同步操作应该在 3~8 秒内完成，同时保证数据完整准确。第一层预检在页面打开时静默执行，用户无感知。第三层全量校准仅在必要时（7天周期或用户手动）触发。
+    </div>
+  </div>
+
+  <!-- ========== 第一层 ========== -->
+  <div class="card">
+    <h2><span class="icon" style="background:rgba(5,150,105,0.1);color:var(--positive)">①</span> 三、第一层：快速预检</h2>
+
+    <h3>3.1 流程图</h3>
+
+    <div class="flow-diagram">┌───────────────────────────────────────────────────────────────────────────┐
+│                      第一层：快速预检（页面加载时自动执行）                        │
+├───────────────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│  开始                                                                      │
+│    │                                                                      │
+│    ▼                                                                      │
+│  ┌──────────────────────┐                                                 │
+│  │  ① 查询服务器 COUNT   │  1次API   SELECT count(1) WHERE dflag!=1       │
+│  └──────────┬───────────┘                                                 │
+│             │                                                              │
+│             ▼                                                              │
+│  ┌──────────────────────┐                                                 │
+│  │  ② 查询服务器 MAX(id) │  1次API   SELECT max(id) WHERE dflag!=1         │
+│  └──────────┬───────────┘                                                 │
+│             │                                                              │
+│             ▼                                                              │
+│  ┌──────────────────────┐                                                 │
+│  │  ③ 查询本地 COUNT     │  Dexie本地   db.transactions.count()            │
+│  └──────────┬───────────┘                                                 │
+│             │                                                              │
+│             ▼                                                              │
+│  ┌──────────────────────┐                                                 │
+│  │  ④ 查询本地 MAX(id)   │  Dexie本地   db.transactions.orderBy('id').last │
+│  └──────────┬───────────┘                                                 │
+│             │                                                              │
+│             ▼                                                              │
+│        ┌────┴────┐                                                        │
+│        │ 比对两个维度 │                                                    │
+│        └────┬────┘                                                        │
+│             │                                                              │
+│    ┌────────┴────────┐                                                    │
+│    │                  │                                                    │
+│  count相等?       maxId相等?                                              │
+│    │                  │                                                    │
+│    ├─── 是 ───┐   ┌──┴──┐                                                │
+│    │          │   │     │                                                │
+│    ▼          ▼   ▼     ▼                                                │
+│   继续      count≠server   maxId≠server                                   │
+│   检查          │     │                                                   │
+│   maxId         ▼     ▼                                                   │
+│              都不一致 ──→ 显示「有变化」，等待用户点击同步                        │
+│              └─────────┘                                                    │
+│                   │                                                         │
+│                任一不相等 ──→ 显示「有变化」，等待用户点击同步                      │
+│                                                                            │
+└───────────────────────────────────────────────────────────────────────────┘</div>
+
+    <h3>3.2 API 调用</h3>
+
+    <pre><span class="comment">// 查询服务器总记录数</span>
+<span class="keyword">await</span> <span class="func">fetchTotalCount</span>(<span class="string">'libitem'</span>, <span class="string">'dflag != 1 AND status = 1'</span>);
+
+<span class="comment">// 查询服务器最大 ID</span>
+<span class="keyword">await</span> <span class="func">_sendRequest</span>({
+  <span class="string">cmd</span>: <span class="string">'load_data'</span>,
+  <span class="string">dtname</span>: <span class="string">'libitem'</span>,
+  <span class="string">field</span>: <span class="string">'max(id) maxid'</span>,  <span class="comment">// 聚合查询，只返回1条记录</span>
+  <span class="string">where</span>: <span class="string">'dflag != 1 AND status = 1'</span>,
+  <span class="string">flag</span>: <span class="number">1</span>
+});</pre>
+
+    <h3>3.3 效率指标</h3>
+
+    <table>
+      <thead>
+        <tr><th>维度</th><th>数值</th><th>说明</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>API 调用次数</td><td>2 次</td><td>COUNT + MAX(id)</td></tr>
+        <tr><td>网络耗时</td><td>&lt;500ms</td><td>每次返回 1 条数据</td></tr>
+        <tr><td>MySQL 负载</td><td>极低</td><td>COUNT 和 MAX 走索引，极快</td></tr>
+        <tr><td>Dexie 本地查询</td><td>&lt;100ms</td><td>count() 和 orderBy('id').last()</td></tr>
+        <tr><td><strong>总耗时</strong></td><td><strong>&lt;1s</strong></td><td>用户无感知</td></tr>
+      </tbody>
+    </table>
+
+    <div class="key-point">
+      <strong>极端场景说明</strong>：如果恰好删除了 1 条 ID=100，又新增了 1 条 ID=200，COUNT 和 MAX(id) 都可能保持一致，此时会漏检。但这种情况由定期全量校准兜底，日常概率极低。
+    </div>
+  </div>
+
+  <!-- ========== 第二层 ========== -->
+  <div class="card">
+    <h2><span class="icon" style="background:rgba(196,93,62,0.1);color:var(--accent)">②</span> 四、第二层：时间戳增量 + 分段二分删除检测</h2>
+
+    <p>当第一层检测到差异后，用户点击"同步"按钮触发第二层。此层完成三件事：拉取新增/更新 → 检测并删除 → 同步库存快照。</p>
+
+    <h3>4.1 整体流程</h3>
+
+    <div class="flow-diagram">┌───────────────────────────────────────────────────────────────────────────┐
+│              第二层：时间戳增量 + 分段二分删除检测（用户点击同步时）               │
+├───────────────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│  Step 1: 新增+更新 ──── 时间戳查询 ────────────────────────────────────── │
+│  │                                                                          │
+│  │  SELECT * FROM libitem                                                   │
+│  │  WHERE dflag != 1 AND status = 1                                        │
+│  │    AND (creatstm &gt; lastSync OR modstm &gt; lastSync)                  │
+│  │                                                                          │
+│  │  → 返回 10~500 条增量记录                                                │
+│  │  → <span class="hl-green">bulkPut(records)</span>  写入本地 IndexedDB                          │
+│  │                                                                          │
+│  └───────────────────────────────────────────────────────────────────────┘ │
+│                              │                                               │
+│                              ▼                                               │
+│  Step 2: 删除检测 ──── 分段二分查找 ────────────────────────────────────── │
+│  │                                                                          │
+│  │  ① 计算本地 maxId，确定分段数量                                          │
+│  │  ② 对每段执行：服务器 COUNT vs 本地 COUNT                                │
+│  │  ③ 对差异段执行：二分查找定位具体删除 ID                                 │
+│  │  ④ bulkDelete(deletedIds) 删除本地多余记录                              │
+│  │                                                                          │
+│  │  日常耗时：3~8s                                                          │
+│  │  最坏耗时：15~20s                                                        │
+│  │                                                                          │
+│  └───────────────────────────────────────────────────────────────────────┘ │
+│                              │                                               │
+│                              ▼                                               │
+│  Step 3: 库存快照 ──── 全量覆盖 ────────────────────────────────────────── │
+│  │                                                                          │
+│  │  syncClearInventory()                                                    │
+│  │  syncBatchWriteInventory(invData)                                        │
+│  │  → 通常 &lt;1000 条，1~2s                                               │
+│  │                                                                          │
+│  └───────────────────────────────────────────────────────────────────────┘ │
+│                              │                                               │
+│                              ▼                                               │
+│  Step 4: 更新同步元信息                                                     │
+│                                                                            │
+│  lastSyncTime = 服务器当前时间                                              │
+│  syncSaveSyncMeta({ last_sync_time, last_sync_mode: 'incremental', ... })  │
+│                                                                            │
+└───────────────────────────────────────────────────────────────────────────┘</div>
+
+    <h3>4.2 Step 1: 时间戳增量（新增+更新）</h3>
+
+    <pre><span class="keyword">async function</span> <span class="func">fetchIncrementalChanges</span>(lastSyncTime) {
+  <span class="comment">// 新增 + 更新的记录</span>
+  <span class="keyword">const</span> changed = <span class="keyword">await</span> <span class="func">_sendRequest</span>({
+    <span class="string">cmd</span>: <span class="string">'load_data'</span>,
+    <span class="string">dtname</span>: <span class="string">'libitem'</span>,
+    <span class="string">field</span>: <span class="string">'id,type,lib,pid,nin,nout,num,date,sdate,cprice,status,creatstm,modstm,...'</span>,
+    <span class="string">where</span>: <span class="string">`dflag != 1 AND status = 1 AND (creatstm &gt; '${lastSyncTime}' OR modstm &gt; '${lastSyncTime}')`</span>,
+    <span class="string">flag</span>: <span class="number">1</span>
+  });
+
+  <span class="comment">// 软删除的记录（如果软删除时 modstm 有更新）</span>
+  <span class="keyword">const</span> softDeleted = <span class="keyword">await</span> <span class="func">_sendRequest</span>({
+    <span class="string">cmd</span>: <span class="string">'load_data'</span>,
+    <span class="string">dtname</span>: <span class="string">'libitem'</span>,
+    <span class="string">field</span>: <span class="string">'id'</span>,
+    <span class="string">where</span>: <span class="string">`dflag = 1 AND modstm &gt; '${lastSyncTime}'`</span>,
+    <span class="string">flag</span>: <span class="number">1</span>
+  });
+
+  <span class="keyword">return</span> {
+    <span class="string">changed</span>: (changed.data || []).map(<span class="func">_mapFlowItem</span>),
+    <span class="string">softDeletedIds</span>: (softDeleted.data || []).map(<span class="variable">r</span> => parseInt(<span class="variable">r</span>.id, <span class="number">10</span>))
+  };
+}</pre>
+
+    <h3>4.2.5 Step 1.5: 执行数据增量刷新（dtime 执行时间戳）</h3>
+
+    <p>Step 1 基于 <code>creatstm/modstm</code> 捕获的是<strong>填单层</strong>的变更（新建、修改、软删除）。但在业务系统中，流水还有一层<strong>执行层</strong>的变更——审核通过、执行时间修改等，这些变更会更新 <code>dtime</code>（执行时间戳，Unix timestamp），但 <strong>不会更新</strong> <code>creatstm/modstm</code>。</p>
+
+    <div class="formula-box">
+      <span class="label">问题</span><br>
+      仅靠 creatstm/modstm 增量查询，会遗漏执行层数据变更。<br>
+      例如：一条流水昨天填单（creatstm=昨天），今天审核通过（dtime=今天的时间戳），<br>
+      但 modstm 未更新 → Step 1 查不到 → 本地 dtime 仍为旧值 → 台账计算错误。
+    </div>
+
+    <p>因此，在 Step 1 之后增加 <strong>Step 1.5</strong>，基于独立的 <code>last_update_timestamp</code>（Unix秒级时间戳），按 <code>dtime</code> 直接比对查询执行数据增量：</p>
+
+    <pre><span class="keyword">async function</span> <span class="func">fetchExecutionChanges</span>(lastUpdateTimestamp) {
+  <span class="comment">// dtime 是执行时间戳（Unix timestamp），直接用数值比对</span>
+  <span class="keyword">const</span> whereCond = <span class="string">`dflag != 1 AND status = 1 AND dtime &gt; ${lastUpdateTimestamp}`</span>;
+
+  <span class="keyword">const</span> json = <span class="keyword">await</span> <span class="func">_sendRequest</span>({
+    <span class="string">cmd</span>: <span class="string">'load_data'</span>,
+    <span class="string">dtname</span>: <span class="string">'libitem'</span>,
+    <span class="string">field</span>: <span class="string">'id,type,lib,pid,nin,nout,num,date,sdate,dtime,cprice,cost_money_rate,...'</span>,
+    <span class="string">where</span>: whereCond,
+    <span class="string">flag</span>: <span class="number">1</span>
+  });
+
+  <span class="keyword">return</span> (json.data || []).map(<span class="func">_mapFlowItem</span>);
+}</pre>
+
+    <h4>双时间戳互补机制</h4>
+
+    <table style="width:100%;border-collapse:collapse;margin:16px 0;font-size:13px">
+      <thead><tr style="background:var(--surface-alt)">
+        <th style="padding:8px 12px;text-align:left;border-bottom:2px solid var(--border)">场景</th>
+        <th style="padding:8px 12px;text-align:center;border-bottom:2px solid var(--border)">Step 1<br><code>creatstm/modstm</code></th>
+        <th style="padding:8px 12px;text-align:center;border-bottom:2px solid var(--border)">Step 1.5<br><code>dtime</code></th>
+      </tr></thead>
+      <tbody>
+        <tr><td style="padding:6px 12px;border-bottom:1px solid var(--border-light)">新建流水（填单）</td><td style="padding:6px 12px;text-align:center;border-bottom:1px solid var(--border-light)">✅ creatstm 更新</td><td style="padding:6px 12px;text-align:center;border-bottom:1px solid var(--border-light)">❌ dtime 可能为0</td></tr>
+        <tr><td style="padding:6px 12px;border-bottom:1px solid var(--border-light)">修改流水（改数量/成本）</td><td style="padding:6px 12px;text-align:center;border-bottom:1px solid var(--border-light)">✅ modstm 更新</td><td style="padding:6px 12px;text-align:center;border-bottom:1px solid var(--border-light)">❌ dtime 可能不变</td></tr>
+        <tr><td style="padding:6px 12px;border-bottom:1px solid var(--border-light)">审核通过（执行时间变更）</td><td style="padding:6px 12px;text-align:center;border-bottom:1px solid var(--border-light)">❌ creatstm/modstm 可能不变</td><td style="padding:6px 12px;text-align:center;border-bottom:1px solid var(--border-light)">✅ dtime 更新</td></tr>
+        <tr><td style="padding:6px 12px">执行时间被修改</td><td style="padding:6px 12px;text-align:center">❌ creatstm/modstm 可能不变</td><td style="padding:6px 12px;text-align:center">✅ dtime 更新</td></tr>
+      </tbody>
+    </table>
+
+    <div class="formula-box">
+      <span class="label">结论</span><br>
+      <code>creatstm/modstm</code> 捕获<strong>填单层</strong>变更，<code>dtime</code>（执行时间戳）捕获<strong>执行层</strong>变更。两者互补，缺一不可。<br><br>
+      <code>last_sync_time</code> 存储为字符串格式（<code>'YYYY-MM-DD HH:mm:ss'</code>），<code>last_update_timestamp</code> 存储为 Unix 秒级时间戳数值，两者在同步完成时分别写入。
+    </div>
+
+    <h4>4.2.6 写入语义：bulkPut = Upsert（覆盖写）</h4>
+
+    <p>Step 1 和 Step 1.5 的增量数据都通过 <code>syncBatchWriteTransactions</code> 写入本地 IndexedDB，底层调用 Dexie.js 的 <code>bulkPut</code> 方法。其语义为 <strong>Upsert</strong>（存在则覆盖，不存在则插入）：</p>
+
+    <table style="width:100%;border-collapse:collapse;margin:16px 0;font-size:13px">
+      <thead><tr style="background:var(--surface-alt)">
+        <th style="padding:8px 12px;text-align:left;border-bottom:2px solid var(--border)">主键 ID 状态</th>
+        <th style="padding:8px 12px;text-align:left;border-bottom:2px solid var(--border)">bulkPut 行为</th>
+        <th style="padding:8px 12px;text-align:left;border-bottom:2px solid var(--border)">说明</th>
+      </tr></thead>
+      <tbody>
+        <tr><td style="padding:6px 12px;border-bottom:1px solid var(--border-light)">本地不存在该 ID</td><td style="padding:6px 12px;border-bottom:1px solid var(--border-light)"><strong>Insert</strong> — 插入新记录</td><td style="padding:6px 12px;border-bottom:1px solid var(--border-light)">新增流水首次同步到本地</td></tr>
+        <tr><td style="padding:6px 12px">本地已存在该 ID</td><td style="padding:6px 12px"><strong>覆盖写</strong> — 用新数据整体替换旧记录</td><td style="padding:6px 12px">已有流水的字段值被最新数据覆盖</td></tr>
+      </tbody>
+    </table>
+
+    <div class="formula-box">
+      <span class="label">注意</span><br>
+      <code>bulkPut</code> 是<strong>整行覆盖</strong>，不是字段级合并。如果 API 返回的记录缺少某个字段（如 <code>cprice</code> 为空），覆盖后该字段也会变为空值。<br>
+      当前 <code>fetchIncrementalChanges</code> 和 <code>fetchExecutionChanges</code> 均请求了完整的 field 列表，因此不存在字段丢失的风险。<br><br>
+      这与 <code>bulkAdd</code> 不同——<code>bulkAdd</code> 遇到已存在的主键会抛出 <code>ConstraintError</code>，不适合增量同步场景。
+    </div>
+
+    <h4>4.2.7 Step 1 与 Step 1.5 的数据重叠处理</h4>
+
+    <p>Step 1 按 <code>creatstm/modstm</code> 拉取增量，Step 1.5 按 <code>dtime</code> 拉取增量，两者可能返回<strong>相同 ID 的记录</strong>（一条流水既修改了填单信息又变更了执行时间）。由于都使用 <code>bulkPut</code>（Upsert 语义），重复写入不会产生数据错误，只是多做了一次覆盖写。</p>
+
+    <table style="width:100%;border-collapse:collapse;margin:16px 0;font-size:13px">
+      <thead><tr style="background:var(--surface-alt)">
+        <th style="padding:8px 12px;text-align:left;border-bottom:2px solid var(--border)">步骤</th>
+        <th style="padding:8px 12px;text-align:left;border-bottom:2px solid var(--border)">写入函数</th>
+        <th style="padding:8px 12px;text-align:left;border-bottom:2px solid var(--border)">语义</th>
+        <th style="padding:8px 12px;text-align:left;border-bottom:2px solid var(--border)">已存在时行为</th>
+      </tr></thead>
+      <tbody>
+        <tr><td style="padding:6px 12px;border-bottom:1px solid var(--border-light)">Step 1: <code>creatstm/modstm</code> 增量</td><td style="padding:6px 12px;border-bottom:1px solid var(--border-light)"><code>bulkPut</code></td><td style="padding:6px 12px;border-bottom:1px solid var(--border-light)">Upsert</td><td style="padding:6px 12px;border-bottom:1px solid var(--border-light)">覆盖写</td></tr>
+        <tr><td style="padding:6px 12px;border-bottom:1px solid var(--border-light)">Step 1.5: <code>dtime</code> 增量</td><td style="padding:6px 12px;border-bottom:1px solid var(--border-light)"><code>bulkPut</code></td><td style="padding:6px 12px;border-bottom:1px solid var(--border-light)">Upsert</td><td style="padding:6px 12px;border-bottom:1px solid var(--border-light)">覆盖写</td></tr>
+        <tr><td style="padding:6px 12px">Step 3: 库存快照</td><td style="padding:6px 12px"><code>bulkPut</code>（先清空再写）</td><td style="padding:6px 12px">Insert</td><td style="padding:6px 12px">不可能重复</td></tr>
+      </tbody>
+    </table>
+
+    <h3>4.3 Step 2: 分段二分删除检测 — 核心算法</h3>
+
+    <p>这是整个方案的核心创新点。当第一层检测到差异后，进入删除检测阶段。传统方式是全量拉取 10 万个 ID 做比对。我们用<strong>分段二分查找</strong>将日常场景的 ID 传输量降低 80%+。</p>
+
+    <h4>4.3.1 核心思想</h4>
+
+    <div class="formula-box">
+      <span class="label">洞察</span><br>
+      10 万条数据中，真正被删除的 ID 通常只有几十~几百个（占比 &lt;3%）<br><br>
+      如果每 1 万条 ID 为一个段，则只有 1~3 个段包含删除<br>
+      只需拉取这 1~3 个差异段的 ID，其余 7~9 个段直接跳过
+    </div>
+
+    <h4>4.3.2 分段 COUNT 粗定位</h4>
+
+    <div class="flow-diagram">┌───────────────────────────────────────────────────────────────────────────┐
+│                  分段 COUNT 粗定位 — 快速排除无差异段                          │
+├───────────────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│  本地 maxId = 100,500  →  分为 10 段，每段约 10,000 个 ID                   │
+│                                                                            │
+│  段1: id[    1 ~  10000]   server:  9876   local: 9876   ✅ 一致，跳过       │
+│  段2: id[10001 ~  20000]   server:  9950   local: 9950   ✅ 一致，跳过       │
+│  段3: id[20001 ~  30000]   server:  9980   local: 9980   ✅ 一致，跳过       │
+│  段4: id[30001 ~  40000]   server:  <span class="hl-yellow"> 9968</span>   local: <span class="hl-yellow">9972</span>   <span class="hl-yellow">❌ 差 4 条 → 进入二分</span>    │
+│  段5: id[40001 ~  50000]   server: 10000   local:10000   ✅ 一致，跳过       │
+│  段6: id[50001 ~  60000]   server:  9988   local: 9988   ✅ 一致，跳过       │
+│  段7: id[60001 ~  70000]   server: <span class="hl-yellow"> 9940</span>   local: <span class="hl-yellow">9960</span>   <span class="hl-yellow">❌ 差 20 条 → 进入二分</span>  │
+│  段8: id[70001 ~  80000]   server: 10020   local:10020   ✅ 一致，跳过       │
+│  段9: id[80001 ~  90000]   server:  9990   local: 9990   ✅ 一致，跳过       │
+│  段10:id[90001 ~ 100500]   server: 10000   local:10000   ✅ 一致，跳过       │
+│                                                                            │
+│  结果：10 次 COUNT 查询（每次1条返回），只对 2 个差异段（段4、段7）          │
+│       执行第二步：二分查找精确定位删除 ID                                     │
+│                                                                            │
+└───────────────────────────────────────────────────────────────────────────┘</div>
+
+    <h4>4.3.3 二分查找精确定位删除 ID</h4>
+
+    <div class="flow-diagram">┌───────────────────────────────────────────────────────────────────────────┐
+│              二分查找 — 精确定位段内的删除 ID（以段7 为例）                      │
+├───────────────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│  段7: id[60001 ~ 70000]  已知差 20 条                                        │
+│                                                                            │
+│  ── 第一层二分 ─────────────────────────────────────────────────────────── │
+│                                                                            │
+│  前半: id[60001 ~ 65000]   server: 4990   local: 4990   ✅ 一致            │
+│  后半: id[65001 ~ 70000]   server: <span class="hl-yellow"> 4950</span>   local: <span class="hl-yellow"> 4970</span>   ❌ 差 20 条            │
+│                   ↑                                                       │
+│              差异在前半段，继续二分                                         │
+│                                                                            │
+│  ── 第二层二分 ─────────────────────────────────────────────────────────── │
+│                                                                            │
+│  后半前半: id[65001 ~ 67500]  server: <span class="hl-yellow"> 2480</span>  local: <span class="hl-yellow"> 2495</span>  ❌ 差 15 条      │
+│  后半后半: id[67501 ~ 70000]  server:  2470   local:  2475   ❌ 差 5 条      │
+│                   ↑                                                       │
+│              两半都有差异，继续二分                                         │
+│                                                                            │
+│  ── 第三层二分 ─────────────────────────────────────────────────────────── │
+│                                                                            │
+│  [65001~66250]: server: 1240  local: 1240   ✅ 一致                       │
+│  [66251~67500]: server: <span class="hl-yellow"> 1240</span>  local: <span class="hl-yellow"> 1255</span>  ❌ 差 15 条      │
+│  [67501~68750]: server:  1240  local:  1240   ✅ 一致                       │
+│  [68751~70000]: server:  1230  local:  1235   ❌ 差 5 条                   │
+│                                                                            │
+│  ── 第四层二分 ─────────────────────────────────────────────────────────── │
+│                                                                            │
+│  [66251~66875]: server:  625  local:  640   ❌ 差 15 条（继续）            │
+│  [66876~67500]: server:  615  local:  615   ✅ 一致                       │
+│  [68751~69375]: server:  615  local:  620   ❌ 差 5 条（继续）            │
+│  [69376~70000]: server:  615  local:  615   ✅ 一致                       │
+│                                                                            │
+│  ── 继续直到范围 &lt; 100，切换策略 ─────────────────────────────────────── │
+│                                                                            │
+│  [66251~66350]: 拉取服务器该范围全部 ID → 逐个比对 → 找出 15 个删除 ID       │
+│  [68751~68850]: 拉取服务器该范围全部 ID → 逐个比对 → 找出 5 个删除 ID        │
+│                                                                            │
+│  总计：拉取约 200 个 ID，找到 20 个删除 ID → bulkDelete()                  │
+│       相比直接拉取段内全部 10000 个 ID，节省 98% 的传输量                     │
+│                                                                            │
+└───────────────────────────────────────────────────────────────────────────┘</div>
+
+    <h4>4.3.4 算法伪代码</h4>
+
+    <pre><span class="comment">/**
+ * 分段二分查找 — 检测本地多余记录（被硬删除的 ID）
+ * @param {number} localMaxId - 本地最大 ID
+ * @param {number} segmentSize - 每段大小，默认 10000
+ * @param {number} threshold - 范围小于此值时切换为逐个比对，默认 100
+ * @returns {Promise&lt;number[]&gt;} 被删除的 ID 列表
+ */</span>
+<span class="keyword">async function</span> <span class="func">detectDeletedIds</span>(localMaxId, segmentSize = <span class="number">10000</span>, threshold = <span class="number">100</span>) {
+
+  <span class="comment">// ========== 第一步：分段 COUNT 粗定位 ==========</span>
+  <span class="keyword">const</span> segmentCount = Math.ceil(localMaxId / segmentSize);
+  <span class="keyword">const</span> diffSegments = [];
+
+  <span class="keyword">for</span> (<span class="keyword">let</span> seg = <span class="number">0</span>; seg &lt; segmentCount; seg++) {
+    <span class="keyword">const</span> lo = seg * segmentSize + <span class="number">1</span>;
+    <span class="keyword">const</span> hi = Math.min((seg + <span class="number">1</span>) * segmentSize, localMaxId);
+
+    <span class="comment">// 服务器 COUNT（只返回 1 条记录，极轻量）</span>
+    <span class="keyword">const</span> serverCount = <span class="keyword">await</span> <span class="func">fetchSegmentCount</span>(lo, hi);
+
+    <span class="comment">// 本地 COUNT</span>
+    <span class="keyword">const</span> localCount = <span class="keyword">await</span> syncDB.transactions
+      .where(<span class="string">'id'</span>).between(lo, hi, <span class="keyword">true</span>, <span class="keyword">true</span>).count();
+
+    <span class="keyword">if</span> (serverCount !== localCount) {
+      diffSegments.push({ lo, hi, diff: localCount - serverCount });
+    }
+  }
+
+  <span class="comment">// ========== 第二步：根据差异段数 K 动态选择策略 ==========</span>
+  <span class="keyword">const</span> K = diffSegments.length;
+  <span class="keyword">const</span> FULL_ID_API_COST = Math.ceil(localMaxId / <span class="number">2000</span>);  <span class="comment">// 全量 ID 拉取的 API 次数</span>
+  <span class="keyword">const</span> BINARY_API_COST = <span class="number">10</span> + K * Math.ceil(Math.log2(segmentSize / threshold));  <span class="comment">// 二分的预估 API 次数</span>
+
+  <span class="keyword">const</span> deletedIds = [];
+
+  <span class="keyword">if</span> (K === <span class="number">0</span>) {
+    <span class="comment">// 无差异段，无需任何操作</span>
+    <span class="keyword">return</span> [];
+  } <span class="keyword">else if</span> (BINARY_API_COST &lt;= FULL_ID_API_COST) {
+    <span class="comment">// K 较小，二分更省 → 继续二分查找</span>
+    <span class="keyword">for</span> (<span class="keyword">const</span> seg <span class="keyword">of</span> diffSegments) {
+      <span class="keyword">const</span> segDeleted = <span class="keyword">await</span> <span class="func">binarySearchDelete</span>(seg.lo, seg.hi, threshold);
+      deletedIds.push(...segDeleted);
+    }
+  } <span class="keyword">else</span> {
+    <span class="comment">// K 较大，二分反超 → 直接拉取差异段的全量 ID 做比对</span>
+    <span class="keyword">for</span> (<span class="keyword">const</span> seg <span class="keyword">of</span> diffSegments) {
+      <span class="keyword">const</span> segDeleted = <span class="keyword">await</span> <span class="func">segmentFullIdCompare</span>(seg.lo, seg.hi);
+      deletedIds.push(...segDeleted);
+    }
+  }
+
+  <span class="keyword">return</span> deletedIds;
+}
+
+<span class="comment">/**
+ * 差异段全量 ID 比对 — 当差异段数 K 较大时，直接拉取该段全部 ID 做比对
+ * 比 binarySearchDelete 更适合删除量大的场景
+ */</span>
+<span class="keyword">async function</span> <span class="func">segmentFullIdCompare</span>(lo, hi) {
+  <span class="keyword">const</span> serverIds = <span class="keyword">new</span> Set(<span class="keyword">await</span> <span class="func">fetchIdRange</span>(lo, hi));
+  <span class="keyword">const</span> localIds = <span class="keyword">new</span> Set(
+    <span class="keyword">await</span> syncDB.transactions
+      .where(<span class="string">'id'</span>).between(lo, hi, <span class="keyword">true</span>, <span class="keyword">true</span>)
+      .primaryKeys()
+  );
+  <span class="keyword">const</span> deleted = [];
+  <span class="keyword">for</span> (<span class="keyword">const</span> id <span class="keyword">of</span> localIds) {
+    <span class="keyword">if</span> (!serverIds.has(id)) deleted.push(id);
+  }
+  <span class="keyword">return</span> deleted;
+}
+
+<span class="comment">/**
+ * 二分查找 — 在 [lo, hi] 范围内找出被删除的 ID
+ */</span>
+<span class="keyword">async function</span> <span class="func">binarySearchDelete</span>(lo, hi, threshold) {
+  <span class="keyword">if</span> (lo &gt; hi) <span class="keyword">return</span> [];
+
+  <span class="comment">// 范围足够小时，切换为逐个比对策略</span>
+  <span class="keyword">if</span> (hi - lo + <span class="number">1</span> &lt;= threshold) {
+    <span class="keyword">return await</span> <span class="func">bruteForceFindDeleted</span>(lo, hi);
+  }
+
+  <span class="comment">// 二分：取中点</span>
+  <span class="keyword">const</span> mid = Math.floor((lo + hi) / <span class="number">2</span>);
+
+  <span class="comment">// 统计前半段的差异</span>
+  <span class="keyword">const</span> frontServerCount = <span class="keyword">await</span> <span class="func">fetchSegmentCount</span>(lo, mid);
+  <span class="keyword">const</span> frontLocalCount = <span class="keyword">await</span> syncDB.transactions
+    .where(<span class="string">'id'</span>).between(lo, mid, <span class="keyword">true</span>, <span class="keyword">true</span>).count();
+  <span class="keyword">const</span> frontDiff = frontLocalCount - frontServerCount;
+
+  <span class="comment">// 统计后半段的差异</span>
+  <span class="keyword">const</span> backServerCount = <span class="keyword">await</span> <span class="func">fetchSegmentCount</span>(mid + <span class="number">1</span>, hi);
+  <span class="keyword">const</span> backLocalCount = <span class="keyword">await</span> syncDB.transactions
+    .where(<span class="string">'id'</span>).between(mid + <span class="number">1</span>, hi, <span class="keyword">true</span>, <span class="keyword">true</span>).count();
+  <span class="keyword">const</span> backDiff = backLocalCount - backServerCount;
+
+  <span class="comment">// 递归处理差异段</span>
+  <span class="keyword">const</span> results = [];
+  <span class="keyword">if</span> (frontDiff &gt; <span class="number">0</span>) {
+    results.push(...<span class="keyword">await</span> <span class="func">binarySearchDelete</span>(lo, mid, threshold));
+  }
+  <span class="keyword">if</span> (backDiff &gt; <span class="number">0</span>) {
+    results.push(...<span class="keyword">await</span> <span class="func">binarySearchDelete</span>(mid + <span class="number">1</span>, hi, threshold));
+  }
+
+  <span class="keyword">return</span> results;
+}
+
+<span class="comment">/**
+ * 逐个比对 — 范围足够小时，直接拉取并比对
+ */</span>
+<span class="keyword">async function</span> <span class="func">bruteForceFindDeleted</span>(lo, hi) {
+  <span class="comment">// 拉取该范围内所有服务器 ID（只取 id 字段，flag=1，最快）</span>
+  <span class="keyword">const</span> serverIds = <span class="keyword">await</span> <span class="func">fetchIdRange</span>(lo, hi);
+
+  <span class="comment">// 获取本地该范围所有 ID</span>
+  <span class="keyword">const</span> localIds = <span class="keyword">new</span> Set(
+    <span class="keyword">await</span> syncDB.transactions
+      .where(<span class="string">'id'</span>).between(lo, hi, <span class="keyword">true</span>, <span class="keyword">true</span>)
+      .primaryKeys()
+  );
+
+  <span class="comment">// 差集：本地有但服务器没有的 = 被删除的</span>
+  <span class="keyword">const</span> deletedIds = [];
+  <span class="keyword">for</span> (<span class="keyword">const</span> sid <span class="keyword">of</span> serverIds) {
+    localIds.delete(sid);
+  }
+  <span class="keyword">return</span> [...localIds];
+}
+
+<span class="comment">/**
+ * 获取指定 ID 范围内的服务器记录数
+ */</span>
+<span class="keyword">async function</span> <span class="func">fetchSegmentCount</span>(lo, hi) {
+  <span class="keyword">const</span> result = <span class="keyword">await</span> <span class="func">_sendRequest</span>({
+    <span class="string">cmd</span>: <span class="string">'load_data'</span>,
+    <span class="string">dtname</span>: <span class="string">'libitem'</span>,
+    <span class="string">field</span>: <span class="string">'count(1) cnt'</span>,  <span class="comment">// 只返回计数</span>
+    <span class="string">where</span>: <span class="string">`id &gt;= ${lo} AND id &lt;= ${hi} AND dflag != 1 AND status = 1`</span>,
+    <span class="string">flag</span>: <span class="number">1</span>
+  });
+  <span class="keyword">return</span> parseInt(result.data?.[<span class="number">0</span>]?.cnt || <span class="number">0</span>, <span class="number">10</span>);
+}
+
+<span class="comment">/**
+ * 获取指定 ID 范围内的服务器记录 ID 列表（只取 id，最快）
+ */</span>
+<span class="keyword">async function</span> <span class="func">fetchIdRange</span>(lo, hi) {
+  <span class="keyword">const</span> result = <span class="keyword">await</span> <span class="func">_sendRequest</span>({
+    <span class="string">cmd</span>: <span class="string">'load_data'</span>,
+    <span class="string">dtname</span>: <span class="string">'libitem'</span>,
+    <span class="string">field</span>: <span class="string">'id'</span>,  <span class="comment">// 只取 id，极大减少传输量</span>
+    <span class="string">where</span>: <span class="string">`id &gt;= ${lo} AND id &lt;= ${hi} AND dflag != 1 AND status = 1`</span>,
+    <span class="string">flag</span>: <span class="number">1</span>,
+    <span class="string">limit</span>: <span class="number">2000</span>  <span class="comment">// 分页防止单次返回过多</span>
+  });
+  <span class="keyword">return</span> (result.data || []).map(<span class="variable">r</span> => parseInt(<span class="variable">r</span>.id, <span class="number">10</span>));
+}</pre>
+
+    <h4>4.3.5 完整第二层同步函数</h4>
+
+    <pre><span class="keyword">async function</span> <span class="func">doIncrementalSync</span>(lastSyncTime) {
+  <span class="keyword">const</span> log = (<span class="variable">msg</span>, <span class="variable">level</span>) <span class="operator">=&gt;</span> <span class="func">appendLog</span>(<span class="string">`[${<span class="func">now</span>()}] ${msg}`</span>, <span class="variable">level</span>);
+
+  <span class="comment">// ── Step 1: 时间戳增量（新增+更新） ──────────────────────────</span>
+  <span class="func">log</span>(<span class="string">'Step 1: 获取时间戳增量数据...'</span>, <span class="string">'ok'</span>);
+  <span class="keyword">const</span> { changed, softDeletedIds } = <span class="keyword">await</span> <span class="func">fetchIncrementalChanges</span>(lastSyncTime);
+
+  <span class="keyword">if</span> (changed.length &gt; <span class="number">0</span>) {
+    <span class="keyword">await</span> <span class="func">syncBatchWriteTransactions</span>(changed);
+    <span class="func">log</span>(<span class="string">`写入 ${changed.length} 条新增/更新记录`</span>, <span class="string">'ok'</span>);
+  }
+  <span class="keyword">if</span> (softDeletedIds.length &gt; <span class="number">0</span>) {
+    <span class="keyword">await</span> syncDB.transactions.bulkDelete(softDeletedIds);
+    <span class="func">log</span>(<span class="string">`软删除 ${softDeletedIds.length} 条`</span>, <span class="string">'warn'</span>);
+  }
+
+  <span class="comment">// ── Step 1.5: 执行数据增量刷新（dtime 执行时间戳） ──────────────</span>
+  <span class="func">log</span>(<span class="string">'Step 1.5: 刷新执行数据增量...'</span>, <span class="string">'ok'</span>);
+  <span class="keyword">const</span> meta = <span class="keyword">await</span> <span class="func">syncLoadSyncMeta</span>();
+  <span class="keyword">const</span> lastUpdateTimestamp = meta?.last_update_timestamp || <span class="number">0</span>;
+
+  <span class="keyword">if</span> (lastUpdateTimestamp &gt; <span class="number">0</span>) {
+    <span class="keyword">const</span> execChanged = <span class="keyword">await</span> <span class="func">fetchExecutionChanges</span>(lastUpdateTimestamp);
+    <span class="keyword">if</span> (execChanged.length &gt; <span class="number">0</span>) {
+      <span class="keyword">await</span> <span class="func">syncBatchWriteTransactions</span>(execChanged);
+      <span class="func">log</span>(<span class="string">`刷新 ${execChanged.length} 条执行数据变更记录`</span>, <span class="string">'ok'</span>);
+    } <span class="keyword">else</span> {
+      <span class="func">log</span>(<span class="string">'无执行数据变更'</span>, <span class="string">'ok'</span>);
+    }
+  } <span class="keyword">else</span> {
+    <span class="func">log</span>(<span class="string">'首次同步，跳过执行数据增量刷新'</span>, <span class="string">'ok'</span>);
+  }
+
+  <span class="comment">// ── Step 2: 分段二分删除检测（硬删除） ────────────────────────</span>
+  <span class="func">log</span>(<span class="string">'Step 2: 检测硬删除记录...'</span>, <span class="string">'ok'</span>);
+  <span class="keyword">const</span> localMaxId = (await syncDB.transactions.orderBy(<span class="string">'id'</span>).last())?.id || <span class="number">0</span>;
+  <span class="keyword">const</span> deletedIds = <span class="keyword">await</span> <span class="func">detectDeletedIds</span>(localMaxId, <span class="number">10000</span>, <span class="number">100</span>);
+
+  <span class="keyword">if</span> (deletedIds.length &gt; <span class="number">0</span>) {
+    <span class="keyword">await</span> syncDB.transactions.bulkDelete(deletedIds);
+    <span class="func">log</span>(<span class="string">`硬删除 ${deletedIds.length} 条记录`</span>, <span class="string">'warn'</span>);
+  } <span class="keyword">else</span> {
+    <span class="func">log</span>(<span class="string">'未检测到硬删除记录'</span>, <span class="string">'ok'</span>);
+  }
+
+  <span class="comment">// ── Step 3: 库存快照 ─────────────────────────────────────────</span>
+  <span class="func">log</span>(<span class="string">'Step 3: 同步库存快照...'</span>, <span class="string">'ok'</span>);
+  <span class="keyword">const</span> invData = <span class="keyword">await</span> <span class="func">fetchInventorySnapshot</span>();
+  <span class="keyword">await</span> <span class="func">syncClearInventory</span>();
+  <span class="keyword">await</span> <span class="func">syncBatchWriteInventory</span>(invData);
+  <span class="func">log</span>(<span class="string">`库存快照同步完成：${invData.length} 条`</span>, <span class="string">'ok'</span>);
+
+  <span class="comment">// ── Step 4: 更新同步元信息 ───────────────────────────────────</span>
+  <span class="keyword">const</span> serverTime = <span class="keyword">await</span> <span class="func">getServerTime</span>();  <span class="comment">// 取服务器时间，避免时钟偏移</span>
+  <span class="keyword">await</span> <span class="func">syncSaveSyncMeta</span>({
+    <span class="string">last_sync_time</span>: serverTime,
+    <span class="string">last_sync_mode</span>: <span class="string">'incremental'</span>,
+    <span class="string">last_update_timestamp</span>: serverTimestamp  <span class="comment">// Unix秒级时间戳，用于 Step 1.5 dtime 比对</span>
+  });
+
+  <span class="keyword">return</span> {
+    <span class="string">changedCount</span>: changed.length,
+    <span class="string">deletedCount</span>: deletedIds.length + softDeletedIds.length,
+    <span class="string">invCount</span>: invData.length
+  };
+}</pre>
+  </div>
+
+  <!-- ========== 第三层 ========== -->
+  <div class="card">
+    <h2><span class="icon" style="background:rgba(100,116,139,0.1);color:var(--text-secondary)">③</span> 五、第三层：定期全量校准</h2>
+
+    <h3>5.1 触发条件</h3>
+
+    <ul>
+      <li><strong>时间触发</strong>：距上次全量校准超过 7 天</li>
+      <li><strong>手动触发</strong>：用户点击"强制全量同步"</li>
+      <li><strong>异常触发</strong>：第一层预检发现 COUNT 差异超过 15%</li>
+    </ul>
+
+    <h3>5.2 差异比例校验逻辑</h3>
+
+    <div class="flow-diagram">┌───────────────────────────────────────────────────────────────────────────┐
+│                    差异比例校验 — 决定走增量还是全量                            │
+├───────────────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│  diffRatio = Math.abs(serverCount - localCount) / Math.max(serverCount, localCount) │
+│                                                                            │
+│  ┌─────────────┐     diffRatio ≤ 15%      ┌──────────────────────────┐       │
+│  │ 增量同步     │ ────────────────────→ │ 走第二层分段二分算法       │       │
+│  │ (轻量快速)  │                         │ 耗时 3~8s                │       │
+│  └─────────────┘                          └──────────────────────────┘       │
+│                                                                            │
+│  ┌─────────────┐     diffRatio &gt; 15%     ┌──────────────────────────┐       │
+│  │ 全量同步     │ ────────────────────→ │ 弹窗询问用户               │       │
+│  │ (保守可靠)  │                         │ 「数据差异较大，建议全量」  │       │
+│  └─────────────┘                          └──────────────────────────┘       │
+│                                                                            │
+│  15% 阈值依据：                                                              │
+│  · 正常增量同步后，差异应为 0%                                               │
+│  · 偶尔几条删除/新增，差异 &lt; 1%                                              │
+│  · 15% 意味着约 1.5 万条差异（极端情况），分段二分仍能处理但耗时较长           │
+│  · 此时直接全量拉取反而更省时，且更可靠                                       │
+│                                                                            │
+└───────────────────────────────────────────────────────────────────────────┘</div>
+
+    <h3>5.3 全量校准流程</h3>
+
+    <pre><span class="comment">/**
+ * 第三层：全量校准
+ * - 清空本地 transactions 表
+ * - 分页拉取服务器全部数据
+ * - 写入本地 IndexedDB
+ * - 更新同步元信息
+ */</span>
+<span class="keyword">async function</span> <span class="func">doFullCalibration</span>() {
+  <span class="func">appendLog</span>(<span class="string">'全量校准：清空本地流水数据...'</span>, <span class="string">'warn'</span>);
+  <span class="keyword">await</span> <span class="func">syncClearTransactions</span>();
+  <span class="keyword">await</span> <span class="func">syncClearCheckpoint</span>();
+
+  <span class="comment">// 获取总记录数</span>
+  <span class="keyword">const</span> totalCount = <span class="keyword">await</span> <span class="func">fetchTotalCount</span>(<span class="string">'libitem'</span>, <span class="string">'dflag != 1 AND status = 1'</span>);
+  <span class="func">appendLog</span>(<span class="string">`全量校准：待拉取 ${totalCount} 条记录`</span>, <span class="string">'ok'</span>);
+
+  <span class="comment">// 分页拉取</span>
+  <span class="keyword">const</span> pageSize = <span class="number">2000</span>;
+  <span class="keyword">let</span> start = <span class="number">0</span>;
+  <span class="keyword">let</span> synced = <span class="number">0</span>;
+
+  <span class="keyword">while</span> (<span class="keyword">true</span>) {
+    <span class="keyword">const</span> { items, hasMore } = <span class="keyword">await</span> <span class="func">fetchFlowPage</span>(start, pageSize);
+    <span class="keyword">if</span> (items.length === <span class="number">0</span>) <span class="keyword">break</span>;
+
+    <span class="keyword">await</span> <span class="func">syncBatchWriteTransactions</span>(items);
+    synced += items.length;
+    start += items.length;
+
+    <span class="comment">// 进度回调</span>
+    <span class="func">onProgress</span>({
+      <span class="string">total</span>: totalCount,
+      <span class="string">done</span>: synced,
+      <span class="string">progress</span>: (synced / totalCount * <span class="number">100</span>).toFixed(<span class="number">1</span>)
+    });
+
+    <span class="keyword">if</span> (!hasMore) <span class="keyword">break</span>;
+    <span class="keyword">await</span> <span class="func">sleep</span>(<span class="number">300</span>);  <span class="comment">// 限流</span>
+  }
+
+  <span class="comment">// 更新元信息</span>
+  <span class="keyword">await</span> <span class="func">syncSaveSyncMeta</span>({
+    <span class="string">last_sync_time</span>: <span class="keyword">await</span> <span class="func">getServerTime</span>(),
+    <span class="string">last_sync_mode</span>: <span class="string">'full'</span>,
+    <span class="string">last_calibration_time</span>: <span class="keyword">new</span> Date().toISOString()
+  });
+
+  <span class="keyword">return</span> { <span class="string">totalCount</span>: synced };
+}</pre>
+  </div>
+
+  <!-- ========== 完整同步入口 ========== -->
+  <div class="card">
+    <h2><span class="icon" style="background:rgba(217,119,6,0.1);color:var(--warning)">🎯</span> 六、完整同步入口函数</h2>
+
+    <pre><span class="comment">/**
+ * 完整同步流程入口
+ * 由 UI 按钮触发
+ *
+ * @param {'auto'|'incremental'|'full'} mode
+ *   - 'auto': 自动选择（默认）
+ *   - 'incremental': 强制走第二层增量
+ *   - 'full': 强制全量校准
+ */</span>
+<span class="keyword">async function</span> <span class="func">startSync</span>(mode = <span class="string">'auto'</span>) {
+  <span class="comment">// ── 预检查 ────────────────────────────────────────────────────</span>
+  <span class="keyword">if</span> (!syncDexieReady) {
+    <span class="func">showToast</span>(<span class="string">'同步功能不可用（Dexie.js 未加载）'</span>, <span class="string">'error'</span>);
+    <span class="keyword">return</span>;
+  }
+
+  <span class="comment">// ── 自动模式：预检 ────────────────────────────────────────────</span>
+  <span class="keyword">if</span> (mode === <span class="string">'auto'</span>) {
+    <span class="keyword">const</span> diffResult = <span class="keyword">await</span> <span class="func">quickDiffCheck</span>();
+
+    <span class="comment">// 差异过大，直接建议全量</span>
+    <span class="keyword">const</span> diffRatio = diffResult.countMatch ? <span class="number">0</span> : Math.abs(diffResult.serverCount - diffResult.localCount)
+      / Math.max(diffResult.serverCount, diffResult.localCount);
+
+    <span class="keyword">if</span> (diffRatio &gt; <span class="number">0.15</span>) {
+      <span class="keyword">const</span> confirmed = <span class="keyword">await</span> <span class="func">showConfirmModal</span>(<span class="string">'数据差异较大（'</span> + (diffRatio * <span class="number">100</span>).toFixed(<span class="number">1</span>) + <span class="string">'%），'</span> +
+        <span class="string">'建议执行全量同步以确保数据完整。是否继续？'</span>);
+      <span class="keyword">if</span> (confirmed) {
+        <span class="keyword">return await</span> <span class="func">doFullCalibration</span>();
+      } <span class="keyword">else</span> {
+        <span class="keyword">return</span>;
+      }
+    }
+
+    <span class="comment">// 无差异，跳过同步</span>
+    <span class="keyword">if</span> (diffResult.countMatch && diffResult.maxIdMatch) {
+      <span class="func">showToast</span>(<span class="string">'数据已是最新，无需同步'</span>, <span class="string">'success'</span>);
+      <span class="keyword">return</span>;
+    }
+  }
+
+  <span class="comment">// ── 执行同步 ──────────────────────────────────────────────────</span>
+  <span class="keyword">if</span> (mode === <span class="string">'full'</span>) {
+    <span class="keyword">return await</span> <span class="func">doFullCalibration</span>();
+  }
+
+  <span class="comment">// 'auto' 或 'incremental' 模式：走第二层</span>
+  <span class="keyword">const</span> lastSyncTime = (<span class="keyword">await</span> <span class="func">syncLoadSyncMeta</span>())?.last_sync_time || <span class="string">'1970-01-01 00:00:00'</span>;
+  <span class="keyword">return await</span> <span class="func">doIncrementalSync</span>(lastSyncTime);
+}
+
+<span class="comment">/**
+ * 快速差异检查（第一层）
+ * @returns {Promise&lt;{countMatch, maxIdMatch, serverCount, localCount, serverMaxId, localMaxId}&gt;}
+ */</span>
+<span class="keyword">async function</span> <span class="func">quickDiffCheck</span>() {
+  <span class="keyword">const</span> [serverCount, localCount, serverMaxId, localMaxId] = <span class="keyword">await</span> Promise.all([
+    <span class="func">fetchTotalCount</span>(<span class="string">'libitem'</span>, <span class="string">'dflag != 1 AND status = 1'</span>),
+    syncDB.transactions.count(),
+    <span class="func">fetchMaxId</span>(),
+    syncDB.transactions.orderBy(<span class="string">'id'</span>).last().then(<span class="variable">r</span> =&gt; <span class="variable">r</span>?.id || <span class="number">0</span>)
+  ]);
+
+  <span class="keyword">return</span> {
+    <span class="string">countMatch</span>: serverCount === localCount,
+    <span class="string">maxIdMatch</span>: serverMaxId === localMaxId,
+    serverCount, localCount, serverMaxId, localMaxId
+  };
+}</pre>
+  </div>
+
+  <!-- ========== 效率对比 ========== -->
+  <div class="card">
+    <h2><span class="icon" style="background:rgba(5,150,105,0.1);color:var(--positive)">📊</span> 七、效率对比</h2>
+
+    <h3>7.1 不同场景下的耗时对比</h3>
+
+    <table>
+      <thead>
+        <tr><th>场景</th><th>全量同步</th><th>时间戳增量</th><th>分段二分（推荐）</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>无变化</td><td>30~60s（浪费）</td><td>3~5s（浪费）</td><td>&lt;1s（第一层预检结束）</td></tr>
+        <tr><td>少量新增（10条）</td><td>30~60s</td><td>3~5s</td><td>1~3s</td></tr>
+        <tr><td>少量删除（20条，集中1段）</td><td>30~60s</td><td>3~5s（检测不到硬删除）</td><td>3~5s ✅</td></tr>
+        <tr><td>中等变化（500条）</td><td>30~60s</td><td>5~8s</td><td>5~8s</td></tr>
+        <tr><td>大量变化（2万条）</td><td>30~60s</td><td>10~20s</td><td>10~20s（触发全量提示）</td></tr>
+      </tbody>
+    </table>
+
+    <h3>7.2 删除检测专项对比</h3>
+
+    <table>
+      <thead>
+        <tr><th>方案</th><th>API 调用次数</th><th>传输 ID 数量</th><th>适合删除量</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>全量 ID 拉取（当前）</td><td>50 次（分页）</td><td>10 万个</td><td>任意，但浪费严重</td></tr>
+        <tr><td>分段 COUNT 粗定位</td><td>10 次</td><td>0</td><td>仅粗定位，仍需配合</td></tr>
+        <tr><td><strong>分段二分查找（推荐）</strong></td><td><strong>10 + N×log₂(S) 次</strong></td><td><strong>差异段内 ~200 个</strong></td><td><strong>&lt;500 条（日常场景）</strong></td></tr>
+        <tr><td>全量校准</td><td>50 次</td><td>10 万条完整数据</td><td>&gt;500 条（直接全量更优）</td></tr>
+      </tbody>
+    </table>
+
+    <h3>7.3 效率边界分析：删除越少，节省越多</h3>
+
+    <p>分段二分算法的核心特性：<strong>删除数据越少，比全量 ID 对比节约的时间越多</strong>。这是单调递增关系，下面严格证明。</p>
+
+    <h4>7.3.1 全量 ID 对比的固定成本</h4>
+
+    <p>不管删除多少条，全量 ID 方案的代价是<strong>恒定的</strong>：</p>
+
+    <div class="formula-box">
+      <span class="label">全量 ID</span> 10万条 ID，分页 2000条/页 → 50 次 API → 传输 800KB → 约 15s<br>
+      无论删除 0 条还是 5000 条，这 15 秒都要花。
+    </div>
+
+    <h4>7.3.2 分段二分的可变成本</h4>
+
+    <table>
+      <thead>
+        <tr><th>阶段</th><th>成本</th><th>与删除量的关系</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>分段 COUNT 粗定位</td><td>10 次 API（固定）</td><td><strong>无关</strong> — 无论删多少，都要扫 10 段</td></tr>
+        <tr><td>二分查找精定位</td><td>每差异段 log₂(段大小/阈值) 次 API</td><td><strong>正相关</strong> — 删除越少，差异段越少，二分越少</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>关键</strong>：删除越少 → 差异段越少 → 二分越少 → 总成本越低。</p>
+
+    <h4>7.3.3 量化对比</h4>
+
+    <p>假设 10 万条数据，分 10 段（每段 1 万），二分阈值 100：</p>
+
+    <table>
+      <thead>
+        <tr><th>删除量</th><th>差异段数 K</th><th>分段COUNT</th><th>二分API</th><th>总API</th><th>全量ID方案</th><th>节省</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>0 条</strong></td><td>0 段</td><td>10 次</td><td>0 次</td><td><strong>10 次</strong></td><td>50 次</td><td><strong>80%</strong></td></tr>
+        <tr><td><strong>5 条（集中1段）</strong></td><td>1 段</td><td>10 次</td><td>~7 次</td><td><strong>17 次</strong></td><td>50 次</td><td><strong>66%</strong></td></tr>
+        <tr><td><strong>20 条（分散2段）</strong></td><td>2 段</td><td>10 次</td><td>~14 次</td><td><strong>24 次</strong></td><td>50 次</td><td><strong>52%</strong></td></tr>
+        <tr><td><strong>100 条（分散4段）</strong></td><td>4 段</td><td>10 次</td><td>~28 次</td><td><strong>38 次</strong></td><td>50 次</td><td><strong>24%</strong></td></tr>
+        <tr><td style="color:var(--negative)"><strong>500 条（分散8段）</strong></td><td>8 段</td><td>10 次</td><td>~56 次</td><td><strong style="color:var(--negative)">66 次</strong></td><td>50 次</td><td>❌ <strong>反超 32%</strong></td></tr>
+        <tr><td style="color:var(--negative)"><strong>3000 条（全段差异）</strong></td><td>10 段</td><td>10 次</td><td>~70 次</td><td><strong style="color:var(--negative)">80 次</strong></td><td>50 次</td><td>❌ <strong>反超 60%</strong></td></tr>
+      </tbody>
+    </table>
+
+    <h4>7.3.4 反转点公式</h4>
+
+    <div class="formula-box">
+      <span class="label">设</span> N = 总ID数, S = 段大小, T = 二分阈值, K = 差异段数<br><br>
+      <span class="label">全量 ID</span> API = ceil(N / 2000) = 50 次（固定）<br>
+      <span class="label">分段二分</span> API = ceil(N/S) + K × log₂(S/T) = 10 + 7K<br><br>
+      <span class="label">反转条件</span> 10 + 7K &gt; 50 → K &gt; 5.7 → <strong>K ≥ 6 段时反转</strong><br><br>
+      <span class="label">结论</span> 删除数据越少，差异段 K 越小，节省越多。<strong>单调递减关系</strong>。<br>
+      当 K ≥ 6（约 200+ 条删除且分散）时，方案反转，全量更优。
+    </div>
+
+    <h3>7.4 动态切换策略：永远不比全量更差</h3>
+
+    <p>基于上述反转点分析，在分段 COUNT 粗定位完成后，根据实际差异段数 K 动态决定后续策略：</p>
+
+    <div class="flow-diagram">┌───────────────────────────────────────────────────────────────────────────┐
+│              动态切换策略 — 分段 COUNT 完成后自动选择最优路径                    │
+├───────────────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│  分段 COUNT 粗定位完成 → 发现 K 个差异段                                    │
+│                                                                            │
+│         ┌──────────────────────────────────────────────┐                   │
+│         │                                                │                   │
+│    K ≤ 5 段                                    K &gt; 5 段                     │
+│         │                                                │                   │
+│         ▼                                                ▼                   │
+│  ┌──────────────────┐                       ┌──────────────────────────┐   │
+│  │ 继续二分查找       │                       │ 直接拉取 K 个差异段的全量  │   │
+│  │ (更省，10+7K 次)  │                       │ ID 做比对                  │   │
+│  │                  │                       │ (K段 × 5页/段 = 5K 次)    │   │
+│  │ 例：K=2 → 24次   │                       │ 例：K=8 → 40次            │   │
+│  │ 全量需50次，省52% │                       │ 全量需50次，省20%          │   │
+│  └──────────────────┘                       └──────────────────────────┘   │
+│                                                                            │
+│  保证：无论 K 多大，本方案 API 次数 ≤ 全量 ID 方案（50 次）                  │
+│                                                                            │
+│  极端情况 K=10（全段差异）：直接走全量 ID 拉取（50次），不二分（80次）        │
+│                                                                            │
+└───────────────────────────────────────────────────────────────────────────┘</div>
+
+    <div class="key-point">
+      <strong>核心保证</strong>：动态切换策略确保算法<strong>永远不会比全量 ID 方案更差</strong>。删除少时大幅节省，删除多时自动退化为全量拉取差异段，最坏情况等价于全量方案。
+    </div>
+
+    <div class="key-point">
+      <strong>算法复杂度</strong>：分段二分查找的 API 调用次数 = O(log₂(N)) + O(m×log₂(S))，其中 N=总ID数，S=段大小，m=差异段数。日常场景（m=1~3，删除&lt;50条）下，总调用约 10+15 = 25 次，相比全量同步 50 次，节省 50% 的 API 调用。
+    </div>
+  </div>
+
+  <!-- ========== 前置条件 ========== -->
+  <div class="card">
+    <h2><span class="icon" style="background:rgba(217,119,6,0.1);color:var(--warning)">⚠️</span> 八、前置条件与依赖</h2>
+
+    <h3>8.1 MySQL 索引要求</h3>
+
+    <pre><span class="comment">-- 必须在 libitem 表上创建以下索引，否则增量查询会走全表扫描</span>
+
+<span class="comment">-- 1. 增量查询核心索引（creatstm + modstm，覆盖时间戳范围查询）</span>
+ALTER TABLE libitem ADD INDEX idx_creatstm (creatstm);
+ALTER TABLE libitem ADD INDEX idx_modstm (modstm);
+
+<span class="comment">-- 1.5 执行数据增量索引（dtime，执行时间戳数值比对）</span>
+ALTER TABLE libitem ADD INDEX idx_dtime (dtime);
+
+<span class="comment">-- 2. ID 范围查询索引（用于分段二分查找）</span>
+ALTER TABLE libitem ADD INDEX idx_id_dflag_status (id, dflag, status);
+
+<span class="comment">-- 3. 软删除检测索引（可选，如果软删除时 modstm 会更新）</span>
+ALTER TABLE libitem ADD INDEX idx_dflag_modstm (dflag, modstm);</pre>
+
+    <h3>8.2 modstm 可靠性验证</h3>
+
+    <p>需要确认数据库软删除操作是否会更新 <code>modstm</code> 字段。可通过以下 SQL 在测试环境验证：</p>
+
+    <pre><span class="comment">-- 在测试环境执行一条记录软删除后，检查 modstm 是否更新</span>
+SELECT id, dflag, creatstm, modstm
+FROM libitem
+WHERE dflag = 1
+ORDER BY modstm DESC
+LIMIT 10;
+
+<span class="comment">-- 验证：所有 dflag=1 的记录，modstm 是否 &gt; creatstm</span>
+<span class="comment">-- 如果 modstm 为空或等于 creatstm，说明软删除时 modstm 未更新</span>
+<span class="comment">-- 此时软删除检测方案退化为仅依赖硬删除的 ID 比对</span></pre>
+
+    <h3>8.3 creatstm/modstm 格式确认</h3>
+
+    <p>确认 <code>creatstm</code> 和 <code>modstm</code> 的数据格式，影响 WHERE 条件写法：</p>
+
+    <ul>
+      <li>如果是 <code>YYYY-MM-DD HH:mm:ss</code> 格式：直接字符串比较即可</li>
+      <li>如果是 Unix 时间戳（整数）：需要用 <code>UNIX_TIMESTAMP()</code> 转换</li>
+      <li>如果是毫秒级时间戳：需要除以 1000 后比较</li>
+    </ul>
+
+    <div class="warn-point">
+      <strong>重要</strong>：建议在 API 层统一将 <code>last_sync_time</code> 格式化为与服务器 <code>creatstm/modstm</code> 一致的格式，避免格式不匹配导致的查询错误。
+    </div>
+  </div>
+
+  <!-- ========== 数据流总图 ========== -->
+  <div class="card">
+    <h2><span class="icon" style="background:rgba(26,58,74,0.1);color:var(--primary)">🗺️</span> 九、完整数据流总图</h2>
+
+    <div class="flow-diagram">┌───────────────────────────────────────────────────────────────────────────────────────────┐
+│                          库存流水增量同步 — 完整数据流                                       │
+├───────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                            │
+│  ┌─────────────┐                                                                          │
+│  │ 用户打开页面  │                                                                          │
+│  └──────┬──────┘                                                                          │
+│         │                                                                                 │
+│         ▼                                                                                 │
+│  ┌──────────────────────────────────────────────────────────────────────┐                │
+│  │  第一层：快速预检（自动，静默）                                        │                │
+│  │                                                                       │                │
+│  │  ① serverCount = fetchTotalCount('libitem')         →  1 次 API     │                │
+│  │  ② localCount  = db.transactions.count()            →  Dexie       │                │
+│  │  ③ serverMaxId = fetchMaxId()                       →  1 次 API     │                │
+│  │  ④ localMaxId  = db.transactions.orderBy('id').last →  Dexie       │                │
+│  │                                                                       │                │
+│  │  if (count相等 AND maxId相等) → 「已是最新」✅，结束                  │                │
+│  └──────────────────────────────────┬───────────────────────────────────┘                │
+│                                      │ 不一致                                                │
+│                                      ▼                                                       │
+│  ┌──────────────────────────────────────────────────────────────────────┐                │
+│  │  用户点击「同步数据」                                                    │                │
+│  └──────────────────────────────────┬───────────────────────────────────┘                │
+│                                      │                                                         │
+│                                      ▼                                                         │
+│  ┌──────────────────────────────────────────────────────────────────────┐                │
+│  │  ① fetchIncrementalChanges(lastSync)               →  1~2 次 API     │                │
+│  │     WHERE creatstm &gt; lastSync OR modstm &gt; lastSync                   │                │
+│  │     返回 10~500 条新增/更新记录                                        │                │
+│  │                           │                                             │                │
+│  │                           ▼                                             │                │
+│  │     bulkPut(records) ──→ IndexedDB.transactions                         │                │
+│  └──────────────────────────────────┬───────────────────────────────────┘                │
+│                                      │                                                         │
+│                                      ▼                                                         │
+│  ┌──────────────────────────────────────────────────────────────────────┐                │
+│  │  ①.⑤ fetchExecutionChanges(lastUpdateTimestamp)    →  1 次 API      │                │
+│  │     WHERE dtime &gt; lastUpdateTimestamp                                 │                │
+│  │     dtime 为执行时间戳（Unix timestamp），直接数值比对                  │                │
+│  │                           │                                             │                │
+│  │                           ▼                                             │                │
+│  │     bulkPut(records) ──→ IndexedDB.transactions                         │                │
+│  └──────────────────────────────────┬───────────────────────────────────┘                │
+│                                      │                                                         │
+│                                      ▼                                                         │
+│  ┌──────────────────────────────────────────────────────────────────────┐                │
+│  │  ② detectDeletedIds(localMaxId)                    →  10 + N 次 API   │                │
+│  │                                                                       │                │
+│  │     ┌─ 分段 COUNT 粗定位 ─────────────────────────────────┐            │                │
+│  │     │  段1~段10: COUNT(lo~hi) vs localCount(lo~hi)      │            │                │
+│  │     │  找出 1~3 个差异段                               │            │                │
+│  │     └───────────────────────────────────────────────────┘            │                │
+│  │                           │                                             │                │
+│  │                           ▼                                             │                │
+│  │     ┌─ 二分查找精定位 ─────────────────────────────────┐            │                │
+│  │     │  对每个差异段递归二分                           │            │                │
+│  │     │  范围 &lt; 100 时切换逐个比对                       │            │                │
+│  │     │  找出具体 10~50 个删除 ID                       │            │                │
+│  │     └───────────────────────────────────────────────────┘            │                │
+│  │                           │                                             │                │
+│  │                           ▼                                             │                │
+│  │     bulkDelete(deletedIds) ──→ IndexedDB.transactions                 │                │
+│  └──────────────────────────────────┬───────────────────────────────────┘                │
+│                                      │                                                         │
+│                                      ▼                                                         │
+│  ┌──────────────────────────────────────────────────────────────────────┐                │
+│  │  ③ fetchInventorySnapshot()                        →  1 次 API      │                │
+│  │     清空本地库存 → 写入全部库存数据                                      │                │
+│  └──────────────────────────────────┬───────────────────────────────────┘                │
+│                                      │                                                         │
+│                                      ▼                                                         │
+│  ┌──────────────────────────────────────────────────────────────────────┐                │
+│  │  ④ syncSaveSyncMeta({ last_sync_time, last_update_timestamp, mode })  │                │
+│  │     last_sync_time = 服务器当前时间（非客户端时间）                     │                │
+│  │     last_update_timestamp = Unix秒级时间戳，用于 Step 1.5 dtime 比对   │                │
+│  └──────────────────────────────────┬───────────────────────────────────┘                │
+│                                      ▼                                                         │
+│                              同步完成 ✅                                                   │
+│                                                                                            │
+├───────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                            │
+│  定期（7天）/ 手动触发 ──→ 第三层：全量校准                                                │
+│                                                                                            │
+│  clearTransactions() → 分页拉取全部数据 → bulkPut → 更新元信息                              │
+│  耗时：15~30s，但频率极低，不影响日常体验                                                   │
+│                                                                                            │
+└───────────────────────────────────────────────────────────────────────────────────────────┘</div>
+  </div>
+
+  <!-- ========== 总结 ========== -->
+  <div class="card">
+    <h2><span class="icon" style="background:rgba(5,150,105,0.1);color:var(--positive)">✅</span> 十、方案总结</h2>
+
+    <table>
+      <thead>
+        <tr><th>层级</th><th>触发时机</th><th>核心能力</th><th>耗时</th><th>API 次数</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>第一层：快速预检</strong></td><td>页面打开（自动）</td><td>判断是否有变化</td><td>&lt;1s</td><td>2 次</td></tr>
+        <tr><td><strong>第二层：时间戳+分段二分</strong></td><td>用户点击同步</td><td>新增+更新+删除全检测</td><td>3~8s</td><td>10~25 次</td></tr>
+        <tr><td><strong>第三层：全量校准</strong></td><td>7天/手动/差异&gt;15%</td><td>消除一切漂移</td><td>15~30s</td><td>50+ 次</td></tr>
+      </tbody>
+    </table>
+
+    <h3>关键创新点</h3>
+
+    <ul>
+      <li><strong>分段二分查找</strong>：日常硬删除检测的 ID 传输量从 10 万个降低到 ~200 个，节省 99%+</li>
+      <li><strong>效率单调性</strong>：删除越少，差异段 K 越小，节省越多；K≥6 时自动切换为全量段 ID 比对，<strong>永远不比全量方案更差</strong></li>
+      <li><strong>动态切换策略</strong>：分段 COUNT 完成后，根据 K 值自动选择二分或全量段比对，无需人工判断</li>
+      <li><strong>差异比例校验</strong>：15% 阈值自动判断走增量还是全量，避免极端场景下的无效尝试</li>
+      <li><strong>三层递进架构</strong>：由轻到重、由快到准，用户日常使用在 3~8 秒内完成完整同步</li>
+      <li><strong>服务器时间锚定</strong>：同步时间戳取自服务器而非客户端，避免时钟偏移导致的遗漏</li>
+    </ul>
+
+    <h3>实施步骤</h3>
+
+    <ol>
+      <li><strong>前置验证</strong>：确认 <code>creatstm/modstm</code> 格式，验证 <code>modstm</code> 在软删除时是否更新，创建所需索引</li>
+      <li><strong>代码实现</strong>：将上述伪代码实装到 <code>LoaddataProvider</code> 和 <code>InventorySyncManager</code> 中</li>
+      <li><strong>测试验证</strong>：在测试环境模拟新增、更新、软删除、硬删除各种场景</li>
+      <li><strong>灰度上线</strong>：小范围用户先行，观察日志和错误率</li>
+      <li><strong>全量上线</strong>：确认稳定后全量发布</li>
+    </ol>
+  </div>
+
+</div>
+
+<div class="page-footer">
+  库存台账系统 · 增量同步方案文档 · 版本 1.0 · 2026-05
+</div>
+
+</body>
+</html>

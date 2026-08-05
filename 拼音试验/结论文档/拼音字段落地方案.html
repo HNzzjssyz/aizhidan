@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>拼音字段落地方案 — 技术设计文档</title>
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+<style>
+:root {
+  --bg: #f8f9fb;
+  --card: #ffffff;
+  --border: #e8ecf0;
+  --text: #1f2937;
+  --text-secondary: #6b7280;
+  --primary: #3b82f6;
+  --primary-light: #eff6ff;
+  --primary-border: #bfdbfe;
+  --green: #10b981;
+  --green-light: #ecfdf5;
+  --green-border: #a7f3d0;
+  --amber: #f59e0b;
+  --amber-light: #fffbeb;
+  --amber-border: #fde68a;
+  --red: #ef4444;
+  --red-light: #fef2f2;
+  --red-border: #fecaca;
+  --purple: #8b5cf6;
+  --purple-light: #f5f3ff;
+  --purple-border: #ddd6fe;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  padding: 32px 20px;
+}
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.doc-header {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px 48px;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+}
+.doc-header::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6, #10b981);
+}
+.doc-header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.doc-header h1 i { color: var(--primary); font-size: 28px; }
+.doc-header .subtitle {
+  font-size: 15px;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+}
+.doc-meta {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.doc-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.doc-meta-item i { font-size: 14px; color: var(--primary); }
+.doc-meta-item strong { color: var(--text); font-weight: 600; }
+
+.section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 32px 36px;
+  margin-bottom: 20px;
+}
+.section-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.section-title i {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: white;
+  flex-shrink: 0;
+}
+.section-title .icon-blue { background: var(--primary); }
+.section-title .icon-green { background: var(--green); }
+.section-title .icon-amber { background: var(--amber); }
+.section-title .icon-red { background: var(--red); }
+.section-title .icon-purple { background: var(--purple); }
+
+p { font-size: 14px; color: var(--text); margin-bottom: 12px; line-height: 1.8; }
+p:last-child { margin-bottom: 0; }
+
+.highlight-box {
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  line-height: 1.8;
+}
+.highlight-box.blue { background: var(--primary-light); border: 1px solid var(--primary-border); color: #1e40af; }
+.highlight-box.green { background: var(--green-light); border: 1px solid var(--green-border); color: #065f46; }
+.highlight-box.amber { background: var(--amber-light); border: 1px solid var(--amber-border); color: #92400e; }
+.highlight-box.red { background: var(--red-light); border: 1px solid var(--red-border); color: #991b1b; }
+.highlight-box.purple { background: var(--purple-light); border: 1px solid var(--purple-border); color: #5b21b6; }
+.highlight-box i { margin-right: 6px; }
+
+.compare-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+@media (max-width: 700px) {
+  .compare-grid { grid-template-columns: 1fr; }
+}
+.compare-card {
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.2s;
+  position: relative;
+}
+.compare-card.recommended {
+  border-color: var(--green);
+  background: var(--green-light);
+}
+.compare-card .card-badge {
+  position: absolute;
+  top: -10px;
+  right: 16px;
+  padding: 3px 12px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.compare-card.recommended .card-badge {
+  background: var(--green);
+  color: white;
+}
+.compare-card .card-title {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.compare-card .card-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+.compare-card ul {
+  list-style: none;
+  margin-top: 10px;
+}
+.compare-card ul li {
+  font-size: 13px;
+  padding: 4px 0;
+  padding-left: 18px;
+  position: relative;
+  color: var(--text-secondary);
+}
+.compare-card ul li::before {
+  content: '\2713';
+  position: absolute;
+  left: 0;
+  color: var(--green);
+  font-weight: 700;
+}
+.compare-card ul li.warn::before {
+  content: '\2717';
+  color: var(--red);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-bottom: 16px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.data-table th, .data-table td {
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.data-table th {
+  background: #f1f5f9;
+  font-weight: 600;
+  color: var(--text);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.data-table td {
+  color: var(--text-secondary);
+}
+.data-table tr:last-child td { border-bottom: none; }
+.data-table code {
+  background: #f1f5f9;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  color: #e5484d;
+}
+
+.flow-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: 16px;
+}
+.flow-step {
+  display: flex;
+  gap: 16px;
+  position: relative;
+}
+.flow-step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 19px;
+  top: 40px;
+  bottom: -8px;
+  width: 2px;
+  background: var(--primary-border);
+}
+.flow-step-num {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  flex-shrink: 0;
+  z-index: 1;
+}
+.flow-step-content {
+  flex: 1;
+  padding-bottom: 20px;
+}
+.flow-step-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+  padding-top: 8px;
+}
+.flow-step-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.code-block {
+  background: #1e293b;
+  color: #e2e8f0;
+  padding: 18px 20px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.7;
+  overflow-x: auto;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  margin-bottom: 16px;
+}
+.code-block .comment { color: #64748b; }
+.code-block .keyword { color: #c084fc; }
+.code-block .string { color: #34d399; }
+.code-block .type { color: #60a5fa; }
+
+.task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.task-item {
+  display: flex;
+  gap: 14px;
+  padding: 16px 20px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  transition: all 0.2s;
+  align-items: flex-start;
+}
+.task-item:hover {
+  border-color: var(--primary-border);
+  background: var(--primary-light);
+}
+.task-item .task-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: var(--primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.task-item .task-body { flex: 1; }
+.task-item .task-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.task-item .task-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+.task-item .task-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-top: 6px;
+}
+.task-item .task-tag.db { background: var(--purple-light); color: #5b21b6; }
+.task-item .task-tag.fe { background: var(--primary-light); color: #1e40af; }
+.task-item .task-tag.api { background: var(--green-light); color: #065f46; }
+
+.perf-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+@media (max-width: 700px) {
+  .perf-grid { grid-template-columns: 1fr; }
+}
+.perf-card {
+  text-align: center;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+.perf-card .perf-value {
+  font-size: 32px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+.perf-card .perf-value.fast { color: var(--green); }
+.perf-card .perf-value.medium { color: var(--amber); }
+.perf-card .perf-value.slow { color: var(--red); }
+.perf-card .perf-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.perf-card .perf-detail {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-top: 4px;
+}
+
+.schema-diagram {
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 16px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 13px;
+  line-height: 1.8;
+  overflow-x: auto;
+}
+.schema-diagram .schema-title {
+  font-family: -apple-system, sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.schema-diagram .schema-title i { color: var(--primary); }
+.schema-diagram .field { color: var(--text-secondary); }
+.schema-diagram .field-name { color: #e5484d; font-weight: 600; }
+.schema-diagram .field-type { color: var(--purple); }
+.schema-diagram .field-pk { color: var(--amber); font-weight: 600; }
+.schema-diagram .field-new { color: var(--green); font-weight: 600; }
+
+.footer {
+  text-align: center;
+  padding: 24px;
+  font-size: 12px;
+  color: #9ca3af;
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="doc-header">
+    <h1><i class="ri-translate-2"></i> 拼音字段落地方案</h1>
+    <div class="subtitle">SaaS 老业务系统客户表 / 产品表拼音索引 — 技术设计文档</div>
+    <div class="doc-meta">
+      <div class="doc-meta-item"><i class="ri-calendar-line"></i> <strong>日期</strong> 2026-05-17</div>
+      <div class="doc-meta-item"><i class="ri-user-line"></i> <strong>作者</strong> 智能制单项目组</div>
+      <div class="doc-meta-item"><i class="ri-git-branch-line"></i> <strong>版本</strong> v1.2</div>
+      <div class="doc-meta-item"><i class="ri-shield-check-line"></i> <strong>状态</strong> 已更新</div>
+    </div>
+  </div>
+
+  <!-- 一、背景与目标 -->
+  <div class="section">
+    <div class="section-title">
+      <i class="icon-blue"><i class="ri-flag-line"></i></i>
+      一、背景与目标
+    </div>
+    <p>智能制单系统通过语音/NLP 识别客户和产品信息后，需要将识别结果与后台数据库做拼音匹配。当前客户表和产品表均未存储拼音字段，无法支撑拼音索引查询。</p>
+
+    <div class="highlight-box amber">
+      <i class="ri-alert-line"></i> <strong>核心约束：</strong>SaaS 数据服务器负载较重，客户表作为重业务表存在高概率锁表问题。任何直接修改主表结构的操作都需极其谨慎。
+    </div>
+
+    <p><strong>目标：</strong></p>
+    <ul style="list-style:none;margin-left:0;">
+      <li style="padding:4px 0;padding-left:20px;position:relative;font-size:14px;"><span style="position:absolute;left:0;color:var(--primary);">&#10003;</span> 为客户表、产品表新增拼音字段，支撑拼音索引匹配</li>
+      <li style="padding:4px 0;padding-left:20px;position:relative;font-size:14px;"><span style="position:absolute;left:0;color:var(--primary);">&#10003;</span> 最小化对主业务和服务器负载的影响</li>
+      <li style="padding:4px 0;padding-left:20px;position:relative;font-size:14px;"><span style="position:absolute;left:0;color:var(--primary);">&#10003;</span> 兼顾开发成本，让功能快速上线</li>
+      <li style="padding:4px 0;padding-left:20px;position:relative;font-size:14px;"><span style="position:absolute;left:0;color:var(--primary);">&#10003;</span> 后续可平滑升级为自动同步</li>
+    </ul>
+  </div>
+
+  <!-- 二、方案对比 -->
+  <div class="section">
+    <div class="section-title">
+      <i class="icon-purple"><i class="ri-scales-3-line"></i></i>
+      二、方案对比
+    </div>
+    <p>针对拼音字段的存储位置，对比三种方案：</p>
+
+    <div class="compare-grid">
+      <div class="compare-card">
+        <div class="card-title"><i class="ri-database-2-line" style="color:var(--text-secondary);"></i> 方案A：主表加列</div>
+        <div class="card-desc">直接在客户表/产品表上 ALTER TABLE 新增拼音列</div>
+        <ul>
+          <li>实现最简单</li>
+          <li class="warn">ALTER TABLE 锁表风险高</li>
+          <li class="warn">批量 UPDATE 累积耗时</li>
+          <li class="warn">影响线上业务稳定性</li>
+        </ul>
+      </div>
+      <div class="compare-card recommended">
+        <span class="card-badge">推荐</span>
+        <div class="card-title"><i class="ri-table-line" style="color:var(--green);"></i> 方案B：独立子表</div>
+        <div class="card-desc">新建 KV 子表，仅存 ID + 拼音映射</div>
+        <ul>
+          <li>不修改主表结构</li>
+          <li>无锁表风险</li>
+          <li>批量操作独立进行</li>
+          <li>可按需创建索引</li>
+        </ul>
+      </div>
+      <div class="compare-card">
+        <div class="card-title"><i class="ri-cloud-line" style="color:var(--text-secondary);"></i> 方案C：外部索引</div>
+        <div class="card-desc">使用 Elasticsearch 等外部搜索引擎建立拼音索引</div>
+        <ul>
+          <li>查询性能最优</li>
+          <li class="warn">引入新中间件</li>
+          <li class="warn">运维成本高</li>
+          <li class="warn">数据同步复杂</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="highlight-box green">
+      <i class="ri-check-double-line"></i> <strong>结论：</strong>采用方案B — 独立 KV 子表。在不修改主表结构的前提下，以最低成本实现拼音索引，且不影响线上业务。
+    </div>
+  </div>
+
+  <!-- 三、数据表设计 -->
+  <div class="section">
+    <div class="section-title">
+      <i class="icon-green"><i class="ri-database-line"></i></i>
+      三、数据表设计
+    </div>
+    <p>新建两张独立 KV 子表，仅包含主键、业务 ID 和拼音字段，结构精简、操作轻量。</p>
+
+    <div class="schema-diagram">
+      <div class="schema-title"><i class="ri-building-line"></i> 客户拼音子表 customer_pinyin</div>
+      <span class="field"><span class="field-pk">id</span>          <span class="field-type">BIGINT</span>       -- 主键，自增</span><br>
+      <span class="field"><span class="field-name">customer_id</span> <span class="field-type">BIGINT</span>       -- 关联客户表主键</span><br>
+      <span class="field"><span class="field-new">pinyin</span>       <span class="field-type">VARCHAR(500)</span> -- 客户全称拼音，如 shen_zhen_hua_chuang_ke_ji</span><br>
+      <span class="field"><span class="field-new">pinyin_abbr</span>  <span class="field-type">VARCHAR(100)</span> -- 拼音首字母，如 szhckj</span><br>
+      <span class="field"><span class="field-name">updated_at</span>   <span class="field-type">DATETIME</span>     -- 最后更新时间</span>
+    </div>
+
+    <div class="schema-diagram">
+      <div class="schema-title"><i class="ri-shopping-bag-line"></i> 产品拼音子表 product_pinyin</div>
+      <span class="field"><span class="field-pk">id</span>          <span class="field-type">BIGINT</span>       -- 主键，自增</span><br>
+      <span class="field"><span class="field-name">product_id</span>  <span class="field-type">BIGINT</span>       -- 关联产品表主键</span><br>
+      <span class="field"><span class="field-new">name_pinyin</span>  <span class="field-type">VARCHAR(300)</span> -- 产品名称拼音，如 A3_da_yin_zhi</span><br>
+      <span class="field"><span class="field-new">name_abbr</span>    <span class="field-type">VARCHAR(50)</span>  -- 名称拼音首字母</span><br>
+      <span class="field"><span class="field-new">spec_pinyin</span>  <span class="field-type">VARCHAR(300)</span> -- 规格型号拼音</span><br>
+      <span class="field"><span class="field-name">updated_at</span>   <span class="field-type">DATETIME</span>     -- 最后更新时间</span>
+    </div>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>索引</th>
+          <th>类型</th>
+          <th>字段</th>
+          <th>说明</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>uk_customer_id</code></td>
+          <td>UNIQUE</td>
+          <td>customer_id</td>
+          <td>一个客户仅一条拼音记录</td>
+        </tr>
+        <tr>
+          <td><code>uk_product_id</code></td>
+          <td>UNIQUE</td>
+          <td>product_id</td>
+          <td>一个产品仅一条拼音记录</td>
+        </tr>
+        <tr>
+          <td><code>idx_pinyin</code></td>
+          <td>NORMAL</td>
+          <td>pinyin / name_pinyin</td>
+          <td>加速拼音模糊查询</td>
+        </tr>
+        <tr>
+          <td><code>idx_abbr</code></td>
+          <td>NORMAL</td>
+          <td>pinyin_abbr / name_abbr</td>
+          <td>加速首字母匹配</td>
+        </tr>
+        <tr>
+          <td><code>idx_updated</code></td>
+          <td>NORMAL</td>
+          <td>updated_at</td>
+          <td>增量刷新时间戳查询</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 四、拼音生成方案 -->
+  <div class="section">
+    <div class="section-title">
+      <i class="icon-amber"><i class="ri-cpu-line"></i></i>
+      四、拼音生成方案
+    </div>
+    <p>拼音转换逻辑放在<strong>浏览器前端本地</strong>执行，使用 <code>pinyin-pro</code> 离线拼音库，不占用服务器资源。</p>
+
+    <div class="perf-grid">
+      <div class="perf-card">
+        <div class="perf-value fast">&lt;10s</div>
+        <div class="perf-label">5万条本地生成</div>
+        <div class="perf-detail">浏览器端 pinyin-pro</div>
+      </div>
+      <div class="perf-card">
+        <div class="perf-value slow">5~15min</div>
+        <div class="perf-label">5万条服务端生成</div>
+        <div class="perf-detail">服务端 pinyin 库 + DB写入</div>
+      </div>
+      <div class="perf-card">
+        <div class="perf-value fast">0</div>
+        <div class="perf-label">服务器额外负载</div>
+        <div class="perf-detail">前端本地计算，仅提交结果</div>
+      </div>
+    </div>
+
+    <div class="highlight-box blue">
+      <i class="ri-lightbulb-line"></i> <strong>核心思路：</strong>前端通过 CDN 引入 pinyin-pro 库，在浏览器中将客户名称/产品名称转为拼音，然后批量提交到后端写入子表。服务器零计算负担。
+    </div>
+
+    <div class="code-block"><span class="comment">// CDN 引入 pinyin-pro（离线，无需服务器）</span>
+&lt;script src=<span class="string">"https://cdn.jsdelivr.net/npm/pinyin-pro@3.25.0/dist/index.js"</span>&gt;&lt;/script&gt;
+
+<span class="comment">// 前端本地生成拼音（中英混合分段处理）</span>
+<span class="keyword">function</span> <span class="type">generatePinyinForText</span>(text) {
+  <span class="comment">// 1. 按中/非中分段</span>
+  <span class="keyword">var</span> segments = splitByChinese(text);
+  <span class="keyword">var</span> fullParts = [], abbrParts = [];
+
+  <span class="keyword">for</span> (<span class="keyword">var</span> j = <span class="string">0</span>; j &lt; segments.length; j++) {
+    <span class="keyword">if</span> (segments[j].isChinese) {
+      <span class="comment">// 中文段：pinyin-pro 转拼音</span>
+      fullParts.push(pinyinPro.pinyin(seg.text, {toneType:<span class="string">'none'</span>, type:<span class="string">'array'</span>}).join(<span class="string">'_'</span>));
+      abbrParts.push(pinyinPro.pinyin(seg.text, {pattern:<span class="string">'first'</span>, toneType:<span class="string">'none'</span>, type:<span class="string">'array'</span>}).join(<span class="string">''</span>));
+    } <span class="keyword">else</span> {
+      <span class="comment">// 非中文段：全拼保留原字符，首字母按音节提取</span>
+      fullParts.push(seg.text.toLowerCase().replace(/\s+/g, <span class="string">'_'</span>));
+      <span class="keyword">if</span> (/^[a-z]+([_\s]+[a-z]+)*$/.test(seg.text.toLowerCase())) {
+        <span class="comment">// 拼音格式文本：按 _ 拆分取每个音节首字母</span>
+        abbrParts.push(seg.text.toLowerCase().split(/[_\s]+/).map(w =&gt; w[0]).join(<span class="string">''</span>));
+      } <span class="keyword">else</span> {
+        abbrParts.push(seg.text.toLowerCase().replace(/\s+/g, <span class="string">''</span>));
+      }
+    }
+  }
+  <span class="keyword">return</span> { full: fullParts.join(<span class="string">'_'</span>), abbr: abbrParts.join(<span class="string">''</span>) };
+}
+
+<span class="comment">// 占位符统一判断函数</span>
+<span class="keyword">function</span> <span class="type">isPlaceholder</span>(val) {
+  <span class="keyword">if</span> (!val) <span class="keyword">return true</span>;
+  <span class="keyword">var</span> t = val.trim();
+  <span class="keyword">return</span> !t || t === <span class="string">'-'</span> || t === <span class="string">'[未填写]'</span> || <span class="string">/^\[.*\]$/</span>.test(t);
+}
+
+<span class="comment">// 产品拼音生成：品名+型号+规格合并（占位符过滤）</span>
+<span class="keyword">var</span> combined = [p.name, p.model, p.spec]
+  .filter(<span class="keyword">function</span>(s) { <span class="keyword">return</span> !isPlaceholder(s); })
+  .join(<span class="string">' '</span>);
+<span class="keyword">var</span> py = generatePinyinForText(combined);
+
+<span class="comment">// 示例：generatePinyinForText('深圳华创科技有限公司')</span>
+<span class="comment">// → { full: 'shen_zhen_hua_chuang_ke_ji_you_xian_gong_si',</span>
+<span class="comment">//     abbr: 'szhckjyxgs' }</span>
+<span class="comment">//</span>
+<span class="comment">// 示例：generatePinyinForText('fei_er_gong_mao_you_xian_gong_si')</span>
+<span class="comment">// → { full: 'fei_er_gong_mao_you_xian_gong_si',</span>
+<span class="comment">//     abbr: 'fegmyxgs' }  ← 按音节取首字母，非整体去空格</span></div>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>拼音规则</th>
+          <th>说明</th>
+          <th>示例</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>全拼</td>
+          <td>小写 + 下划线分隔，数字保留</td>
+          <td><code>shen_zhen_hua_chuang_ke_ji</code></td>
+        </tr>
+        <tr>
+          <td>首字母（中文段）</td>
+          <td>每个汉字取首字母</td>
+          <td><code>szhckjyxgs</code></td>
+        </tr>
+        <tr>
+          <td>首字母（拼音段）</td>
+          <td>按 <code>_</code> 拆分后取每个音节首字母</td>
+          <td><code>fei_er_gong_mao</code> → <code>fegm</code></td>
+        </tr>
+        <tr>
+          <td>产品合并生成</td>
+          <td>品名+型号+规格合并后生成拼音</td>
+          <td><code>视频会议 POLYCOM HDX 6000</code> → <code>shi_pin_hui_yi_polycom_hdx_6000</code></td>
+        </tr>
+        <tr>
+          <td>占位符过滤</td>
+          <td>空值、<code>"-"</code>、<code>"[未填写]"</code>、<code>"[空]"</code> 等方括号占位符不参与拼音生成（<code>isPlaceholder()</code> 统一判断）</td>
+          <td>model=<code>"[未填写]"</code> → 不加入combined文本，避免拼音污染</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 五、同步机制 -->
+  <div class="section">
+    <div class="section-title">
+      <i class="icon-purple"><i class="ri-refresh-line"></i></i>
+      五、同步机制
+    </div>
+    <p>采用<strong>分阶段演进</strong>策略，初期手工触发，后续自动同步，最小化前期开发成本。</p>
+
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="flow-step-num">1</div>
+        <div class="flow-step-content">
+          <div class="flow-step-title">首次初始化 — 离线批量生成</div>
+          <div class="flow-step-desc">在管理页面点击"生成拼音"按钮，前端分批加载客户/产品数据（每批 500 条），本地转换后批量提交写入子表。整个过程不锁主表，不影响线上业务。</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-num">2</div>
+        <div class="flow-step-content">
+          <div class="flow-step-title">增量更新 — 时间戳驱动</div>
+          <div class="flow-step-desc">基于客户表/产品表的 <code>updated_at</code> 字段，查询上次同步后新增或修改的记录，仅对这些记录生成拼音并更新子表。支持按需手动触发。</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-num">3</div>
+        <div class="flow-step-content">
+          <div class="flow-step-title">自动同步（后续演进）</div>
+          <div class="flow-step-desc">业务量提升后，在客户/产品的新增/修改接口中增加异步消息，自动触发拼音子表更新。此阶段为可选升级，不影响初期功能上线。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="highlight-box purple">
+      <i class="ri-route-line"></i> <strong>演进路径：</strong>手动触发 → 增量刷新 → 自动同步。每个阶段独立可用，可按业务节奏逐步升级。
+    </div>
+  </div>
+
+  <!-- 六、交互设计 -->
+  <div class="section">
+    <div class="section-title">
+      <i class="icon-blue"><i class="ri-mouse-line"></i></i>
+      六、交互设计
+    </div>
+    <p>在客户管理和产品管理页面添加拼音操作区域：</p>
+
+    <div class="schema-diagram" style="font-family:-apple-system,sans-serif;">
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+        <span style="padding:6px 14px;background:var(--primary);color:white;border-radius:8px;font-size:13px;font-weight:600;"><i class="ri-play-line"></i> 生成全部拼音</span>
+        <span style="padding:6px 14px;background:var(--green);color:white;border-radius:8px;font-size:13px;font-weight:600;"><i class="ri-refresh-line"></i> 增量更新拼音</span>
+      </div>
+      <div style="font-size:13px;color:var(--text-secondary);line-height:1.8;">
+        <div>📋 客户拼音：已生成 <strong style="color:var(--green);">12,458</strong> / 12,500 条 &nbsp;|&nbsp; 最后更新：2026-05-14 10:30</div>
+        <div>📦 产品拼音：已生成 <strong style="color:var(--green);">8,921</strong> / 9,000 条 &nbsp;|&nbsp; 最后更新：2026-05-14 10:28</div>
+        <div style="margin-top:8px;color:var(--amber);">⚠️ 待更新：42 条客户、79 条产品（基于 updated_at 增量检测）</div>
+      </div>
+    </div>
+
+    <div class="highlight-box amber">
+      <i class="ri-information-line"></i> <strong>批量处理策略：</strong>前端每批处理 500 条，每批之间插入 200ms 间隔，避免浏览器卡顿。每批转换完成后立即提交后端写入，用户可实时看到进度。
+    </div>
+  </div>
+
+  <!-- 七、API 设计 -->
+  <div class="section">
+    <div class="section-title">
+      <i class="icon-green"><i class="ri-code-s-slash-line"></i></i>
+      七、API 设计
+    </div>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>接口</th>
+          <th>方法</th>
+          <th>说明</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>/api/pinyin/batch</code></td>
+          <td>POST</td>
+          <td>批量写入拼音数据（前端生成后提交）</td>
+        </tr>
+        <tr>
+          <td><code>/api/pinyin/status</code></td>
+          <td>GET</td>
+          <td>获取拼音生成状态（已生成数/总数/最后更新时间）</td>
+        </tr>
+        <tr>
+          <td><code>/api/pinyin/incremental</code></td>
+          <td>GET</td>
+          <td>获取需要增量更新的记录列表（基于时间戳）</td>
+        </tr>
+        <tr>
+          <td><code>/api/pinyin/query</code></td>
+          <td>GET</td>
+          <td>拼音匹配查询（智能制单调用）</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="code-block"><span class="comment">// POST /api/pinyin/batch 请求体</span>
+{
+  <span class="string">"type"</span>: <span class="string">"customer"</span>,        <span class="comment">// "customer" | "product"</span>
+  <span class="string">"items"</span>: [
+    {
+      <span class="string">"id"</span>: 1001,
+      <span class="string">"pinyin"</span>: <span class="string">"shen_zhen_hua_chuang_ke_ji"</span>,
+      <span class="string">"pinyin_abbr"</span>: <span class="string">"szhckj"</span>
+    }
+  ]
+}
+
+<span class="comment">// GET /api/pinyin/query?keyword=szhckj&type=customer</span>
+<span class="comment">// → 返回拼音匹配的客户列表</span></div>
+  </div>
+
+  <!-- 八、风险与应对 -->
+  <div class="section">
+    <div class="section-title">
+      <i class="icon-red"><i class="ri-shield-line"></i></i>
+      八、风险与应对
+    </div>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>风险</th>
+          <th>影响</th>
+          <th>应对措施</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>批量写入子表时数据库压力</td>
+          <td>中</td>
+          <td>分批提交（每批 500 条），批间间隔 200ms；选择业务低峰期执行</td>
+        </tr>
+        <tr>
+          <td>主表数据变更后子表未同步</td>
+          <td>低</td>
+          <td>增量刷新按钮 + updated_at 时间戳检测；后续升级为自动同步</td>
+        </tr>
+        <tr>
+          <td>多音字导致拼音不准确</td>
+          <td>低</td>
+          <td>pinyin-pro 支持多音字词库；匹配时同时查全拼和首字母，提高命中率</td>
+        </tr>
+        <tr>
+          <td>浏览器端批量生成时页面卡顿</td>
+          <td>低</td>
+          <td>使用 requestIdleCallback 或 Web Worker 分批处理；展示进度条</td>
+        </tr>
+        <tr>
+          <td>CDN 不可用导致 pinyin-pro 加载失败</td>
+          <td>低</td>
+          <td>将 pinyin-pro 打包到项目静态资源中作为 fallback</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 九、开发任务 -->
+  <div class="section">
+    <div class="section-title">
+      <i class="icon-blue"><i class="ri-list-check-2"></i></i>
+      九、开发任务
+    </div>
+
+    <div class="task-list">
+      <div class="task-item">
+        <div class="task-num">1</div>
+        <div class="task-body">
+          <div class="task-title">新建拼音子表</div>
+          <div class="task-desc">创建 customer_pinyin 和 product_pinyin 两张 KV 子表，建立唯一索引和查询索引</div>
+          <div class="task-tag db">数据库</div>
+        </div>
+      </div>
+      <div class="task-item">
+        <div class="task-num">2</div>
+        <div class="task-body">
+          <div class="task-title">后端批量写入 & 查询 API</div>
+          <div class="task-desc">实现 /api/pinyin/batch、/api/pinyin/status、/api/pinyin/incremental、/api/pinyin/query 四个接口</div>
+          <div class="task-tag api">后端</div>
+        </div>
+      </div>
+      <div class="task-item">
+        <div class="task-num">3</div>
+        <div class="task-body">
+          <div class="task-title">前端拼音生成 & 批量提交</div>
+          <div class="task-desc">引入 pinyin-pro，实现前端本地拼音转换、分批提交、进度展示。在客户/产品管理页添加"生成拼音"和"增量更新"按钮</div>
+          <div class="task-tag fe">前端</div>
+        </div>
+      </div>
+      <div class="task-item">
+        <div class="task-num">4</div>
+        <div class="task-body">
+          <div class="task-title">增量刷新逻辑</div>
+          <div class="task-desc">基于 updated_at 时间戳实现增量检测，仅对新增/修改的记录生成拼音并更新子表</div>
+          <div class="task-tag fe">前端</div>
+          <div class="task-tag api">后端</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 十、演进路线 -->
+  <div class="section">
+    <div class="section-title">
+      <i class="icon-green"><i class="ri-road-map-line"></i></i>
+      十、演进路线
+    </div>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>阶段</th>
+          <th>能力</th>
+          <th>触发方式</th>
+          <th>开发量</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Phase 1</strong></td>
+          <td>手动全量生成 + 拼音查询</td>
+          <td>管理页按钮触发</td>
+          <td>2~3 人天</td>
+        </tr>
+        <tr>
+          <td><strong>Phase 2</strong></td>
+          <td>增量刷新 + 状态监控</td>
+          <td>手动触发 + 时间戳检测</td>
+          <td>1~2 人天</td>
+        </tr>
+        <tr>
+          <td><strong>Phase 3</strong></td>
+          <td>自动同步</td>
+          <td>业务接口异步消息</td>
+          <td>2~3 人天</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="highlight-box green">
+      <i class="ri-rocket-line"></i> <strong>建议：</strong>优先完成 Phase 1 + Phase 2，即可支撑智能制单的拼音匹配需求。Phase 3 为可选升级，待业务量提升后按需实施。
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  智能制单项目组 · 拼音字段落地方案 · v1.2
+</div>
+
+</body>
+</html>

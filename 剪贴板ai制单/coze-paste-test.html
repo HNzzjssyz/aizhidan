@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coze SDK 粘贴测试</title>
+<script src="https://lf-cdn.coze.cn/obj/unpkg/flow-platform/chat-app-sdk/1.2.0-beta.19/libs/cn/index.js"></script>
+<style>
+body { font-family: sans-serif; padding: 20px; }
+h1 { margin-bottom: 20px; }
+.info { color: #666; margin-bottom: 20px; line-height: 1.8; }
+</style>
+</head>
+<body>
+<h1>Coze SDK 粘贴截图测试</h1>
+<div class="info">
+  <p>这是一个最小化测试页面，只包含 Coze SDK，没有任何其他代码。</p>
+  <p>测试步骤：</p>
+  <ol>
+    <li>点击右下角悬浮球打开聊天窗口</li>
+    <li>截图复制到剪贴板</li>
+    <li>在聊天输入框中按 Ctrl+V / Cmd+V 粘贴</li>
+    <li>观察是否出现粘贴的图片</li>
+  </ol>
+</div>
+<script>
+var cozeClient = new CozeWebSDK.WebChatClient({
+  config: {
+    bot_id: '7638933573109792777',
+  },
+  auth: {
+    type: 'token',
+    token: 'pat_zwWR14W4YEjLnqpD2BhItuhzKhC4VYH52oWfwYoeiB2Y9JuKBR1g1TfRzFDTbWQe',
+    onRefreshToken: function () {
+      return 'pat_zwWR14W4YEjLnqpD2BhItuhzKhC4VYH52oWfwYoeiB2Y9JuKBR1g1TfRzFDTbWQe';
+    }
+  },
+  ui: {
+    base: {
+      lang: 'zh-CN',
+    },
+    chatBot: {
+      title: '智能制单助手',
+    },
+  }
+});
+</script>
+</body>
+</html>

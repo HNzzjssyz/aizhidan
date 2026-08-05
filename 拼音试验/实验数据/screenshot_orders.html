@@ -1,0 +1,2176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>模拟订单截图数据</title>
+<style>
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#f0f2f5;padding:20px}
+.screenshot-container{max-width:800px;margin:0 auto}
+.order-card{background:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.1);margin-bottom:24px;overflow:hidden}
+.order-header{background:#1890ff;color:#fff;padding:12px 20px;font-size:16px;font-weight:600;display:flex;justify-content:space-between}
+.order-header .order-no{font-size:13px;opacity:.9}
+.order-body{padding:16px 20px}
+.info-row{display:flex;margin-bottom:8px;font-size:14px;line-height:1.8}
+.info-label{color:#999;width:80px;flex-shrink:0}
+.info-value{color:#333;font-weight:500}
+.product-table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px}
+.product-table th{background:#fafafa;padding:8px 12px;text-align:left;border:1px solid #e8e8e8;color:#666;font-weight:500}
+.product-table td{padding:8px 12px;border:1px solid #e8e8e8;color:#333}
+.product-table .amount{text-align:right;font-weight:600;color:#f5222d}
+.order-footer{padding:12px 20px;background:#fafafa;border-top:1px solid #e8e8e8;display:flex;justify-content:space-between;font-size:13px;color:#666}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:12px;margin-left:8px}
+.badge-urgent{background:#fff1f0;color:#f5222d;border:1px solid #ffa39e}
+.badge-normal{background:#f6ffed;color:#52c41a;border:1px solid #b7eb8f}
+.badge-invoice{background:#e6f7ff;color:#1890ff;border:1px solid #91d5ff}
+.badge-monthly{background:#fff7e6;color:#fa8c16;border:1px solid #ffd591}
+h2{color:#333;margin-bottom:16px}
+</style>
+</head>
+<body>
+<div class="screenshot-container">
+<h2>📋 模拟订单截图数据（共15条）</h2>
+<div class="order-card">
+  <div class="order-header">
+    <span>销售订单<span class="badge badge-urgent">加急</span></span>
+    <span class="order-no">ORD20260518001</span>
+  </div>
+  <div class="order-body">
+    <div class="info-row"><span class="info-label">客户名称</span><span class="info-value">新疆龙浩医疗器械有限公司</span></div>
+    <div class="info-row"><span class="info-label">联系人</span><span class="info-value">张总</span></div>
+    <div class="info-row"><span class="info-label">收货地址</span><span class="info-value">武汉市洪山区光谷大道77号</span></div>
+    <table class="product-table">
+      <tr><th>产品名称</th><th>型号</th><th>规格</th><th>数量</th><th>单价</th><th>金额</th></tr>
+      <tr>
+        <td>嘉恒 涤纶条纹 深蓝 连帽分体 真空ESD千级 防静电洁净服</td>
+        <td>深蓝ESD 185/3XL</td>
+        <td>-</td>
+        <td>8包</td>
+        <td>¥30,693.10</td>
+        <td class="amount">¥245,544.80</td>
+      </tr>
+      <tr>
+        <td>安百利 X012 石棉铝箔 45*55 加长护腿 隔热耐高温 脚盖</td>
+        <td>65m*45cm</td>
+        <td>-</td>
+        <td>7个</td>
+        <td>¥37,750.67</td>
+        <td class="amount">¥264,254.69</td>
+      </tr>
+      <tr>
+        <td>恩惠 304不锈钢 10CM 直尖头 手术剪刀</td>
+        <td>10cm  直尖</td>
+        <td>-</td>
+        <td>46包</td>
+        <td>¥34,767.77</td>
+        <td class="amount">¥1,599,317.42</td>
+      </tr>
+      <tr>
+        <td>豪尔泰1354-8 涤棉厚斜纹 卡其单层 春秋长袖 夹克工作服</td>
+        <td>165/M</td>
+        <td>-</td>
+        <td>3包</td>
+        <td>¥25,226.52</td>
+        <td class="amount">¥75,679.56</td>
+      </tr>
+      <tr>
+        <td>牛郎星 NL118 棉线胶片 黄纱红胶 手背贴片 压纹指挂 挂胶手套</td>
+        <td>黄/红/9/M</td>
+        <td>-</td>
+        <td>37盒</td>
+        <td>¥8,550.43</td>
+        <td class="amount">¥316,365.91</td>
+      </tr>
+      <tr>
+        <td>霍尼韦尔 75808/Bold 重型/防滑/防砸/防刺穿/防化 安全胶靴</td>
+        <td>42码</td>
+        <td>-</td>
+        <td>46套</td>
+        <td>¥4,093.44</td>
+        <td class="amount">¥188,298.24</td>
+      </tr>
+      <tr>
+        <td>河北 涤棉 大花迷彩 工作服</td>
+        <td>190/4XL</td>
+        <td>-</td>
+        <td>34盒</td>
+        <td>¥21,431.68</td>
+        <td class="amount">¥728,677.12</td>
+      </tr>
+      <tr>
+        <td>山东 尼龙圆木 Φ20绳 Φ24 圆木 间距30CM 长20米 尼龙软梯</td>
+        <td>G57绳梯（软梯）</td>
+        <td>-</td>
+        <td>48本</td>
+        <td>¥16,722.49</td>
+        <td class="amount">¥802,679.52</td>
+      </tr>
+      <tr>
+        <td>征雪 3202 反绒PU底 黄色中邦 防砸绝缘 长毛棉鞋</td>
+        <td>38码</td>
+        <td>-</td>
+        <td>47本</td>
+        <td>¥34,068.20</td>
+        <td class="amount">¥1,601,205.40</td>
+      </tr>
+      <tr>
+        <td>河北 涤棉07式 数码迷彩 多功能 武警防寒大衣</td>
+        <td>160/S</td>
+        <td>-</td>
+        <td>9个</td>
+        <td>¥36,488.75</td>
+        <td class="amount">¥328,398.75</td>
+      </tr>
+    </table>
+  </div>
+  <div class="order-footer">
+    <span>下单日期：2026-05-17</span>
+    <span>合计：¥6,150,421.41</span>
+  </div>
+</div>
+<div class="order-card">
+  <div class="order-header">
+    <span>销售订单<span class="badge badge-urgent">加急</span></span>
+    <span class="order-no">ORD20260519002</span>
+  </div>
+  <div class="order-body">
+    <div class="info-row"><span class="info-label">客户名称</span><span class="info-value">崇左市江州区东方希望畜牧有限公司</span></div>
+    <div class="info-row"><span class="info-label">联系人</span><span class="info-value">张经理</span></div>
+    <div class="info-row"><span class="info-label">收货地址</span><span class="info-value">杭州市西湖区文三路200号</span></div>
+    <table class="product-table">
+      <tr><th>产品名称</th><th>型号</th><th>规格</th><th>数量</th><th>单价</th><th>金额</th></tr>
+      <tr>
+        <td>玉丰 黄色 三防高筒 棉雨靴</td>
+        <td>45码</td>
+        <td>-</td>
+        <td>29套</td>
+        <td>¥25,504.27</td>
+        <td class="amount">¥739,623.83</td>
+      </tr>
+      <tr>
+        <td>普安特 橡胶底 反绒面 加盖棕色中邦 耐高温防砸鞋</td>
+        <td>41码</td>
+        <td>-</td>
+        <td>13盒</td>
+        <td>¥43,288.93</td>
+        <td class="amount">¥562,756.09</td>
+      </tr>
+      <tr>
+        <td>新疆 500ML 医用碘伏 瓶装 消毒液</td>
+        <td>500ML</td>
+        <td>-</td>
+        <td>46包</td>
+        <td>¥46,597.49</td>
+        <td class="amount">¥2,143,484.54</td>
+      </tr>
+      <tr>
+        <td>3M蓝/无铅/电工胶带/18mm*20m/车家通用/PVC/电气绝缘胶带</td>
+        <td></td>
+        <td>-</td>
+        <td>18盒</td>
+        <td>¥7,072.26</td>
+        <td class="amount">¥127,300.68</td>
+      </tr>
+      <tr>
+        <td>征雪 3101B-2 PU底压花皮 黑色低帮 绝缘防刺穿 安全鞋</td>
+        <td>34码 低/黑</td>
+        <td>-</td>
+        <td>7包</td>
+        <td>¥26,817.44</td>
+        <td class="amount">¥187,722.08</td>
+      </tr>
+      <tr>
+        <td>银鹰 H718黑 超纤PU底 低帮黑色 防砸防刺穿 15KV绝缘安全鞋</td>
+        <td>低帮/41码</td>
+        <td>-</td>
+        <td>4盒</td>
+        <td>¥25,707.59</td>
+        <td class="amount">¥102,830.36</td>
+      </tr>
+      <tr>
+        <td>山东 颗粒柱状 纸袋 活性炭</td>
+        <td>100g</td>
+        <td>-</td>
+        <td>15件</td>
+        <td>¥34,134.92</td>
+        <td class="amount">¥512,023.80</td>
+      </tr>
+      <tr>
+        <td>帝欧 D8301 反绒牛皮橡胶底 中帮 桂圆色 防砸防刺穿 安全鞋</td>
+        <td>D8301-38</td>
+        <td>-</td>
+        <td>31套</td>
+        <td>¥11,552.97</td>
+        <td class="amount">¥358,142.07</td>
+      </tr>
+      <tr>
+        <td>安百利 T10 芳纶镀铝布 耐高温1000°单层配帽式 隔热披肩帽</td>
+        <td>披肩帽/单层/大码</td>
+        <td>-</td>
+        <td>46个</td>
+        <td>¥1,628.68</td>
+        <td class="amount">¥74,919.28</td>
+      </tr>
+      <tr>
+        <td>固安特 ABS 旋钮/Y带 三筋/透气/卷边 安全帽</td>
+        <td>黄</td>
+        <td>-</td>
+        <td>33盒</td>
+        <td>¥31,576.07</td>
+        <td class="amount">¥1,042,010.31</td>
+      </tr>
+      <tr>
+        <td>雷克兰 CT1S 428E C级 黄色 连体防化服</td>
+        <td>175/XL</td>
+        <td>-</td>
+        <td>5箱</td>
+        <td>¥5,776.91</td>
+        <td class="amount">¥28,884.55</td>
+      </tr>
+      <tr>
+        <td>毅腾 涤纶3T4M 黄色4M*7CM*6MM扁带双扣 起重吊带</td>
+        <td>3T4M黄色</td>
+        <td>-</td>
+        <td>14件</td>
+        <td>¥15,785.32</td>
+        <td class="amount">¥220,994.48</td>
+      </tr>
+      <tr>
+        <td>唐丰 ABS V-B型 一指键D带 安全帽</td>
+        <td>白色</td>
+        <td>-</td>
+        <td>18包</td>
+        <td>¥19,541.19</td>
+        <td class="amount">¥351,741.42</td>
+      </tr>
+      <tr>
+        <td>嘉恒 涤纶条纹 深灰色 连帽分体 真空ESD千级 防静电洁净服</td>
+        <td>深灰ESD 175/XL</td>
+        <td>-</td>
+        <td>27箱</td>
+        <td>¥21,348.46</td>
+        <td class="amount">¥576,408.42</td>
+      </tr>
+      <tr>
+        <td>恒拓 K55 防砸/防穿刺/耐磨/耐油/耐酸碱  旋钮/快速穿脱  黑色网面安全鞋</td>
+        <td>K55-43</td>
+        <td>-</td>
+        <td>21台</td>
+        <td>¥35,708.28</td>
+        <td class="amount">¥749,873.88</td>
+      </tr>
+      <tr>
+        <td>西北行 全棉厚珠帆 双层 大红工作服</td>
+        <td>165/M</td>
+        <td>-</td>
+        <td>32套</td>
+        <td>¥25,398.12</td>
+        <td class="amount">¥812,739.84</td>
+      </tr>
+    </table>
+  </div>
+  <div class="order-footer">
+    <span>下单日期：2026-05-18</span>
+    <span>合计：¥8,591,455.63</span>
+  </div>
+</div>
+<div class="order-card">
+  <div class="order-header">
+    <span>销售订单<span class="badge badge-monthly">月结</span></span>
+    <span class="order-no">ORD20260520003</span>
+  </div>
+  <div class="order-body">
+    <div class="info-row"><span class="info-label">客户名称</span><span class="info-value">吴丙贵</span></div>
+    <div class="info-row"><span class="info-label">联系人</span><span class="info-value">13909901105</span></div>
+    <div class="info-row"><span class="info-label">收货地址</span><span class="info-value">武汉市洪山区光谷大道77号</span></div>
+    <table class="product-table">
+      <tr><th>产品名称</th><th>型号</th><th>规格</th><th>数量</th><th>单价</th><th>金额</th></tr>
+      <tr>
+        <td>卓锐 ABS V型 旋钮绒带 Y型D下巴带 透气卷边 安全帽</td>
+        <td>黄色</td>
+        <td>-</td>
+        <td>18本</td>
+        <td>¥15,810.56</td>
+        <td class="amount">¥284,590.08</td>
+      </tr>
+      <tr>
+        <td>江苏 涤纶PU 白色 20kg-65-25米 不含接头 消防水带</td>
+        <td>白色20/65/25</td>
+        <td>-</td>
+        <td>33件</td>
+        <td>¥8,723.52</td>
+        <td class="amount">¥287,876.16</td>
+      </tr>
+      <tr>
+        <td>双安 15KV高压 布面胶底 黑色 绝缘鞋</td>
+        <td>黑色41码</td>
+        <td>-</td>
+        <td>5盒</td>
+        <td>¥46,326.12</td>
+        <td class="amount">¥231,630.60</td>
+      </tr>
+      <tr>
+        <td>ansell微护佳5000-186 橘色 2/3级液密 阿波罗款 化学防护服（暂命名）</td>
+        <td>阿波罗款/5型</td>
+        <td>-</td>
+        <td>42本</td>
+        <td>¥2,532.04</td>
+        <td class="amount">¥106,345.68</td>
+      </tr>
+      <tr>
+        <td>新疆 有机玻璃 约885*585*3MM 消防栓箱 玻璃配件</td>
+        <td>885*585*3mm</td>
+        <td>-</td>
+        <td>2盒</td>
+        <td>¥42,315.25</td>
+        <td class="amount">¥84,630.50</td>
+      </tr>
+      <tr>
+        <td>坤泽尔 50G淋膜 E级 桔红/连帽分体 防喷溅 分体防护服</td>
+        <td>175/XL/桔红</td>
+        <td>-</td>
+        <td>47个</td>
+        <td>¥24,109.43</td>
+        <td class="amount">¥1,133,143.21</td>
+      </tr>
+      <tr>
+        <td>多给力 WG500 弹力尼龙丁腈 灰纱黑胶 磨砂指挂 挂胶手套</td>
+        <td>9/L/灰纱黑</td>
+        <td>-</td>
+        <td>26套</td>
+        <td>¥35,226.96</td>
+        <td class="amount">¥915,900.96</td>
+      </tr>
+      <tr>
+        <td>嘉恒 PVC 软底/透气网面 蓝色低帮 防尘/防静电/工作鞋</td>
+        <td>44码</td>
+        <td>-</td>
+        <td>5件</td>
+        <td>¥38,732.85</td>
+        <td class="amount">¥193,664.25</td>
+      </tr>
+      <tr>
+        <td>霍尼韦尔 华瑞PGM-2500  4合一 泵吸便携式 气体检测仪</td>
+        <td>泵吸O2 CO H2S LEL</td>
+        <td>-</td>
+        <td>31本</td>
+        <td>¥19,658.94</td>
+        <td class="amount">¥609,427.14</td>
+      </tr>
+      <tr>
+        <td>ST天征 橡胶帆布 黑色 下水裤</td>
+        <td>42码</td>
+        <td>-</td>
+        <td>26个</td>
+        <td>¥41,098.48</td>
+        <td class="amount">¥1,068,560.48</td>
+      </tr>
+      <tr>
+        <td>铝合金 手持式 防爆字 盾牌</td>
+        <td></td>
+        <td>-</td>
+        <td>4台</td>
+        <td>¥8,966.98</td>
+        <td class="amount">¥35,867.92</td>
+      </tr>
+      <tr>
+        <td>银鹰 H718黑 超纤PU底 低帮黑色 防砸防刺穿 15KV绝缘安全鞋</td>
+        <td>低帮/43码</td>
+        <td>-</td>
+        <td>30套</td>
+        <td>¥44,717.90</td>
+        <td class="amount">¥1,341,537.00</td>
+      </tr>
+      <tr>
+        <td>蓝月亮 500ML 芦荟抑菌 洗手液</td>
+        <td>500ml</td>
+        <td>-</td>
+        <td>37本</td>
+        <td>¥18,666.04</td>
+        <td class="amount">¥690,643.48</td>
+      </tr>
+      <tr>
+        <td>河北 S线 10*7厚斜纹 湛蓝/金属扣 春秋长袖 牛仔工作服</td>
+        <td>195/5XL/湛蓝</td>
+        <td>-</td>
+        <td>22套</td>
+        <td>¥26,943.90</td>
+        <td class="amount">¥592,765.80</td>
+      </tr>
+      <tr>
+        <td>嘉恒 涤纶条纹 浅蓝/双袖/直拉 翻领分体/无帽 防静电/洁净服</td>
+        <td>160/S</td>
+        <td>-</td>
+        <td>8包</td>
+        <td>¥9,647.88</td>
+        <td class="amount">¥77,183.04</td>
+      </tr>
+      <tr>
+        <td>嘉恒 涤纶条纹 浅灰色 翻领/分体（不连帽） 防静电 洁净服/套装</td>
+        <td>195/5XL灰分体</td>
+        <td>-</td>
+        <td>49台</td>
+        <td>¥26,070.00</td>
+        <td class="amount">¥1,277,430.00</td>
+      </tr>
+      <tr>
+        <td>龙虎牌 风油精 滚珠型 6ml 清凉/止痛/驱风</td>
+        <td>6ml</td>
+        <td>-</td>
+        <td>38件</td>
+        <td>¥41,403.69</td>
+        <td class="amount">¥1,573,340.22</td>
+      </tr>
+      <tr>
+        <td>安百利 F11 阻燃铝箔 耐高温500°连体隔热服 带背囊套装</td>
+        <td>带背囊XL</td>
+        <td>-</td>
+        <td>23台</td>
+        <td>¥4,388.72</td>
+        <td class="amount">¥100,940.56</td>
+      </tr>
+      <tr>
+        <td>江苏 02三层标准款 阻燃藏青  消防战斗服（上衣+裤子）</td>
+        <td>170/L</td>
+        <td>-</td>
+        <td>43箱</td>
+        <td>¥11,262.95</td>
+        <td class="amount">¥484,306.85</td>
+      </tr>
+    </table>
+  </div>
+  <div class="order-footer">
+    <span>下单日期：2026-05-19</span>
+    <span>合计：¥11,089,783.93</span>
+  </div>
+</div>
+<div class="order-card">
+  <div class="order-header">
+    <span>销售订单<span class="badge badge-monthly">月结</span></span>
+    <span class="order-no">ORD20260521004</span>
+  </div>
+  <div class="order-body">
+    <div class="info-row"><span class="info-label">客户名称</span><span class="info-value">双安科技（天津）有限公司</span></div>
+    <div class="info-row"><span class="info-label">联系人</span><span class="info-value">张总</span></div>
+    <div class="info-row"><span class="info-label">收货地址</span><span class="info-value">北京市海淀区中关村大街1号</span></div>
+    <table class="product-table">
+      <tr><th>产品名称</th><th>型号</th><th>规格</th><th>数量</th><th>单价</th><th>金额</th></tr>
+      <tr>
+        <td>3M 8246 R95 中文版/防酸性气体/淡蓝色/头戴/碗状 防尘口罩</td>
+        <td>头戴/蓝色</td>
+        <td>-</td>
+        <td>15包</td>
+        <td>¥7,295.91</td>
+        <td class="amount">¥109,438.65</td>
+      </tr>
+      <tr>
+        <td>牛二层全皮 本色 透气款 电焊服上衣</td>
+        <td>大号</td>
+        <td>-</td>
+        <td>13本</td>
+        <td>¥33,136.91</td>
+        <td class="amount">¥430,779.83</td>
+      </tr>
+      <tr>
+        <td>海固 3NP PVC 黄色/空呼内置/气密 重型防化服</td>
+        <td>黄色/180/3XL</td>
+        <td>-</td>
+        <td>43套</td>
+        <td>¥8,657.76</td>
+        <td class="amount">¥372,283.68</td>
+      </tr>
+      <tr>
+        <td>南核 2618 硅胶蓝色 防尘半面具套装</td>
+        <td>蓝色</td>
+        <td>-</td>
+        <td>20本</td>
+        <td>¥43,994.95</td>
+        <td class="amount">¥879,899.00</td>
+      </tr>
+      <tr>
+        <td>河南 涤纶 盒装伸缩 30米红/白 隔离安全警戒带</td>
+        <td>30米/红/白</td>
+        <td>-</td>
+        <td>5个</td>
+        <td>¥31,646.14</td>
+        <td class="amount">¥158,230.70</td>
+      </tr>
+      <tr>
+        <td>山东 灯罩棉 10针细线 300g/12双 本白线手套</td>
+        <td>300g/12双白</td>
+        <td>-</td>
+        <td>22台</td>
+        <td>¥21,254.56</td>
+        <td class="amount">¥467,600.32</td>
+      </tr>
+      <tr>
+        <td>代尔塔 301404 PU底压花 黑色高腰 防刺防静电 安全靴</td>
+        <td>39码</td>
+        <td>-</td>
+        <td>7包</td>
+        <td>¥22,209.84</td>
+        <td class="amount">¥155,468.88</td>
+      </tr>
+      <tr>
+        <td>湖北 2011 涤纶绸 保安制式 活里活面 墨绿/深蓝 加长款 保安棉衣</td>
+        <td>195/5XL</td>
+        <td>-</td>
+        <td>16套</td>
+        <td>¥3,135.74</td>
+        <td class="amount">¥50,171.84</td>
+      </tr>
+      <tr>
+        <td>飞鹤 1207 PU橡胶压花皮 黑色中帮 防砸 安全鞋</td>
+        <td>36码</td>
+        <td>-</td>
+        <td>12套</td>
+        <td>¥15,408.49</td>
+        <td class="amount">¥184,901.88</td>
+      </tr>
+      <tr>
+        <td>ST鲲鹏 KP-ZC26 橡胶 轻型高筒 防砸防刺防静电 矿用胶靴</td>
+        <td>轻型/41码</td>
+        <td>-</td>
+        <td>50盒</td>
+        <td>¥16,038.77</td>
+        <td class="amount">¥801,938.50</td>
+      </tr>
+      <tr>
+        <td>河北 涤纶加绒 长袖立领 厨师服上衣（备注颜色）</td>
+        <td>加绒180</td>
+        <td>-</td>
+        <td>30箱</td>
+        <td>¥7,014.48</td>
+        <td class="amount">¥210,434.40</td>
+      </tr>
+      <tr>
+        <td>霍尼韦尔 SHTP00502/New Tripper反绒/PU底/兰网布 低帮/透气 防静电/防砸/防刺穿 安全鞋</td>
+        <td>38码/低帮/透气</td>
+        <td>-</td>
+        <td>8台</td>
+        <td>¥28,858.47</td>
+        <td class="amount">¥230,867.76</td>
+      </tr>
+      <tr>
+        <td>嘉恒 涤纶条纹 黄色双袖 连帽连体 防静电洁净服</td>
+        <td>165/M/黄</td>
+        <td>-</td>
+        <td>44箱</td>
+        <td>¥46,846.36</td>
+        <td class="amount">¥2,061,239.84</td>
+      </tr>
+      <tr>
+        <td>山东  PU底/压花皮 人造毛棉 黑色/中帮 绝缘鞋</td>
+        <td>42码</td>
+        <td>-</td>
+        <td>18台</td>
+        <td>¥6,434.16</td>
+        <td class="amount">¥115,814.88</td>
+      </tr>
+      <tr>
+        <td>嘉恒 涤纶条纹 浅蓝连帽分体 防静电洁净服</td>
+        <td>155/XS 常规</td>
+        <td>-</td>
+        <td>14包</td>
+        <td>¥48,259.55</td>
+        <td class="amount">¥675,633.70</td>
+      </tr>
+      <tr>
+        <td>雷马 220617 橡胶底 头层荔纹皮 羊毛黑色中帮 防砸防刺 安全棉鞋</td>
+        <td>36码 中帮棉</td>
+        <td>-</td>
+        <td>24件</td>
+        <td>¥17,260.21</td>
+        <td class="amount">¥414,245.04</td>
+      </tr>
+      <tr>
+        <td>飞鹤 0103 头层牛巴皮 PU/TPR底 人造长绒 防砸/防刺穿/保暖 黄色/中帮/棉安全鞋</td>
+        <td>35码/黄/棉/中帮</td>
+        <td>-</td>
+        <td>45套</td>
+        <td>¥38,420.81</td>
+        <td class="amount">¥1,728,936.45</td>
+      </tr>
+      <tr>
+        <td>星宇 BDL700 丁腈12寸 7.0克 100只袋抽 乌梅紫 一次性手套</td>
+        <td>12寸/乌梅紫/L码</td>
+        <td>-</td>
+        <td>31套</td>
+        <td>¥30,726.88</td>
+        <td class="amount">¥952,533.28</td>
+      </tr>
+      <tr>
+        <td>中麦 1878 橡胶底 牛头层 低邦防滑 绝缘行政鞋（男士）</td>
+        <td>42码</td>
+        <td>-</td>
+        <td>5盒</td>
+        <td>¥32,389.25</td>
+        <td class="amount">¥161,946.25</td>
+      </tr>
+    </table>
+  </div>
+  <div class="order-footer">
+    <span>下单日期：2026-05-20</span>
+    <span>合计：¥10,162,364.88</span>
+  </div>
+</div>
+<div class="order-card">
+  <div class="order-header">
+    <span>销售订单<span class="badge badge-monthly">月结</span></span>
+    <span class="order-no">ORD20260522005</span>
+  </div>
+  <div class="order-body">
+    <div class="info-row"><span class="info-label">客户名称</span><span class="info-value">石河子市合盛绿色能源管理有限公司</span></div>
+    <div class="info-row"><span class="info-label">联系人</span><span class="info-value">张经理</span></div>
+    <div class="info-row"><span class="info-label">收货地址</span><span class="info-value">杭州市西湖区文三路200号</span></div>
+    <table class="product-table">
+      <tr><th>产品名称</th><th>型号</th><th>规格</th><th>数量</th><th>单价</th><th>金额</th></tr>
+      <tr>
+        <td>星宇 A566 U轻松 弹力尼龙 灰纱兰胶 吸盘压纹 挂胶手套</td>
+        <td>灰纱蓝/8码</td>
+        <td>-</td>
+        <td>12个</td>
+        <td>¥18,525.06</td>
+        <td class="amount">¥222,300.72</td>
+      </tr>
+      <tr>
+        <td>湖北17款 涤棉高弹 速干 武警绿短袖 黑色短裤 夏季/T恤 体能训练服（套装）</td>
+        <td>160/S</td>
+        <td>-</td>
+        <td>34件</td>
+        <td>¥19,251.21</td>
+        <td class="amount">¥654,541.14</td>
+      </tr>
+      <tr>
+        <td>广东 206不锈钢 30L 约30*25*70CM 银色无盖 茶水分离桶</td>
+        <td>30L银色</td>
+        <td>-</td>
+        <td>20个</td>
+        <td>¥45,094.61</td>
+        <td class="amount">¥901,892.20</td>
+      </tr>
+      <tr>
+        <td>江苏 涤纶PU 加棉 90*45CM 红色反光条 消防炮 保护罩</td>
+        <td>90*45cm 加棉</td>
+        <td>-</td>
+        <td>32台</td>
+        <td>¥3,278.04</td>
+        <td class="amount">¥104,897.28</td>
+      </tr>
+      <tr>
+        <td>ST金伯利 低温 防护鞋</td>
+        <td></td>
+        <td>-</td>
+        <td>41台</td>
+        <td>¥33,938.89</td>
+        <td class="amount">¥1,391,494.49</td>
+      </tr>
+      <tr>
+        <td>好攀宜 K头对讲机配套 带线耳机</td>
+        <td></td>
+        <td>-</td>
+        <td>3个</td>
+        <td>¥8,651.25</td>
+        <td class="amount">¥25,953.75</td>
+      </tr>
+      <tr>
+        <td>雷马 L8305 压花牛皮/EVA加橡胶大底/针织羊毛 中帮/黑色 防砸/防穿刺/防静电 棉鞋</td>
+        <td>46/中帮/棉</td>
+        <td>-</td>
+        <td>10个</td>
+        <td>¥42,288.74</td>
+        <td class="amount">¥422,887.40</td>
+      </tr>
+      <tr>
+        <td>三脚架配件-成华 铸铁30米钢丝绳 1800磅 手摇绞盘</td>
+        <td>30米</td>
+        <td>-</td>
+        <td>4台</td>
+        <td>¥9,041.97</td>
+        <td class="amount">¥36,167.88</td>
+      </tr>
+      <tr>
+        <td>焊兽 415A 牛反绒皮 本色 斜白布里 14寸双层 长电焊手套</td>
+        <td>415A本色</td>
+        <td>-</td>
+        <td>42本</td>
+        <td>¥37,355.34</td>
+        <td class="amount">¥1,568,924.28</td>
+      </tr>
+      <tr>
+        <td>丽泰 高白棉 食品靴 活套</td>
+        <td>45码</td>
+        <td>-</td>
+        <td>36个</td>
+        <td>¥21,173.09</td>
+        <td class="amount">¥762,231.24</td>
+      </tr>
+      <tr>
+        <td>河北 铁制 P-CO-2 原5号 防有机气体 白色标 小型滤毒罐</td>
+        <td>白色/5号</td>
+        <td>-</td>
+        <td>14盒</td>
+        <td>¥38,789.66</td>
+        <td class="amount">¥543,055.24</td>
+      </tr>
+      <tr>
+        <td>雷马 ZA220604 压花牛皮/橡胶底/针织羊毛 中帮/黑色 防砸/防穿刺/绝缘/6KV 棉安全鞋</td>
+        <td>44/绝缘/中帮/棉</td>
+        <td>-</td>
+        <td>17件</td>
+        <td>¥22,333.76</td>
+        <td class="amount">¥379,673.92</td>
+      </tr>
+      <tr>
+        <td>ST安健 涤棉 绿灰/防静电 夹克工作服</td>
+        <td>180/2xL</td>
+        <td>-</td>
+        <td>30台</td>
+        <td>¥39,917.10</td>
+        <td class="amount">¥1,197,513.00</td>
+      </tr>
+      <tr>
+        <td>津鑫/踏雪 35KV 橡胶里布 绿色中筒 高压绝缘靴</td>
+        <td>43码</td>
+        <td>-</td>
+        <td>14件</td>
+        <td>¥46,276.75</td>
+        <td class="amount">¥647,874.50</td>
+      </tr>
+      <tr>
+        <td>波迈特 05型 LED锂电 防水带线 矿灯</td>
+        <td>棕色 8W</td>
+        <td>-</td>
+        <td>12台</td>
+        <td>¥3,536.10</td>
+        <td class="amount">¥42,433.20</td>
+      </tr>
+      <tr>
+        <td>高压 拉闸杆 电绝缘 令克棒</td>
+        <td>10KV</td>
+        <td>-</td>
+        <td>15套</td>
+        <td>¥28,118.96</td>
+        <td class="amount">¥421,784.40</td>
+      </tr>
+      <tr>
+        <td>安百利 ABL-F04 碳纤维 分体多层 带背囊 消防隔热避火服</td>
+        <td>175/XL</td>
+        <td>-</td>
+        <td>4盒</td>
+        <td>¥31,834.62</td>
+        <td class="amount">¥127,338.48</td>
+      </tr>
+      <tr>
+        <td>豪尔泰 1850-31涤棉厚斜纹 藏青/大红 春秋长袖 行业多功能 夹克工作服</td>
+        <td>190/4XL</td>
+        <td>-</td>
+        <td>41套</td>
+        <td>¥37,234.15</td>
+        <td class="amount">¥1,526,600.15</td>
+      </tr>
+    </table>
+  </div>
+  <div class="order-footer">
+    <span>下单日期：2026-05-21</span>
+    <span>合计：¥10,977,563.27</span>
+  </div>
+</div>
+<div class="order-card">
+  <div class="order-header">
+    <span>销售订单<span class="badge badge-invoice">需开票</span></span>
+    <span class="order-no">ORD20260523006</span>
+  </div>
+  <div class="order-body">
+    <div class="info-row"><span class="info-label">客户名称</span><span class="info-value">李朝蓉</span></div>
+    <div class="info-row"><span class="info-label">联系人</span><span class="info-value">15729923179</span></div>
+    <div class="info-row"><span class="info-label">收货地址</span><span class="info-value">武汉市洪山区光谷大道77号</span></div>
+    <table class="product-table">
+      <tr><th>产品名称</th><th>型号</th><th>规格</th><th>数量</th><th>单价</th><th>金额</th></tr>
+      <tr>
+        <td>河北 涤棉07式 数码迷彩 多功能 武警防寒大衣</td>
+        <td>185/3XL</td>
+        <td>-</td>
+        <td>2台</td>
+        <td>¥23,927.89</td>
+        <td class="amount">¥47,855.78</td>
+      </tr>
+      <tr>
+        <td>中麦 230 压花牛皮 800克毛里 天然橡胶大底 防砸刺棉靴</td>
+        <td>44码</td>
+        <td>-</td>
+        <td>47包</td>
+        <td>¥31,468.82</td>
+        <td class="amount">¥1,479,034.54</td>
+      </tr>
+      <tr>
+        <td>飞鹤 1207 PU底压花 中邦长绒 防砸绝缘 棉安全鞋</td>
+        <td>43码</td>
+        <td>-</td>
+        <td>12套</td>
+        <td>¥27,239.20</td>
+        <td class="amount">¥326,870.40</td>
+      </tr>
+      <tr>
+        <td>3515 牛皮黑色 低腰行政 单皮鞋</td>
+        <td>43码黑色</td>
+        <td>-</td>
+        <td>4台</td>
+        <td>¥45,242.17</td>
+        <td class="amount">¥180,968.68</td>
+      </tr>
+      <tr>
+        <td>湖北 07款 涤棉细斜 荒漠/数码/迷彩 春秋季长袖 冬作训服</td>
+        <td>170/L</td>
+        <td>-</td>
+        <td>40个</td>
+        <td>¥39,987.52</td>
+        <td class="amount">¥1,599,500.80</td>
+      </tr>
+      <tr>
+        <td>江苏 聚酯尼龙 加钢丝 Φ8MM *20米 两头小钩 应急逃生救援 安全绳</td>
+        <td>加钢丝/8MM *20米</td>
+        <td>-</td>
+        <td>26件</td>
+        <td>¥11,565.69</td>
+        <td class="amount">¥300,707.94</td>
+      </tr>
+      <tr>
+        <td>雷马 320 反绒PU低 网布透气 低邦黑色/灰色 防静电安全鞋</td>
+        <td>45码</td>
+        <td>-</td>
+        <td>13台</td>
+        <td>¥6,700.36</td>
+        <td class="amount">¥87,104.68</td>
+      </tr>
+      <tr>
+        <td>霍尼韦尔 BD173B ABS/黑色 弹簧式 配安全帽 面屏支架</td>
+        <td>ABS/黑色</td>
+        <td>-</td>
+        <td>28个</td>
+        <td>¥14,491.86</td>
+        <td class="amount">¥405,772.08</td>
+      </tr>
+      <tr>
+        <td>湖北 21款/涤棉 火焰兰/春秋/消防员 备勤帽</td>
+        <td>59/秋备勤</td>
+        <td>-</td>
+        <td>35本</td>
+        <td>¥9,789.38</td>
+        <td class="amount">¥342,628.30</td>
+      </tr>
+      <tr>
+        <td>广东双益 丁基尼龙衬里 31CM 绿色 耐酸碱 手套</td>
+        <td>绿色衬里 M</td>
+        <td>-</td>
+        <td>32个</td>
+        <td>¥34,595.63</td>
+        <td class="amount">¥1,107,060.16</td>
+      </tr>
+      <tr>
+        <td>帝欧 D8301 反绒牛皮橡胶底 中帮 桂圆色 防砸防刺穿 安全鞋</td>
+        <td>D8301-38</td>
+        <td>-</td>
+        <td>41件</td>
+        <td>¥33,684.48</td>
+        <td class="amount">¥1,381,063.68</td>
+      </tr>
+      <tr>
+        <td>豪尔泰1364-27A 涤棉厚珠帆 磨毛青色 春秋长袖 夹克工作服</td>
+        <td>170/L</td>
+        <td>-</td>
+        <td>40件</td>
+        <td>¥17,129.36</td>
+        <td class="amount">¥685,174.40</td>
+      </tr>
+      <tr>
+        <td>新疆 冷轧钢红色1.5MM厚 约750*480*230mmMM 8kg干粉2具装 灭火器箱</td>
+        <td>1.5*8</td>
+        <td>-</td>
+        <td>27箱</td>
+        <td>¥26,728.10</td>
+        <td class="amount">¥721,658.70</td>
+      </tr>
+      <tr>
+        <td>代尔塔 301322 PU反绒网布 低帮灰色 彩虹安全鞋</td>
+        <td>46吗</td>
+        <td>-</td>
+        <td>41个</td>
+        <td>¥8,707.85</td>
+        <td class="amount">¥357,021.85</td>
+      </tr>
+      <tr>
+        <td>耐视 涤纶编织 反光字 盒装50米红色警戒带</td>
+        <td>反光字/50米</td>
+        <td>-</td>
+        <td>10盒</td>
+        <td>¥1,497.23</td>
+        <td class="amount">¥14,972.30</td>
+      </tr>
+      <tr>
+        <td>江苏 17款 3C 橡胶/防砸/防刺穿/黄黑/高筒/消防/战斗棉靴</td>
+        <td>高筒40码</td>
+        <td>-</td>
+        <td>21台</td>
+        <td>¥45,973.91</td>
+        <td class="amount">¥965,452.11</td>
+      </tr>
+      <tr>
+        <td>凯迪 3532 PVC 黑色/里布 高筒/防滑/防水 胶靴</td>
+        <td>39码</td>
+        <td>-</td>
+        <td>13个</td>
+        <td>¥34,040.57</td>
+        <td class="amount">¥442,527.41</td>
+      </tr>
+      <tr>
+        <td>海氏海诺 10片/盒  止血/消毒/清洁 创可贴</td>
+        <td>10片/盒</td>
+        <td>-</td>
+        <td>48套</td>
+        <td>¥45,459.35</td>
+        <td class="amount">¥2,182,048.80</td>
+      </tr>
+      <tr>
+        <td>雷克兰 AMN428E 白色限次性 连体防化服</td>
+        <td>180/2XL</td>
+        <td>-</td>
+        <td>5包</td>
+        <td>¥3,186.62</td>
+        <td class="amount">¥15,933.10</td>
+      </tr>
+      <tr>
+        <td>姜太公 C款 45S针织布 墨绿分身 套装雨衣</td>
+        <td>180/2XL/中号</td>
+        <td>-</td>
+        <td>43件</td>
+        <td>¥43,626.41</td>
+        <td class="amount">¥1,875,935.63</td>
+      </tr>
+    </table>
+  </div>
+  <div class="order-footer">
+    <span>下单日期：2026-05-22</span>
+    <span>合计：¥14,519,291.34</span>
+  </div>
+</div>
+<div class="order-card">
+  <div class="order-header">
+    <span>销售订单</span>
+    <span class="order-no">ORD20260524007</span>
+  </div>
+  <div class="order-body">
+    <div class="info-row"><span class="info-label">客户名称</span><span class="info-value">伊布拉依木</span></div>
+    <div class="info-row"><span class="info-label">联系人</span><span class="info-value">13899110344</span></div>
+    <div class="info-row"><span class="info-label">收货地址</span><span class="info-value">深圳市南山区科技园路66号</span></div>
+    <table class="product-table">
+      <tr><th>产品名称</th><th>型号</th><th>规格</th><th>数量</th><th>单价</th><th>金额</th></tr>
+      <tr>
+        <td>豪尔泰1851-31 涤棉厚斜纹 藏青拼红反光 网格B级防静电 春秋长袖 夹克工作服</td>
+        <td>165/M</td>
+        <td>-</td>
+        <td>13套</td>
+        <td>¥10,125.19</td>
+        <td class="amount">¥131,627.47</td>
+      </tr>
+      <tr>
+        <td>远征81-1 07款 布面/胶底 低帮/丛林迷彩 作训鞋</td>
+        <td>36码</td>
+        <td>-</td>
+        <td>31套</td>
+        <td>¥34,966.92</td>
+        <td class="amount">¥1,083,974.52</td>
+      </tr>
+      <tr>
+        <td>海王 复合布 迷彩 血防裤</td>
+        <td>42码</td>
+        <td>-</td>
+        <td>7本</td>
+        <td>¥45,901.96</td>
+        <td class="amount">¥321,313.72</td>
+      </tr>
+      <tr>
+        <td>飞鹤 ABS V型布衬 Y型带反光 矿工安全帽</td>
+        <td>一指键 黑色</td>
+        <td>-</td>
+        <td>15盒</td>
+        <td>¥4,260.11</td>
+        <td class="amount">¥63,901.65</td>
+      </tr>
+      <tr>
+        <td>嘉恒 涤纶条纹 黄色 连帽连体 防静电洁净服</td>
+        <td>黄175/XL</td>
+        <td>-</td>
+        <td>27件</td>
+        <td>¥28,914.96</td>
+        <td class="amount">¥780,703.92</td>
+      </tr>
+      <tr>
+        <td>江苏 PVC不锈钢 7*7CM 强力粘胶挂钩</td>
+        <td>7*7CM 中号</td>
+        <td>-</td>
+        <td>39套</td>
+        <td>¥31,179.91</td>
+        <td class="amount">¥1,216,016.49</td>
+      </tr>
+      <tr>
+        <td>上泓 H006 涤纶双大钩 欧式缓冲 护腰垫 上红下黑 5挂点全身式 安全带套装</td>
+        <td>护腰/五点式</td>
+        <td>-</td>
+        <td>27包</td>
+        <td>¥3,177.67</td>
+        <td class="amount">¥85,797.09</td>
+      </tr>
+      <tr>
+        <td>呼享 9200 单滤盒 过滤式呼吸 硅胶半面罩</td>
+        <td>9200</td>
+        <td>-</td>
+        <td>3包</td>
+        <td>¥34,367.00</td>
+        <td class="amount">¥103,101.00</td>
+      </tr>
+      <tr>
+        <td>湖北16款 涤棉/高弹速干 武警绿 夏季短袖 体能服/体恤（上衣）</td>
+        <td>185/3XL</td>
+        <td>-</td>
+        <td>38包</td>
+        <td>¥37,816.39</td>
+        <td class="amount">¥1,437,022.82</td>
+      </tr>
+      <tr>
+        <td>山东 涤棉/平纹/斜纹 墨绿/枣红等色 立领长袖 厨师服（上衣）</td>
+        <td>长袖/170/L</td>
+        <td>-</td>
+        <td>32箱</td>
+        <td>¥31,577.71</td>
+        <td class="amount">¥1,010,486.72</td>
+      </tr>
+    </table>
+  </div>
+  <div class="order-footer">
+    <span>下单日期：2026-05-23</span>
+    <span>合计：¥6,233,945.40</span>
+  </div>
+</div>
+<div class="order-card">
+  <div class="order-header">
+    <span>销售订单<span class="badge badge-urgent">加急</span></span>
+    <span class="order-no">ORD20260525008</span>
+  </div>
+  <div class="order-body">
+    <div class="info-row"><span class="info-label">客户名称</span><span class="info-value">开门旺生活超市</span></div>
+    <div class="info-row"><span class="info-label">联系人</span><span class="info-value">徐敏</span></div>
+    <div class="info-row"><span class="info-label">收货地址</span><span class="info-value">上海市浦东新区张江路88号</span></div>
+    <table class="product-table">
+      <tr><th>产品名称</th><th>型号</th><th>规格</th><th>数量</th><th>单价</th><th>金额</th></tr>
+      <tr>
+        <td>雷马 220616 头层牛巴橡胶底 黄色低帮 防砸防刺 安全鞋</td>
+        <td>42码 黄/低帮</td>
+        <td>-</td>
+        <td>16箱</td>
+        <td>¥41,995.74</td>
+        <td class="amount">¥671,931.84</td>
+      </tr>
+      <tr>
+        <td>嘉恒 PVC 软底/透气网面 蓝色低帮 防尘/防静电/工作鞋</td>
+        <td>38码</td>
+        <td>-</td>
+        <td>23件</td>
+        <td>¥22,845.29</td>
+        <td class="amount">¥525,441.67</td>
+      </tr>
+      <tr>
+        <td>恒拓 银鹰7040 EVA橡胶贴片底 低帮黑色 防滑耐油 厨师鞋</td>
+        <td>36</td>
+        <td>-</td>
+        <td>31台</td>
+        <td>¥11,296.54</td>
+        <td class="amount">¥350,192.74</td>
+      </tr>
+      <tr>
+        <td>新疆 冷轧钢 800*650*240*0.6MM 红色 室外消防栓箱</td>
+        <td>0.6* 800*650*240MM</td>
+        <td>-</td>
+        <td>12箱</td>
+        <td>¥6,182.55</td>
+        <td class="amount">¥74,190.60</td>
+      </tr>
+      <tr>
+        <td>恒泰 压缩氧 隔绝式 自救器45分钟 新国标</td>
+        <td>压缩氧/45分钟</td>
+        <td>-</td>
+        <td>38套</td>
+        <td>¥465.05</td>
+        <td class="amount">¥17,671.90</td>
+      </tr>
+      <tr>
+        <td>豪尔泰1551-22A 涤棉厚珠帆 磨毛橙色 春秋单层 长袖夹克工作服</td>
+        <td>190/4xL</td>
+        <td>-</td>
+        <td>20本</td>
+        <td>¥48,004.25</td>
+        <td class="amount">¥960,085.00</td>
+      </tr>
+      <tr>
+        <td>嘉恒 涤纶条纹 紫色 连帽分体 真空ESD千级 防静电洁净服</td>
+        <td>紫色ESD 155/XS</td>
+        <td>-</td>
+        <td>33件</td>
+        <td>¥38,518.77</td>
+        <td class="amount">¥1,271,119.41</td>
+      </tr>
+      <tr>
+        <td>飞鹤 1621101 PU底翻毛皮 灰色低帮 防砸绝缘 安全鞋</td>
+        <td>42码/灰色</td>
+        <td>-</td>
+        <td>27件</td>
+        <td>¥1,088.70</td>
+        <td class="amount">¥29,394.90</td>
+      </tr>
+      <tr>
+        <td>3515 牛皮黑色 低腰行政 单皮鞋</td>
+        <td>38码黑色</td>
+        <td>-</td>
+        <td>9包</td>
+        <td>¥6,589.38</td>
+        <td class="amount">¥59,304.42</td>
+      </tr>
+      <tr>
+        <td>湖北 19款火焰蓝 消防作训服 配件-标志-软胸章</td>
+        <td>软胸章</td>
+        <td>-</td>
+        <td>14箱</td>
+        <td>¥5,183.07</td>
+        <td class="amount">¥72,562.98</td>
+      </tr>
+      <tr>
+        <td>ST思创 ST-M60G-2B 硅胶/蓝色 单/大螺旋 半面罩（主体）</td>
+        <td>M/中号</td>
+        <td>-</td>
+        <td>1包</td>
+        <td>¥18,613.12</td>
+        <td class="amount">¥18,613.12</td>
+      </tr>
+      <tr>
+        <td>湖南 PVC复合尼龙绸 42L 50*76CM 蓝色 医用氧气袋</td>
+        <td>50*76CM/42L</td>
+        <td>-</td>
+        <td>21个</td>
+        <td>¥21,062.29</td>
+        <td class="amount">¥442,308.09</td>
+      </tr>
+      <tr>
+        <td>河北 圆管（地梁）加厚军绿/迷彩涂层帆布 5.8*4.6*1.4*2.3 户外多功能帐篷</td>
+        <td>5.8*4.6*1.4*2.3</td>
+        <td>-</td>
+        <td>14盒</td>
+        <td>¥6,179.70</td>
+        <td class="amount">¥86,515.80</td>
+      </tr>
+      <tr>
+        <td>尊盾 44cal/cm 深蓝分体式 背带裤 头套手套靴套 阻燃防电弧套装（七件套））</td>
+        <td>175/XL</td>
+        <td>-</td>
+        <td>32个</td>
+        <td>¥43,450.87</td>
+        <td class="amount">¥1,390,427.84</td>
+      </tr>
+      <tr>
+        <td>ST代尔塔 301212 反绒PU底 低帮网面 黑色防砸 安全鞋</td>
+        <td>43码</td>
+        <td>-</td>
+        <td>8包</td>
+        <td>¥9,845.44</td>
+        <td class="amount">¥78,763.52</td>
+      </tr>
+      <tr>
+        <td>乔邦 涤卡斜纹 藏蓝 松紧小翻领 兰大褂</td>
+        <td>160/S/兰</td>
+        <td>-</td>
+        <td>2盒</td>
+        <td>¥33,368.76</td>
+        <td class="amount">¥66,737.52</td>
+      </tr>
+    </table>
+  </div>
+  <div class="order-footer">
+    <span>下单日期：2026-05-24</span>
+    <span>合计：¥6,115,261.35</span>
+  </div>
+</div>
+<div class="order-card">
+  <div class="order-header">
+    <span>销售订单</span>
+    <span class="order-no">ORD20260526009</span>
+  </div>
+  <div class="order-body">
+    <div class="info-row"><span class="info-label">客户名称</span><span class="info-value">祥盛综合批发部</span></div>
+    <div class="info-row"><span class="info-label">联系人</span><span class="info-value">何昌春</span></div>
+    <div class="info-row"><span class="info-label">收货地址</span><span class="info-value">广州市天河区天河路385号</span></div>
+    <table class="product-table">
+      <tr><th>产品名称</th><th>型号</th><th>规格</th><th>数量</th><th>单价</th><th>金额</th></tr>
+      <tr>
+        <td>江苏 20款 PU/皮面 黑色高腰 筒型 消防救援/灭火靴</td>
+        <td>42码</td>
+        <td>-</td>
+        <td>4本</td>
+        <td>¥32,061.29</td>
+        <td class="amount">¥128,245.16</td>
+      </tr>
+      <tr>
+        <td>安百利 V10 石棉铝箔布 80cm*110cm 耐高温1000° 隔热围裙</td>
+        <td>80cm*110cm</td>
+        <td>-</td>
+        <td>24箱</td>
+        <td>¥43,617.15</td>
+        <td class="amount">¥1,046,811.60</td>
+      </tr>
+      <tr>
+        <td>河北 人造棉/摩托车骑行 防水 挡风披</td>
+        <td>个</td>
+        <td>-</td>
+        <td>21盒</td>
+        <td>¥10,007.18</td>
+        <td class="amount">¥210,150.78</td>
+      </tr>
+      <tr>
+        <td>恒拓 226 飞织PU底 黑色低帮 防砸穿刺静电 安全鞋</td>
+        <td>44码</td>
+        <td>-</td>
+        <td>28箱</td>
+        <td>¥38,607.15</td>
+        <td class="amount">¥1,081,000.20</td>
+      </tr>
+      <tr>
+        <td>河北 涤棉07式 荒漠迷彩 防水活里活面 中长款 防寒棉大衣</td>
+        <td>防水/165/M 荒漠</td>
+        <td>-</td>
+        <td>3台</td>
+        <td>¥21,161.11</td>
+        <td class="amount">¥63,483.33</td>
+      </tr>
+      <tr>
+        <td>湖北 21款/涤棉 火焰兰/春秋/消防员 备勤帽</td>
+        <td>58/秋备勤</td>
+        <td>-</td>
+        <td>22台</td>
+        <td>¥2,798.49</td>
+        <td class="amount">¥61,566.78</td>
+      </tr>
+      <tr>
+        <td>飞鹤 0101 PU底压花 黑色低邦 防砸刺防静电 安全鞋</td>
+        <td>44码</td>
+        <td>-</td>
+        <td>10本</td>
+        <td>¥49,344.17</td>
+        <td class="amount">¥493,441.70</td>
+      </tr>
+      <tr>
+        <td>湖北 无纺布 2g/只 14英寸 单筋/蓝色/条形 一次性护发帽</td>
+        <td>条形2.0/ 蓝色</td>
+        <td>-</td>
+        <td>39包</td>
+        <td>¥14,599.07</td>
+        <td class="amount">¥569,363.73</td>
+      </tr>
+      <tr>
+        <td>3515 16款 超纤网布 羊毛橡胶底 高腰黑色 作战棉靴</td>
+        <td>高/棉/46码</td>
+        <td>-</td>
+        <td>20个</td>
+        <td>¥13,474.24</td>
+        <td class="amount">¥269,484.80</td>
+      </tr>
+      <tr>
+        <td>唐丰 ABS V-B型 一指键D带 安全帽</td>
+        <td>蓝色</td>
+        <td>-</td>
+        <td>3盒</td>
+        <td>¥24,319.95</td>
+        <td class="amount">¥72,959.85</td>
+      </tr>
+      <tr>
+        <td>河南 65gSF透气膜 白色贴蓝条 一次性 连体防护服</td>
+        <td>175/XL/贴兰条</td>
+        <td>-</td>
+        <td>18本</td>
+        <td>¥7,841.67</td>
+        <td class="amount">¥141,150.06</td>
+      </tr>
+    </table>
+  </div>
+  <div class="order-footer">
+    <span>下单日期：2026-05-25</span>
+    <span>合计：¥4,137,657.99</span>
+  </div>
+</div>
+<div class="order-card">
+  <div class="order-header">
+    <span>销售订单<span class="badge badge-normal">常规</span></span>
+    <span class="order-no">ORD20260527010</span>
+  </div>
+  <div class="order-body">
+    <div class="info-row"><span class="info-label">客户名称</span><span class="info-value">马根花(百货大全针织>标签库尔勒火车站旁边</span></div>
+    <div class="info-row"><span class="info-label">联系人</span><span class="info-value">张总</span></div>
+    <div class="info-row"><span class="info-label">收货地址</span><span class="info-value">杭州市西湖区文三路200号</span></div>
+    <table class="product-table">
+      <tr><th>产品名称</th><th>型号</th><th>规格</th><th>数量</th><th>单价</th><th>金额</th></tr>
+      <tr>
+        <td>河北  双人智能调温 电热毯</td>
+        <td>双人</td>
+        <td>-</td>
+        <td>22件</td>
+        <td>¥8,261.72</td>
+        <td class="amount">¥181,757.84</td>
+      </tr>
+      <tr>
+        <td>河北 灭鼠灭虫 10KG/袋 老鼠药</td>
+        <td>10kg</td>
+        <td>-</td>
+        <td>50件</td>
+        <td>¥44,200.31</td>
+        <td class="amount">¥2,210,015.50</td>
+      </tr>
+      <tr>
+        <td>代尔塔 101144 PC黑色 时尚/超轻 防雾/防炫目/防冲击眼镜</td>
+        <td>防雾/黑色</td>
+        <td>-</td>
+        <td>36台</td>
+        <td>¥23,191.70</td>
+        <td class="amount">¥834,901.20</td>
+      </tr>
+      <tr>
+        <td>豪尔泰960-31 纯棉厚珠帆 磨毛活里 300g藏青 抗油拒水防静电 棉裤</td>
+        <td>195/5XL/藏青</td>
+        <td>-</td>
+        <td>36盒</td>
+        <td>¥46,482.84</td>
+        <td class="amount">¥1,673,382.24</td>
+      </tr>
+      <tr>
+        <td>福建 钢制烤漆 DN250 10寸外径273mm 消防沟槽 连接管箍(喉箍)</td>
+        <td>DN250/273 红</td>
+        <td>-</td>
+        <td>16箱</td>
+        <td>¥38,841.07</td>
+        <td class="amount">¥621,457.12</td>
+      </tr>
+      <tr>
+        <td>ST双安 500V等电位 高压屏蔽 导电袜子</td>
+        <td>小号</td>
+        <td>-</td>
+        <td>24台</td>
+        <td>¥29,045.34</td>
+        <td class="amount">¥697,088.16</td>
+      </tr>
+      <tr>
+        <td>河北 塑料 60CM*10CM 加油充气棒</td>
+        <td>60CM*10CM</td>
+        <td>-</td>
+        <td>2包</td>
+        <td>¥15,237.53</td>
+        <td class="amount">¥30,475.06</td>
+      </tr>
+      <tr>
+        <td>消防 应急紧急 破碎钥匙箱</td>
+        <td>通用</td>
+        <td>-</td>
+        <td>50箱</td>
+        <td>¥48,405.61</td>
+        <td class="amount">¥2,420,280.50</td>
+      </tr>
+      <tr>
+        <td>嘉恒 涤纶条纹 桔色直拉 连帽连体 防静电洁净 连体服</td>
+        <td>195/5XL</td>
+        <td>-</td>
+        <td>48箱</td>
+        <td>¥26,060.35</td>
+        <td class="amount">¥1,250,896.80</td>
+      </tr>
+      <tr>
+        <td>一次性 无纺布 白色 连体服</td>
+        <td>中码</td>
+        <td>-</td>
+        <td>23包</td>
+        <td>¥36,560.75</td>
+        <td class="amount">¥840,897.25</td>
+      </tr>
+      <tr>
+        <td>江苏 铝合金 DN80快(雌)转80快（雄）银白 同径转换 快速接头</td>
+        <td>80快雌转80快雄</td>
+        <td>-</td>
+        <td>31盒</td>
+        <td>¥982.23</td>
+        <td class="amount">¥30,449.13</td>
+      </tr>
+      <tr>
+        <td>广东钢架 1.5x2x0.5米 四层220kg/层 690kg/组 工业货架（主架）</td>
+        <td>1.5x2x0.5米 四层主架</td>
+        <td>-</td>
+        <td>23本</td>
+        <td>¥41,878.23</td>
+        <td class="amount">¥963,199.29</td>
+      </tr>
+      <tr>
+        <td>津鑫/踏雪 35KV 橡胶里布 绿色中筒 高压绝缘靴</td>
+        <td>40码</td>
+        <td>-</td>
+        <td>8台</td>
+        <td>¥50,012.81</td>
+        <td class="amount">¥400,102.48</td>
+      </tr>
+      <tr>
+        <td>华润三九 20g*6袋 三九胃泰颗粒</td>
+        <td>20g*6袋</td>
+        <td>-</td>
+        <td>11盒</td>
+        <td>¥16,485.43</td>
+        <td class="amount">¥181,339.73</td>
+      </tr>
+    </table>
+  </div>
+  <div class="order-footer">
+    <span>下单日期：2026-05-26</span>
+    <span>合计：¥12,336,242.30</span>
+  </div>
+</div>
+<div class="order-card">
+  <div class="order-header">
+    <span>销售订单<span class="badge badge-invoice">需开票</span></span>
+    <span class="order-no">ORD20260528011</span>
+  </div>
+  <div class="order-body">
+    <div class="info-row"><span class="info-label">客户名称</span><span class="info-value">苏湘劳保</span></div>
+    <div class="info-row"><span class="info-label">联系人</span><span class="info-value">龙未凤</span></div>
+    <div class="info-row"><span class="info-label">收货地址</span><span class="info-value">广州市天河区天河路385号</span></div>
+    <table class="product-table">
+      <tr><th>产品名称</th><th>型号</th><th>规格</th><th>数量</th><th>单价</th><th>金额</th></tr>
+      <tr>
+        <td>ST特航 橡胶模压底 反绒面 红色中邦 防砸绝缘鞋</td>
+        <td>42码</td>
+        <td>-</td>
+        <td>49箱</td>
+        <td>¥46,650.76</td>
+        <td class="amount">¥2,285,887.24</td>
+      </tr>
+      <tr>
+        <td>山东 PVC 黑框 透明片 太空镜 马脸防护面罩</td>
+        <td>黑框/透明</td>
+        <td>-</td>
+        <td>32本</td>
+        <td>¥21,661.96</td>
+        <td class="amount">¥693,182.72</td>
+      </tr>
+      <tr>
+        <td>代尔塔 301404 PU底压花 黑色高腰 防刺防静电 安全靴</td>
+        <td>39码</td>
+        <td>-</td>
+        <td>26件</td>
+        <td>¥45,809.58</td>
+        <td class="amount">¥1,191,049.08</td>
+      </tr>
+      <tr>
+        <td>江苏 PVC 反光膜 5*2000CM 箭头流向 不干胶 管道标识贴</td>
+        <td>5*2000CM</td>
+        <td>-</td>
+        <td>22箱</td>
+        <td>¥11,283.82</td>
+        <td class="amount">¥248,244.04</td>
+      </tr>
+      <tr>
+        <td>呼享 8N95+  椭圆形/白色/ 颗粒物防尘过滤棉</td>
+        <td>8N95+</td>
+        <td>-</td>
+        <td>45本</td>
+        <td>¥5,330.77</td>
+        <td class="amount">¥239,884.65</td>
+      </tr>
+      <tr>
+        <td>津鑫/踏雪 5KV 黄布面/橡胶底 毛毡中帮 绝缘棉鞋</td>
+        <td>46码</td>
+        <td>-</td>
+        <td>14包</td>
+        <td>¥29,264.53</td>
+        <td class="amount">¥409,703.42</td>
+      </tr>
+      <tr>
+        <td>湖北 涤棉绒衣 火焰兰 长袖拉链 冬季加绒 体能训练服套装</td>
+        <td>冬款190/4XL</td>
+        <td>-</td>
+        <td>49箱</td>
+        <td>¥12,522.94</td>
+        <td class="amount">¥613,624.06</td>
+      </tr>
+      <tr>
+        <td>宝手王 乳胶55CM 黑色防化 耐酸碱手套</td>
+        <td>黑色55CM</td>
+        <td>-</td>
+        <td>46个</td>
+        <td>¥38,153.45</td>
+        <td class="amount">¥1,755,058.70</td>
+      </tr>
+      <tr>
+        <td>3M 1270 硅胶 圣诞树形 橘色蓝线 1付/包 带线耳塞</td>
+        <td>橘色带线</td>
+        <td>-</td>
+        <td>10台</td>
+        <td>¥37,897.23</td>
+        <td class="amount">¥378,972.30</td>
+      </tr>
+      <tr>
+        <td>中麦 212 橡胶压花底 中邦灰毛长绒 绝缘防砸 安全棉鞋</td>
+        <td>49码</td>
+        <td>-</td>
+        <td>29本</td>
+        <td>¥21,753.89</td>
+        <td class="amount">¥630,862.81</td>
+      </tr>
+      <tr>
+        <td>越秀山 乳胶105g 31CM 白色家用手套</td>
+        <td>31cm白</td>
+        <td>-</td>
+        <td>8个</td>
+        <td>¥25,725.07</td>
+        <td class="amount">¥205,800.56</td>
+      </tr>
+      <tr>
+        <td>ST君希 3655 PU底/反绒 中帮//白毛/红皮 防穿刺/防静电 棉安全鞋</td>
+        <td>35码</td>
+        <td>-</td>
+        <td>22箱</td>
+        <td>¥11,664.54</td>
+        <td class="amount">¥256,619.88</td>
+      </tr>
+      <tr>
+        <td>安百利 S521 铝箔毛毡布 黄掌铝袖 耐高温500°五指隔热手套</td>
+        <td>铝箔/黄/36CM</td>
+        <td>-</td>
+        <td>10件</td>
+        <td>¥40,706.70</td>
+        <td class="amount">¥407,067.00</td>
+      </tr>
+      <tr>
+        <td>英科K78L-V1000 自然色PVC 12寸7.0g 真空100只/袋 一次性洁净 工业检查手套</td>
+        <td>12寸/10/L/袋装</td>
+        <td>-</td>
+        <td>7套</td>
+        <td>¥14,320.97</td>
+        <td class="amount">¥100,246.79</td>
+      </tr>
+      <tr>
+        <td>河北 尼龙面 羊皮毛里 防寒马甲</td>
+        <td>马甲/185/3XL</td>
+        <td>-</td>
+        <td>11盒</td>
+        <td>¥28,593.41</td>
+        <td class="amount">¥314,527.51</td>
+      </tr>
+      <tr>
+        <td>豪尔泰1362-18A 涤棉厚珠帆 大红磨毛 春秋长袖 夹克工作服</td>
+        <td>180/2xL</td>
+        <td>-</td>
+        <td>29个</td>
+        <td>¥46,643.62</td>
+        <td class="amount">¥1,352,664.98</td>
+      </tr>
+    </table>
+  </div>
+  <div class="order-footer">
+    <span>下单日期：2026-05-27</span>
+    <span>合计：¥11,083,395.74</span>
+  </div>
+</div>
+<div class="order-card">
+  <div class="order-header">
+    <span>销售订单<span class="badge badge-normal">常规</span></span>
+    <span class="order-no">ORD20260529012</span>
+  </div>
+  <div class="order-body">
+    <div class="info-row"><span class="info-label">客户名称</span><span class="info-value">蔡文华</span></div>
+    <div class="info-row"><span class="info-label">联系人</span><span class="info-value">18999478502</span></div>
+    <div class="info-row"><span class="info-label">收货地址</span><span class="info-value">深圳市南山区科技园路66号</span></div>
+    <table class="product-table">
+      <tr><th>产品名称</th><th>型号</th><th>规格</th><th>数量</th><th>单价</th><th>金额</th></tr>
+      <tr>
+        <td>河北 全棉约110g 48*73CM 提花毛巾</td>
+        <td>110g/全棉提花</td>
+        <td>-</td>
+        <td>15件</td>
+        <td>¥42,177.03</td>
+        <td class="amount">¥632,655.45</td>
+      </tr>
+      <tr>
+        <td>江苏 02三层标准款 阻燃藏青  消防战斗服（上衣+裤子）</td>
+        <td>170/L</td>
+        <td>-</td>
+        <td>8箱</td>
+        <td>¥26,154.73</td>
+        <td class="amount">¥209,237.84</td>
+      </tr>
+      <tr>
+        <td>津鑫/踏雪 5KV 黄布面/橡胶底 中帮绝缘鞋</td>
+        <td>45码</td>
+        <td>-</td>
+        <td>48包</td>
+        <td>¥32,388.48</td>
+        <td class="amount">¥1,554,647.04</td>
+      </tr>
+      <tr>
+        <td>雷马 ZA220604 压花牛皮/橡胶底/针织羊毛 中帮/黑色 防砸/防穿刺/绝缘/6KV 棉安全鞋</td>
+        <td>44/绝缘/中帮/棉</td>
+        <td>-</td>
+        <td>40盒</td>
+        <td>¥43,283.28</td>
+        <td class="amount">¥1,731,331.20</td>
+      </tr>
+      <tr>
+        <td>宏安达 HD600 泵吸液晶 4合一便携式 气体检测仪</td>
+        <td>泵吸O2 CO H2S LEL</td>
+        <td>-</td>
+        <td>1包</td>
+        <td>¥37,730.98</td>
+        <td class="amount">¥37,730.98</td>
+      </tr>
+      <tr>
+        <td>嘉恒 涤纶条纹布 天蓝/小沿 防静电/洁净/工作帽</td>
+        <td>天蓝</td>
+        <td>-</td>
+        <td>9本</td>
+        <td>¥6,915.33</td>
+        <td class="amount">¥62,237.97</td>
+      </tr>
+      <tr>
+        <td>银莱 全棉/莱卡 深灰/圆领/矿用/保暖 秋衣/秋裤 套装</td>
+        <td>深灰/190/4XL</td>
+        <td>-</td>
+        <td>48本</td>
+        <td>¥39,153.36</td>
+        <td class="amount">¥1,879,361.28</td>
+      </tr>
+      <tr>
+        <td>日本重松 DR28SU2K(BT) KP95 硅胶针织头带 灰色 含2个水洗滤盒  防尘面具（套装）</td>
+        <td>针织带M/KP95</td>
+        <td>-</td>
+        <td>31台</td>
+        <td>¥33,671.73</td>
+        <td class="amount">¥1,043,823.63</td>
+      </tr>
+      <tr>
+        <td>泰诺尔 3202V KN95 活性炭/头戴/带阀 折叠式 防尘口罩</td>
+        <td>头戴/单片装</td>
+        <td>-</td>
+        <td>16个</td>
+        <td>¥47,887.76</td>
+        <td class="amount">¥766,204.16</td>
+      </tr>
+      <tr>
+        <td>征安 400V棉线乳胶 黄纱黑胶 皱纹指挂 挂胶绝缘手套</td>
+        <td>400V/黄纱黑</td>
+        <td>-</td>
+        <td>31套</td>
+        <td>¥45,444.65</td>
+        <td class="amount">¥1,408,784.15</td>
+      </tr>
+      <tr>
+        <td>泰州 牛头层 光面皮 驳掌加托 浅色 全皮皮袖 单层 长电焊手套</td>
+        <td>皮袖/浅色</td>
+        <td>-</td>
+        <td>28箱</td>
+        <td>¥265.23</td>
+        <td class="amount">¥7,426.44</td>
+      </tr>
+      <tr>
+        <td>江苏 KM A5螺旋装订 50页/本 防静电 无尘笔记本</td>
+        <td>A5无尘/50页</td>
+        <td>-</td>
+        <td>22盒</td>
+        <td>¥45,337.01</td>
+        <td class="amount">¥997,414.22</td>
+      </tr>
+      <tr>
+        <td>雷公王CR-62 ABS灰 195*320*60CM 7.4V 1500mA 30w 500米 手持式喊话器 喇叭</td>
+        <td>30W灰白</td>
+        <td>-</td>
+        <td>17件</td>
+        <td>¥2,238.05</td>
+        <td class="amount">¥38,046.85</td>
+      </tr>
+      <tr>
+        <td>飞鹤FH16-0322 PU底压花皮 中帮黑色 加盖电焊 绝缘防砸安全鞋</td>
+        <td>37码</td>
+        <td>-</td>
+        <td>7台</td>
+        <td>¥46,126.91</td>
+        <td class="amount">¥322,888.37</td>
+      </tr>
+      <tr>
+        <td>亿诚 1050 硅胶白色KN95 3200款 防尘半面罩(套装)</td>
+        <td>白色/KN95</td>
+        <td>-</td>
+        <td>43箱</td>
+        <td>¥5,324.99</td>
+        <td class="amount">¥228,974.57</td>
+      </tr>
+    </table>
+  </div>
+  <div class="order-footer">
+    <span>下单日期：2026-05-28</span>
+    <span>合计：¥10,920,764.15</span>
+  </div>
+</div>
+<div class="order-card">
+  <div class="order-header">
+    <span>销售订单<span class="badge badge-normal">常规</span></span>
+    <span class="order-no">ORD20260530013</span>
+  </div>
+  <div class="order-body">
+    <div class="info-row"><span class="info-label">客户名称</span><span class="info-value">内蒙古赛盛新材料有限公司</span></div>
+    <div class="info-row"><span class="info-label">联系人</span><span class="info-value">张经理</span></div>
+    <div class="info-row"><span class="info-label">收货地址</span><span class="info-value">杭州市西湖区文三路200号</span></div>
+    <table class="product-table">
+      <tr><th>产品名称</th><th>型号</th><th>规格</th><th>数量</th><th>单价</th><th>金额</th></tr>
+      <tr>
+        <td>征雪 8122-BM 橡胶底 压花皮面 中帮黑色 绝缘安全棉鞋</td>
+        <td>39码</td>
+        <td>-</td>
+        <td>10本</td>
+        <td>¥23,537.65</td>
+        <td class="amount">¥235,376.50</td>
+      </tr>
+      <tr>
+        <td>津鑫/踏雪 黑色橡胶里布 高筒工矿胶靴</td>
+        <td>37码</td>
+        <td>-</td>
+        <td>11盒</td>
+        <td>¥21,900.27</td>
+        <td class="amount">¥240,902.97</td>
+      </tr>
+      <tr>
+        <td>快乐娃 新K1 乳胶白 70g/31CM 薄款 家用手套</td>
+        <td>31CM L/大码</td>
+        <td>-</td>
+        <td>32本</td>
+        <td>¥33,351.56</td>
+        <td class="amount">¥1,067,249.92</td>
+      </tr>
+      <tr>
+        <td>恒拓 226 飞织PU底 黑色低帮 防砸穿刺静电 安全鞋</td>
+        <td>40码</td>
+        <td>-</td>
+        <td>37个</td>
+        <td>¥1,433.31</td>
+        <td class="amount">¥53,032.47</td>
+      </tr>
+      <tr>
+        <td>豪尔泰620-4 全棉牛仔 耐磨靛蓝 夏季薄款 长袖塑料扣工作服</td>
+        <td>165/M</td>
+        <td>-</td>
+        <td>7个</td>
+        <td>¥11,770.32</td>
+        <td class="amount">¥82,392.24</td>
+      </tr>
+      <tr>
+        <td>河北 涤棉 米白 防静电工作服（夏装）</td>
+        <td>185/3xL</td>
+        <td>-</td>
+        <td>14台</td>
+        <td>¥46,706.13</td>
+        <td class="amount">¥653,885.82</td>
+      </tr>
+      <tr>
+        <td>山东 9117 橡胶底压花 黑色高腰 白毛防尘袋 防刺安全棉靴</td>
+        <td>38码</td>
+        <td>-</td>
+        <td>27箱</td>
+        <td>¥12,376.10</td>
+        <td class="amount">¥334,154.70</td>
+      </tr>
+      <tr>
+        <td>江苏 条纹布/塑料底 四孔透气 白色 防静电/洁净工作鞋</td>
+        <td>四孔 37码</td>
+        <td>-</td>
+        <td>37个</td>
+        <td>¥28,743.32</td>
+        <td class="amount">¥1,063,502.84</td>
+      </tr>
+      <tr>
+        <td>代尔塔 301301 PU橡胶底 超轻透气 红网低邦 防砸刺穿 防静电安全鞋</td>
+        <td>39码</td>
+        <td>-</td>
+        <td>5个</td>
+        <td>¥45,897.60</td>
+        <td class="amount">¥229,488.00</td>
+      </tr>
+      <tr>
+        <td>雷马 1228 反绒/PU底/网布  低邦/黑灰 绝缘/防砸/防刺穿透气 安全鞋</td>
+        <td>低邦/42码</td>
+        <td>-</td>
+        <td>43个</td>
+        <td>¥34,509.91</td>
+        <td class="amount">¥1,483,926.13</td>
+      </tr>
+      <tr>
+        <td>雷马 04126 PU底/低帮 防砸/防刺/防静电 安全鞋</td>
+        <td>44</td>
+        <td>-</td>
+        <td>1台</td>
+        <td>¥44,898.74</td>
+        <td class="amount">¥44,898.74</td>
+      </tr>
+      <tr>
+        <td>华科仪 2503D-BNC-0.6m 实验室 PH计玻璃电极</td>
+        <td>2503D-BNC-0.6m</td>
+        <td>-</td>
+        <td>26台</td>
+        <td>¥12,352.67</td>
+        <td class="amount">¥321,169.42</td>
+      </tr>
+      <tr>
+        <td>中麦 239款 橡胶底/牛巴 黄棕色/低帮 防刺穿/绝缘 安全鞋</td>
+        <td>35码/低帮/黄棕</td>
+        <td>-</td>
+        <td>49套</td>
+        <td>¥19,936.90</td>
+        <td class="amount">¥976,908.10</td>
+      </tr>
+      <tr>
+        <td>开元 玻璃钢 盔式 金属扣 D带布衬 安全帽</td>
+        <td>蓝色</td>
+        <td>-</td>
+        <td>6箱</td>
+        <td>¥2,458.18</td>
+        <td class="amount">¥14,749.08</td>
+      </tr>
+      <tr>
+        <td>新疆 冷轧钢焊接喷漆 1*1*1M*0.8mm 带盖带腿 消防沙箱</td>
+        <td>1M*1M*1M*0.8mm</td>
+        <td>-</td>
+        <td>39台</td>
+        <td>¥28,851.54</td>
+        <td class="amount">¥1,125,210.06</td>
+      </tr>
+      <tr>
+        <td>ST新疆 地产/废旧/再利用/整理大块 棉花包 包皮布</td>
+        <td>整理大块</td>
+        <td>-</td>
+        <td>19包</td>
+        <td>¥37,464.99</td>
+        <td class="amount">¥711,834.81</td>
+      </tr>
+      <tr>
+        <td>豪尔泰 T621-4 全棉10*7牛仔 浅蓝单层 春秋长袖 金属纽扣 工作服</td>
+        <td>175/XL</td>
+        <td>-</td>
+        <td>49件</td>
+        <td>¥1,364.19</td>
+        <td class="amount">¥66,845.31</td>
+      </tr>
+      <tr>
+        <td>3M 9502V KN95 头戴/带阀/皮筋/折叠式 防尘口罩</td>
+        <td>单片</td>
+        <td>-</td>
+        <td>40件</td>
+        <td>¥30,261.71</td>
+        <td class="amount">¥1,210,468.40</td>
+      </tr>
+    </table>
+  </div>
+  <div class="order-footer">
+    <span>下单日期：2026-05-29</span>
+    <span>合计：¥9,915,995.51</span>
+  </div>
+</div>
+<div class="order-card">
+  <div class="order-header">
+    <span>销售订单<span class="badge badge-monthly">月结</span></span>
+    <span class="order-no">ORD20260531014</span>
+  </div>
+  <div class="order-body">
+    <div class="info-row"><span class="info-label">客户名称</span><span class="info-value">思琪纸巾</span></div>
+    <div class="info-row"><span class="info-label">联系人</span><span class="info-value">付思琪</span></div>
+    <div class="info-row"><span class="info-label">收货地址</span><span class="info-value">武汉市洪山区光谷大道77号</span></div>
+    <table class="product-table">
+      <tr><th>产品名称</th><th>型号</th><th>规格</th><th>数量</th><th>单价</th><th>金额</th></tr>
+      <tr>
+        <td>中麦 082 反绒PU底 低邦灰网 防砸绝缘 透气安全鞋</td>
+        <td>40码</td>
+        <td>-</td>
+        <td>29盒</td>
+        <td>¥46,920.66</td>
+        <td class="amount">¥1,360,699.14</td>
+      </tr>
+      <tr>
+        <td>ST广东 牛二层/B级 黄色绒面皮 全掌背全皮 绒布里棉 防寒 短皮手套</td>
+        <td>黄/全皮/棉</td>
+        <td>-</td>
+        <td>21台</td>
+        <td>¥25,902.58</td>
+        <td class="amount">¥543,954.18</td>
+      </tr>
+      <tr>
+        <td>好攀宜 IP68 K头 H12对讲机专用带线耳机</td>
+        <td>H12专用</td>
+        <td>-</td>
+        <td>7盒</td>
+        <td>¥24,063.24</td>
+        <td class="amount">¥168,442.68</td>
+      </tr>
+      <tr>
+        <td>豪尔泰1811-31 涤棉薄帆布 藏青 防牛仔 夏季短袖 夹克工作服</td>
+        <td>185/3XL</td>
+        <td>-</td>
+        <td>46个</td>
+        <td>¥28,564.37</td>
+        <td class="amount">¥1,313,961.02</td>
+      </tr>
+      <tr>
+        <td>3M 1211 含1701滤棉 防尘/组合 套装</td>
+        <td></td>
+        <td>-</td>
+        <td>20台</td>
+        <td>¥310.85</td>
+        <td class="amount">¥6,217.00</td>
+      </tr>
+      <tr>
+        <td>友邦 PVC 彩色女士款 中筒雨靴</td>
+        <td>38码</td>
+        <td>-</td>
+        <td>26台</td>
+        <td>¥34,363.99</td>
+        <td class="amount">¥893,463.74</td>
+      </tr>
+      <tr>
+        <td>江苏 化学物质清洗粉剂（暂命名）</td>
+        <td></td>
+        <td>-</td>
+        <td>1台</td>
+        <td>¥35,618.98</td>
+        <td class="amount">¥35,618.98</td>
+      </tr>
+      <tr>
+        <td>河北 PVC塑料 宽20CM 厚2MM 透明软门帘</td>
+        <td>20CM 透明</td>
+        <td>-</td>
+        <td>1本</td>
+        <td>¥46,624.33</td>
+        <td class="amount">¥46,624.33</td>
+      </tr>
+      <tr>
+        <td>丽泰 高白棉 食品靴 活套</td>
+        <td>45码</td>
+        <td>-</td>
+        <td>6套</td>
+        <td>¥16,897.49</td>
+        <td class="amount">¥101,384.94</td>
+      </tr>
+      <tr>
+        <td>江苏 20款 涤棉/防静电 桔红 消防/抢险救援服/配套小沿帽</td>
+        <td>桔红帽/59码</td>
+        <td>-</td>
+        <td>27包</td>
+        <td>¥418.34</td>
+        <td class="amount">¥11,295.18</td>
+      </tr>
+      <tr>
+        <td>豪尔泰 1850-31涤棉厚斜纹 藏青/大红 春秋长袖 行业多功能 夹克工作服</td>
+        <td>180/2XL</td>
+        <td>-</td>
+        <td>33个</td>
+        <td>¥22,049.35</td>
+        <td class="amount">¥727,628.55</td>
+      </tr>
+      <tr>
+        <td>安惠 丙纶/编织 8mm*20米蓝色 两头小钩 安全绳</td>
+        <td>蓝色8mm*20米</td>
+        <td>-</td>
+        <td>48套</td>
+        <td>¥19,523.14</td>
+        <td class="amount">¥937,110.72</td>
+      </tr>
+      <tr>
+        <td>登泰 反绒橡胶底 咖啡低帮 6KV绝缘 防砸刺穿 安全鞋</td>
+        <td>38码</td>
+        <td>-</td>
+        <td>39盒</td>
+        <td>¥19,949.06</td>
+        <td class="amount">¥778,013.34</td>
+      </tr>
+      <tr>
+        <td>广东 牛二层AB级 绒面皮 桔红棕色 白斜布里 14寸双层 长电焊手套</td>
+        <td>桔/棕/14寸/双层</td>
+        <td>-</td>
+        <td>2套</td>
+        <td>¥43,533.98</td>
+        <td class="amount">¥87,067.96</td>
+      </tr>
+    </table>
+  </div>
+  <div class="order-footer">
+    <span>下单日期：2026-05-30</span>
+    <span>合计：¥7,011,481.76</span>
+  </div>
+</div>
+<div class="order-card">
+  <div class="order-header">
+    <span>销售订单<span class="badge badge-invoice">需开票</span></span>
+    <span class="order-no">ORD20260601015</span>
+  </div>
+  <div class="order-body">
+    <div class="info-row"><span class="info-label">客户名称</span><span class="info-value">喀什市巨兴商贸有限公司</span></div>
+    <div class="info-row"><span class="info-label">联系人</span><span class="info-value">张经理</span></div>
+    <div class="info-row"><span class="info-label">收货地址</span><span class="info-value">上海市浦东新区张江路88号</span></div>
+    <table class="product-table">
+      <tr><th>产品名称</th><th>型号</th><th>规格</th><th>数量</th><th>单价</th><th>金额</th></tr>
+      <tr>
+        <td>控制机 热敏打印纸</td>
+        <td>热敏纸</td>
+        <td>-</td>
+        <td>47套</td>
+        <td>¥11,701.59</td>
+        <td class="amount">¥549,974.73</td>
+      </tr>
+      <tr>
+        <td>豪尔泰960-18 纯棉厚珠帆 磨毛活里 300g大红 抗油拒水防静电 棉裤</td>
+        <td>180/2XL</td>
+        <td>-</td>
+        <td>43包</td>
+        <td>¥32,542.88</td>
+        <td class="amount">¥1,399,343.84</td>
+      </tr>
+      <tr>
+        <td>豪尔泰1851-31 涤棉厚斜纹 藏青拼红反光 网格B级防静电 春秋长袖 夹克工作服</td>
+        <td>175/XL</td>
+        <td>-</td>
+        <td>13件</td>
+        <td>¥33,879.98</td>
+        <td class="amount">¥440,439.74</td>
+      </tr>
+      <tr>
+        <td>花护 1097 铝支架/PC 3.0MM透明 耐高温 配安全帽 隔热面罩</td>
+        <td>PC/3.0/透明</td>
+        <td>-</td>
+        <td>37盒</td>
+        <td>¥35,869.69</td>
+        <td class="amount">¥1,327,178.53</td>
+      </tr>
+      <tr>
+        <td>登泰 23-5 超纤皮橡胶底 灰长绒 防砸防刺 中帮棉鞋</td>
+        <td>42码</td>
+        <td>-</td>
+        <td>30台</td>
+        <td>¥10,907.87</td>
+        <td class="amount">¥327,236.10</td>
+      </tr>
+      <tr>
+        <td>艳丽 250D 春亚纺PU反光 深蓝 分身套装雨衣</td>
+        <td>185/3XL</td>
+        <td>-</td>
+        <td>49个</td>
+        <td>¥25,706.38</td>
+        <td class="amount">¥1,259,612.62</td>
+      </tr>
+      <tr>
+        <td>湖北 21款/涤棉 火焰兰/春秋/消防员 备勤帽</td>
+        <td>59/秋备勤</td>
+        <td>-</td>
+        <td>41包</td>
+        <td>¥47,163.23</td>
+        <td class="amount">¥1,933,692.43</td>
+      </tr>
+      <tr>
+        <td>汰渍 202g 360°三重功效 淡黄 洗衣肥皂</td>
+        <td>202g</td>
+        <td>-</td>
+        <td>50个</td>
+        <td>¥439.23</td>
+        <td class="amount">¥21,961.50</td>
+      </tr>
+      <tr>
+        <td>美的 家用微波炉</td>
+        <td></td>
+        <td>-</td>
+        <td>12盒</td>
+        <td>¥34,288.11</td>
+        <td class="amount">¥411,457.32</td>
+      </tr>
+      <tr>
+        <td>雕牌 508g 加香加酶 洗衣粉</td>
+        <td>508g</td>
+        <td>-</td>
+        <td>35个</td>
+        <td>¥46,916.45</td>
+        <td class="amount">¥1,642,075.75</td>
+      </tr>
+      <tr>
+        <td>MSA 10146462 PE一指键 绒吸汗带/D下巴带 V型/标准款安全帽</td>
+        <td>蓝色/一指键</td>
+        <td>-</td>
+        <td>30台</td>
+        <td>¥43,349.36</td>
+        <td class="amount">¥1,300,480.80</td>
+      </tr>
+      <tr>
+        <td>3M VOISO亮黄 125g涤纶布 灰高亮条 拉链基本款 反光马甲</td>
+        <td>185/3XL</td>
+        <td>-</td>
+        <td>19件</td>
+        <td>¥2,045.94</td>
+        <td class="amount">¥38,872.86</td>
+      </tr>
+      <tr>
+        <td>嘉恒 PU底/超纤皮面 白色 低帮 防酸碱 安全鞋</td>
+        <td>38码</td>
+        <td>-</td>
+        <td>23盒</td>
+        <td>¥45,642.92</td>
+        <td class="amount">¥1,049,787.16</td>
+      </tr>
+      <tr>
+        <td>嘉恒 涤纶条纹 深蓝 双袖直拉 连帽连体 防静电 洁净连体服</td>
+        <td>深兰/双/195/5XL</td>
+        <td>-</td>
+        <td>43包</td>
+        <td>¥28,026.67</td>
+        <td class="amount">¥1,205,146.81</td>
+      </tr>
+      <tr>
+        <td>嘉恒 涤纶条纹 浅蓝/翻领分体/不连帽 防静电/洁净服</td>
+        <td>190/4xL</td>
+        <td>-</td>
+        <td>28套</td>
+        <td>¥9,358.73</td>
+        <td class="amount">¥262,044.44</td>
+      </tr>
+      <tr>
+        <td>唐丰 ABS 双筋一指键 反光布衬Y带 矿工安全帽</td>
+        <td>黄色</td>
+        <td>-</td>
+        <td>18箱</td>
+        <td>¥35,726.65</td>
+        <td class="amount">¥643,079.70</td>
+      </tr>
+      <tr>
+        <td>嘉恒 涤纶条纹布 天蓝/小沿/开天窗款 防静电/洁净 工作帽</td>
+        <td>天窗/天蓝</td>
+        <td>-</td>
+        <td>46盒</td>
+        <td>¥393.65</td>
+        <td class="amount">¥18,107.90</td>
+      </tr>
+      <tr>
+        <td>津鑫/踏雪 35KV 橡胶里布 绿色中筒 高压绝缘靴</td>
+        <td>44码</td>
+        <td>-</td>
+        <td>5箱</td>
+        <td>¥23,573.69</td>
+        <td class="amount">¥117,868.45</td>
+      </tr>
+    </table>
+  </div>
+  <div class="order-footer">
+    <span>下单日期：2026-05-31</span>
+    <span>合计：¥13,948,360.68</span>
+  </div>
+</div>
+</div>
+</body>
+</html>

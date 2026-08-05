@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coze智能体鉴权方案 — index.html 实现文档</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; background: #f8fafc; color: #1e293b; line-height: 1.8; }
+  .container { max-width: 960px; margin: 0 auto; padding: 40px 32px; }
+
+  .hero { background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 50%, #7c3aed 100%); color: white; padding: 48px 40px; border-radius: 16px; margin-bottom: 36px; position: relative; overflow: hidden; }
+  .hero::before { content: ''; position: absolute; top: -50%; right: -20%; width: 400px; height: 400px; background: rgba(255,255,255,0.05); border-radius: 50%; }
+  .hero h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+  .hero .subtitle { font-size: 15px; opacity: 0.85; }
+  .hero .badge { display: inline-block; background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 12px; margin-top: 12px; }
+
+  h2 { font-size: 20px; font-weight: 700; color: #1e293b; margin: 36px 0 16px; padding-left: 12px; border-left: 4px solid #2563eb; }
+  h3 { font-size: 16px; font-weight: 600; color: #334155; margin: 24px 0 12px; }
+
+  p { margin-bottom: 12px; font-size: 14px; color: #475569; }
+  ul, ol { margin: 8px 0 16px 24px; font-size: 14px; color: #475569; }
+  li { margin-bottom: 6px; }
+
+  .card { background: white; border-radius: 12px; padding: 20px 24px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04); border: 1px solid #e2e8f0; }
+  .card.warn { border-left: 4px solid #f59e0b; background: #fffbeb; }
+  .card.danger { border-left: 4px solid #ef4444; background: #fef2f2; }
+  .card.success { border-left: 4px solid #16a34a; background: #f0fdf4; }
+  .card.info { border-left: 4px solid #3b82f6; background: #eff6ff; }
+  .card-title { font-weight: 600; font-size: 14px; margin-bottom: 8px; }
+
+  table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 13px; }
+  th { background: #f1f5f9; padding: 10px 14px; text-align: left; font-weight: 600; color: #334155; border-bottom: 2px solid #e2e8f0; }
+  td { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; color: #475569; }
+  tr:hover td { background: #f8fafc; }
+
+  pre { background: #1e293b; color: #e2e8f0; padding: 20px; border-radius: 10px; margin: 12px 0 20px; overflow-x: auto; font-size: 13px; line-height: 1.6; }
+  code { font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; }
+  .inline-code { background: #f1f5f9; color: #7c3aed; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+
+  .flow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 16px 0; }
+  .flow-step { background: white; border: 2px solid #3b82f6; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; color: #1e40af; }
+  .flow-arrow { color: #94a3b8; font-size: 18px; }
+
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  .tag-red { background: #fef2f2; color: #dc2626; }
+  .tag-green { background: #f0fdf4; color: #16a34a; }
+  .tag-blue { background: #eff6ff; color: #2563eb; }
+  .tag-yellow { background: #fffbeb; color: #d97706; }
+
+  .footer { text-align: center; margin-top: 48px; padding-top: 24px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #94a3b8; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="hero">
+  <h1>Coze 智能体鉴权方案</h1>
+  <div class="subtitle">index.html 前端实现文档 — PHP 后端代理 + OAuth JWT</div>
+  <div class="badge">AI智能制单系统 · 实现文档</div>
+</div>
+
+<h2>一、鉴权流程</h2>
+
+<p>前端通过 PHP 后端代理获取 OAuth JWT 签发的临时 <span class="inline-code">access_token</span>，初始化 Coze WebChatClient SDK：</p>
+
+<div class="flow">
+  <div class="flow-step">点击启动按钮</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">fetchCozeToken()</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">后端 /system/bot/token.xt</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">返回 accessToken</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">initCozeSDK()</div>
+</div>
+
+<h2>二、SDK 加载</h2>
+
+<p>Coze Chat App SDK 通过 CDN 在 <span class="inline-code">&lt;head&gt;</span> 中加载：</p>
+
+<pre><code>&lt;script src="https://lf-cdn.coze.cn/obj/unpkg/flow-platform/chat-app-sdk/1.2.0-beta.19/libs/cn/index.js"&gt;&lt;/script&gt;</code></pre>
+
+<div class="card info">
+  <div class="card-title">📘 版本信息</div>
+  <table>
+    <tr><th>项目</th><th>值</th></tr>
+    <tr><td>SDK 名称</td><td>Coze Chat App SDK</td></tr>
+    <tr><td>版本号</td><td><span class="inline-code">1.2.0-beta.19</span></td></tr>
+    <tr><td>CDN 域名</td><td><span class="inline-code">lf-cdn.coze.cn</span></td></tr>
+    <tr><td>全局对象</td><td><span class="inline-code">CozeWebSDK</span></td></tr>
+  </table>
+</div>
+
+<h2>三、HTML 结构</h2>
+
+<p>Coze 配置面板位于页面左侧，包含启动按钮和状态显示：</p>
+
+<pre><code>&lt;div id="cozeConfigPanel"&gt;
+  &lt;div&gt;
+    &lt;i class="ri-robot-2-line"&gt;&lt;/i&gt;
+    &lt;span&gt;Coze 智能体&lt;/span&gt;
+  &lt;/div&gt;
+  &lt;button id="connectCozeBtn" onclick="initCozeSDK()"&gt;
+    &lt;i class="ri-play-line"&gt;&lt;/i&gt;
+    &lt;span&gt;启动智能体&lt;/span&gt;
+  &lt;/button&gt;
+  &lt;span id="apiStatus"&gt;&lt;/span&gt;
+&lt;/div&gt;</code></pre>
+
+<table>
+  <tr><th>元素 ID</th><th>用途</th></tr>
+  <tr><td><span class="inline-code">cozeConfigPanel</span></td><td>配置面板容器</td></tr>
+  <tr><td><span class="inline-code">connectCozeBtn</span></td><td>启动/状态切换按钮</td></tr>
+  <tr><td><span class="inline-code">apiStatus</span></td><td>连接状态文字显示</td></tr>
+</table>
+
+<h2>四、全局变量</h2>
+
+<pre><code>var cozeClient = null;
+var cozeAccessToken = null;
+var lastDetectedJSON = '';</code></pre>
+
+<table>
+  <tr><th>变量</th><th>类型</th><th>用途</th></tr>
+  <tr><td><span class="inline-code">cozeClient</span></td><td>CozeWebSDK.WebChatClient | null</td><td>SDK 客户端实例，用于 showChatBot / destroy</td></tr>
+  <tr><td><span class="inline-code">cozeAccessToken</span></td><td>string | null</td><td>当前有效的 access_token，onRefreshToken 时更新</td></tr>
+  <tr><td><span class="inline-code">lastDetectedJSON</span></td><td>string</td><td>剪贴板监听中最后检测到的 JSON 内容（非 Coze 专用）</td></tr>
+</table>
+
+<h2>五、fetchCozeToken() — 获取令牌</h2>
+
+<pre><code>async function fetchCozeToken() {
+  try {
+    var response = await fetch('/system/bot/token.xt');
+    if (!response.ok) throw new Error('令牌接口返回错误: ' + response.status);
+    var data = await response.json();
+    if (data.ok !== 1 || !data.accessToken) throw new Error(data.msg || '获取令牌失败');
+    return data.accessToken;
+  } catch (e) {
+    console.error('fetchCozeToken error:', e);
+    throw e;
+  }
+}</code></pre>
+
+<div class="card info">
+  <div class="card-title">📘 接口说明</div>
+  <table>
+    <tr><th>项目</th><th>值</th></tr>
+    <tr><td>请求地址</td><td><span class="inline-code">/system/bot/token.xt</span></td></tr>
+    <tr><td>请求方法</td><td>GET</td></tr>
+    <tr><td>请求参数</td><td>无</td></tr>
+    <tr><td>成功响应</td><td><span class="inline-code">{"ok":1,"accessToken":"xxx"}</span></td></tr>
+    <tr><td>失败响应</td><td><span class="inline-code">{"ok":0,"msg":"错误信息"}</span></td></tr>
+    <tr><td>成功判断</td><td><span class="inline-code">data.ok === 1 &amp;&amp; data.accessToken</span></td></tr>
+  </table>
+</div>
+
+<h2>六、initCozeSDK() — 初始化 SDK</h2>
+
+<pre><code>async function initCozeSDK() {
+  var btn = document.getElementById('connectCozeBtn');
+  btn.disabled = true;
+  btn.innerHTML = '&lt;i class="ri-loader-4-line" style="font-size:16px;animation:spin 1s linear infinite;"&gt;&lt;/i&gt;&lt;span&gt;获取授权...&lt;/span&gt;';
+  document.getElementById('apiStatus').textContent = '正在获取授权...';
+
+  try {
+    cozeAccessToken = await fetchCozeToken();
+
+    if (typeof CozeWebSDK === 'undefined') {
+      throw new Error('Coze SDK 未加载，请刷新页面');
+    }
+
+    if (cozeClient &amp;&amp; typeof cozeClient.destroy === 'function') {
+      cozeClient.destroy();
+    }
+
+    cozeClient = new CozeWebSDK.WebChatClient({
+      config: {
+        bot_id: '7638933573109792777',
+      },
+      auth: {
+        type: 'token',
+        token: cozeAccessToken,
+        onRefreshToken: async function () {
+          try {
+            cozeAccessToken = await fetchCozeToken();
+            return cozeAccessToken;
+          } catch (e) {
+            console.error('onRefreshToken error:', e);
+            return cozeAccessToken;
+          }
+        }
+      },
+      ui: {
+        base: { lang: 'zh-CN', zIndex: 50 },
+        asstBtn: { isNeed: true },
+        chatBot: {
+          title: '智能制单助手',
+          uploadable: true,
+          width: 460,
+        },
+        header: { isShow: true, isNeedClose: false }
+      }
+    });
+
+    setTimeout(function() {
+      if (cozeClient &amp;&amp; typeof cozeClient.showChatBot === 'function') {
+        cozeClient.showChatBot();
+      }
+    }, 500);
+
+    document.getElementById('apiStatus').textContent = '已连接 ✅';
+    document.getElementById('apiStatus').style.color = '#16a34a';
+    btn.disabled = false;
+    btn.innerHTML = '&lt;i class="ri-check-line" style="font-size:14px;"&gt;&lt;/i&gt;&lt;span&gt;已连接&lt;/span&gt;';
+    btn.style.background = '#16a34a';
+    showToast('智能体已启动');
+
+  } catch (e) {
+    console.error('Coze SDK 初始化失败:', e);
+    btn.disabled = false;
+    btn.innerHTML = '&lt;i class="ri-play-line" style="font-size:16px;"&gt;&lt;/i&gt;&lt;span&gt;启动智能体&lt;/span&gt;';
+    btn.style.background = '';
+    document.getElementById('apiStatus').textContent = e.message;
+    document.getElementById('apiStatus').style.color = '#e5484d';
+    showToast('启动失败: ' + e.message);
+  }
+}</code></pre>
+
+<h3>6.1 初始化流程</h3>
+
+<ol>
+  <li>禁用按钮，显示加载动画</li>
+  <li>调用 <span class="inline-code">fetchCozeToken()</span> 获取 access_token</li>
+  <li>检查 <span class="inline-code">CozeWebSDK</span> 全局对象是否存在</li>
+  <li>若已有客户端实例，先调用 <span class="inline-code">destroy()</span> 销毁</li>
+  <li>创建 <span class="inline-code">CozeWebSDK.WebChatClient</span> 实例</li>
+  <li>500ms 后调用 <span class="inline-code">showChatBot()</span> 弹出聊天窗口</li>
+  <li>更新按钮和状态为"已连接"</li>
+</ol>
+
+<h3>6.2 SDK 配置参数</h3>
+
+<table>
+  <tr><th>配置项</th><th>值</th><th>说明</th></tr>
+  <tr><td>config.bot_id</td><td><span class="inline-code">'7638933573109792777'</span></td><td>智能体 Bot ID，当前硬编码</td></tr>
+  <tr><td>auth.type</td><td><span class="inline-code">'token'</span></td><td>使用 token 鉴权模式</td></tr>
+  <tr><td>auth.token</td><td>access_token 值</td><td>从后端获取的临时令牌</td></tr>
+  <tr><td>auth.onRefreshToken</td><td>回调函数</td><td>token 过期时自动调用 fetchCozeToken() 续期</td></tr>
+  <tr><td>ui.base.lang</td><td><span class="inline-code">'zh-CN'</span></td><td>中文界面</td></tr>
+  <tr><td>ui.base.zIndex</td><td><span class="inline-code">50</span></td><td>浮层 z-index</td></tr>
+  <tr><td>ui.asstBtn.isNeed</td><td><span class="inline-code">true</span></td><td>显示助手按钮</td></tr>
+  <tr><td>ui.chatBot.title</td><td><span class="inline-code">'智能制单助手'</span></td><td>聊天窗口标题</td></tr>
+  <tr><td>ui.chatBot.uploadable</td><td><span class="inline-code">true</span></td><td>允许上传文件</td></tr>
+  <tr><td>ui.chatBot.width</td><td><span class="inline-code">460</span></td><td>聊天窗口宽度(px)</td></tr>
+  <tr><td>ui.header.isShow</td><td><span class="inline-code">true</span></td><td>显示标题栏</td></tr>
+  <tr><td>ui.header.isNeedClose</td><td><span class="inline-code">false</span></td><td>不显示关闭按钮</td></tr>
+</table>
+
+<h3>6.3 按钮状态变化</h3>
+
+<table>
+  <tr><th>阶段</th><th>按钮文字</th><th>按钮颜色</th><th>按钮状态</th></tr>
+  <tr><td>初始</td><td>▶ 启动智能体</td><td>蓝色渐变</td><td>可点击</td></tr>
+  <tr><td>获取授权中</td><td>⟳ 获取授权...</td><td>蓝色渐变</td><td>disabled</td></tr>
+  <tr><td>连接成功</td><td>✓ 已连接</td><td>绿色 #16a34a</td><td>可点击</td></tr>
+  <tr><td>连接失败</td><td>▶ 启动智能体</td><td>蓝色渐变（重置）</td><td>可点击</td></tr>
+</table>
+
+<h3>6.4 Token 自动续期</h3>
+
+<p>SDK 通过 <span class="inline-code">onRefreshToken</span> 回调实现 token 自动续期：</p>
+
+<ul>
+  <li>当 access_token 过期时，SDK 自动调用 <span class="inline-code">onRefreshToken</span></li>
+  <li>回调内重新调用 <span class="inline-code">fetchCozeToken()</span> 获取新 token</li>
+  <li>成功时返回新 token，失败时返回旧 token（降级保活）</li>
+</ul>
+
+<h2>七、isInCozeSDKArea() — SDK 区域检测</h2>
+
+<pre><code>function isInCozeSDKArea(el) {
+  while (el) {
+    if (el.className &amp;&amp; typeof el.className === 'string') {
+      if (el.className.indexOf('coze-chat-sdk') !== -1 || el.className.indexOf('coz-') !== -1) {
+        return true;
+      }
+    }
+    el = el.parentElement;
+  }
+  return false;
+}</code></pre>
+
+<p>通过 DOM 类名向上遍历，判断目标元素是否在 Coze SDK 聊天窗口内。匹配规则：</p>
+<ul>
+  <li>类名包含 <span class="inline-code">coze-chat-sdk</span></li>
+  <li>类名以 <span class="inline-code">coz-</span> 为前缀</li>
+</ul>
+
+<h2>八、injectImageToCozeSDK() — 图片粘贴注入</h2>
+
+<pre><code>function injectImageToCozeSDK(e) {
+  try {
+    var items = e.clipboardData &amp;&amp; e.clipboardData.items;
+    if (!items) return;
+
+    var hasImage = false;
+    for (var i = 0; i &lt; items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        hasImage = true;
+        break;
+      }
+    }
+    if (!hasImage) return;
+
+    if (!isInCozeSDKArea(e.target)) return;
+
+    var fileInput = document.querySelector('input.coze-chat-sdk-semi-upload-hidden-input');
+    if (!fileInput) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    var files = [];
+    for (var i = 0; i &lt; items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        var file = items[i].getAsFile();
+        if (file) files.push(file);
+      }
+    }
+    if (files.length === 0) return;
+
+    var dataTransfer = new DataTransfer();
+    files.forEach(function(f) { dataTransfer.items.add(f); });
+    fileInput.files = dataTransfer.files;
+    fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+  } catch (e) {
+    console.warn('injectImageToCozeSDK error:', e);
+  }
+}
+
+document.addEventListener('paste', injectImageToCozeSDK, true);</code></pre>
+
+<h3>8.1 执行流程</h3>
+
+<ol>
+  <li>监听全局 <span class="inline-code">paste</span> 事件（捕获阶段）</li>
+  <li>检查剪贴板是否包含图片类型数据</li>
+  <li>检查粘贴目标是否在 Coze SDK 区域内（<span class="inline-code">isInCozeSDKArea</span>）</li>
+  <li>查找 SDK 内部的隐藏文件输入框 <span class="inline-code">input.coze-chat-sdk-semi-upload-hidden-input</span></li>
+  <li>拦截默认粘贴行为（<span class="inline-code">preventDefault</span> + <span class="inline-code">stopPropagation</span>）</li>
+  <li>通过 <span class="inline-code">DataTransfer</span> API 构造文件列表</li>
+  <li>将文件列表赋值给隐藏输入框，触发 <span class="inline-code">change</span> 事件完成上传</li>
+</ol>
+
+<h3>8.2 作用域限制</h3>
+
+<div class="card info">
+  <div class="card-title">📘 仅在 SDK 区域内生效</div>
+  <p>通过 <span class="inline-code">isInCozeSDKArea(e.target)</span> 判断，只有当粘贴操作发生在 Coze 聊天窗口内时才拦截。页面其他区域（如订单 JSON 粘贴区）的粘贴行为不受影响。</p>
+</div>
+
+<h2>九、安全现状</h2>
+
+<table>
+  <tr><th>安全维度</th><th>当前状态</th><th>说明</th></tr>
+  <tr><td>PAT 令牌</td><td><span class="tag tag-green">已移除</span></td><td>前端代码中不含任何 PAT 令牌</td></tr>
+  <tr><td>access_token</td><td><span class="tag tag-green">临时持有</span></td><td>从后端获取，仅存于内存变量，自动续期</td></tr>
+  <tr><td>Bot ID</td><td><span class="tag tag-yellow">硬编码</span></td><td><span class="inline-code">'7638933573109792777'</span> 写在 JS 中，F12 可见</td></tr>
+  <tr><td>会话隔离</td><td><span class="tag tag-yellow">未启用</span></td><td>fetchCozeToken() 未传 session_name 参数</td></tr>
+  <tr><td>SDK 版本</td><td><span class="tag tag-yellow">beta</span></td><td>使用 <span class="inline-code">1.2.0-beta.19</span>，非正式版</td></tr>
+</table>
+
+<div class="footer">
+  AI智能制单系统 · Coze鉴权实现文档 · 2026年5月
+</div>
+
+</div>
+</body>
+</html>

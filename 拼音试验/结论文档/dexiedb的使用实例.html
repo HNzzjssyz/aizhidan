@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dexie.js 在本项目中的使用实例 — 技术文档</title>
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+<style>
+:root {
+  --bg: #f8f9fb;
+  --card: #ffffff;
+  --border: #e8ecf0;
+  --text: #1f2937;
+  --text-secondary: #6b7280;
+  --primary: #3b82f6;
+  --primary-light: #eff6ff;
+  --primary-border: #bfdbfe;
+  --green: #10b981;
+  --green-light: #ecfdf5;
+  --green-border: #a7f3d0;
+  --amber: #f59e0b;
+  --amber-light: #fffbeb;
+  --amber-border: #fde68a;
+  --red: #ef4444;
+  --red-light: #fef2f2;
+  --red-border: #fecaca;
+  --purple: #8b5cf6;
+  --purple-light: #f5f3ff;
+  --purple-border: #ddd6fe;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  padding: 32px 20px;
+}
+.container { max-width: 960px; margin: 0 auto; }
+
+.doc-header {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px 48px;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+}
+.doc-header::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6, #10b981);
+}
+.doc-header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.doc-header h1 i { color: var(--primary); font-size: 28px; }
+.doc-header .subtitle {
+  font-size: 15px;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+}
+.doc-meta {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.doc-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.doc-meta-item i { font-size: 14px; color: var(--primary); }
+.doc-meta-item strong { color: var(--text); font-weight: 600; }
+
+.section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 32px 36px;
+  margin-bottom: 20px;
+}
+.section-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.section-title i {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; color: white; flex-shrink: 0;
+}
+.section-title .icon-blue { background: var(--primary); }
+.section-title .icon-green { background: var(--green); }
+.section-title .icon-amber { background: var(--amber); }
+.section-title .icon-red { background: var(--red); }
+.section-title .icon-purple { background: var(--purple); }
+
+p { font-size: 14px; color: var(--text); margin-bottom: 12px; line-height: 1.8; }
+p:last-child { margin-bottom: 0; }
+
+.highlight-box {
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  line-height: 1.8;
+}
+.highlight-box.blue { background: var(--primary-light); border: 1px solid var(--primary-border); color: #1e40af; }
+.highlight-box.green { background: var(--green-light); border: 1px solid var(--green-border); color: #065f46; }
+.highlight-box.amber { background: var(--amber-light); border: 1px solid var(--amber-border); color: #92400e; }
+.highlight-box.red { background: var(--red-light); border: 1px solid var(--red-border); color: #991b1b; }
+.highlight-box.purple { background: var(--purple-light); border: 1px solid var(--purple-border); color: #5b21b6; }
+.highlight-box i { margin-right: 6px; }
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-bottom: 16px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.data-table th, .data-table td {
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.data-table th {
+  background: #f1f5f9;
+  font-weight: 600;
+  color: var(--text);
+  font-size: 12px;
+}
+.data-table td { color: var(--text-secondary); }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table code {
+  background: #f1f5f9;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  color: #e5484d;
+}
+
+pre {
+  background: #1e293b;
+  color: #e2e8f0;
+  border-radius: 10px;
+  padding: 20px 24px;
+  font-size: 13px;
+  line-height: 1.7;
+  overflow-x: auto;
+  margin-bottom: 16px;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+}
+pre .keyword { color: #c084fc; font-weight: 600; }
+pre .func { color: #67e8f9; }
+pre .string { color: #86efac; }
+pre .num { color: #fbbf24; }
+pre .comment { color: #64748b; font-style: italic; }
+pre .prop { color: #93c5fd; }
+pre .type { color: #f9a8d4; }
+
+.metric-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.metric-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+}
+.metric-value {
+  font-size: 28px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+.metric-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 2px;
+}
+.metric-desc {
+  font-size: 11px;
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
+.flow-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: 16px;
+}
+.flow-step {
+  display: flex;
+  gap: 16px;
+  position: relative;
+}
+.flow-step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 19px;
+  top: 40px;
+  bottom: -8px;
+  width: 2px;
+  background: var(--primary-border);
+}
+.flow-step-num {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: white;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 700;
+  flex-shrink: 0;
+  z-index: 1;
+}
+.flow-step-content { flex: 1; padding-bottom: 20px; }
+.flow-step-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.flow-step-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.file-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #f1f5f9;
+  border: 1px solid var(--border);
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  color: var(--primary);
+}
+
+.toc {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px 32px;
+  margin-bottom: 24px;
+}
+.toc-title {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.toc-list {
+  list-style: none;
+  counter-reset: toc;
+}
+.toc-list li {
+  counter-increment: toc;
+  font-size: 14px;
+  padding: 6px 0 6px 28px;
+  position: relative;
+  color: var(--text-secondary);
+}
+.toc-list li::before {
+  content: counter(toc);
+  position: absolute;
+  left: 0;
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 13px;
+}
+.toc-list li a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.toc-list li a:hover { color: var(--primary); }
+
+.api-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px 24px;
+  margin-bottom: 16px;
+  position: relative;
+}
+.api-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
+  border-radius: 10px 0 0 10px;
+}
+.api-card.api-read::before { background: var(--green); }
+.api-card.api-write::before { background: var(--amber); }
+.api-card.api-cache::before { background: var(--purple); }
+.api-card.api-delete::before { background: var(--red); }
+.api-card .api-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.api-card .api-name {
+  font-size: 14px;
+  font-weight: 700;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  color: var(--text);
+}
+.api-card .api-badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+.api-badge.read { background: var(--green-light); color: #065f46; border: 1px solid var(--green-border); }
+.api-badge.write { background: var(--amber-light); color: #92400e; border: 1px solid var(--amber-border); }
+.api-badge.cache { background: var(--purple-light); color: #5b21b6; border: 1px solid var(--purple-border); }
+.api-badge.delete { background: var(--red-light); color: #991b1b; border: 1px solid var(--red-border); }
+.api-card .api-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin-bottom: 8px;
+}
+.api-card .api-code {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  background: #f8f9fb;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="doc-header">
+  <h1><i class="ri-database-2-line"></i>Dexie.js 在本项目中的使用实例</h1>
+  <div class="subtitle">AI智能制单系统 — IndexedDB 封装层技术文档</div>
+  <div class="doc-meta">
+    <div class="doc-meta-item"><i class="ri-calendar-line"></i> <strong>2026-05-22</strong></div>
+    <div class="doc-meta-item"><i class="ri-code-s-slash-line"></i> <strong>Dexie 3.2.7</strong></div>
+    <div class="doc-meta-item"><i class="ri-file-code-line"></i> <strong>pinyin_match.js</strong></div>
+    <div class="doc-meta-item"><i class="ri-shield-check-line"></i> <strong>5万上限约束</strong></div>
+  </div>
+</div>
+
+<div class="toc">
+  <div class="toc-title"><i class="ri-list-ordered" style="color:var(--primary);"></i> 目录</div>
+  <ol class="toc-list">
+    <li><a href="#s1">为什么选择 Dexie.js</a></li>
+    <li><a href="#s2">架构总览：三层结构</a></li>
+    <li><a href="#s3">数据库定义与初始化</a></li>
+    <li><a href="#s4">基础读写 API</a></li>
+    <li><a href="#s5">内存缓存层</a></li>
+    <li><a href="#s6">缓存失效机制</a></li>
+    <li><a href="#s7">全量获取与5万上限约束</a></li>
+    <li><a href="#s8">增量更新与合并截断</a></li>
+    <li><a href="#s9">拼音数据的事务写入</a></li>
+    <li><a href="#s10">同步状态管理</a></li>
+    <li><a href="#s11">数据清理与重置</a></li>
+    <li><a href="#s12">API 速查表</a></li>
+    <li><a href="#s13">踩坑记录与最佳实践</a></li>
+  </ol>
+</div>
+
+<div class="section" id="s1">
+  <div class="section-title">
+    <i class="icon-blue"><i class="ri-question-line"></i></i>
+    为什么选择 Dexie.js
+  </div>
+  <p>本系统（AI智能制单）需要将客户和产品数据存储在浏览器端，以支持离线拼音匹配。原方案使用 <code>localStorage</code>，存在以下瓶颈：</p>
+  <table class="data-table">
+    <thead>
+      <tr><th>对比维度</th><th>localStorage</th><th>Dexie (IndexedDB)</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>存储容量</td><td>~5MB / 源</td><td>数百MB甚至GB</td></tr>
+      <tr><td>数据类型</td><td>仅字符串（需 JSON 序列化）</td><td>结构化数据，直接存对象</td></tr>
+      <tr><td>查询能力</td><td>全量读取 + JS 过滤</td><td>索引查询、范围查询、游标</td></tr>
+      <tr><td>写入性能</td><td>同步阻塞，大数据量卡顿</td><td>异步非阻塞，bulkPut 批量写入</td></tr>
+      <tr><td>事务支持</td><td>无</td><td>完整事务（readwrite / readonly）</td></tr>
+    </tbody>
+  </table>
+  <div class="highlight-box green">
+    <i class="ri-check-line"></i>
+    <strong>选型结论：</strong>Dexie.js 是 IndexedDB 的轻量封装库（~30KB），提供链式 API、Promise 支持、事务管理，完美满足本系统"5万客户+5万产品+拼音索引"的存储与查询需求。
+  </div>
+</div>
+
+<div class="section" id="s2">
+  <div class="section-title">
+    <i class="icon-purple"><i class="ri-stack-line"></i></i>
+    架构总览：三层结构
+  </div>
+  <p>本项目的数据访问采用<strong>三层架构</strong>，从上到下依次为：</p>
+
+  <div class="metric-cards">
+    <div class="metric-card">
+      <div class="metric-value" style="color:var(--primary);">UI 层</div>
+      <div class="metric-label">index.html / get_cus_pro.html</div>
+      <div class="metric-desc">制单页面 + 数据管理页面</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value" style="color:var(--purple);">缓存层</div>
+      <div class="metric-label">getProductsCached() 等</div>
+      <div class="metric-desc">内存缓存，避免重复读取 IndexedDB</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value" style="color:var(--green);">持久层</div>
+      <div class="metric-label">Dexie → IndexedDB</div>
+      <div class="metric-desc">浏览器本地数据库，数据跨会话持久</div>
+    </div>
+  </div>
+
+  <pre><span class="comment">/* 数据流向 */</span>
+
+<span class="type">UI 层</span>（index.html / get_cus_pro.html）
+  │
+  │  PinyinMatch.getProductsCached()
+  │  PinyinMatch.setCustomersAsync()
+  │  PinyinMatch.matchProductsFromRawList()
+  ▼
+<span class="type">缓存层</span>（pinyin_match.js 闭包内）
+  │  _productsCache / _customersCache / _productMapCache ...
+  │  命中缓存 → 直接返回（0ms）
+  │  未命中 → 向下读取
+  ▼
+<span class="type">持久层</span>（Dexie API）
+  │  db.customer.toArray()    ← 全量读取
+  │  db.customer.bulkPut()    ← 批量写入
+  │  db.customer.get(id)      ← 主键查询
+  │  db.transaction('rw', ...) ← 事务写入
+  ▼
+<span class="type">IndexedDB</span>（浏览器内置数据库）
+  PinyinToolDB
+    ├── customer  （客户表）
+    ├── product   （产品表）
+    └── sync_status （同步状态表）</pre>
+
+  <div class="highlight-box blue">
+    <i class="ri-information-line"></i>
+    <strong>关键设计：</strong>所有 Dexie 操作封装在 <code>PinyinMatch</code> 闭包内，UI 层不直接操作 Dexie，只通过闭包暴露的 API 访问数据。缓存层对 UI 透明——调用方无需关心数据来自内存还是 IndexedDB。
+  </div>
+</div>
+
+<div class="section" id="s3">
+  <div class="section-title">
+    <i class="icon-green"><i class="ri-database-line"></i></i>
+    数据库定义与初始化
+  </div>
+  <p>数据库定义在 <span class="file-tag"><i class="ri-file-code-line"></i> pinyin_match.js</span> 的 <code>initDB()</code> 函数中：</p>
+
+  <pre><span class="keyword">var</span> db = <span class="keyword">null</span>;
+
+<span class="keyword">function</span> <span class="func">initDB</span>() {
+  <span class="keyword">if</span> (db) <span class="keyword">return</span> db;  <span class="comment">// 单例模式，避免重复创建</span>
+  db = <span class="keyword">new</span> Dexie(<span class="string">'PinyinToolDB'</span>);
+  db.version(<span class="num">1</span>).stores({
+    customer:    <span class="string">'id, name, pinyin, pinyin_abbr, update_time'</span>,
+    product:     <span class="string">'id, name, model, sku, pinyin, pinyin_abbr, update_time'</span>,
+    sync_status: <span class="string">'key'</span>
+  });
+  <span class="keyword">return</span> db;
+}</pre>
+
+  <table class="data-table">
+    <thead>
+      <tr><th>表名</th><th>主键</th><th>索引字段</th><th>用途</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>customer</code></td>
+        <td><code>id</code></td>
+        <td>name, pinyin, pinyin_abbr, update_time</td>
+        <td>客户基础数据 + 拼音索引</td>
+      </tr>
+      <tr>
+        <td><code>product</code></td>
+        <td><code>id</code></td>
+        <td>name, model, sku, pinyin, pinyin_abbr, update_time</td>
+        <td>产品基础数据 + 拼音索引</td>
+      </tr>
+      <tr>
+        <td><code>sync_status</code></td>
+        <td><code>key</code></td>
+        <td>（无额外索引）</td>
+        <td>键值对存储同步时间戳等元数据</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="highlight-box amber">
+    <i class="ri-alert-line"></i>
+    <strong>stores() 中只声明索引字段，不是全部字段。</strong>Dexie 允许存储任意结构的对象，<code>stores()</code> 中列出的字段仅用于建立索引。例如 <code>customer</code> 表实际存储的字段包括 <code>address</code>、<code>contact</code>、<code>code</code> 等，但它们不需要索引，所以不在 <code>stores()</code> 中声明。
+  </div>
+
+  <p><strong>初始化入口</strong>——两个函数的区别：</p>
+  <table class="data-table">
+    <thead>
+      <tr><th>函数</th><th>返回值</th><th>使用场景</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>initDB()</code></td>
+        <td>Dexie 实例（同步）</td>
+        <td>内部各函数开头调用，确保 db 已初始化</td>
+      </tr>
+      <tr>
+        <td><code>init()</code></td>
+        <td>Promise&lt;Dexie&gt;</td>
+        <td>UI 层入口：<code>PinyinMatch.init().then(...)</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <pre><span class="comment">// index.html 中的初始化</span>
+PinyinMatch.init().then(<span class="keyword">function</span>() {
+  <span class="func">checkPinyinData</span>();
+  <span class="func">startClipboardMonitor</span>();
+});</pre>
+</div>
+
+<div class="section" id="s4">
+  <div class="section-title">
+    <i class="icon-green"><i class="ri-arrow-left-right-line"></i></i>
+    基础读写 API
+  </div>
+
+  <div class="api-card api-read">
+    <div class="api-header">
+      <span class="api-name">getCustomersAsync()</span>
+      <span class="api-badge read">读取</span>
+    </div>
+    <div class="api-desc">读取客户表全量数据。内部调用 <code>db.customer.toArray()</code>，返回对象数组。</div>
+    <div class="api-code">var customers = await PinyinMatch.getCustomersAsync(); // [{id, name, pinyin, ...}, ...]</div>
+  </div>
+
+  <div class="api-card api-read">
+    <div class="api-header">
+      <span class="api-name">getProductsAsync()</span>
+      <span class="api-badge read">读取</span>
+    </div>
+    <div class="api-desc">读取产品表全量数据。内部调用 <code>db.product.toArray()</code>。</div>
+    <div class="api-code">var products = await PinyinMatch.getProductsAsync(); // [{id, name, model, sku, pinyin, ...}, ...]</div>
+  </div>
+
+  <div class="api-card api-read">
+    <div class="api-header">
+      <span class="api-name">getCustomerPinyinAsync() / getProductPinyinAsync()</span>
+      <span class="api-badge read">读取</span>
+    </div>
+    <div class="api-desc">读取拼音索引数据，返回 <code>{id: {pinyin, pinyin_abbr}}</code> 格式的映射表。内部先 <code>toArray()</code> 全量读取，再 <code>forEach</code> 提取拼音字段。</div>
+    <div class="api-code">var pinyinMap = await PinyinMatch.getProductPinyinAsync(); // {"123": {pinyin: "chan pin", pinyin_abbr: "cp"}, ...}</div>
+  </div>
+
+  <div class="api-card api-write">
+    <div class="api-header">
+      <span class="api-name">setCustomersAsync(customers)</span>
+      <span class="api-badge write">写入</span>
+    </div>
+    <div class="api-desc">全量替换客户数据。先将所有 id 转为字符串，再 <code>clear() + bulkPut()</code> 清空后批量写入。写入后自动调用 <code>invalidateCustomerCache()</code> 清除缓存。</div>
+    <div class="api-code">await PinyinMatch.setCustomersAsync(customerArray);</div>
+  </div>
+
+  <div class="api-card api-write">
+    <div class="api-header">
+      <span class="api-name">setProductsAsync(products)</span>
+      <span class="api-badge write">写入</span>
+    </div>
+    <div class="api-desc">全量替换产品数据。逻辑同 <code>setCustomersAsync</code>，写入后自动调用 <code>invalidateProductCache()</code>。</div>
+    <div class="api-code">await PinyinMatch.setProductsAsync(productArray);</div>
+  </div>
+
+  <div class="highlight-box blue">
+    <i class="ri-information-line"></i>
+    <strong>id 字段统一转字符串：</strong><code>setCustomersAsync</code> 和 <code>setProductsAsync</code> 内部都会执行 <code>obj.id = String(obj.id)</code>，确保主键类型一致。这是因为后端返回的 id 可能是数字，而 Dexie 主键类型必须统一。
+  </div>
+</div>
+
+<div class="section" id="s5">
+  <div class="section-title">
+    <i class="icon-purple"><i class="ri-speed-line"></i></i>
+    内存缓存层
+  </div>
+  <p>IndexedDB 读取是异步 I/O 操作，每次 <code>toArray()</code> 全量读取5万条数据需要数十毫秒。在制单匹配流程中，同一批数据可能被多次访问（产品匹配、客户匹配、填充表单等），重复读取会造成性能浪费。因此设计了<strong>内存缓存层</strong>。</p>
+
+  <table class="data-table">
+    <thead>
+      <tr><th>缓存变量</th><th>类型</th><th>来源</th><th>用途</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>_productsCache</code></td>
+        <td>Array</td>
+        <td><code>db.product.toArray()</code></td>
+        <td>产品全量数据</td>
+      </tr>
+      <tr>
+        <td><code>_customersCache</code></td>
+        <td>Array</td>
+        <td><code>db.customer.toArray()</code></td>
+        <td>客户全量数据</td>
+      </tr>
+      <tr>
+        <td><code>_productMapCache</code></td>
+        <td>Object</td>
+        <td>由 _productsCache 派生</td>
+        <td>id → 产品对象，O(1) 查找</td>
+      </tr>
+      <tr>
+        <td><code>_customerMapCache</code></td>
+        <td>Object</td>
+        <td>由 _customersCache 派生</td>
+        <td>id → 客户对象，O(1) 查找</td>
+      </tr>
+      <tr>
+        <td><code>_nameIndexCache</code></td>
+        <td>Object</td>
+        <td>由 _productsCache 派生</td>
+        <td>产品名小写 → 产品数组，精确匹配</td>
+      </tr>
+      <tr>
+        <td><code>_indexDbCache</code></td>
+        <td>Array</td>
+        <td>由 _productsCache 派生</td>
+        <td>产品拼音索引条目</td>
+      </tr>
+      <tr>
+        <td><code>_customerIndexDbCache</code></td>
+        <td>Array</td>
+        <td>由 _customersCache 派生</td>
+        <td>客户拼音索引条目</td>
+      </tr>
+      <tr>
+        <td><code>_tokenInvertedIndex</code></td>
+        <td>Object</td>
+        <td>由 _indexDbCache 派生</td>
+        <td>拼音 token → 产品索引集合，倒排索引</td>
+      </tr>
+      <tr>
+        <td><code>_customerTokenInvertedIndex</code></td>
+        <td>Object</td>
+        <td>由 _customerIndexDbCache 派生</td>
+        <td>拼音 token → 客户索引集合，倒排索引</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p><strong>缓存读取模式</strong>——以 <code>getProductsCached()</code> 为例：</p>
+  <pre><span class="keyword">async function</span> <span class="func">getProductsCached</span>() {
+  <span class="keyword">if</span> (_productsCache) <span class="keyword">return</span> _productsCache;  <span class="comment">// 命中缓存，直接返回</span>
+  <span class="keyword">var</span> t0 = performance.now();
+  _productsCache = <span class="keyword">await</span> <span class="func">getProductsAsync</span>();   <span class="comment">// 未命中，从 IndexedDB 读取</span>
+  console.log(<span class="string">'[Cache] loaded '</span> + _productsCache.length + <span class="string">' products in '</span> + (performance.now() - t0).toFixed(<span class="num">1</span>) + <span class="string">'ms'</span>);
+  <span class="keyword">return</span> _productsCache;
+}</pre>
+
+  <div class="highlight-box green">
+    <i class="ri-check-line"></i>
+    <strong>缓存依赖链：</strong>高级缓存依赖低级缓存。例如 <code>getProductMapCached()</code> 调用 <code>getProductsCached()</code>，<code>getTokenInvertedIndexCached()</code> 调用 <code>getProductIndexDbCached()</code>。首次调用时，整条依赖链会逐级填充；后续调用直接命中内存缓存，0ms 返回。
+  </div>
+</div>
+
+<div class="section" id="s6">
+  <div class="section-title">
+    <i class="icon-red"><i class="ri-refresh-line"></i></i>
+    缓存失效机制
+  </div>
+  <p>缓存必须在数据变更时主动失效，否则 UI 会读到旧数据。本系统设计了三级失效函数：</p>
+
+  <table class="data-table">
+    <thead>
+      <tr><th>失效函数</th><th>清除的缓存</th><th>触发时机</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>invalidateCache()</code></td>
+        <td>全部缓存</td>
+        <td><code>clearAllDataAsync()</code> 清空数据库时</td>
+      </tr>
+      <tr>
+        <td><code>invalidateProductCache()</code></td>
+        <td>_productsCache, _indexDbCache, _productMapCache, _nameIndexCache, _tokenInvertedIndex, _pinyinCache</td>
+        <td><code>setProductsAsync()</code> 或 <code>setProductPinyinAsync()</code> 写入后</td>
+      </tr>
+      <tr>
+        <td><code>invalidateCustomerCache()</code></td>
+        <td>_customersCache, _customerIndexDbCache, _customerMapCache, _customerTokenInvertedIndex</td>
+        <td><code>setCustomersAsync()</code> 或 <code>setCustomerPinyinAsync()</code> 写入后</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <pre><span class="comment">// 失效时机示例</span>
+<span class="keyword">async function</span> <span class="func">setCustomersAsync</span>(customers) {
+  initDB();
+  <span class="keyword">var</span> normalized = customers.map(<span class="keyword">function</span>(c) {
+    <span class="keyword">var</span> obj = Object.assign({}, c);
+    obj.id = String(obj.id);
+    <span class="keyword">return</span> obj;
+  });
+  <span class="keyword">await</span> db.customer.clear();
+  <span class="keyword">await</span> db.customer.bulkPut(normalized);
+  <span class="func">invalidateCustomerCache</span>();  <span class="comment">// ← 写入后立即失效缓存</span>
+}</pre>
+
+  <div class="highlight-box amber">
+    <i class="ri-alert-line"></i>
+    <strong>关键原则：写入必失效。</strong>任何修改 IndexedDB 数据的操作（<code>setCustomersAsync</code>、<code>setProductsAsync</code>、<code>setCustomerPinyinAsync</code>、<code>setProductPinyinAsync</code>、<code>clearAllDataAsync</code>），完成后都必须调用对应的 <code>invalidateXxxCache()</code>。遗漏失效会导致 UI 展示过期数据。
+  </div>
+</div>
+
+<div class="section" id="s7">
+  <div class="section-title">
+    <i class="icon-amber"><i class="ri-download-line"></i></i>
+    全量获取与5万上限约束
+  </div>
+  <p>全量获取发生在 <span class="file-tag"><i class="ri-file-code-line"></i> get_cus_pro.html</span> 的 <code>fetchFullData()</code> 中，流程如下：</p>
+
+  <div class="flow-steps">
+    <div class="flow-step">
+      <div class="flow-step-num">1</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">获取总记录数</div>
+        <div class="flow-step-desc">调用后端 API 获取客户和产品的总数</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num">2</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">5万上限检查</div>
+        <div class="flow-step-desc"><code>Math.min(total, 50000)</code> 计算实际读取量，超限时弹出 toast 提示"总量超界，只取5万数据"</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num">3</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">分批读取</div>
+        <div class="flow-step-desc">按批次大小（客户1万/批，产品2万/批）循环调用后端 API，OFFSET 分页</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num">4</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">兜底截断</div>
+        <div class="flow-step-desc">读取完成后，若数据量仍超5万（理论上不会），<code>slice(0, 50000)</code> 截断</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num">5</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">写入 Dexie</div>
+        <div class="flow-step-desc">调用 <code>PinyinMatch.setCustomersAsync()</code> / <code>PinyinMatch.setProductsAsync()</code>，内部执行 <code>clear() + bulkPut()</code></div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num">6</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">分批生成拼音</div>
+        <div class="flow-step-desc">每批200条，调用 <code>PinyinMatch.setCustomerPinyinAsync()</code> / <code>PinyinMatch.setProductPinyinAsync()</code></div>
+      </div>
+    </div>
+  </div>
+
+  <pre><span class="comment">// 5万上限约束核心代码</span>
+<span class="keyword">var</span> CUSTOMER_LIMIT = <span class="num">50000</span>;
+<span class="keyword">var</span> PRODUCT_LIMIT = <span class="num">50000</span>;
+
+<span class="comment">// 步骤2：计算实际读取量</span>
+<span class="keyword">var</span> customerFetchTotal = Math.min(customerTotal, CUSTOMER_LIMIT);
+<span class="keyword">var</span> productFetchTotal = Math.min(productTotal, PRODUCT_LIMIT);
+<span class="keyword">var</span> customerBatches = Math.ceil(customerFetchTotal / CUSTOMER_BATCH_SIZE) || <span class="num">1</span>;
+<span class="keyword">var</span> productBatches = Math.ceil(productFetchTotal / PRODUCT_BATCH_SIZE) || <span class="num">1</span>;
+
+<span class="comment">// 步骤4：兜底截断</span>
+<span class="keyword">if</span> (allCustomers.length > CUSTOMER_LIMIT) {
+  allCustomers = allCustomers.slice(<span class="num">0</span>, CUSTOMER_LIMIT);
+}
+<span class="keyword">if</span> (allProducts.length > PRODUCT_LIMIT) {
+  allProducts = allProducts.slice(<span class="num">0</span>, PRODUCT_LIMIT);
+}
+
+<span class="comment">// 步骤5：写入 Dexie（内部自动失效缓存）</span>
+<span class="keyword">await</span> PinyinMatch.setCustomersAsync(allCustomers);
+<span class="keyword">await</span> PinyinMatch.setProductsAsync(allProducts);</pre>
+</div>
+
+<div class="section" id="s8">
+  <div class="section-title">
+    <i class="icon-amber"><i class="ri-loop-left-line"></i></i>
+    增量更新与合并截断
+  </div>
+  <p>增量更新发生在 <code>fetchIncrementalData()</code> 中，流程为：</p>
+
+  <div class="flow-steps">
+    <div class="flow-step">
+      <div class="flow-step-num">1</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">读取增量数据</div>
+        <div class="flow-step-desc">调用后端 API，传入 <code>incremental_time</code> 时间戳，获取变更数据</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num">2</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">读取本地全量数据</div>
+        <div class="flow-step-desc">调用 <code>PinyinMatch.getCustomersAsync()</code> / <code>getProductsAsync()</code> 从 Dexie 读取</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num">3</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">合并：增量覆盖本地</div>
+        <div class="flow-step-desc">以 id 为键，增量数据覆盖本地同名记录，本地独有记录保留</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num">4</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">5万上限截断</div>
+        <div class="flow-step-desc">合并后若超过5万条，<code>slice(0, 50000)</code> 截断，弹出 toast 提示</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num">5</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">写回 Dexie</div>
+        <div class="flow-step-desc">调用 <code>setCustomersAsync()</code> / <code>setProductsAsync()</code> 全量替换</div>
+      </div>
+    </div>
+  </div>
+
+  <pre><span class="comment">// 增量合并核心代码</span>
+<span class="keyword">var</span> existingMap = {};
+existingCustomers.forEach(<span class="keyword">function</span>(c) { existingMap[c.id] = c; });
+normalized.forEach(<span class="keyword">function</span>(c) { existingMap[c.id] = c; });  <span class="comment">// 增量覆盖</span>
+
+<span class="keyword">var</span> merged = Object.values(existingMap);
+<span class="keyword">if</span> (merged.length > CUSTOMER_LIMIT) {
+  merged = merged.slice(<span class="num">0</span>, CUSTOMER_LIMIT);
+  <span class="func">showToast</span>(<span class="string">'客户总量超界，只取5万数据'</span>, <span class="string">'error'</span>);
+}
+<span class="keyword">await</span> PinyinMatch.setCustomersAsync(merged);</pre>
+</div>
+
+<div class="section" id="s9">
+  <div class="section-title">
+    <i class="icon-blue"><i class="ri-shield-keyhole-line"></i></i>
+    拼音数据的事务写入
+  </div>
+  <p>拼音生成是异步分批进行的，写入时需要<strong>逐条读取已有记录 → 更新拼音字段 → 写回</strong>。为避免中途出错导致数据不一致，使用 Dexie 事务：</p>
+
+  <pre><span class="keyword">async function</span> <span class="func">setProductPinyinAsync</span>(pinyinMap) {
+  initDB();
+  <span class="keyword">await</span> db.transaction(<span class="string">'rw'</span>, db.product, <span class="keyword">async function</span>() {
+    <span class="keyword">for</span> (<span class="keyword">var</span> id <span class="keyword">in</span> pinyinMap) {
+      <span class="keyword">var</span> existing = <span class="keyword">await</span> db.product.<span class="func">get</span>(id);   <span class="comment">// 主键查询</span>
+      <span class="keyword">if</span> (existing) {
+        existing.pinyin = pinyinMap[id].pinyin;
+        existing.pinyin_abbr = pinyinMap[id].pinyin_abbr;
+        <span class="keyword">await</span> db.product.<span class="func">put</span>(existing);     <span class="comment">// 整条写回</span>
+      }
+    }
+  });
+  <span class="func">invalidateProductCache</span>();  <span class="comment">// 事务完成后失效缓存</span>
+}</pre>
+
+  <div class="highlight-box blue">
+    <i class="ri-information-line"></i>
+    <strong>为什么用 <code>put</code> 而不是 <code>update</code>？</strong>Dexie 的 <code>put()</code> 是"整条替换"（按主键），如果记录已存在则覆盖，不存在则新增。<code>update()</code> 是"部分字段更新"，但要求记录必须存在。本场景中先 <code>get()</code> 确认存在再 <code>put()</code>，更安全直观。
+  </div>
+
+  <div class="highlight-box amber">
+    <i class="ri-alert-line"></i>
+    <strong>事务的必要性：</strong>拼音写入涉及数千条记录的逐条更新。如果不用事务，中途出错会导致部分记录已更新、部分未更新的不一致状态。事务保证"要么全部成功，要么全部回滚"。
+  </div>
+</div>
+
+<div class="section" id="s10">
+  <div class="section-title">
+    <i class="icon-green"><i class="ri-time-line"></i></i>
+    同步状态管理
+  </div>
+  <p><code>sync_status</code> 表是一个简单的键值对存储，用于记录数据同步的时间戳等元数据：</p>
+
+  <pre><span class="comment">// 读取同步状态</span>
+<span class="keyword">async function</span> <span class="func">getSyncStatusAsync</span>(key) {
+  initDB();
+  <span class="keyword">var</span> record = <span class="keyword">await</span> db.sync_status.<span class="func">get</span>(key);
+  <span class="keyword">return</span> record ? record.value : <span class="keyword">null</span>;
+}
+
+<span class="comment">// 写入同步状态</span>
+<span class="keyword">async function</span> <span class="func">setSyncStatusAsync</span>(key, value) {
+  initDB();
+  <span class="keyword">await</span> db.sync_status.<span class="func">put</span>({ key: key, value: value });
+}</pre>
+
+  <table class="data-table">
+    <thead>
+      <tr><th>key</th><th>value 示例</th><th>用途</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>sync_time</code></td><td><code>"2026-05-22T10:30:00Z"</code></td>
+        <td>最近一次全量同步时间</td></tr>
+      <tr><td><code>incremental_time</code></td><td><code>"2026-05-22T14:00:00Z"</code></td>
+        <td>最近一次增量同步时间（增量 API 的查询参数）</td></tr>
+    </tbody>
+  </table>
+
+  <div class="highlight-box green">
+    <i class="ri-check-line"></i>
+    <strong>设计优势：</strong>同步状态存在 IndexedDB 而非 localStorage，与业务数据在同一数据库中，清除数据时一并清除，避免状态残留。
+  </div>
+</div>
+
+<div class="section" id="s11">
+  <div class="section-title">
+    <i class="icon-red"><i class="ri-delete-bin-line"></i></i>
+    数据清理与重置
+  </div>
+
+  <pre><span class="keyword">async function</span> <span class="func">clearAllDataAsync</span>() {
+  <span class="keyword">if</span> (db) {
+    <span class="keyword">try</span> {
+      <span class="keyword">await</span> db.delete();  <span class="comment">// 删除整个数据库（最彻底）</span>
+    } <span class="keyword">catch</span> (e) {
+      <span class="comment">// 降级方案：逐表清空</span>
+      <span class="keyword">await</span> db.customer.clear();
+      <span class="keyword">await</span> db.product.clear();
+      <span class="keyword">await</span> db.sync_status.clear();
+    }
+    db = <span class="keyword">null</span>;  <span class="comment">// 重置实例，下次 initDB() 会重新创建</span>
+  }
+  <span class="func">invalidateCache</span>();  <span class="comment">// 清除全部内存缓存</span>
+}</pre>
+
+  <div class="highlight-box red">
+    <i class="ri-alarm-warning-line"></i>
+    <strong>db.delete() vs 逐表 clear()：</strong><code>db.delete()</code> 会删除整个数据库文件，下次 <code>initDB()</code> 时需要重新声明 schema。<code>clear()</code> 只清空数据，保留表结构。代码中优先 <code>delete()</code>，失败时降级为 <code>clear()</code>，兼顾彻底性和兼容性。
+  </div>
+</div>
+
+<div class="section" id="s12">
+  <div class="section-title">
+    <i class="icon-purple"><i class="ri-list-check-2"></i></i>
+    API 速查表
+  </div>
+
+  <table class="data-table">
+    <thead>
+      <tr><th>API</th><th>类型</th><th>Dexie 操作</th><th>缓存行为</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>initDB()</code></td><td>初始化</td><td><code>new Dexie() + version().stores()</code></td><td>—</td></tr>
+      <tr><td><code>init()</code></td><td>初始化</td><td>调用 initDB()，返回 Promise</td><td>—</td></tr>
+      <tr><td><code>getCustomersAsync()</code></td><td>读取</td><td><code>db.customer.toArray()</code></td><td>不经过缓存</td></tr>
+      <tr><td><code>getProductsAsync()</code></td><td>读取</td><td><code>db.product.toArray()</code></td><td>不经过缓存</td></tr>
+      <tr><td><code>getCustomerPinyinAsync()</code></td><td>读取</td><td><code>db.customer.toArray()</code> + JS 提取</td><td>不经过缓存</td></tr>
+      <tr><td><code>getProductPinyinAsync()</code></td><td>读取</td><td><code>db.product.toArray()</code> + JS 提取</td><td>不经过缓存</td></tr>
+      <tr><td><code>getProductsCached()</code></td><td>缓存读取</td><td>未命中时调用 getProductsAsync</td><td>内存缓存</td></tr>
+      <tr><td><code>getCustomersCached()</code></td><td>缓存读取</td><td>未命中时调用 getCustomersAsync</td><td>内存缓存</td></tr>
+      <tr><td><code>getProductMapCached()</code></td><td>缓存派生</td><td>由 getProductsCached 派生</td><td>内存缓存</td></tr>
+      <tr><td><code>getCustomerMapCached()</code></td><td>缓存派生</td><td>由 getCustomersCached 派生</td><td>内存缓存</td></tr>
+      <tr><td><code>getProductNameIndexCached()</code></td><td>缓存派生</td><td>由 getProductsCached 派生</td><td>内存缓存</td></tr>
+      <tr><td><code>getProductIndexDbCached()</code></td><td>缓存派生</td><td>由 getProductsCached 派生</td><td>内存缓存</td></tr>
+      <tr><td><code>getCustomerIndexDbCached()</code></td><td>缓存派生</td><td>由 getCustomersCached 派生</td><td>内存缓存</td></tr>
+      <tr><td><code>getTokenInvertedIndexCached()</code></td><td>缓存派生</td><td>由 getProductIndexDbCached 派生</td><td>内存缓存</td></tr>
+      <tr><td><code>getCustomerTokenInvertedIndexCached()</code></td><td>缓存派生</td><td>由 getCustomerIndexDbCached 派生</td><td>内存缓存</td></tr>
+      <tr><td><code>setCustomersAsync()</code></td><td>写入</td><td><code>clear() + bulkPut()</code></td><td>自动失效客户缓存</td></tr>
+      <tr><td><code>setProductsAsync()</code></td><td>写入</td><td><code>clear() + bulkPut()</code></td><td>自动失效产品缓存</td></tr>
+      <tr><td><code>setCustomerPinyinAsync()</code></td><td>事务写入</td><td><code>transaction('rw') + get() + put()</code></td><td>自动失效客户缓存</td></tr>
+      <tr><td><code>setProductPinyinAsync()</code></td><td>事务写入</td><td><code>transaction('rw') + get() + put()</code></td><td>自动失效产品缓存</td></tr>
+      <tr><td><code>getSyncStatusAsync()</code></td><td>读取</td><td><code>db.sync_status.get(key)</code></td><td>无缓存</td></tr>
+      <tr><td><code>setSyncStatusAsync()</code></td><td>写入</td><td><code>db.sync_status.put()</code></td><td>无缓存</td></tr>
+      <tr><td><code>hasPinyinDataAsync()</code></td><td>检查</td><td><code>db.customer.count() + db.product.count()</code></td><td>无缓存</td></tr>
+      <tr><td><code>getPinyinDataStatsAsync()</code></td><td>统计</td><td><code>count() + toArray() + filter()</code></td><td>无缓存</td></tr>
+      <tr><td><code>clearAllDataAsync()</code></td><td>删除</td><td><code>db.delete()</code> 或逐表 <code>clear()</code></td><td>自动失效全部缓存</td></tr>
+      <tr><td><code>invalidateCache()</code></td><td>缓存失效</td><td>—</td><td>清除全部缓存</td></tr>
+      <tr><td><code>invalidateProductCache()</code></td><td>缓存失效</td><td>—</td><td>清除产品相关缓存</td></tr>
+      <tr><td><code>invalidateCustomerCache()</code></td><td>缓存失效</td><td>—</td><td>清除客户相关缓存</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="section" id="s13">
+  <div class="section-title">
+    <i class="icon-red"><i class="ri-bug-line"></i></i>
+    踩坑记录与最佳实践
+  </div>
+
+  <div class="api-card api-delete">
+    <div class="api-header">
+      <span class="api-name">坑1：initDB() 返回值不是 Promise</span>
+      <span class="api-badge delete">踩坑</span>
+    </div>
+    <div class="api-desc"><code>initDB()</code> 返回 Dexie 实例（同步），不是 Promise。如果写 <code>initDB().then(...)</code> 会报 <code>TypeError: initDB(...).then is not a function</code>，导致整个页面脚本中断。</div>
+    <div class="api-code">❌ initDB().then(function() { ... })   → 报错
+✅ PinyinMatch.init().then(function() { ... })   → 正确</div>
+  </div>
+
+  <div class="api-card api-delete">
+    <div class="api-header">
+      <span class="api-name">坑2：id 类型不一致导致 get() 查不到</span>
+      <span class="api-badge delete">踩坑</span>
+    </div>
+    <div class="api-desc">后端返回的 id 可能是数字 <code>123</code>，而 Dexie 中存储的主键是字符串 <code>"123"</code>。如果直接用数字 id 调用 <code>db.customer.get(123)</code>，会查不到数据。所有写入操作内部都做了 <code>String(obj.id)</code> 转换，但外部查询时也需注意类型一致。</div>
+    <div class="api-code">❌ db.customer.get(123)        → undefined
+✅ db.customer.get("123")       → {id: "123", name: "..."}</div>
+  </div>
+
+  <div class="api-card api-delete">
+    <div class="api-header">
+      <span class="api-name">坑3：bulkPut 前必须 clear</span>
+      <span class="api-badge delete">踩坑</span>
+    </div>
+    <div class="api-desc"><code>bulkPut()</code> 是"upsert"语义——主键存在则更新，不存在则新增。如果不先 <code>clear()</code>，旧数据会残留。本系统的全量获取场景要求"全量替换"，所以必须先 <code>clear()</code> 再 <code>bulkPut()</code>。</div>
+    <div class="api-code">await db.customer.clear();         // 先清空
+await db.customer.bulkPut(data);   // 再批量写入</div>
+  </div>
+
+  <div class="api-card api-delete">
+    <div class="api-header">
+      <span class="api-name">坑4：缓存失效遗漏</span>
+      <span class="api-badge delete">踩坑</span>
+    </div>
+    <div class="api-desc">如果直接操作 <code>db.customer.put()</code> 而不通过 <code>setCustomersAsync()</code>，缓存不会失效，UI 会展示旧数据。所有数据变更必须通过封装的 API 进行，不要绕过缓存层直接操作 Dexie。</div>
+    <div class="api-code">❌ db.customer.put(newRecord)              // 缓存未失效
+✅ PinyinMatch.setCustomersAsync(allData)   // 自动失效缓存</div>
+  </div>
+
+  <div class="api-card api-delete">
+    <div class="api-header">
+      <span class="api-name">坑5：5万上限必须在批次计算前生效</span>
+      <span class="api-badge delete">踩坑</span>
+    </div>
+    <div class="api-desc">如果先计算批次（<code>Math.ceil(total / batchSize)</code>）再截断，会导致从服务器多读数据后丢弃。正确做法是先用 <code>Math.min(total, 50000)</code> 计算实际读取量，再基于此计算批次。</div>
+    <div class="api-code">❌ batches = Math.ceil(100000 / 10000)  → 10批，多读5万条
+✅ fetchTotal = Math.min(100000, 50000)  → 50000
+  batches = Math.ceil(50000 / 10000)    → 5批，只读5万条</div>
+  </div>
+
+  <div class="highlight-box green">
+    <i class="ri-check-line"></i>
+    <strong>最佳实践总结：</strong>
+    <br>① 所有 Dexie 操作通过 <code>PinyinMatch</code> 闭包 API 进行，UI 层不直接操作数据库
+    <br>② 写入操作后必须调用对应的 <code>invalidateXxxCache()</code>
+    <br>③ 主键 id 统一为字符串类型
+    <br>④ 全量替换用 <code>clear() + bulkPut()</code>，部分更新用事务 <code>transaction('rw') + get() + put()</code>
+    <br>⑤ 5万上限约束在批次计算前生效，避免多读后丢弃
+    <br>⑥ 缓存层对 UI 透明，调用方无需关心数据来源
+  </div>
+</div>
+
+</div>
+</body>
+</html>

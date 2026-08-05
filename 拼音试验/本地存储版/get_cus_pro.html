@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>拼音字段调试工具 — 第一阶段原型</title>
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/pinyin-pro@3.25.0/dist/index.js"></script>
+<script src="pinyin_match.js"></script>
+<style>
+:root {
+  --bg: #f5f7fa;
+  --card: #ffffff;
+  --border: #e5e9ef;
+  --text: #1f2937;
+  --text2: #6b7280;
+  --text3: #9ca3af;
+  --primary: #3b82f6;
+  --primary-light: #eff6ff;
+  --primary-border: #bfdbfe;
+  --green: #10b981;
+  --green-light: #ecfdf5;
+  --green-border: #a7f3d0;
+  --amber: #f59e0b;
+  --amber-light: #fffbeb;
+  --amber-border: #fde68a;
+  --red: #ef4444;
+  --red-light: #fef2f2;
+  --red-border: #fecaca;
+  --purple: #8b5cf6;
+  --purple-light: #f5f3ff;
+  --purple-border: #ddd6fe;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+.topbar {
+  background: white;
+  border-bottom: 1px solid var(--border);
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.topbar-left i {
+  font-size: 22px;
+  color: var(--primary);
+}
+.topbar-left h1 {
+  font-size: 17px;
+  font-weight: 700;
+}
+.topbar-left .badge {
+  padding: 2px 10px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--amber-light);
+  color: #92400e;
+  border: 1px solid var(--amber-border);
+}
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--text2);
+}
+.topbar-right .storage-bar {
+  width: 80px;
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.topbar-right .storage-bar .fill {
+  height: 100%;
+  background: var(--green);
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+
+.main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .main { grid-template-columns: 1fr; }
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: sticky;
+  top: 72px;
+}
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.card-header {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-header i { color: var(--primary); font-size: 16px; }
+.card-body { padding: 16px 18px; }
+
+.api-group { margin-bottom: 14px; }
+.api-group:last-child { margin-bottom: 0; }
+.api-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text2);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.api-label .method {
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: monospace;
+}
+.api-label .method.get { background: var(--green-light); color: #065f46; border: 1px solid var(--green-border); }
+.api-label .method.post { background: var(--primary-light); color: #1e40af; border: 1px solid var(--primary-border); }
+.api-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 12px;
+  font-family: monospace;
+  background: #f8fafc;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.api-input:focus { border-color: var(--primary); background: white; }
+.api-input::placeholder { color: var(--text3); }
+
+.btn {
+  padding: 9px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:hover:not(:disabled) { background: #2563eb; }
+.btn-green { background: var(--green); color: white; }
+.btn-green:hover:not(:disabled) { background: #059669; }
+.btn-amber { background: var(--amber); color: white; }
+.btn-amber:hover:not(:disabled) { background: #d97706; }
+.btn-outline { background: white; color: var(--text2); border: 1px solid var(--border); }
+.btn-outline:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+.btn-red { background: white; color: var(--red); border: 1px solid var(--red-border); }
+.btn-red:hover:not(:disabled) { background: var(--red-light); }
+.btn-block { width: 100%; justify-content: center; }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+
+.btn-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 13px;
+}
+.status-row:last-child { border-bottom: none; }
+.status-row .label { color: var(--text2); }
+.status-row .value { font-weight: 600; color: var(--text); }
+.status-row .value.green { color: var(--green); }
+.status-row .value.amber { color: var(--amber); }
+.status-row .value.red { color: var(--red); }
+
+.content-area {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 4px;
+}
+.tab {
+  flex: 1;
+  padding: 9px 16px;
+  border: none;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text2);
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.tab.active {
+  background: var(--primary);
+  color: white;
+  box-shadow: 0 2px 8px rgba(59,130,246,0.3);
+}
+.tab:hover:not(.active) { background: #f3f4f6; }
+
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+.search-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.search-input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.search-input:focus { border-color: var(--primary); }
+.search-mode {
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  background: white;
+  cursor: pointer;
+  outline: none;
+  color: var(--text);
+}
+
+.result-stats {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 14px;
+  font-size: 12px;
+  color: var(--text2);
+}
+.result-stats strong { color: var(--primary); }
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.data-table th, .data-table td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid #f3f4f6;
+}
+.data-table th {
+  background: #f8fafc;
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text2);
+  position: sticky;
+  top: 0;
+}
+.data-table td { color: var(--text); }
+.data-table tr:hover td { background: #f8fafc; }
+.data-table .pinyin { color: var(--primary); font-family: monospace; font-size: 12px; }
+.data-table .abbr { color: var(--purple); font-family: monospace; font-size: 12px; }
+.data-table .match-highlight { background: #fef08a; padding: 1px 3px; border-radius: 2px; }
+
+.table-wrapper {
+  max-height: 520px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.table-wrapper::-webkit-scrollbar { width: 5px; }
+.table-wrapper::-webkit-scrollbar-track { background: transparent; }
+.table-wrapper::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+
+.progress-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.4);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.progress-overlay.active { display: flex; }
+.progress-card {
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  width: 420px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+.progress-card h3 {
+  font-size: 16px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.progress-bar-outer {
+  width: 100%;
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.progress-bar-inner {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--green));
+  border-radius: 4px;
+  transition: width 0.3s;
+  width: 0%;
+}
+.progress-text {
+  font-size: 13px;
+  color: var(--text2);
+  margin-bottom: 8px;
+}
+.progress-detail {
+  font-size: 12px;
+  color: var(--text3);
+}
+
+.toast {
+  position: fixed;
+  top: 72px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  z-index: 2000;
+  opacity: 0;
+  transition: all 0.3s;
+  pointer-events: none;
+}
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.toast.success { background: var(--green); color: white; }
+.toast.error { background: var(--red); color: white; }
+.toast.info { background: var(--primary); color: white; }
+
+.empty-state {
+  text-align: center;
+  padding: 48px 20px;
+  color: var(--text3);
+}
+.empty-state i { font-size: 40px; margin-bottom: 12px; display: block; opacity: 0.4; }
+.empty-state p { font-size: 14px; line-height: 1.8; }
+
+.log-area {
+  background: #1e293b;
+  color: #94a3b8;
+  padding: 14px 16px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  line-height: 1.7;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.log-area::-webkit-scrollbar { width: 4px; }
+.log-area::-webkit-scrollbar-thumb { background: #475569; border-radius: 2px; }
+.log-area .log-time { color: #64748b; }
+.log-area .log-ok { color: #34d399; }
+.log-area .log-err { color: #f87171; }
+.log-area .log-info { color: #60a5fa; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <i class="ri-translate-2"></i>
+    <h1>拼音字段调试工具</h1>
+    <span class="badge">Phase 1 原型</span>
+  </div>
+  <div class="topbar-right">
+    <span>本地存储</span>
+    <div class="storage-bar"><div class="fill" id="storageFill" style="width:0%"></div></div>
+    <span id="storageText">0 KB</span>
+  </div>
+</div>
+
+<div class="main">
+  <div class="sidebar">
+
+    <div class="card">
+      <div class="card-header"><i class="ri-plug-line"></i> 接口配置</div>
+      <div class="card-body">
+        <div style="background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px;font-size:12px;color:var(--text2);line-height:1.7;">
+          <div style="font-weight:600;color:var(--text);margin-bottom:6px;">接口地址</div>
+          <div style="font-family:monospace;color:var(--primary);word-break:break-all;">/system/api.xt</div>
+        </div>
+        <div style="background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px;font-size:12px;color:var(--text2);line-height:1.7;">
+          <div style="font-weight:600;color:var(--text);margin-bottom:6px;">客户请求参数</div>
+          <div><strong>cmd：</strong>load_data</div>
+          <div><strong>dtname：</strong>customer</div>
+          <div><strong>field：</strong>id,cu_name</div>
+          <div><strong>flag：</strong>1（跳过字段函数，返回原始值）</div>
+        </div>
+        <div style="background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px;font-size:12px;color:var(--text2);line-height:1.7;">
+          <div style="font-weight:600;color:var(--text);margin-bottom:6px;">产品请求参数</div>
+          <div><strong>cmd：</strong>load_data</div>
+          <div><strong>dtname：</strong>product</div>
+          <div><strong>field：</strong>id,pro_name,model,spec</div>
+          <div><strong>flag：</strong>1（跳过字段函数，返回原始值）</div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary btn-block" onclick="fetchFullData()"><i class="ri-download-line"></i> 全量获取</button>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-amber btn-block" onclick="fetchIncrementalData()"><i class="ri-refresh-line"></i> 增量获取</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><i class="ri-database-2-line"></i> 数据状态</div>
+      <div class="card-body">
+        <div class="status-row">
+          <span class="label">客户数据</span>
+          <span class="value" id="customerCount">0 条</span>
+        </div>
+        <div class="status-row">
+          <span class="label">客户拼音</span>
+          <span class="value" id="customerPinyinCount">0 条</span>
+        </div>
+        <div class="status-row">
+          <span class="label">产品数据</span>
+          <span class="value" id="productCount">0 条</span>
+        </div>
+        <div class="status-row">
+          <span class="label">产品拼音</span>
+          <span class="value" id="productPinyinCount">0 条</span>
+        </div>
+        <div class="status-row">
+          <span class="label">最后同步</span>
+          <span class="value" id="lastSync">-</span>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-green btn-block" onclick="generateAllPinyin()"><i class="ri-translate-2"></i> 生成拼音</button>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-outline btn-sm" onclick="exportJSON('customer')" style="flex:1"><i class="ri-file-download-line"></i> 导出客户</button>
+          <button class="btn btn-outline btn-sm" onclick="exportJSON('product')" style="flex:1"><i class="ri-file-download-line"></i> 导出产品</button>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-outline btn-sm" onclick="importJSON()" style="flex:1"><i class="ri-file-upload-line"></i> 导入JSON</button>
+          <button class="btn btn-red btn-sm" onclick="clearAllData()" style="flex:1"><i class="ri-delete-bin-line"></i> 清空数据</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><i class="ri-terminal-box-line"></i> 操作日志</div>
+      <div class="card-body" style="padding:0;">
+        <div class="log-area" id="logArea"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="content-area">
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('customer')"><i class="ri-building-line"></i> 客户拼音</button>
+      <button class="tab" onclick="switchTab('product')"><i class="ri-shopping-bag-line"></i> 产品拼音</button>
+      <button class="tab" onclick="switchTab('query')"><i class="ri-search-line"></i> 拼音查询</button>
+    </div>
+
+    <div class="tab-content active" id="tab-customer">
+      <div class="search-bar">
+        <input type="text" class="search-input" id="customerSearch" placeholder="搜索客户名称或拼音..." oninput="PinyinMatch.debounce(filterCustomerTable, 250)()">
+        <select class="search-mode" id="customerSearchMode" onchange="filterCustomerTable()">
+          <option value="all">全部</option>
+          <option value="generated">已生成</option>
+          <option value="pending">未生成</option>
+        </select>
+      </div>
+      <div class="result-stats" id="customerStats"></div>
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width:60px;">ID</th>
+              <th>客户名称</th>
+              <th>全拼</th>
+              <th>首字母</th>
+              <th style="width:80px;">状态</th>
+            </tr>
+          </thead>
+          <tbody id="customerTableBody">
+            <tr><td colspan="5"><div class="empty-state"><i class="ri-database-line"></i><p>暂无客户数据<br>请先通过接口获取或导入JSON</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-product">
+      <div class="search-bar">
+        <input type="text" class="search-input" id="productSearch" placeholder="搜索产品名称、规格或拼音..." oninput="PinyinMatch.debounce(filterProductTable, 250)()">
+        <select class="search-mode" id="productSearchMode" onchange="filterProductTable()">
+          <option value="all">全部</option>
+          <option value="generated">已生成</option>
+          <option value="pending">未生成</option>
+        </select>
+      </div>
+      <div class="result-stats" id="productStats"></div>
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width:60px;">ID</th>
+              <th>产品名称</th>
+              <th>型号</th>
+              <th>规格</th>
+              <th>合并全拼</th>
+              <th>合并首字母</th>
+              <th style="width:80px;">状态</th>
+            </tr>
+          </thead>
+          <tbody id="productTableBody">
+            <tr><td colspan="7"><div class="empty-state"><i class="ri-database-line"></i><p>暂无产品数据<br>请先通过接口获取或导入JSON</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-query">
+      <div class="search-bar">
+        <input type="text" class="search-input" id="queryInput" placeholder="输入拼音或中文搜索客户和产品..." oninput="PinyinMatch.debounce(doQuery, 250)()">
+        <select class="search-mode" id="queryType">
+          <option value="all">客户+产品</option>
+          <option value="customer">仅客户</option>
+          <option value="product">仅产品</option>
+        </select>
+      </div>
+      <div id="queryResults">
+        <div class="empty-state"><i class="ri-search-line"></i><p>输入拼音或中文进行匹配查询<br>支持全拼、首字母、中文混合搜索</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="progress-overlay" id="progressOverlay">
+  <div class="progress-card">
+    <h3><i class="ri-loader-4-line" style="animation:spin 1s linear infinite;"></i> <span id="progressTitle">处理中...</span></h3>
+    <div class="progress-bar-outer"><div class="progress-bar-inner" id="progressBar"></div></div>
+    <div class="progress-text" id="progressText">0 / 0</div>
+    <div class="progress-detail" id="progressDetail"></div>
+  </div>
+</div>
+
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+<input type="file" id="importFileInput" accept=".json" style="display:none;" onchange="handleImportFile(event)">
+
+<script>
+var LS_KEY_CUSTOMER = 'pinyin_tool_customers';
+var LS_KEY_PRODUCT = 'pinyin_tool_products';
+var LS_KEY_PINYIN_CUSTOMER = 'pinyin_tool_customer_pinyin';
+var LS_KEY_PINYIN_PRODUCT = 'pinyin_tool_product_pinyin';
+var LS_KEY_SYNC_TIME = 'pinyin_tool_sync_time';
+var LS_KEY_INCREMENTAL_TIME = 'pinyin_tool_incremental_time';
+
+function setStore(key, data) {
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch (e) {
+    log('存储空间不足，请导出数据后清理', 'err');
+  }
+}
+
+function getCustomers() { return PinyinMatch.getStore(LS_KEY_CUSTOMER, []); }
+function getProducts() { return PinyinMatch.getStore(LS_KEY_PRODUCT, []); }
+function getCustomerPinyin() { return PinyinMatch.getStore(LS_KEY_PINYIN_CUSTOMER, {}); }
+function getProductPinyin() { return PinyinMatch.getStore(LS_KEY_PINYIN_PRODUCT, {}); }
+
+function log(msg, type) {
+  var area = document.getElementById('logArea');
+  var now = new Date();
+  var time = now.toTimeString().substring(0, 8);
+  var cls = type === 'ok' ? 'log-ok' : type === 'err' ? 'log-err' : type === 'info' ? 'log-info' : '';
+  var div = document.createElement('div');
+  var timeSpan = document.createElement('span');
+  timeSpan.className = 'log-time';
+  timeSpan.textContent = '[' + time + '] ';
+  var msgSpan = document.createElement('span');
+  msgSpan.className = cls;
+  msgSpan.textContent = msg;
+  div.appendChild(timeSpan);
+  div.appendChild(msgSpan);
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+}
+
+function showToast(msg, type) {
+  var t = document.createElement('div');
+  t.className = 'toast ' + (type || 'info');
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(function() { t.classList.add('show'); }, 10);
+  setTimeout(function() { t.classList.remove('show'); setTimeout(function() { t.remove(); }, 300); }, 2500);
+}
+
+function updateStatus() {
+  var customers = getCustomers();
+  var products = getProducts();
+  var cp = getCustomerPinyin();
+  var pp = getProductPinyin();
+
+  var cpCount = Object.keys(cp).length;
+  var ppCount = Object.keys(pp).length;
+
+  document.getElementById('customerCount').textContent = customers.length + ' 条';
+  document.getElementById('customerPinyinCount').textContent = cpCount + ' 条';
+  document.getElementById('customerPinyinCount').className = 'value' + (cpCount === customers.length && customers.length > 0 ? ' green' : cpCount > 0 ? ' amber' : '');
+  document.getElementById('productCount').textContent = products.length + ' 条';
+  document.getElementById('productPinyinCount').textContent = ppCount + ' 条';
+  document.getElementById('productPinyinCount').className = 'value' + (ppCount === products.length && products.length > 0 ? ' green' : ppCount > 0 ? ' amber' : '');
+
+  var syncTime = localStorage.getItem(LS_KEY_SYNC_TIME);
+  document.getElementById('lastSync').textContent = syncTime || '-';
+
+  var totalSize = 0;
+  for (var i = 0; i < localStorage.length; i++) {
+    var key = localStorage.key(i);
+    if (key && key.indexOf('pinyin_tool_') === 0) {
+      totalSize += localStorage.getItem(key).length * 2;
+    }
+  }
+  var kb = (totalSize / 1024).toFixed(1);
+  var pct = Math.min((totalSize / (5 * 1024 * 1024)) * 100, 100);
+  document.getElementById('storageFill').style.width = pct + '%';
+  document.getElementById('storageFill').style.background = pct > 80 ? 'var(--red)' : pct > 50 ? 'var(--amber)' : 'var(--green)';
+  document.getElementById('storageText').textContent = kb + ' KB';
+}
+
+function showProgress(title, current, total, detail) {
+  document.getElementById('progressTitle').textContent = title;
+  var pct = total > 0 ? (current / total * 100) : 0;
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressText').textContent = current + ' / ' + total;
+  document.getElementById('progressDetail').textContent = detail || '';
+}
+
+function sendLoadData(params) {
+  var headers = { 'Content-Type': 'application/json' };
+  return fetch('/system/api.xt', {
+    method: 'POST',
+    headers: headers,
+    body: JSON.stringify(params)
+  }).then(function(r) { return r.json(); });
+}
+
+function parseLoadDataResponse(data) {
+  if (data.ok === 1 && data.data) return data.data;
+  if (Array.isArray(data)) return data;
+  if (data.data && Array.isArray(data.data)) return data.data;
+  return [];
+}
+
+function fetchFullData() {
+  document.getElementById('progressOverlay').classList.add('active');
+  showProgress('正在获取数据...', 0, 2, '请求接口中...');
+
+  var customerParams = { cmd: 'load_data', dtname: 'customer', field: 'id,cu_name,amstamp', flag: 1 };
+  var productParams = { cmd: 'load_data', dtname: 'product', field: 'id,pro_name,model,spec,modstm', flag: 1 };
+
+  sendLoadData(customerParams).then(function(data) {
+    var list = parseLoadDataResponse(data);
+    var normalized = list.map(function(item) {
+      return { id: item.id, name: item.cu_name || item.name || '' };
+    });
+    setStore(LS_KEY_CUSTOMER, normalized);
+    log('客户全量获取成功：' + normalized.length + ' 条', 'ok');
+    showProgress('正在获取数据...', 1, 2, '客户完成，获取产品中...');
+    return sendLoadData(productParams);
+  }).then(function(data) {
+    var list = parseLoadDataResponse(data);
+    var normalized = list.map(function(item) {
+      return { id: item.id, name: item.pro_name || item.name || '', model: item.model || '', spec: item.spec || '' };
+    });
+    setStore(LS_KEY_PRODUCT, normalized);
+    log('产品全量获取成功：' + normalized.length + ' 条', 'ok');
+    showProgress('正在获取数据...', 2, 2, '完成');
+    var now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+    localStorage.setItem(LS_KEY_SYNC_TIME, now);
+    localStorage.setItem(LS_KEY_INCREMENTAL_TIME, now);
+  }).catch(function(e) {
+    log('全量获取失败：' + e.message, 'err');
+  }).then(function() {
+    document.getElementById('progressOverlay').classList.remove('active');
+    updateStatus();
+    renderCurrentTab();
+    showToast('数据获取完成', 'success');
+  });
+}
+
+function fetchIncrementalData() {
+  var lastTime = localStorage.getItem(LS_KEY_INCREMENTAL_TIME);
+  if (!lastTime) {
+    showToast('尚未进行过全量获取，请先全量获取', 'warning');
+    return;
+  }
+
+  document.getElementById('progressOverlay').classList.add('active');
+  showProgress('正在获取增量数据...', 0, 3, '请求接口中...');
+
+  var customerWhere = "amstamp > '" + lastTime + "'";
+  var productWhere = "modstm > '" + lastTime + "'";
+  var customerParams = { cmd: 'load_data', dtname: 'customer', field: 'id,cu_name,amstamp', where: customerWhere, flag: 1 };
+  var productParams = { cmd: 'load_data', dtname: 'product', field: 'id,pro_name,model,spec,modstm', where: productWhere, flag: 1 };
+
+  var newCustomerIds = [];
+  var newProductIds = [];
+
+  sendLoadData(customerParams).then(function(data) {
+    var list = parseLoadDataResponse(data);
+    var normalized = list.map(function(item) {
+      return { id: item.id, name: item.cu_name || item.name || '' };
+    });
+    newCustomerIds = normalized.map(function(c) { return c.id; });
+    var existing = getCustomers();
+    var existingMap = {};
+    existing.forEach(function(c) { existingMap[c.id] = c; });
+    normalized.forEach(function(c) { existingMap[c.id] = c; });
+    var merged = Object.values(existingMap);
+    setStore(LS_KEY_CUSTOMER, merged);
+    log('客户增量：新增/更新 ' + normalized.length + ' 条，合并后共 ' + merged.length + ' 条', 'ok');
+    showProgress('正在获取增量数据...', 1, 3, '客户完成，获取产品中...');
+    return sendLoadData(productParams);
+  }).then(function(data) {
+    var list = parseLoadDataResponse(data);
+    var normalized = list.map(function(item) {
+      return { id: item.id, name: item.pro_name || item.name || '', model: item.model || '', spec: item.spec || '' };
+    });
+    newProductIds = normalized.map(function(p) { return p.id; });
+    var existing = getProducts();
+    var existingMap = {};
+    existing.forEach(function(p) { existingMap[p.id] = p; });
+    normalized.forEach(function(p) { existingMap[p.id] = p; });
+    var merged = Object.values(existingMap);
+    setStore(LS_KEY_PRODUCT, merged);
+    log('产品增量：新增/更新 ' + normalized.length + ' 条，合并后共 ' + merged.length + ' 条', 'ok');
+    showProgress('正在获取增量数据...', 2, 3, '数据合并完成，生成拼音中...');
+    return generateIncrementalPinyin(newCustomerIds, newProductIds);
+  }).then(function() {
+    var now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+    localStorage.setItem(LS_KEY_SYNC_TIME, now);
+    localStorage.setItem(LS_KEY_INCREMENTAL_TIME, now);
+    showProgress('正在获取增量数据...', 3, 3, '完成');
+  }).catch(function(e) {
+    log('增量获取失败：' + e.message, 'err');
+  }).then(function() {
+    document.getElementById('progressOverlay').classList.remove('active');
+    updateStatus();
+    renderCurrentTab();
+    showToast('增量数据获取完成', 'success');
+  });
+}
+
+function generateAllPinyin() {
+  var customers = getCustomers();
+  var products = getProducts();
+  var total = customers.length + products.length;
+
+  if (total === 0) {
+    showToast('暂无数据，请先获取数据', 'error');
+    return;
+  }
+
+  document.getElementById('progressOverlay').classList.add('active');
+
+  var cp = {};
+  var pp = {};
+  var batchSize = 200;
+  var idx = 0;
+
+  function processBatch() {
+    var end = Math.min(idx + batchSize, total);
+
+    for (var i = idx; i < end; i++) {
+      if (i < customers.length) {
+        var c = customers[i];
+        var py = PinyinMatch.generatePinyinForText(c.name);
+        cp[c.id] = { id: c.id, name: c.name, pinyin: py.full, pinyin_abbr: py.abbr };
+      } else {
+        var pi = i - customers.length;
+        var p = products[pi];
+        var combined = [p.name, p.model, p.spec].filter(function(s) { return !PinyinMatch.isPlaceholder(s); }).join(' ');
+        var py = PinyinMatch.generatePinyinForText(combined);
+        pp[p.id] = { id: p.id, name: p.name, model: p.model || '', spec: p.spec || '', pinyin: py.full, pinyin_abbr: py.abbr };
+      }
+    }
+
+    idx = end;
+    showProgress('生成拼音...', idx, total, '已完成 ' + Math.round(idx / total * 100) + '%');
+
+    if (idx < total) {
+      setTimeout(processBatch, 50);
+    } else {
+      setStore(LS_KEY_PINYIN_CUSTOMER, cp);
+      setStore(LS_KEY_PINYIN_PRODUCT, pp);
+      document.getElementById('progressOverlay').classList.remove('active');
+      log('拼音生成完成：客户 ' + Object.keys(cp).length + ' 条，产品 ' + Object.keys(pp).length + ' 条', 'ok');
+      updateStatus();
+      renderCurrentTab();
+      showToast('拼音生成完成', 'success');
+    }
+  }
+
+  processBatch();
+}
+
+function generateIncrementalPinyin(customerIds, productIds) {
+  return new Promise(function(resolve) {
+    var cp = getCustomerPinyin();
+    var pp = getProductPinyin();
+    var customers = getCustomers();
+    var products = getProducts();
+
+    var customerMap = {};
+    customers.forEach(function(c) { customerMap[c.id] = c; });
+    var productMap = {};
+    products.forEach(function(p) { productMap[p.id] = p; });
+
+    var newCount = 0;
+    var updateCount = 0;
+
+    customerIds.forEach(function(id) {
+      var c = customerMap[id];
+      if (!c) return;
+      var py = PinyinMatch.generatePinyinForText(c.name);
+      var isNew = !cp[id];
+      if (isNew) newCount++; else updateCount++;
+      cp[id] = { id: c.id, name: c.name, pinyin: py.full, pinyin_abbr: py.abbr };
+    });
+
+    productIds.forEach(function(id) {
+      var p = productMap[id];
+      if (!p) return;
+      var combined = [p.name, p.model, p.spec].filter(function(s) { return !PinyinMatch.isPlaceholder(s); }).join(' ');
+      var py = PinyinMatch.generatePinyinForText(combined);
+      var isNew = !pp[id];
+      if (isNew) newCount++; else updateCount++;
+      pp[id] = { id: p.id, name: p.name, model: p.model || '', spec: p.spec || '', pinyin: py.full, pinyin_abbr: py.abbr };
+    });
+
+    setStore(LS_KEY_PINYIN_CUSTOMER, cp);
+    setStore(LS_KEY_PINYIN_PRODUCT, pp);
+
+    var totalChanged = customerIds.length + productIds.length;
+    if (totalChanged > 0) {
+      log('增量拼音生成：新增 ' + newCount + ' 条，更新 ' + updateCount + ' 条', 'ok');
+    } else {
+      log('增量拼音生成：无新增或更新', 'ok');
+    }
+
+    updateStatus();
+    renderCurrentTab();
+    resolve();
+  });
+}
+
+function exportJSON(type) {
+  var data, filename;
+  if (type === 'customer') {
+    data = { customers: getCustomers(), pinyin: getCustomerPinyin(), exportedAt: new Date().toISOString() };
+    filename = 'customer_pinyin_' + new Date().toISOString().slice(0, 10) + '.json';
+  } else {
+    data = { products: getProducts(), pinyin: getProductPinyin(), exportedAt: new Date().toISOString() };
+    filename = 'product_pinyin_' + new Date().toISOString().slice(0, 10) + '.json';
+  }
+
+  var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  log('已导出 ' + filename, 'ok');
+  showToast('导出成功', 'success');
+}
+
+function importJSON() {
+  document.getElementById('importFileInput').click();
+}
+
+function handleImportFile(event) {
+  var file = event.target.files[0];
+  if (!file) return;
+
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var data = JSON.parse(e.target.result);
+      if (data.customers) {
+        setStore(LS_KEY_CUSTOMER, data.customers);
+        log('导入客户数据：' + data.customers.length + ' 条', 'ok');
+      }
+      if (data.products) {
+        setStore(LS_KEY_PRODUCT, data.products);
+        log('导入产品数据：' + data.products.length + ' 条', 'ok');
+      }
+      if (data.pinyin) {
+        if (data.customers) setStore(LS_KEY_PINYIN_CUSTOMER, data.pinyin);
+        if (data.products) setStore(LS_KEY_PINYIN_PRODUCT, data.pinyin);
+        log('导入拼音数据：' + Object.keys(data.pinyin).length + ' 条', 'ok');
+      }
+      updateStatus();
+      renderCurrentTab();
+      showToast('导入成功', 'success');
+    } catch (err) {
+      log('导入失败：' + err.message, 'err');
+      showToast('JSON 格式错误', 'error');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function clearAllData() {
+  if (!confirm('确定清空所有本地数据？此操作不可恢复。')) return;
+  localStorage.removeItem(LS_KEY_CUSTOMER);
+  localStorage.removeItem(LS_KEY_PRODUCT);
+  localStorage.removeItem(LS_KEY_PINYIN_CUSTOMER);
+  localStorage.removeItem(LS_KEY_PINYIN_PRODUCT);
+  localStorage.removeItem(LS_KEY_SYNC_TIME);
+  localStorage.removeItem(LS_KEY_INCREMENTAL_TIME);
+  log('所有本地数据已清空', 'info');
+  updateStatus();
+  renderCurrentTab();
+  showToast('数据已清空', 'info');
+}
+
+var currentTab = 'customer';
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(function(t, i) {
+    var tabs = ['customer', 'product', 'query'];
+    t.classList.toggle('active', tabs[i] === tab);
+  });
+  document.querySelectorAll('.tab-content').forEach(function(tc) {
+    tc.classList.toggle('active', tc.id === 'tab-' + tab);
+  });
+  renderCurrentTab();
+}
+
+function renderCurrentTab() {
+  if (currentTab === 'customer') renderCustomerTable();
+  else if (currentTab === 'product') renderProductTable();
+}
+
+function renderCustomerTable() {
+  var customers = getCustomers();
+  var cp = getCustomerPinyin();
+  var tbody = document.getElementById('customerTableBody');
+  var search = document.getElementById('customerSearch').value.trim().toLowerCase();
+  var mode = document.getElementById('customerSearchMode').value;
+
+  var filtered = customers.filter(function(c) {
+    var py = cp[c.id];
+    if (mode === 'generated' && !py) return false;
+    if (mode === 'pending' && py) return false;
+    if (search) {
+      var name = (c.name || '').toLowerCase();
+      var pinyin = py ? py.pinyin.toLowerCase() : '';
+      var abbr = py ? py.pinyin_abbr.toLowerCase() : '';
+      return name.indexOf(search) !== -1 || pinyin.indexOf(search) !== -1 || abbr.indexOf(search) !== -1;
+    }
+    return true;
+  });
+
+  var generated = customers.filter(function(c) { return cp[c.id]; }).length;
+  document.getElementById('customerStats').innerHTML =
+    '共 <strong>' + customers.length + '</strong> 条 | 已生成 <strong>' + generated + '</strong> 条 | 待生成 <strong>' + (customers.length - generated) + '</strong> 条';
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><i class="ri-inbox-line"></i><p>暂无匹配数据</p></div></td></tr>';
+    return;
+  }
+
+  var html = '';
+  filtered.forEach(function(c) {
+    var py = cp[c.id];
+    html += '<tr>' +
+      '<td>' + c.id + '</td>' +
+      '<td>' + (PinyinMatch.escapeHtml(c.name) || '-') + '</td>' +
+      '<td class="pinyin">' + (py ? PinyinMatch.escapeHtml(py.pinyin) : '-') + '</td>' +
+      '<td class="abbr">' + (py ? PinyinMatch.escapeHtml(py.pinyin_abbr) : '-') + '</td>' +
+      '<td>' + (py ? '<span style="color:var(--green);font-weight:600;">已生成</span>' : '<span style="color:var(--text3);">待生成</span>') + '</td>' +
+    '</tr>';
+  });
+  tbody.innerHTML = html;
+}
+
+function filterCustomerTable() { renderCustomerTable(); }
+
+function renderProductTable() {
+  var products = getProducts();
+  var pp = getProductPinyin();
+  var tbody = document.getElementById('productTableBody');
+  var search = document.getElementById('productSearch').value.trim().toLowerCase();
+  var mode = document.getElementById('productSearchMode').value;
+
+  var filtered = products.filter(function(p) {
+    var py = pp[p.id];
+    if (mode === 'generated' && !py) return false;
+    if (mode === 'pending' && py) return false;
+    if (search) {
+      var name = (p.name || '').toLowerCase();
+      var model = (p.model || '').toLowerCase();
+      var spec = (p.spec || '').toLowerCase();
+      var pinyin = py ? py.pinyin.toLowerCase() : '';
+      var abbr = py ? py.pinyin_abbr.toLowerCase() : '';
+      return name.indexOf(search) !== -1 || model.indexOf(search) !== -1 || spec.indexOf(search) !== -1 || pinyin.indexOf(search) !== -1 || abbr.indexOf(search) !== -1;
+    }
+    return true;
+  });
+
+  var generated = products.filter(function(p) { return pp[p.id]; }).length;
+  document.getElementById('productStats').innerHTML =
+    '共 <strong>' + products.length + '</strong> 条 | 已生成 <strong>' + generated + '</strong> 条 | 待生成 <strong>' + (products.length - generated) + '</strong> 条';
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><i class="ri-inbox-line"></i><p>暂无匹配数据</p></div></td></tr>';
+    return;
+  }
+
+  var html = '';
+  filtered.forEach(function(p) {
+    var py = pp[p.id];
+    html += '<tr>' +
+      '<td>' + p.id + '</td>' +
+      '<td>' + (PinyinMatch.escapeHtml(p.name) || '-') + '</td>' +
+      '<td>' + (PinyinMatch.escapeHtml(p.model) || '-') + '</td>' +
+      '<td>' + (PinyinMatch.escapeHtml(p.spec) || '-') + '</td>' +
+      '<td class="pinyin">' + (py ? PinyinMatch.escapeHtml(py.pinyin) : '-') + '</td>' +
+      '<td class="abbr">' + (py ? PinyinMatch.escapeHtml(py.pinyin_abbr) : '-') + '</td>' +
+      '<td>' + (py ? '<span style="color:var(--green);font-weight:600;">已生成</span>' : '<span style="color:var(--text3);">待生成</span>') + '</td>' +
+    '</tr>';
+  });
+  tbody.innerHTML = html;
+}
+
+function filterProductTable() { renderProductTable(); }
+
+function doQuery() {
+  var keyword = document.getElementById('queryInput').value.trim();
+  var type = document.getElementById('queryType').value;
+  var container = document.getElementById('queryResults');
+
+  if (!keyword) {
+    container.innerHTML = '<div class="empty-state"><i class="ri-search-line"></i><p>输入拼音或中文进行匹配查询</p></div>';
+    return;
+  }
+
+  var results = [];
+
+  if (type === 'all' || type === 'customer') {
+    var customers = getCustomers();
+    var cp = getCustomerPinyin();
+    var indexDb = customers.filter(function(c) { return cp[c.id]; }).map(function(c) {
+      var py = cp[c.id];
+      return { id: c.id, name: c.name, pinyin: py.pinyin, pinyin_abbr: py.pinyin_abbr };
+    });
+    var matches = PinyinMatch.pinyinMatch(keyword, indexDb, { threshold: 0.45 });
+    matches.forEach(function(m) {
+      var strategy = m.score >= 0.9 ? '自动确认' : m.score >= 0.7 ? '候选推荐' : '模糊提示';
+      results.push({
+        type: 'customer', id: m.id, name: m.name, pinyin: (cp[m.id] || {}).pinyin || '',
+        abbr: (cp[m.id] || {}).pinyin_abbr || '', score: Math.round(m.score * 100),
+        matchType: strategy, details: m.details
+      });
+    });
+  }
+
+  if (type === 'all' || type === 'product') {
+    var products = getProducts();
+    var pp = getProductPinyin();
+    var indexDb = products.filter(function(p) { return pp[p.id]; }).map(function(p) {
+      var py = pp[p.id];
+      return { id: p.id, name: p.name, model: p.model || '', spec: p.spec || '', pinyin: py.pinyin, pinyin_abbr: py.pinyin_abbr };
+    });
+    var matches = PinyinMatch.pinyinMatch(keyword, indexDb, { threshold: 0.45 });
+    matches.forEach(function(m) {
+      var strategy = m.score >= 0.9 ? '自动确认' : m.score >= 0.7 ? '候选推荐' : '模糊提示';
+      results.push({
+        type: 'product', id: m.id, name: m.name, model: m.model || '', spec: m.spec || '',
+        pinyin: (pp[m.id] || {}).pinyin || '', abbr: (pp[m.id] || {}).pinyin_abbr || '',
+        score: Math.round(m.score * 100), matchType: strategy, details: m.details
+      });
+    });
+  }
+
+  results.sort(function(a, b) { return b.score - a.score; });
+
+  if (results.length === 0) {
+    container.innerHTML = '<div class="empty-state"><i class="ri-search-line"></i><p>未找到匹配结果</p></div>';
+    return;
+  }
+
+  var html = '<div class="result-stats">找到 <strong>' + results.length + '</strong> 条匹配结果</div>';
+  html += '<div class="table-wrapper"><table class="data-table"><thead><tr>';
+  html += '<th style="width:60px;">类型</th><th>ID</th><th>名称</th><th>全拼</th><th>首字母</th><th>匹配策略</th><th style="width:60px;">得分</th><th style="width:200px;">评分详情</th>';
+  html += '</tr></thead><tbody>';
+
+  results.forEach(function(r) {
+    var typeLabel = r.type === 'customer' ? '<span style="color:var(--primary);"><i class="ri-building-line"></i> 客户</span>' : '<span style="color:var(--green);"><i class="ri-shopping-bag-line"></i> 产品</span>';
+    var strategyStyle = r.score >= 90 ? 'background:#dcfce7;color:#166534;' : r.score >= 70 ? 'background:#fef3c7;color:#92400e;' : 'background:#f3f4f6;color:#6b7280;';
+    var detailHtml = '';
+    if (r.details) {
+      detailHtml = '<span style="font-size:10px;color:var(--text3);">' +
+        '拼音:' + Math.round(r.details.pinyin * 100) + '% ' +
+        '首字母:' + Math.round(r.details.abbr * 100) + '% ' +
+        '词袋:' + Math.round(r.details.wordBag * 100) + '% ' +
+        '长度:' + Math.round(r.details.length * 100) + '%</span>';
+    }
+    html += '<tr>';
+    html += '<td>' + typeLabel + '</td>';
+    html += '<td>' + r.id + '</td>';
+    html += '<td>' + PinyinMatch.escapeHtml(r.name) + (r.model ? '<br><span style="color:var(--purple);font-size:11px;">型号: ' + PinyinMatch.escapeHtml(r.model) + '</span>' : '') + (r.spec ? '<br><span style="color:var(--text3);font-size:11px;">规格: ' + PinyinMatch.escapeHtml(r.spec) + '</span>' : '') + '</td>';
+    html += '<td class="pinyin">' + PinyinMatch.escapeHtml(r.pinyin) + '</td>';
+    html += '<td class="abbr">' + PinyinMatch.escapeHtml(r.abbr) + '</td>';
+    html += '<td><span style="padding:2px 8px;border-radius:4px;font-size:11px;' + strategyStyle + '">' + r.matchType + '</span></td>';
+    html += '<td style="font-weight:600;color:' + (r.score >= 90 ? 'var(--green)' : r.score >= 70 ? 'var(--amber)' : 'var(--text3)') + ';">' + r.score + '</td>';
+    html += '<td>' + detailHtml + '</td>';
+    html += '</tr>';
+  });
+
+  html += '</tbody></table></div>';
+  container.innerHTML = html;
+}
+
+updateStatus();
+renderCurrentTab();
+log('拼音字段调试工具已就绪', 'info');
+log('pinyin-pro 库状态：' + (typeof pinyinPro !== 'undefined' ? '已加载' : '未加载'), typeof pinyinPro !== 'undefined' ? 'ok' : 'err');
+log('接口地址：/system/api.xt（服务器自带身份验证，无需配置Token）', 'info');
+</script>
+</body>
+</html>

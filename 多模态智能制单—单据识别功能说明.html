@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI制单 - 单据识别功能说明</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <style type="text/tailwindcss">
+        @layer base {
+            body {
+                font-family: 'Noto Sans SC', sans-serif;
+            }
+            h1, h2, h3 {
+                font-family: 'Playfair Display', serif;
+            }
+        }
+        @layer components {
+            .gradient-text {
+                background: linear-gradient(135deg, #1e3a5f 0%, #3d7eaa 50%, #5a9fd4 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+            }
+            .card-hover {
+                transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            .card-hover:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 20px 40px -10px rgba(30, 58, 95, 0.2);
+            }
+            .flow-arrow {
+                position: relative;
+            }
+            .flow-arrow::after {
+                content: '';
+                position: absolute;
+                right: -24px;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 0;
+                height: 0;
+                border-left: 12px solid #3d7eaa;
+                border-top: 8px solid transparent;
+                border-bottom: 8px solid transparent;
+            }
+            @media (max-width: 768px) {
+                .flow-arrow::after {
+                    right: 50%;
+                    top: auto;
+                    bottom: -20px;
+                    transform: translateX(50%) rotate(90deg);
+                }
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 min-h-screen">
+    <!-- Header -->
+    <header class="relative overflow-hidden bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white">
+        <div class="absolute inset-0 opacity-10">
+            <div class="absolute inset-0" style="background-image: radial-gradient(circle at 20% 50%, rgba(93, 159, 212, 0.3) 0%, transparent 50%), radial-gradient(circle at 80% 50%, rgba(93, 159, 212, 0.2) 0%, transparent 50%);"></div>
+        </div>
+        <div class="relative max-w-6xl mx-auto px-6 py-16 md:py-24">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                </div>
+                <span class="text-blue-300 text-sm font-medium tracking-wider uppercase">功能规格文档</span>
+            </div>
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
+                AI制单
+                <span class="block text-blue-400 mt-2">单据识别功能说明</span>
+            </h1>
+            <p class="text-lg md:text-xl text-slate-300 max-w-2xl leading-relaxed">
+                明确系统支持的5类单据识别范围、AI驱动的识别逻辑，以及智能转换触发机制
+            </p>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-6xl mx-auto px-6 py-16">
+        <!-- Overview Section -->
+        <section class="mb-20">
+            <div class="flex items-center gap-4 mb-8">
+                <div class="w-1 h-12 bg-gradient-to-b from-blue-500 to-blue-300 rounded-full"></div>
+                <h2 class="text-3xl font-bold text-slate-800">功能概述</h2>
+            </div>
+            <div class="bg-white rounded-2xl shadow-lg border border-slate-100 p-8 md:p-10">
+                <p class="text-lg text-slate-600 leading-relaxed mb-6">
+                    AI制单工具通过AI技术实现对外来单据的智能识别与自动转换。系统支持识别<strong class="text-slate-800">5类单据</strong>，并根据识别结果自动触发相应的制单流程，实现从"接收单据"到"生成制单"的全链路自动化。
+                </p>
+                <div class="flex flex-wrap gap-3">
+                    <span class="px-4 py-2 bg-blue-50 text-blue-700 rounded-full text-sm font-medium border border-blue-100">AI多模态识别</span>
+                    <span class="px-4 py-2 bg-emerald-50 text-emerald-700 rounded-full text-sm font-medium border border-emerald-100">自动转换触发</span>
+                    <span class="px-4 py-2 bg-violet-50 text-violet-700 rounded-full text-sm font-medium border border-violet-100">智能制单生成</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Document Types Section -->
+        <section class="mb-20">
+            <div class="flex items-center gap-4 mb-8">
+                <div class="w-1 h-12 bg-gradient-to-b from-emerald-500 to-emerald-300 rounded-full"></div>
+                <h2 class="text-3xl font-bold text-slate-800">支持的单据类型</h2>
+            </div>
+            
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- 询价单 -->
+                <div class="card-hover bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden">
+                    <div class="h-2 bg-gradient-to-r from-amber-400 to-orange-500"></div>
+                    <div class="p-6">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            <span class="text-xs font-semibold text-amber-600 uppercase tracking-wider">输入单据</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-800 mb-2">甲方询价单</h3>
+                        <p class="text-slate-500 text-sm leading-relaxed">甲方发送的询价请求单据，包含产品需求、数量、期望价格等信息</p>
+                    </div>
+                </div>
+
+                <!-- 采购单 -->
+                <div class="card-hover bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden">
+                    <div class="h-2 bg-gradient-to-r from-rose-400 to-pink-500"></div>
+                    <div class="p-6">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 rounded-lg bg-rose-100 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                                </svg>
+                            </div>
+                            <span class="text-xs font-semibold text-rose-600 uppercase tracking-wider">输入单据</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-800 mb-2">甲方采购单</h3>
+                        <p class="text-slate-500 text-sm leading-relaxed">甲方发送的正式采购单据，包含确认的产品规格、数量、价格等</p>
+                    </div>
+                </div>
+
+                <!-- 报价单 -->
+                <div class="card-hover bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden">
+                    <div class="h-2 bg-gradient-to-r from-blue-400 to-indigo-500"></div>
+                    <div class="p-6">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                                </svg>
+                            </div>
+                            <span class="text-xs font-semibold text-blue-600 uppercase tracking-wider">输出单据</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-800 mb-2">报价单</h3>
+                        <p class="text-slate-500 text-sm leading-relaxed">基于询价单生成的我方报价单据，包含产品价格、交期、条款等</p>
+                    </div>
+                </div>
+
+                <!-- 订单 -->
+                <div class="card-hover bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden">
+                    <div class="h-2 bg-gradient-to-r from-emerald-400 to-teal-500"></div>
+                    <div class="p-6">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                                </svg>
+                            </div>
+                            <span class="text-xs font-semibold text-emerald-600 uppercase tracking-wider">输出单据</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-800 mb-2">订单</h3>
+                        <p class="text-slate-500 text-sm leading-relaxed">基于采购单生成的我方订单确认单据，包含订单详情、交付安排等</p>
+                    </div>
+                </div>
+
+                <!-- 发货单 -->
+                <div class="card-hover bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden md:col-span-2 lg:col-span-1">
+                    <div class="h-2 bg-gradient-to-r from-violet-400 to-purple-500"></div>
+                    <div class="p-6">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 rounded-lg bg-violet-100 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"></path>
+                                </svg>
+                            </div>
+                            <span class="text-xs font-semibold text-violet-600 uppercase tracking-wider">输出单据</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-800 mb-2">发货单</h3>
+                        <p class="text-slate-500 text-sm leading-relaxed">货物发出时生成的单据，包含发货明细、物流信息、签收确认等</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Recognition Logic Section -->
+        <section class="mb-20">
+            <div class="flex items-center gap-4 mb-8">
+                <div class="w-1 h-12 bg-gradient-to-b from-violet-500 to-violet-300 rounded-full"></div>
+                <h2 class="text-3xl font-bold text-slate-800">识别逻辑设计</h2>
+            </div>
+            
+            <div class="bg-white rounded-2xl shadow-lg border border-slate-100 p-8 md:p-10">
+                <div class="flex items-start gap-6 mb-8">
+                    <div class="hidden md:flex w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 items-center justify-center flex-shrink-0">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-slate-800 mb-4">AI驱动的多模态识别</h3>
+                        <p class="text-slate-600 leading-relaxed mb-6">
+                            由于不同厂商的单据格式差异巨大，不存在固定的版式规律，因此系统采用<strong class="text-violet-700">AI多模态识别技术</strong>进行单据类型判断。AI模型通过分析单据的视觉特征、文字内容、布局结构等多维度信息，智能识别单据类型。
+                        </p>
+                        <div class="grid md:grid-cols-3 gap-4">
+                            <div class="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                                <div class="text-violet-600 font-semibold mb-2">视觉特征</div>
+                                <p class="text-sm text-slate-500">单据整体版式、颜色风格、Logo位置等视觉元素</p>
+                            </div>
+                            <div class="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                                <div class="text-violet-600 font-semibold mb-2">文字内容</div>
+                                <p class="text-sm text-slate-500">单据标题、关键字段、业务术语等文本信息</p>
+                            </div>
+                            <div class="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                                <div class="text-violet-600 font-semibold mb-2">布局结构</div>
+                                <p class="text-sm text-slate-500">表格结构、字段排列、信息层级等布局特征</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-6 border border-amber-100">
+                    <div class="flex items-start gap-4">
+                        <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0 mt-1">
+                            <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-amber-800 mb-2">设计考量</h4>
+                            <p class="text-amber-700 text-sm leading-relaxed">
+                                放弃固定规则模式识别的原因是：不同厂商的单据格式千差万别，无法建立统一的识别规则。AI多模态识别能够自适应各种版式变化，具有更强的泛化能力和准确性。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Conversion Logic Section -->
+        <section class="mb-20">
+            <div class="flex items-center gap-4 mb-8">
+                <div class="w-1 h-12 bg-gradient-to-b from-blue-500 to-cyan-300 rounded-full"></div>
+                <h2 class="text-3xl font-bold text-slate-800">转换触发逻辑</h2>
+            </div>
+            
+            <div class="bg-white rounded-2xl shadow-lg border border-slate-100 p-8 md:p-10">
+                <p class="text-slate-600 leading-relaxed mb-10">
+                    系统根据AI识别的单据类型，自动触发相应的智能制单流程，实现输入单据到输出单据的自动转换：
+                </p>
+                
+                <!-- Flow 1 -->
+                <div class="mb-10">
+                    <div class="flex items-center gap-3 mb-6">
+                        <span class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-bold">1</span>
+                        <h4 class="text-lg font-semibold text-slate-800">询价单 → 报价单</h4>
+                    </div>
+                    <div class="flex flex-col md:flex-row items-stretch gap-4 md:gap-8">
+                        <div class="flex-1 bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-6 border border-amber-100 flow-arrow">
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="w-8 h-8 rounded-lg bg-amber-200 flex items-center justify-center">
+                                    <svg class="w-4 h-4 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </div>
+                                <span class="font-semibold text-amber-800">甲方询价单</span>
+                            </div>
+                            <p class="text-sm text-amber-700">AI识别为询价单</p>
+                        </div>
+                        
+                        <div class="flex-1 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="w-8 h-8 rounded-lg bg-blue-200 flex items-center justify-center">
+                                    <svg class="w-4 h-4 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                                    </svg>
+                                </div>
+                                <span class="font-semibold text-blue-800">自动触发</span>
+                            </div>
+                            <p class="text-sm text-blue-700">生成报价单智能制单流程</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Flow 2 -->
+                <div>
+                    <div class="flex items-center gap-3 mb-6">
+                        <span class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-bold">2</span>
+                        <h4 class="text-lg font-semibold text-slate-800">采购单 → 订单</h4>
+                    </div>
+                    <div class="flex flex-col md:flex-row items-stretch gap-4 md:gap-8">
+                        <div class="flex-1 bg-gradient-to-br from-rose-50 to-pink-50 rounded-xl p-6 border border-rose-100 flow-arrow">
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="w-8 h-8 rounded-lg bg-rose-200 flex items-center justify-center">
+                                    <svg class="w-4 h-4 text-rose-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                                    </svg>
+                                </div>
+                                <span class="font-semibold text-rose-800">甲方采购单</span>
+                            </div>
+                            <p class="text-sm text-rose-700">AI识别为采购单</p>
+                        </div>
+                        
+                        <div class="flex-1 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-6 border border-emerald-100">
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="w-8 h-8 rounded-lg bg-emerald-200 flex items-center justify-center">
+                                    <svg class="w-4 h-4 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                                    </svg>
+                                </div>
+                                <span class="font-semibold text-emerald-800">自动触发</span>
+                            </div>
+                            <p class="text-sm text-emerald-700">生成订单智能制单流程</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Function Boundary Section -->
+        <section class="mb-20">
+            <div class="flex items-center gap-4 mb-8">
+                <div class="w-1 h-12 bg-gradient-to-b from-slate-500 to-slate-300 rounded-full"></div>
+                <h2 class="text-3xl font-bold text-slate-800">功能边界</h2>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="bg-white rounded-2xl shadow-lg border border-slate-100 p-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </div>
+                        <h4 class="font-semibold text-slate-800">功能范围内</h4>
+                    </div>
+                    <ul class="space-y-3 text-slate-600">
+                        <li class="flex items-start gap-2">
+                            <span class="text-emerald-500 mt-1">•</span>
+                            <span>5类单据的AI多模态识别</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-emerald-500 mt-1">•</span>
+                            <span>基于识别结果的自动转换触发</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-emerald-500 mt-1">•</span>
+                            <span>询价单→报价单流程生成</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-emerald-500 mt-1">•</span>
+                            <span>采购单→订单流程生成</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="bg-white rounded-2xl shadow-lg border border-slate-100 p-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </div>
+                        <h4 class="font-semibold text-slate-800">功能范围外</h4>
+                    </div>
+                    <ul class="space-y-3 text-slate-600">
+                        <li class="flex items-start gap-2">
+                            <span class="text-slate-400 mt-1">•</span>
+                            <span>固定规则的单据版式识别</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-slate-400 mt-1">•</span>
+                            <span>单据真伪验证</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-slate-400 mt-1">•</span>
+                            <span>超出5类单据的其他单据类型</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-slate-400 mt-1">•</span>
+                            <span>单据内容的法律合规审核</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Summary Section -->
+        <section>
+            <div class="bg-gradient-to-r from-slate-800 to-slate-900 rounded-2xl shadow-xl p-8 md:p-10 text-white">
+                <h3 class="text-2xl font-bold mb-6">总结</h3>
+                <div class="grid md:grid-cols-3 gap-6">
+                    <div class="bg-white/10 rounded-xl p-5 backdrop-blur-sm">
+                        <div class="text-3xl font-bold text-blue-400 mb-2">5类</div>
+                        <div class="text-slate-300 text-sm">支持识别的单据类型</div>
+                    </div>
+                    <div class="bg-white/10 rounded-xl p-5 backdrop-blur-sm">
+                        <div class="text-3xl font-bold text-emerald-400 mb-2">AI</div>
+                        <div class="text-slate-300 text-sm">多模态智能识别技术</div>
+                    </div>
+                    <div class="bg-white/10 rounded-xl p-5 backdrop-blur-sm">
+                        <div class="text-3xl font-bold text-violet-400 mb-2">自动</div>
+                        <div class="text-slate-300 text-sm">转换触发机制</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-100 border-t border-slate-200 py-8">
+        <div class="max-w-6xl mx-auto px-6 text-center text-slate-500 text-sm">
+            AI制单工具 · 单据识别功能说明文档
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,1395 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 制单增加税率选择 · 生成含税订单和含税报价单的可行性分析</title>
+<style>
+  :root {
+    --primary: #1e40af;
+    --primary-light: #3b82f6;
+    --primary-bg: #eff6ff;
+    --success: #16a34a;
+    --success-bg: #dcfce7;
+    --warning: #d97706;
+    --warning-bg: #fef3c7;
+    --danger: #dc2626;
+    --danger-bg: #fee2e2;
+    --text: #1f2937;
+    --text-light: #6b7280;
+    --border: #e5e7eb;
+    --code-bg: #1e293b;
+    --code-text: #e2e8f0;
+    --bg: #f9fafb;
+    --card-bg: #ffffff;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    font-size: 15px;
+  }
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 32px 24px 80px;
+  }
+  /* ===== 顶部 Hero ===== */
+  .hero {
+    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%);
+    color: #fff;
+    border-radius: 16px;
+    padding: 48px 40px;
+    margin-bottom: 32px;
+    box-shadow: 0 10px 30px rgba(30, 64, 175, 0.2);
+  }
+  .hero h1 {
+    font-size: 32px;
+    margin-bottom: 12px;
+    font-weight: 700;
+  }
+  .hero .subtitle {
+    font-size: 16px;
+    opacity: 0.92;
+    margin-bottom: 24px;
+  }
+  .hero .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    font-size: 13px;
+    opacity: 0.85;
+  }
+  .hero .meta span {
+    background: rgba(255, 255, 255, 0.18);
+    padding: 4px 12px;
+    border-radius: 12px;
+    backdrop-filter: blur(4px);
+  }
+  /* ===== 章节 ===== */
+  .section {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 28px 32px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--border);
+  }
+  .section h2 {
+    font-size: 22px;
+    color: var(--primary);
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--primary-bg);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section h2 .icon {
+    width: 32px;
+    height: 32px;
+    background: var(--primary-bg);
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+  .section h3 {
+    font-size: 17px;
+    color: var(--text);
+    margin: 20px 0 12px;
+    padding-left: 12px;
+    border-left: 3px solid var(--primary-light);
+  }
+  .section h4 {
+    font-size: 15px;
+    color: var(--primary);
+    margin: 16px 0 8px;
+  }
+  .section p, .section li {
+    margin-bottom: 8px;
+  }
+  .section ul, .section ol {
+    padding-left: 24px;
+  }
+  /* ===== 提示框 ===== */
+  .callout {
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 14px 0;
+    border-left: 4px solid;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .callout.info { background: var(--primary-bg); border-color: var(--primary-light); }
+  .callout.success { background: var(--success-bg); border-color: var(--success); }
+  .callout.warning { background: var(--warning-bg); border-color: var(--warning); }
+  .callout.danger { background: var(--danger-bg); border-color: var(--danger); }
+  .callout .label {
+    font-weight: 700;
+    margin-right: 4px;
+  }
+  .callout .icon {
+    font-size: 18px;
+    line-height: 1.4;
+  }
+  /* ===== 表格 ===== */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    font-size: 14px;
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 0 0 1px var(--border);
+  }
+  th {
+    background: var(--primary-bg);
+    color: var(--primary);
+    text-align: left;
+    padding: 10px 12px;
+    font-weight: 600;
+  }
+  td {
+    padding: 10px 12px;
+    border-top: 1px solid var(--border);
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: #fafbfc; }
+  code {
+    font-family: "SF Mono", Consolas, Monaco, monospace;
+    background: #f1f5f9;
+    color: #be185d;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+  pre {
+    background: var(--code-bg);
+    color: var(--code-text);
+    padding: 16px 18px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 14px 0;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  pre code {
+    background: transparent;
+    color: inherit;
+    padding: 0;
+    font-size: 13px;
+  }
+  .keyword { color: #c084fc; font-weight: 600; }
+  .string { color: #86efac; }
+  .number { color: #fcd34d; }
+  .comment { color: #64748b; font-style: italic; }
+  /* ===== 卡片网格 ===== */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 16px 0;
+  }
+  .grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin: 16px 0;
+  }
+  .card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+  }
+  .card.featured {
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border-color: var(--primary-light);
+  }
+  .card .title {
+    font-weight: 600;
+    color: var(--primary);
+    margin-bottom: 6px;
+    font-size: 14px;
+  }
+  .card .body {
+    font-size: 13px;
+    color: var(--text-light);
+  }
+  .card.success { background: var(--success-bg); border-color: var(--success); }
+  .card.success .title { color: var(--success); }
+  .card.warning { background: var(--warning-bg); border-color: var(--warning); }
+  .card.warning .title { color: var(--warning); }
+  .card.danger { background: var(--danger-bg); border-color: var(--danger); }
+  .card.danger .title { color: var(--danger); }
+  /* ===== Mock UI ===== */
+  .mock-window {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid var(--border);
+    margin: 16px 0;
+    overflow: hidden;
+  }
+  .mock-titlebar {
+    background: #f3f4f6;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .mock-titlebar .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+  .mock-titlebar .dot.r { background: #ef4444; }
+  .mock-titlebar .dot.y { background: #f59e0b; }
+  .mock-titlebar .dot.g { background: #10b981; }
+  .mock-titlebar .label {
+    margin-left: 8px;
+    font-size: 12px;
+    color: var(--text-light);
+  }
+  .mock-body { padding: 20px; }
+  .mock-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .mock-table th {
+    background: #f9fafb;
+    color: var(--text-light);
+    font-weight: 500;
+    padding: 10px 8px;
+    text-align: left;
+    border-bottom: 2px solid var(--border);
+  }
+  .mock-table td {
+    padding: 10px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .mock-input, .mock-select {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 13px;
+    background: #fff;
+  }
+  .mock-select { cursor: pointer; }
+  .mock-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .mock-tag.tax-0 { background: #f1f5f9; color: #64748b; }
+  .mock-tag.tax-3 { background: #dbeafe; color: #1e40af; }
+  .mock-tag.tax-6 { background: #d1fae5; color: #047857; }
+  .mock-tag.tax-13 { background: #fee2e2; color: #b91c1c; }
+  .mock-summary {
+    margin-top: 16px;
+    padding: 16px;
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border-radius: 10px;
+    border: 1px solid #bae6fd;
+  }
+  .mock-summary .row {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    font-size: 13px;
+  }
+  .mock-summary .row.total {
+    border-top: 1px dashed #94a3b8;
+    margin-top: 8px;
+    padding-top: 8px;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--danger);
+  }
+  /* ===== 步骤条 ===== */
+  .step {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 18px;
+    align-items: flex-start;
+  }
+  .step .num {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    background: var(--primary);
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+  }
+  .step .content { flex: 1; }
+  .step .content h4 {
+    margin-top: 0;
+    color: var(--text);
+  }
+  /* ===== 标签 ===== */
+  .tag {
+    display: inline-block;
+    background: var(--primary-bg);
+    color: var(--primary);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    margin-right: 4px;
+  }
+  .tag.success { background: var(--success-bg); color: var(--success); }
+  .tag.warning { background: var(--warning-bg); color: var(--warning); }
+  .tag.danger { background: var(--danger-bg); color: var(--danger); }
+  /* ===== Footer ===== */
+  .footer {
+    text-align: center;
+    padding: 24px;
+    color: var(--text-light);
+    font-size: 13px;
+  }
+  /* ===== Responsive ===== */
+  @media (max-width: 768px) {
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .hero { padding: 32px 24px; }
+    .hero h1 { font-size: 24px; }
+    .section { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- ============ Hero ============ -->
+<div class="hero">
+  <h1>AI 制单增加税率选择</h1>
+  <div class="subtitle">生成含税订单和含税报价单的可行性分析</div>
+  <div class="meta">
+    <span>📋 项目：AI 智能制单</span>
+    <span>📅 分析日期：2026-06-10</span>
+    <span>✍️ 状态：可行性论证（待评审）</span>
+    <span>🎯 范围：订单 / 报价单</span>
+  </div>
+</div>
+
+<!-- ============ 摘要 ============ -->
+<div class="section">
+  <h2><span class="icon">📌</span>摘要</h2>
+  <div class="callout success">
+    <span class="icon">✅</span>
+    <div>
+      <span class="label">结论先行：方案完全可行。</span>
+      后端 <code>contract_api</code> 和 <code>price</code> 接口<strong>已经原生支持税率字段</strong>，前端只需要扩展 UI 控件和计算逻辑即可，无需后端改造。
+    </div>
+  </div>
+  <div class="grid-3">
+    <div class="card featured">
+      <div class="title">后端接口</div>
+      <div class="body">订单和报价单子表均已支持 <code>tax_rate</code> / <code>tax_money</code> / <code>un_price_tax</code> 字段</div>
+    </div>
+    <div class="card featured">
+      <div class="title">计算公式</div>
+      <div class="body">订单：<code>sum = amount × un_price × zk/100 + tax_money</code><br>报价单：<code>money = (1 + tax_rate/100) × num × price</code></div>
+    </div>
+    <div class="card featured">
+      <div class="title">前端改动</div>
+      <div class="body">产品明细加税率下拉、订单金额模块加汇总展示，3-5 个函数改造</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 一、现状分析 ============ -->
+<div class="section">
+  <h2><span class="icon">🔍</span>一、现状分析</h2>
+
+  <h3>1.1 后端接口对税率的支持</h3>
+  <p>根据 <code>读取数据接口/创建订单接口.md</code> 和 <code>读取数据接口/创建报价单接口.md</code> 的字段定义：</p>
+
+  <h4>① 订单子表（goods）已支持 4 个税率相关字段</h4>
+  <table>
+    <thead>
+      <tr>
+        <th>字段</th>
+        <th>中文名</th>
+        <th>类型</th>
+        <th>必填</th>
+        <th>说明</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>tax_rate</code></td>
+        <td>税率</td>
+        <td>number</td>
+        <td>否</td>
+        <td>税率百分比，如 <code>13</code> 表示 13%</td>
+      </tr>
+      <tr>
+        <td><code>tax_money</code></td>
+        <td>税金</td>
+        <td>number</td>
+        <td>否</td>
+        <td><strong>税金金额（需前端预计算后传入）</strong></td>
+      </tr>
+      <tr>
+        <td><code>un_price_tax</code></td>
+        <td>含税单价</td>
+        <td>number</td>
+        <td>否</td>
+        <td>含税单价（前端计算后传入）</td>
+      </tr>
+      <tr>
+        <td><code>sum</code></td>
+        <td>金额</td>
+        <td>number</td>
+        <td>否</td>
+        <td>为 0 时系统自动计算：<code>amount × un_price × zk/100 + tax_money</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout warning">
+    <span class="icon">⚠️</span>
+    <div>
+      <span class="label">关键发现：订单接口的 <code>tax_money</code> 是「需要前端传入」的，不会自动计算。</span>
+      这与报价单不同——报价单子表的 <code>money</code> 字段在 <code>tax_rate</code> 存在时会自动套用 <code>(1 + tax_rate/100) × num × price</code>。
+    </div>
+  </div>
+
+  <h4>② 报价单子表（pricedetail）已支持 1 个税率字段</h4>
+  <table>
+    <thead>
+      <tr>
+        <th>字段</th>
+        <th>中文名</th>
+        <th>类型</th>
+        <th>必填</th>
+        <th>说明</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>tax_rate</code></td>
+        <td>税率</td>
+        <td>number</td>
+        <td>否</td>
+        <td>税率百分比，如 <code>20</code> 表示 20%</td>
+      </tr>
+      <tr>
+        <td><code>money</code></td>
+        <td>金额</td>
+        <td>number</td>
+        <td>否</td>
+        <td>为 0 时<strong>系统自动计算</strong>：<code>(1 + tax_rate/100) × num × price</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout info">
+    <span class="icon">💡</span>
+    <div>
+      <span class="label">报价单的便利：</span>只要传 <code>tax_rate</code> 和 <code>num/price</code>，<code>money</code> 系统会自动算含税。前端只传 <code>tax_rate</code> 即可，零计算负担。
+    </div>
+  </div>
+
+  <h3>1.2 现有 AI 制单的能力盘点</h3>
+  <p>根据 <code>dexiedb/index.html</code> 现有代码和 v1.4（2026-06-10）升级内容：</p>
+  <div class="grid-2">
+    <div class="card success">
+      <div class="title">✅ 已具备</div>
+      <div class="body">
+        • AI JSON 解析（标准化 / 匹配异常分层 catch）<br>
+        • 产品匹配（拼音 / 分词 / 混合）<br>
+        • 数量 / 单价 / 产品 ID 数据完整行检测<br>
+        • 参考价显示（v1.4 新增）<br>
+        • 一键价格策略获取（str_ps 解析）<br>
+        • 客户匹配<br>
+        • 订单 / 报价单创建接口已对接
+      </div>
+    </div>
+    <div class="card danger">
+      <div class="title">❌ 缺失</div>
+      <div class="body">
+        • 税率选择 UI（下拉）<br>
+        • 税率联动重算含税金额<br>
+        • 订单金额模块未展示「税前 / 税金 / 含税」三段式汇总<br>
+        • 报价单金额模块未展示「税额」<br>
+        • 没有「统一税率 / 逐行税率」两种模式<br>
+        • 混搭税率的金额合计（不同税率行汇总）
+      </div>
+    </div>
+  </div>
+
+  <h3>1.3 缺口分析（要做哪些事）</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>缺口</th>
+        <th>难度</th>
+        <th>影响范围</th>
+        <th>关键点</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>产品明细加「税率」下拉列</td>
+        <td><span class="tag success">低</span></td>
+        <td>产品表格 UI</td>
+        <td>渲染下拉，change 时重算该行</td>
+      </tr>
+      <tr>
+        <td>前端计算含税金额（订单）</td>
+        <td><span class="tag success">低</span></td>
+        <td>createContract 主流程</td>
+        <td>遍历 subdata 算 tax_money / un_price_tax</td>
+      </tr>
+      <tr>
+        <td>订单金额模块加汇总</td>
+        <td><span class="tag success">低</span></td>
+        <td>订单底部信息块</td>
+        <td>实时累加展示</td>
+      </tr>
+      <tr>
+        <td>报价单金额模块加汇总</td>
+        <td><span class="tag success">低</span></td>
+        <td>报价单底部信息块</td>
+        <td>只展示税额（money 后端算）</td>
+      </tr>
+      <tr>
+        <td>统一税率模式（可选项）</td>
+        <td><span class="tag warning">中</span></td>
+        <td>顶部控件 + 全表联动</td>
+        <td>统一设置后批量应用，再允许逐行覆盖</td>
+      </tr>
+      <tr>
+        <td>完整行检测加税率校验</td>
+        <td><span class="tag success">低</span></td>
+        <td>提交前校验</td>
+        <td>默认 0% 视为有效</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ============ 二、方案设计 ============ -->
+<div class="section">
+  <h2><span class="icon">🛠️</span>二、方案设计</h2>
+
+  <h3>2.1 数据结构扩展</h3>
+  <p>在 <code>currentProducts[i]</code> 上新增 4 个字段：</p>
+  <pre><code><span class="comment">// 单条产品行（扩展后）</span>
+{
+  <span class="comment">// 原有字段</span>
+  id: <span class="string">'4'</span>,
+  matchedId: <span class="string">'4'</span>,
+  matchedName: <span class="string">'金士顿 Micro SD卡(16G)'</span>,
+  matchedSku: <span class="string">'Micro5'</span>,
+  matchedPrice: <span class="string">'75.69'</span>,   <span class="comment">// v1.4 参考价</span>
+  qty: <span class="string">'10'</span>,
+  price: <span class="string">'75.69'</span>,
+  discount: <span class="number">100</span>,            <span class="comment">// 百分比</span>
+  note: <span class="string">''</span>,
+  status: <span class="string">'confirmed'</span>,
+  matchType: <span class="string">'auto'</span>,
+
+  <span class="comment">// 新增（税率相关）</span>
+  taxRate: <span class="number">13</span>,               <span class="comment">// 税率 %，默认 0</span>
+  unPriceTax: <span class="string">'85.5307'</span>,    <span class="comment">// 含税单价 = price × (1 + taxRate/100)</span>
+  taxMoney: <span class="string">'98.40'</span>,       <span class="comment">// 税金 = qty × price × taxRate/100</span>
+  sumWithTax: <span class="string">'855.31'</span>     <span class="comment">// 含税金额 = qty × unPriceTax</span>
+}</code></pre>
+
+  <h3>2.2 UI 设计</h3>
+
+  <h4>① 产品明细表加「税率」列</h4>
+  <p>在「单价」和「数量」之间插入「税率」列：</p>
+  <div class="mock-window">
+    <div class="mock-titlebar">
+      <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+      <span class="label">AI 制单 · 产品明细（含税版）</span>
+    </div>
+    <div class="mock-body">
+      <table class="mock-table">
+        <thead>
+          <tr>
+            <th style="width:32px;">#</th>
+            <th>产品名称</th>
+            <th>规格</th>
+            <th>单价</th>
+            <th>税率</th>
+            <th>含税单价</th>
+            <th>数量</th>
+            <th>折扣</th>
+            <th>含税金额</th>
+            <th>状态</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td>金士顿 Micro SD卡(16G)</td>
+            <td>Micro5</td>
+            <td>¥75.69</td>
+            <td>
+              <select class="mock-select" style="border-color: #b91c1c;">
+                <option>0%</option>
+                <option>3%</option>
+                <option>6%</option>
+                <option selected>13%</option>
+              </select>
+            </td>
+            <td>¥85.53</td>
+            <td>10</td>
+            <td>100%</td>
+            <td><strong>¥855.31</strong></td>
+            <td><span class="tag success">已确认</span></td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>爱国者 U盘 32G</td>
+            <td>IP32</td>
+            <td>¥48.00</td>
+            <td>
+              <select class="mock-select">
+                <option selected>0%</option>
+                <option>3%</option>
+                <option>6%</option>
+                <option>13%</option>
+              </select>
+            </td>
+            <td>¥48.00</td>
+            <td>5</td>
+            <td>100%</td>
+            <td>¥240.00</td>
+            <td><span class="tag success">已确认</span></td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td>办公耗材（复印纸）</td>
+            <td>A4 70g</td>
+            <td>¥25.00</td>
+            <td>
+              <select class="mock-select" style="border-color: #047857;">
+                <option>0%</option>
+                <option>3%</option>
+                <option selected>6%</option>
+                <option>13%</option>
+              </select>
+            </td>
+            <td>¥26.50</td>
+            <td>20</td>
+            <td>90%</td>
+            <td><strong>¥477.00</strong></td>
+            <td><span class="tag success">已确认</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <h4>② 顶部「统一税率」快捷设置（可选增强）</h4>
+  <div class="callout info">
+    <span class="icon">💡</span>
+    <div>
+      <span class="label">效率优化：</span>在产品表上方加一个「统一税率：<code>[13% ▼] [应用到全部]</code>」按钮，点击后所有未手动改过的行批量应用。已被用户改过的行打"🔒"标记，避免被覆盖。
+    </div>
+  </div>
+
+  <h4>③ 订单金额模块（三段式汇总）</h4>
+  <div class="mock-window" style="max-width: 480px;">
+    <div class="mock-titlebar">
+      <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+      <span class="label">订单金额汇总（含税）</span>
+    </div>
+    <div class="mock-body">
+      <div class="mock-summary">
+        <div class="row"><span>不含税金额</span><span>¥1,372.00</span></div>
+        <div class="row"><span>税额（13% 行：¥98.40 + 6% 行：¥27.00）</span><span style="color:#d97706;">¥125.40</span></div>
+        <div class="row total"><span>含税总金额</span><span>¥1,497.40</span></div>
+      </div>
+      <div style="margin-top:12px;font-size:12px;color:var(--text-light);">
+        💡 提示：混搭税率场景下，税额按各行税率分别计算后汇总。<br>
+        💡 0% 行的"不含税金额"= 含税金额。
+      </div>
+    </div>
+  </div>
+
+  <h3>2.3 计算公式</h3>
+
+  <h4>① 单条产品行</h4>
+  <table>
+    <thead>
+      <tr>
+        <th>字段</th>
+        <th>公式</th>
+        <th>说明</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>含税单价</code></td>
+        <td><code>price × (1 + taxRate / 100)</code></td>
+        <td>前端实时计算</td>
+      </tr>
+      <tr>
+        <td><code>税金</code></td>
+        <td><code>qty × price × taxRate / 100</code></td>
+        <td>前端子表传入 <code>tax_money</code></td>
+      </tr>
+      <tr>
+        <td><code>含税金额</code></td>
+        <td><code>qty × 含税单价 × discount / 100</code></td>
+        <td>前端展示用，发单时给后端</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h4>② 订单总金额（混搭税率）</h4>
+  <pre><code><span class="comment">// 订单主表 sum = Σ(子表 sum)；子表 sum 由后端按公式计算</span>
+<span class="comment">// 后端公式：sum = amount × un_price × zk/100 + tax_money</span>
+<span class="comment">// 前端只算 tax_money 传入即可</span>
+
+<span class="keyword">function</span> buildOrderSubdata(products) {
+  <span class="keyword">return</span> products.map(p =&gt; {
+    <span class="keyword">const</span> taxRate = p.taxRate || <span class="number">0</span>;
+    <span class="keyword">const</span> unPrice = parseFloat(p.price) || <span class="number">0</span>;
+    <span class="keyword">const</span> qty = parseFloat(p.qty) || <span class="number">0</span>;
+    <span class="keyword">const</span> zk = (p.discount || <span class="number">100</span>) / <span class="number">100</span>;
+
+    <span class="keyword">const</span> unPriceTax = +(unPrice * (<span class="number">1</span> + taxRate / <span class="number">100</span>)).toFixed(<span class="number">2</span>);
+    <span class="keyword">const</span> taxMoney = +(qty * unPrice * taxRate / <span class="number">100</span>).toFixed(<span class="number">2</span>);
+    <span class="keyword">const</span> sum = +(qty * unPrice * zk + taxMoney).toFixed(<span class="number">2</span>);  <span class="comment">// 冗余，后端会重算</span>
+
+    <span class="keyword">return</span> {
+      name: p.matchedId,
+      pn: p.matchedName,
+      pm: p.matchedSku,
+      amount: qty,
+      un_price: unPrice,
+      zk: (p.discount || <span class="number">100</span>) + <span class="string">'%'</span>,
+      tax_rate: taxRate,
+      tax_money: taxMoney,
+      un_price_tax: unPriceTax,
+      sum: sum
+    };
+  });
+}
+
+<span class="keyword">function</span> buildOrderMain(subdata) {
+  <span class="keyword">const</span> totalSum = subdata.reduce((s, x) =&gt; s + x.sum, <span class="number">0</span>);
+  <span class="keyword">const</span> totalTax = subdata.reduce((s, x) =&gt; s + x.tax_money, <span class="number">0</span>);
+  <span class="keyword">const</span> totalNoTax = +(totalSum - totalTax).toFixed(<span class="number">2</span>);
+
+  <span class="keyword">return</span> {
+    number: <span class="string">''</span>,
+    subject: <span class="string">'...自动从 AI 提取...'</span>,
+    cu_id: currentCustomer.matchedName,
+    date: <span class="keyword">new</span> Date().toISOString().slice(<span class="number">0</span>, <span class="number">10</span>),
+    status: <span class="string">'执行中'</span>,
+    sum: totalSum,            <span class="comment">// 含税总金额</span>
+    subdata: subdata
+  };
+}</code></pre>
+
+  <h4>③ 报价单子表（更简单）</h4>
+  <pre><code><span class="keyword">function</span> buildPriceSubdata(products) {
+  <span class="keyword">return</span> products.map(p =&gt; ({
+    pro_id: p.matchedId,
+    num: parseFloat(p.qty) || <span class="number">0</span>,
+    price: parseFloat(p.price) || <span class="number">0</span>,
+    tax_rate: p.taxRate || <span class="number">0</span>
+    <span class="comment">// money 不传，后端按 (1 + tax_rate/100) × num × price 自动算</span>
+  }));
+}</code></pre>
+
+  <h3>2.4 数据流（端到端）</h3>
+  <pre><code>┌─────────────────┐
+│  1. AI 复制 JSON │
+│  price: 75.69   │
+│  qty: 10        │
+└────────┬────────┘
+         ↓
+┌──────────────────────────────────────────┐
+│  2. AI 制单：产品匹配 / 数量单价预填     │
+│     currentProducts[i].price = 75.69     │
+│     currentProducts[i].qty = 10          │
+│     currentProducts[i].taxRate = 0  ← 默认 0%
+└────────┬─────────────────────────────────┘
+         ↓
+┌──────────────────────────────────────────┐
+│  3. 用户操作：选税率 13%                 │
+│     - UI: <select> 触发 change           │
+│     - taxRate: 0 → 13                    │
+│     - 重算 unPriceTax / taxMoney / sum   │
+└────────┬─────────────────────────────────┘
+         ↓
+┌──────────────────────────────────────────┐
+│  4. 提交前校验（完整行检测 + 税率）      │
+│     ✓ 税率允许 0/3/6/9/13               │
+│     ✓ 至少一条产品 taxRate != null       │
+└────────┬─────────────────────────────────┘
+         ↓
+┌──────────────────────────────────────────┐
+│  5. 构造请求体：buildOrderSubdata()      │
+│     每个 subdata 带 tax_rate/tax_money   │
+└────────┬─────────────────────────────────┘
+         ↓
+┌──────────────────────────────────────────┐
+│  6. 调用 create_data 接口                │
+│     POST /system/api.xt                  │
+│     cmd=create_data, dtname=contract_api │
+└────────┬─────────────────────────────────┘
+         ↓
+┌──────────────────────────────────────────┐
+│  7. 后端：按 sum = amount*price*zk+tax  │
+│     重算各行 sum；保存主表 + 子表        │
+└────────┬─────────────────────────────────┘
+         ↓
+┌──────────────────────────────────────────┐
+│  8. 响应：返回 ok=1, msg, ret[0]         │
+│     弹 toast「订单创建成功」             │
+└──────────────────────────────────────────┘</code></pre>
+</div>
+
+<!-- ============ 三、实施步骤 ============ -->
+<div class="section">
+  <h2><span class="icon">📋</span>三、实施步骤</h2>
+
+  <div class="step">
+    <div class="num">1</div>
+    <div class="content">
+      <h4>扩展 currentProducts 数据结构（预估 1h）</h4>
+      <ul>
+        <li>在 <code>handleClipboardText</code> 匹配完成后，初始化每行 <code>taxRate=0</code></li>
+        <li><code>addProduct()</code> 新建行也默认 <code>taxRate=0</code></li>
+        <li>在 <code>selectProductForEdit</code> / <code>fillProductStandardData</code> 透传 <code>matchedTaxRate</code>（从 product 表读，可选）</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">2</div>
+    <div class="content">
+      <h4>渲染产品明细表加税率列（预估 2h）</h4>
+      <ul>
+        <li><code>renderProductList()</code> 在「单价」列后插入「税率」列</li>
+        <li>每行渲染 <code>&lt;select&gt;</code>，选项：0% / 3% / 6% / 9% / 13%</li>
+        <li>每行渲染：含税单价（实时计算）、含税金额（实时计算）</li>
+        <li>监听 <code>onchange</code>，调用 <code>recalcProductRow(index)</code></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">3</div>
+    <div class="content">
+      <h4>单行重算函数（预估 1h）</h4>
+      <ul>
+        <li>新增 <code>recalcProductRow(index)</code>：按当前行 price/qty/taxRate 重算 unPriceTax / taxMoney / sumWithTax</li>
+        <li>新增 <code>recalcAllProducts()</code>：遍历所有行重算（用于统一税率时）</li>
+        <li>调用 <code>renderProductList()</code> 刷新 UI</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">4</div>
+    <div class="content">
+      <h4>订单金额模块加三段式汇总（预估 2h）</h4>
+      <ul>
+        <li>在「总金额」展示区下方加 3 行：不含税 / 税额 / 含税</li>
+        <li>监听 currentProducts 变化，<code>updateOrderSummary()</code> 实时刷新</li>
+        <li>混搭税率场景：税额 = Σ各行 taxMoney（不同税率不合并）</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">5</div>
+    <div class="content">
+      <h4>统一税率快捷设置（可选增强，预估 2h）</h4>
+      <ul>
+        <li>产品表上方加控件：税率下拉 + 「应用到全部」按钮</li>
+        <li>已被用户改过的行打 <code>🔒</code> 标记，应用时跳过</li>
+        <li>调 <code>recalcAllProducts()</code></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">6</div>
+    <div class="content">
+      <h4>完整行检测加税率校验（预估 0.5h）</h4>
+      <ul>
+        <li><code>_validateProductsCompleteness()</code> 增加：<code>taxRate</code> 必须是 0/3/6/9/13 之一</li>
+        <li>未选税率默认 0%，不报错</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">7</div>
+    <div class="content">
+      <h4>createContract / createPrice 集成（预估 2h）</h4>
+      <ul>
+        <li>新增 <code>buildOrderSubdata(products)</code>：算 tax_money / un_price_tax</li>
+        <li>新增 <code>buildOrderMain(subdata)</code>：算主表 sum（含税总金额）</li>
+        <li>替换现有 <code>createContract</code> 中的硬编码 subdata 构造</li>
+        <li><code>createPrice</code> 同步替换（更简单，后端算 money）</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">8</div>
+    <div class="content">
+      <h4>测试与构建同步（预估 1h）</h4>
+      <ul>
+        <li>单条 / 多条产品税率测试</li>
+        <li>混搭税率测试</li>
+        <li>0% 行 × 多行 × 多税率 累加测试</li>
+        <li>跑 <code>python3 _build_split.py</code> 同步 dev/ + prod/</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout success">
+    <span class="icon">⏱️</span>
+    <div>
+      <span class="label">总预估工时：11.5 小时（约 1.5 个工作日）</span>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 四、风险与缓解 ============ -->
+<div class="section">
+  <h2><span class="icon">⚠️</span>四、风险与缓解</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>风险</th>
+        <th>可能性</th>
+        <th>影响</th>
+        <th>缓解措施</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>订单接口的 <code>tax_money</code> 必须前端传入，计算错位导致金额不对</td>
+        <td><span class="tag warning">中</span></td>
+        <td>订单金额错</td>
+        <td>前端用 <code>toFixed(2)</code> 精确 2 位小数；展示用与发送用同一函数；加单元测试</td>
+      </tr>
+      <tr>
+        <td>后端 <code>sum = amount × un_price × zk/100 + tax_money</code> 公式与前端不一致</td>
+        <td><span class="tag warning">中</span></td>
+        <td>前端 sum 与服务端保存值不一致</td>
+        <td>前端 sum 直接传 0，让后端重算；前端展示用本地计算版本</td>
+      </tr>
+      <tr>
+        <td>混搭税率汇总时，不同税率行税额需要分别计算，UI 容易混淆</td>
+        <td><span class="tag success">低</span></td>
+        <td>用户看到汇总数字看不懂</td>
+        <td>订单金额模块展示"明细：13% 行 ¥98.40 + 6% 行 ¥27.00"</td>
+      </tr>
+      <tr>
+        <td>税率下拉不显示当前选中值（v-model 同步 bug）</td>
+        <td><span class="tag success">低</span></td>
+        <td>用户选了 13%，刷新后变成 0%</td>
+        <td>渲染时 <code>value={p.taxRate}</code> + onchange 双向同步；测试覆盖</td>
+      </tr>
+      <tr>
+        <td>小数精度问题（0.1 + 0.2 = 0.30000000000000004）</td>
+        <td><span class="tag warning">中</span></td>
+        <td>显示尾数错位</td>
+        <td>统一用 <code>+(x).toFixed(2)</code>（带 + 转回 number）</td>
+      </tr>
+      <tr>
+        <td>「应用到全部」覆盖了用户改过的行</td>
+        <td><span class="tag warning">中</span></td>
+        <td>用户操作被覆盖</td>
+        <td>用 <code>product.taxRateManuallySet</code> 标记手动改过的行，应用时跳过</td>
+      </tr>
+      <tr>
+        <td>含税单价的展示与后端 <code>un_price_tax</code> 不一致</td>
+        <td><span class="tag success">低</span></td>
+        <td>前端看到的与保存的不一致</td>
+        <td>前端计算时和保存时用同一份公式</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ============ 五、测试场景 ============ -->
+<div class="section">
+  <h2><span class="icon">🧪</span>五、测试场景</h2>
+
+  <h3>5.1 单税率场景</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>用例编号</th>
+        <th>输入</th>
+        <th>预期</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>T1.1</td>
+        <td>1 行产品，单价 100，数量 5，税率 13%</td>
+        <td>含税单价 113.00；税金 65.00；含税金额 565.00；订单 sum = 565.00</td>
+      </tr>
+      <tr>
+        <td>T1.2</td>
+        <td>1 行产品，单价 100，数量 5，税率 0%</td>
+        <td>含税单价 100.00；税金 0.00；含税金额 500.00；订单 sum = 500.00</td>
+      </tr>
+      <tr>
+        <td>T1.3</td>
+        <td>1 行产品，单价 100，数量 5，税率 6%</td>
+        <td>含税单价 106.00；税金 30.00；含税金额 530.00</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>5.2 混搭税率场景</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>用例编号</th>
+        <th>输入</th>
+        <th>预期</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>T2.1</td>
+        <td>2 行：行 1 单价 100×10 件 13%；行 2 单价 50×5 件 6%</td>
+        <td>行 1 sum=1130；行 2 sum=265；订单 sum=1395；税额=130+15=145；不含税=1250</td>
+      </tr>
+      <tr>
+        <td>T2.2</td>
+        <td>3 行：13% / 0% / 6% 混搭</td>
+        <td>税额：Σ各行 taxMoney（不混合）；含税总金额：Σ各行 sum</td>
+      </tr>
+      <tr>
+        <td>T2.3</td>
+        <td>3 行全部 0%</td>
+        <td>含税总金额 = 不含税总金额；税额 = 0</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>5.3 折扣 × 税率</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>用例编号</th>
+        <th>输入</th>
+        <th>预期</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>T3.1</td>
+        <td>单价 100，数量 5，折扣 90%，税率 13%</td>
+        <td>不含税金额 = 5×100×0.9 = 450；税金 = 5×100×0.13 = 65；含税金额 = 450+65 = 515</td>
+      </tr>
+      <tr>
+        <td>T3.2</td>
+        <td>单价 100，数量 5，折扣 80%，税率 6%</td>
+        <td>不含税金额 = 400；税金 = 30；含税金额 = 430</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout info">
+    <span class="icon">📝</span>
+    <div>
+      <span class="label">关于折扣与税金的计算顺序：</span>后端公式 <code>sum = amount × un_price × zk/100 + tax_money</code> 意味着<strong>税金基于"原价"计算，不受折扣影响</strong>。这是符合中国税法的常见做法（增值税以票面金额为计税基础）。前端展示需保持与之一致。
+    </div>
+  </div>
+
+  <h3>5.4 端到端联调</h3>
+  <ul>
+    <li>从 AI 复制的 JSON（带单价、数量）→ 在 AI 制单中选税率 → 提交订单 → 验证 CRM 中订单子表的 <code>tax_rate</code> / <code>tax_money</code> / <code>un_price_tax</code> 都正确</li>
+    <li>从 AI 复制的 JSON → 在 AI 制单中选税率 → 提交报价单 → 验证 CRM 中报价单子表的 <code>money</code>（含税金额）正确</li>
+    <li>批量提交：混搭税率订单 + 报价单 → 验证后端 <code>ret[]</code> 逐条返回成功</li>
+  </ul>
+</div>
+
+<!-- ============ 六、附录 ============ -->
+<div class="section">
+  <h2><span class="icon">📎</span>六、附录</h2>
+
+  <h3>6.1 完整计算示例</h3>
+  <p><strong>场景</strong>：某企业采购订单，3 行产品，混搭税率。</p>
+  <table>
+    <thead>
+      <tr>
+        <th>行</th>
+        <th>产品</th>
+        <th>单价 (¥)</th>
+        <th>数量</th>
+        <th>折扣</th>
+        <th>税率</th>
+        <th>含税单价</th>
+        <th>税金</th>
+        <th>含税金额</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>金士顿 Micro SD 16G</td>
+        <td>75.69</td>
+        <td>10</td>
+        <td>100%</td>
+        <td>13%</td>
+        <td>85.5307</td>
+        <td>98.3970 → 98.40</td>
+        <td>855.31</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>爱国者 U盘 32G</td>
+        <td>48.00</td>
+        <td>5</td>
+        <td>100%</td>
+        <td>0%</td>
+        <td>48.00</td>
+        <td>0.00</td>
+        <td>240.00</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>复印纸 A4 70g</td>
+        <td>25.00</td>
+        <td>20</td>
+        <td>90%</td>
+        <td>6%</td>
+        <td>26.50</td>
+        <td>30.00</td>
+        <td>450.00 + 30.00 = 480.00</td>
+      </tr>
+      <tr style="background:#f0f9ff;font-weight:600;">
+        <td colspan="8">订单合计（sum）</td>
+        <td style="color:#dc2626;">¥1,575.31</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>6.2 接口请求样例（含税订单）</h3>
+  <pre><code><span class="comment">// 完整请求体（POST /system/api.xt）</span>
+{
+  <span class="string">"cmd"</span>: <span class="string">"create_data"</span>,
+  <span class="string">"dtname"</span>: <span class="string">"contract_api"</span>,
+  <span class="string">"required_skip"</span>: <span class="number">0</span>,
+  <span class="string">"list"</span>: <span class="string">JSON.stringify</span>([{
+    <span class="string">"number"</span>: <span class="string">""</span>,
+    <span class="string">"subject"</span>: <span class="string">"服务器及办公耗材采购"</span>,
+    <span class="string">"cu_id"</span>: <span class="string">"梦蝶北京"</span>,
+    <span class="string">"date"</span>: <span class="string">"2026-06-10"</span>,
+    <span class="string">"sum"</span>: <span class="number">1575.31</span>,        <span class="comment">// 含税总金额</span>
+    <span class="string">"status"</span>: <span class="string">"执行中"</span>,
+    <span class="string">"subdata"</span>: [
+      {
+        <span class="string">"name"</span>: <span class="string">"P001"</span>,
+        <span class="string">"amount"</span>: <span class="number">10</span>,
+        <span class="string">"un_price"</span>: <span class="number">75.69</span>,
+        <span class="string">"zk"</span>: <span class="string">"100%"</span>,
+        <span class="string">"tax_rate"</span>: <span class="number">13</span>,
+        <span class="string">"tax_money"</span>: <span class="number">98.40</span>,
+        <span class="string">"un_price_tax"</span>: <span class="number">85.53</span>,
+        <span class="string">"sum"</span>: <span class="number">855.31</span>
+      },
+      {
+        <span class="string">"name"</span>: <span class="string">"P002"</span>,
+        <span class="string">"amount"</span>: <span class="number">5</span>,
+        <span class="string">"un_price"</span>: <span class="number">48.00</span>,
+        <span class="string">"zk"</span>: <span class="string">"100%"</span>,
+        <span class="string">"tax_rate"</span>: <span class="number">0</span>,
+        <span class="string">"tax_money"</span>: <span class="number">0</span>,
+        <span class="string">"un_price_tax"</span>: <span class="number">48.00</span>,
+        <span class="string">"sum"</span>: <span class="number">240.00</span>
+      },
+      {
+        <span class="string">"name"</span>: <span class="string">"P003"</span>,
+        <span class="string">"amount"</span>: <span class="number">20</span>,
+        <span class="string">"un_price"</span>: <span class="number">25.00</span>,
+        <span class="string">"zk"</span>: <span class="string">"90%"</span>,
+        <span class="string">"tax_rate"</span>: <span class="number">6</span>,
+        <span class="string">"tax_money"</span>: <span class="number">30.00</span>,
+        <span class="string">"un_price_tax"</span>: <span class="number">26.50</span>,
+        <span class="string">"sum"</span>: <span class="number">480.00</span>
+      }
+    ]
+  }])
+}</code></pre>
+
+  <h3>6.3 接口请求样例（含税报价单）</h3>
+  <pre><code>{
+  <span class="string">"cmd"</span>: <span class="string">"create_data"</span>,
+  <span class="string">"dtname"</span>: <span class="string">"price"</span>,
+  <span class="string">"list"</span>: <span class="string">JSON.stringify</span>([{
+    <span class="string">"number"</span>: <span class="string">""</span>,
+    <span class="string">"title"</span>: <span class="string">"含税报价"</span>,
+    <span class="string">"cu_id"</span>: <span class="string">"梦蝶北京"</span>,
+    <span class="string">"date"</span>: <span class="string">"2026-06-10"</span>,
+    <span class="string">"type"</span>: <span class="string">"服务报价"</span>,
+    <span class="string">"price"</span>: <span class="number">1575.31</span>,        <span class="comment">// 含税总金额（前端自己加和）</span>
+    <span class="string">"subdata"</span>: [
+      { <span class="string">"pro_id"</span>: <span class="number">15537</span>, <span class="string">"num"</span>: <span class="number">10</span>, <span class="string">"price"</span>: <span class="number">75.69</span>, <span class="string">"tax_rate"</span>: <span class="number">13</span> },
+      { <span class="string">"pro_id"</span>: <span class="number">15538</span>, <span class="string">"num"</span>: <span class="number">5</span>, <span class="string">"price"</span>: <span class="number">48.00</span>, <span class="string">"tax_rate"</span>: <span class="number">0</span> },
+      { <span class="string">"pro_id"</span>: <span class="number">15539</span>, <span class="string">"num"</span>: <span class="number">20</span>, <span class="string">"price"</span>: <span class="number">25.00</span>, <span class="string">"tax_rate"</span>: <span class="number">6</span> }
+    ]
+    <span class="comment">// money 不传，后端按 (1 + tax_rate/100) × num × price 自动算</span>
+  }])
+}</code></pre>
+
+  <h3>6.4 中国常见增值税税率参考</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>税率</th>
+        <th>适用场景（参考）</th>
+        <th>前端是否预置</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>0%</td>
+        <td>免税商品、出口商品</td>
+        <td>✅ 是</td>
+      </tr>
+      <tr>
+        <td>3%</td>
+        <td>小规模纳税人（默认征收率）</td>
+        <td>✅ 是</td>
+      </tr>
+      <tr>
+        <td>6%</td>
+        <td>现代服务业（软件 / 咨询 / 物流辅助）</td>
+        <td>✅ 是</td>
+      </tr>
+      <tr>
+        <td>9%</td>
+        <td>建筑 / 交通运输 / 邮政 / 基础电信</td>
+        <td>✅ 是（2026 罕见）</td>
+      </tr>
+      <tr>
+        <td>13%</td>
+        <td>大多数货物销售（工业品 / 设备 / 耗材）</td>
+        <td>✅ 是</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="callout info">
+    <span class="icon">💡</span>
+    <div>
+      <span class="label">前端预置 0/3/6/9/13 五个选项</span>覆盖中国 99% 场景。客户自定义税率通过「其他 → 手动输入」入口补充。
+    </div>
+  </div>
+</div>
+
+<!-- ============ 七、相关文档 ============ -->
+<div class="section">
+  <h2><span class="icon">🔗</span>七、相关文档</h2>
+  <table>
+    <thead>
+      <tr><th>文档</th><th>关系</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>读取数据接口/创建订单接口.md</code></td>
+        <td>上游：订单接口定义，<code>tax_rate</code> / <code>tax_money</code> / <code>un_price_tax</code> 字段来源</td>
+      </tr>
+      <tr>
+        <td><code>读取数据接口/创建报价单接口.md</code></td>
+        <td>上游：报价单接口定义，<code>money = (1+tax_rate/100)×num×price</code> 自动计算</td>
+      </tr>
+      <tr>
+        <td><code>读取数据接口/接口类：读取数据表接口.md</code></td>
+        <td>参考：load_data 接口通用格式</td>
+      </tr>
+      <tr>
+        <td><code>读取数据接口/dflag的全局条件.md</code></td>
+        <td>参考：dflag 软删除机制（v1.3 已修正）</td>
+      </tr>
+      <tr>
+        <td><code>结论文档/智能增量同步方案-自动判断切换全量.md</code></td>
+        <td>参考：产品表字段已含 price，可考虑未来加 <code>tax_rate</code> 字段</td>
+      </tr>
+      <tr>
+        <td><code>读取数据接口/读取产品的价格.md</code></td>
+        <td>参考：产品表 price 字段来源</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="section">
+  <h2><span class="icon">✅</span>八、评审签字</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>角色</th>
+        <th>姓名</th>
+        <th>意见</th>
+        <th>签字</th>
+        <th>日期</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>产品经理</td>
+        <td>—</td>
+        <td>—</td>
+        <td>—</td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td>技术负责人</td>
+        <td>—</td>
+        <td>—</td>
+        <td>—</td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td>前端开发</td>
+        <td>—</td>
+        <td>—</td>
+        <td>—</td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td>测试</td>
+        <td>—</td>
+        <td>—</td>
+        <td>—</td>
+        <td>—</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="footer">
+  📄 文档版本 v1.0 · 生成于 2026-06-10 · AI 智能制单项目组
+</div>
+
+</div>
+</body>
+</html>

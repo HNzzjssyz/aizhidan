@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>获取产品图片嵌入Excel — 开发文档</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1e293b; line-height: 1.8; background: #f8fafc; }
+  .container { max-width: 900px; margin: 0 auto; padding: 40px 32px; }
+  h1 { font-size: 28px; font-weight: 700; color: #0f172a; margin-bottom: 8px; }
+  .subtitle { font-size: 14px; color: #64748b; margin-bottom: 40px; }
+  h2 { font-size: 20px; font-weight: 600; color: #1e293b; margin: 36px 0 16px; padding-bottom: 8px; border-bottom: 2px solid #e2e8f0; }
+  h3 { font-size: 16px; font-weight: 600; color: #334155; margin: 24px 0 12px; }
+  h4 { font-size: 14px; font-weight: 600; color: #475569; margin: 16px 0 8px; }
+  p { font-size: 14px; margin-bottom: 12px; }
+  ul, ol { font-size: 14px; margin: 8px 0 16px 24px; }
+  li { margin-bottom: 6px; }
+  code { font-family: 'SF Mono', 'Fira Code', Consolas, monospace; font-size: 13px; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; color: #7c3aed; }
+  pre { background: #1e293b; color: #e2e8f0; padding: 20px; border-radius: 10px; overflow-x: auto; margin: 12px 0 20px; font-size: 13px; line-height: 1.6; }
+  pre code { background: none; padding: 0; color: inherit; }
+  .callout { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 16px 0; font-size: 13px; }
+  .callout.danger { background: #fef2f2; border-left-color: #ef4444; }
+  .callout.success { background: #f0fdf4; border-left-color: #16a34a; }
+  .callout.info { background: #eff6ff; border-left-color: #3b82f6; }
+  .callout strong { display: block; margin-bottom: 4px; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 13px; }
+  th { background: #f1f5f9; padding: 10px 14px; text-align: left; font-weight: 600; border: 1px solid #e2e8f0; }
+  td { padding: 10px 14px; border: 1px solid #e2e8f0; }
+  .flow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 16px 0; }
+  .flow-item { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 14px; font-size: 13px; font-weight: 500; }
+  .flow-arrow { color: #94a3b8; font-size: 18px; }
+  .tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 600; }
+  .tag-red { background: #fef2f2; color: #dc2626; }
+  .tag-green { background: #f0fdf4; color: #16a34a; }
+  .tag-blue { background: #eff6ff; color: #2563eb; }
+  .timeline { position: relative; padding-left: 28px; margin: 16px 0; }
+  .timeline::before { content: ''; position: absolute; left: 10px; top: 0; bottom: 0; width: 2px; background: #e2e8f0; }
+  .timeline-item { position: relative; margin-bottom: 20px; }
+  .timeline-item::before { content: ''; position: absolute; left: -22px; top: 6px; width: 10px; height: 10px; border-radius: 50%; border: 2px solid #3b82f6; background: white; }
+  .timeline-item.fail::before { border-color: #ef4444; background: #fef2f2; }
+  .timeline-item.ok::before { border-color: #16a34a; background: #f0fdf4; }
+  .timeline-item .title { font-size: 14px; font-weight: 600; }
+  .timeline-item .desc { font-size: 13px; color: #64748b; margin-top: 4px; }
+  .timeline-item .error { font-size: 12px; color: #dc2626; margin-top: 4px; font-family: monospace; background: #fef2f2; padding: 4px 8px; border-radius: 4px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>获取产品图片嵌入Excel</h1>
+<div class="subtitle">开发文档 · 记录从图片获取到Excel嵌入的完整技术方案与踩坑历程</div>
+
+<h2>1. 需求背景</h2>
+<p>在AI制单页面中，用户确认产品匹配后，需要将产品明细（含图片）导出为Excel文件。核心挑战：</p>
+<ul>
+  <li>产品图片存储在阿里云OSS，通过服务器302重定向访问</li>
+  <li>图片URL需要鉴权（服务器Cookie + OSS签名）</li>
+  <li>Excel中图片必须嵌入文件，不能使用URL引用（离线不可用）</li>
+</ul>
+
+<h2>2. 图片URL的真实链路</h2>
+<p>页面上的图片URL看似简单，实际经历了服务器重定向：</p>
+
+<div class="flow">
+  <div class="flow-item">/pic/?84s&amp;new=1</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-item" style="background:#fef3c7;">服务器302重定向</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-item" style="font-size:11px;">https://xt-upload.oss-cn-hangzhou.aliyuncs.com/d002/product/1/aa5b...?OSSAccessKeyId=...&amp;Signature=...</div>
+</div>
+
+<div class="callout info">
+  <strong>关键发现</strong>
+  <code>/pic/?84s&amp;new=1</code> 不是图片文件本身，而是服务器端的302重定向入口。服务器验证用户Cookie后，返回302跳转到阿里云OSS的签名URL（自带AccessKeyId + Signature）。
+</div>
+
+<h2>3. 技术方案演进</h2>
+
+<div class="timeline">
+  <div class="timeline-item fail">
+    <div class="title">方案一：Image + crossOrigin + Canvas</div>
+    <div class="desc">用 <code>new Image()</code> 加载图片，设置 <code>crossOrigin='anonymous'</code>，Canvas绘制后 <code>toDataURL()</code> 转Base64</div>
+    <div class="error">❌ crossOrigin='anonymous' 导致带Cookie的同源请求被拒绝，图片加载失败；Canvas被污染后toBlob回调不触发，Promise永远挂起</div>
+  </div>
+  <div class="timeline-item fail">
+    <div class="title">方案二：SheetJS (xlsx) + Base64文本</div>
+    <div class="desc">SheetJS社区版写入Base64字符串到单元格</div>
+    <div class="error">❌ SheetJS社区版不支持图片嵌入，Base64只能作为文本显示，Excel中看到的是乱码字符串</div>
+  </div>
+  <div class="timeline-item fail">
+    <div class="title">方案三：fetch + credentials:'include' + Blob</div>
+    <div class="desc">用 <code>fetch(url, {credentials:'include'})</code> 获取图片Blob，转ArrayBuffer传给ExcelJS</div>
+    <div class="error">❌ CORS冲突：fetch跟随302到OSS后，credentials模式与OSS的 Access-Control-Allow-Origin: * 不兼容</div>
+  </div>
+  <div class="timeline-item fail">
+    <div class="title">方案四：Image + Canvas（不设crossOrigin）</div>
+    <div class="desc">去掉crossOrigin属性，同源图片自动带Cookie，Canvas绘制后toBlob</div>
+    <div class="error">❌ 服务器返回的图片经302重定向后Canvas被标记为"污染"(tainted)，toBlob回调不触发</div>
+  </div>
+  <div class="timeline-item ok">
+    <div class="title">方案五（最终）：fetch() 默认模式 + ArrayBuffer</div>
+    <div class="desc">用 <code>fetch(url)</code> 不带credentials，跟随302到OSS签名URL，直接获取ArrayBuffer</div>
+    <div class="error" style="color:#16a34a;background:#f0fdf4;">✅ 成功！同源请求自动带Cookie完成鉴权，重定向到OSS后签名URL自带鉴权不需要Cookie，默认模式与CORS *兼容</div>
+  </div>
+</div>
+
+<h2>4. 最终方案详解</h2>
+
+<h3>4.1 为什么 fetch() 不带 credentials 能成功？</h3>
+<table>
+  <tr><th>请求阶段</th><th>URL</th><th>credentials行为</th><th>鉴权方式</th></tr>
+  <tr><td>第1次请求</td><td>/pic/?84s&amp;new=1（同源）</td><td>默认 same-origin，<strong>自动带Cookie</strong></td><td>服务器验证Cookie → 302</td></tr>
+  <tr><td>第2次请求（重定向）</td><td>OSS签名URL（跨域）</td><td>默认 same-origin，<strong>不带Cookie</strong></td><td>OSS签名URL自带AccessKeyId+Signature</td></tr>
+</table>
+
+<div class="callout success">
+  <strong>核心原理</strong>
+  <code>fetch(url)</code> 默认 <code>credentials: 'same-origin'</code>：同源请求带Cookie（完成服务器鉴权），跨域请求不带Cookie（与OSS的 <code>Access-Control-Allow-Origin: *</code> 兼容）。而 <code>credentials: 'include'</code> 要求跨域响应的 <code>Allow-Origin</code> 不能是通配符 <code>*</code>，恰好与OSS配置冲突。
+</div>
+
+<h3>4.2 完整代码</h3>
+
+<h4>4.2.1 图片URL获取（load_data接口）</h4>
+<pre><code>async function fetchProductPics(ids) {
+  if (!ids || ids.length === 0) return {};
+  var needFetch = ids.filter(function(id) {
+    return !_productPicCache[String(id)];
+  });
+  if (needFetch.length === 0) return _productPicCache;
+  try {
+    var whereClause = needFetch.map(function(id) {
+      return 'id=' + id;
+    }).join(' OR ');
+    var url = API_BASE + '/api.xt?cmd=load_data&dtname=product&field=id,pic&where='
+              + encodeURIComponent(whereClause);
+    var resp = await fetch(url);
+    var json = await resp.json();
+    if (json.ok && json.data) {
+      for (var i = 0; i &lt; json.data.length; i++) {
+        var row = json.data[i];
+        if (row.id && row.pic) {
+          _productPicCache[String(row.id)] = row.pic;
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('fetchProductPics error:', e);
+  }
+  for (var j = 0; j &lt; needFetch.length; j++) {
+    var cacheKey = String(needFetch[j]);
+    if (!_productPicCache[cacheKey]) _productPicCache[cacheKey] = '';
+  }
+  return _productPicCache;
+}</code></pre>
+
+<h4>4.2.2 URL读取（含HTML实体解码）</h4>
+<pre><code>function getProductPicUrl(id) {
+  var key = String(id);
+  var val = _productPicCache[key];
+  if (val === undefined || val === null || val === '') return '';
+  // 服务器返回的pic字段可能包含HTML实体编码
+  return val.replace(/&amp;/g, '&')
+            .replace(/&lt;/g, '&lt;')
+            .replace(/&gt;/g, '>')
+            .replace(/&quot;/g, '"')
+            .replace(/&#39;/g, "'");
+}</code></pre>
+
+<h4>4.2.3 图片尺寸获取（比例控制）</h4>
+<p>产品图片原始尺寸各异（横图、竖图、正方形），如果强制写入固定宽高会导致变形。需要先获取原始尺寸，再按比例缩放到单元格区域内。</p>
+<pre><code>function _getImageDimensions(buf) {
+  return new Promise(function(resolve) {
+    var blob = new Blob([buf]);
+    var url = URL.createObjectURL(blob);
+    var img = new Image();
+    img.onload = function() {
+      URL.revokeObjectURL(url);
+      resolve({ width: img.naturalWidth, height: img.naturalHeight });
+    };
+    img.onerror = function() {
+      URL.revokeObjectURL(url);
+      resolve({ width: 140, height: 140 }); // 降级为正方形
+    };
+    img.src = url;
+  });
+}</code></pre>
+<div class="callout info">
+  <strong>原理</strong>
+  将 ArrayBuffer 转为 Blob URL，用 <code>Image.naturalWidth / naturalHeight</code> 获取图片原始像素尺寸。此方式不依赖 Canvas，不受跨域污染限制。
+</div>
+
+<h4>4.2.4 图片二进制获取（核心函数）</h4>
+<pre><code>function picUrlToArrayBuffer(url) {
+  if (!url || url === '') {
+    return _placeholderArrayBuffer().then(function(buf) {
+      return { buffer: buf, width: 140, height: 140 };
+    });
+  }
+  // 关键：不设 credentials，使用默认 same-origin 模式
+  return fetch(url)
+    .then(function(resp) {
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      return resp.arrayBuffer();
+    })
+    .then(function(buf) {
+      if (!buf || buf.byteLength === 0) {
+        return _placeholderArrayBuffer().then(function(b) {
+          return { buffer: b, width: 140, height: 140 };
+        });
+      }
+      // 获取原始尺寸，与buffer一起返回
+      return _getImageDimensions(buf).then(function(dim) {
+        return { buffer: buf, width: dim.width, height: dim.height };
+      });
+    })
+    .catch(function(e) {
+      console.warn('picUrlToArrayBuffer: fetch failed for', url, e.message);
+      return _placeholderArrayBuffer().then(function(buf) {
+        return { buffer: buf, width: 140, height: 140 };
+      });
+    });
+}</code></pre>
+<div class="callout success">
+  <strong>返回值结构</strong>
+  函数返回 <code>{ buffer: ArrayBuffer, width: number, height: number }</code>，同时携带图片二进制数据和原始尺寸，供后续按比例缩放使用。
+</div>
+
+<h4>4.2.5 Excel导出（ExcelJS + 图片等比缩放嵌入）</h4>
+<pre><code>async function exportProductExcel() {
+  // 1. 获取产品图片URL缓存
+  var productMap = await getLSProductMap();
+  var allIds = currentProducts.map(function(p) {
+    return p.matchedId || p.id;
+  }).filter(Boolean);
+  if (allIds.length > 0) await fetchProductPics(allIds);
+
+  // 2. 组装行数据
+  var rows = [];
+  for (var i = 0; i &lt; currentProducts.length; i++) {
+    var p = currentProducts[i];
+    var lookupId = p.matchedId || p.id;
+    var info = productMap[String(lookupId)] || {};
+    rows.push({
+      name: info.name || p.matchedName || p.originalName || '',
+      sku: info.sku || p.matchedSku || p.newSku || '-',
+      code: info.code ? ('PRD-' + info.id) : (p.matchedCode || p.newCode || '-'),
+      price: p.price || '-',
+      qty: p.qty || '-',
+      note: p.note || '-',
+      picUrl: getProductPicUrl(lookupId)
+    });
+  }
+
+  // 3. 批量获取图片ArrayBuffer
+  var picBuffers = await Promise.all(
+    rows.map(function(r) { return picUrlToArrayBuffer(r.picUrl); })
+  );
+
+  // 4. 创建ExcelJS工作簿
+  var wb = new ExcelJS.Workbook();
+  var ws = wb.addWorksheet('产品明细');
+  ws.columns = [
+    { header: '图片', key: 'pic', width: 20 },
+    { header: '产品名称', key: 'name', width: 40 },
+    { header: 'SKU', key: 'sku', width: 16 },
+    { header: '产品编号', key: 'code', width: 16 },
+    { header: '单价', key: 'price', width: 10 },
+    { header: '数量', key: 'qty', width: 8 },
+    { header: '备注', key: 'note', width: 24 }
+  ];
+
+  // 5. 逐行写入数据和图片
+  for (var r = 0; r &lt; rows.length; r++) {
+    var rowIdx = r + 2;
+    var row = ws.getRow(rowIdx);
+    row.height = 105;
+    row.getCell(2).value = rows[r].name;
+    row.getCell(3).value = rows[r].sku;
+    row.getCell(4).value = rows[r].code;
+    row.getCell(5).value = rows[r].price;
+    row.getCell(6).value = rows[r].qty;
+    row.getCell(7).value = rows[r].note;
+
+    if (picBuffers[r] && picBuffers[r].buffer && picBuffers[r].buffer.byteLength > 0) {
+      var buf = picBuffers[r].buffer;
+      // 自动检测图片格式：JPEG以FF D8开头，PNG以89 50开头
+      var ext = 'png';
+      var u8 = new Uint8Array(buf);
+      if (u8[0] === 0xFF && u8[1] === 0xD8) ext = 'jpeg';
+
+      var imgId = wb.addImage({ buffer: buf, extension: ext });
+
+      // 按原始尺寸等比缩放，适配单元格区域（最大140×105）
+      var origW = picBuffers[r].width || 140;
+      var origH = picBuffers[r].height || 140;
+      var maxW = 140, maxH = 105;
+      var scale = Math.min(maxW / origW, maxH / origH);
+      var drawW = Math.round(origW * scale);
+      var drawH = Math.round(origH * scale);
+
+      ws.addImage(imgId, {
+        tl: { col: 0, row: rowIdx - 1 },
+        ext: { width: drawW, height: drawH }
+      });
+    }
+  }
+
+  // 6. 导出下载
+  var outBuffer = await wb.xlsx.writeBuffer();
+  var blob = new Blob([outBuffer], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '产品明细_' + customerName + '_' + today + '.xlsx';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}</code></pre>
+
+<h2>5. 踩坑总结</h2>
+
+<table>
+  <tr><th>#</th><th>问题</th><th>原因</th><th>解决</th></tr>
+  <tr>
+    <td><span class="tag tag-red">1</span></td>
+    <td>crossOrigin='anonymous' 导致图片加载失败</td>
+    <td>同源请求设crossOrigin后，浏览器不再自动带Cookie</td>
+    <td>同源图片不要设crossOrigin属性</td>
+  </tr>
+  <tr>
+    <td><span class="tag tag-red">2</span></td>
+    <td>Canvas toBlob 回调不触发，Promise挂起</td>
+    <td>跨域图片绘制后Canvas被"污染"，toBlob静默失败</td>
+    <td>放弃Canvas路线，改用fetch直接获取二进制</td>
+  </tr>
+  <tr>
+    <td><span class="tag tag-red">3</span></td>
+    <td>SheetJS社区版无法嵌入图片</td>
+    <td>社区版不支持addImage，Base64只能作为文本</td>
+    <td>换用ExcelJS（原生支持图片嵌入）</td>
+  </tr>
+  <tr>
+    <td><span class="tag tag-red">4</span></td>
+    <td>ExcelJS addImage传入Blob无效</td>
+    <td>addImage的buffer参数只接受ArrayBuffer</td>
+    <td>fetch后调用resp.arrayBuffer()获取ArrayBuffer</td>
+  </tr>
+  <tr>
+    <td><span class="tag tag-red">5</span></td>
+    <td>fetch credentials:'include' 触发CORS错误</td>
+    <td>OSS返回 Allow-Origin:*，与credentials模式不兼容</td>
+    <td>使用fetch()默认模式（same-origin），不设credentials</td>
+  </tr>
+  <tr>
+    <td><span class="tag tag-red">6</span></td>
+    <td>图片URL中的&amp;amp;导致fetch请求失败</td>
+    <td>服务器JSON返回的pic字段含HTML实体编码</td>
+    <td>getProductPicUrl中做HTML实体解码</td>
+  </tr>
+  <tr>
+    <td><span class="tag tag-red">7</span></td>
+    <td>缓存键类型不匹配导致图片查不到</td>
+    <td>row.id为数字，lookupId为字符串，对象键不一致</td>
+    <td>所有缓存操作统一用String(id)作为键</td>
+  </tr>
+  <tr>
+    <td><span class="tag tag-blue">8</span></td>
+    <td>JPEG图片extension写png导致Excel打开异常</td>
+    <td>OSS返回的图片可能是JPEG格式</td>
+    <td>读取ArrayBuffer前2字节判断格式（FF D8=JPEG）</td>
+  </tr>
+  <tr>
+    <td><span class="tag tag-blue">9</span></td>
+    <td>Excel中图片比例变形</td>
+    <td>ext固定写width:140, height:140，但原始图片不一定是正方形</td>
+    <td>获取原始尺寸后按Math.min(maxW/origW, maxH/origH)等比缩放</td>
+  </tr>
+</table>
+
+<h2>6. 关键技术决策</h2>
+
+<h3>6.1 为什么选ExcelJS而不是SheetJS？</h3>
+<table>
+  <tr><th>特性</th><th>SheetJS (xlsx)</th><th>ExcelJS</th></tr>
+  <tr><td>图片嵌入</td><td>❌ 社区版不支持</td><td>✅ 原生支持 addImage</td></tr>
+  <tr><td>行高设置</td><td>❌ 需手动操作</td><td>✅ row.height 直接设置</td></tr>
+  <tr><td>单元格样式</td><td>❌ 社区版有限</td><td>✅ 完整支持</td></tr>
+  <tr><td>文件体积</td><td>较小</td><td>较大（~400KB）</td></tr>
+</table>
+
+<h3>6.2 为什么用fetch而不是Image+Canvas？</h3>
+<table>
+  <tr><th>方案</th><th>鉴权</th><th>CORS</th><th>Canvas污染</th><th>可靠性</th></tr>
+  <tr><td>Image + Canvas</td><td>✅ 同源自动带Cookie</td><td>⚠️ crossOrigin冲突</td><td>❌ 302重定向后污染</td><td>低</td></tr>
+  <tr><td>fetch + arrayBuffer</td><td>✅ same-origin带Cookie</td><td>✅ 默认模式兼容</td><td>— 不经过Canvas</td><td>高</td></tr>
+</table>
+
+<h2>7. 完整数据流</h2>
+
+<div class="flow">
+  <div class="flow-item">load_data接口<br><small>获取pic URL</small></div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-item">HTML实体解码<br><small>&amp;amp; → &amp;</small></div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-item">内存缓存<br><small>_productPicCache</small></div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-item">fetch(url)<br><small>same-origin模式</small></div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-item">302重定向<br><small>OSS签名URL</small></div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-item">arrayBuffer()<br><small>图片二进制</small></div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-item">ExcelJS<br><small>addImage嵌入</small></div>
+</div>
+
+<h2>8. 注意事项</h2>
+
+<ol>
+  <li><strong>fetch不要设credentials:'include'</strong> — OSS的CORS配置为通配符<code>*</code>，与include模式冲突</li>
+  <li><strong>缓存键统一用String(id)</strong> — 服务器返回的id可能是数字，JS对象键会自动转字符串，但显式转换避免隐式问题</li>
+  <li><strong>HTML实体解码</strong> — 服务器JSON返回的pic字段可能包含<code>&amp;amp;</code>等HTML实体，fetch前必须解码</li>
+  <li><strong>图片格式自动检测</strong> — 读取ArrayBuffer前2字节：JPEG=<code>FF D8</code>，PNG=<code>89 50</code>，传给ExcelJS正确的extension</li>
+  <li><strong>等比缩放防变形</strong> — 用<code>Math.min(maxW/origW, maxH/origH)</code>计算缩放比，横图适配列宽、竖图适配行高，保证不变形</li>
+  <li><strong>空值缓存防重</strong> — 无图片的产品ID也写入空字符串缓存，避免每次导出都重复请求</li>
+  <li><strong>try/catch全局包裹</strong> — 导出流程中任何环节报错都要showToast提示用户，不能静默失败</li>
+  <li><strong>占位图兜底</strong> — 图片获取失败时使用Canvas动态生成的占位图，保证Excel结构完整</li>
+</ol>
+
+<div class="callout danger">
+  <strong>最重要的一条</strong>
+  当图片URL涉及服务器302重定向到第三方存储（如阿里云OSS、腾讯COS）时，<code>fetch(url)</code> 使用默认模式即可。不要加 <code>credentials:'include'</code>，因为第三方存储的CORS通常配置为 <code>Access-Control-Allow-Origin: *</code>，与credentials模式不兼容。
+</div>
+
+</div>
+</body>
+</html>

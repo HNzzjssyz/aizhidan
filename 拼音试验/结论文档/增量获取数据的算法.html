@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>增量获取数据算法 — 技术文档</title>
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+<style>
+:root {
+  --bg: #f8f9fb;
+  --card: #ffffff;
+  --border: #e8ecf0;
+  --text: #1f2937;
+  --text-secondary: #6b7280;
+  --primary: #3b82f6;
+  --primary-light: #eff6ff;
+  --primary-border: #bfdbfe;
+  --green: #10b981;
+  --green-light: #ecfdf5;
+  --green-border: #a7f3d0;
+  --amber: #f59e0b;
+  --amber-light: #fffbeb;
+  --amber-border: #fde68a;
+  --red: #ef4444;
+  --red-light: #fef2f2;
+  --red-border: #fecaca;
+  --purple: #8b5cf6;
+  --purple-light: #f5f3ff;
+  --purple-border: #ddd6fe;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  padding: 32px 20px;
+}
+.container { max-width: 960px; margin: 0 auto; }
+
+.doc-header {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px 48px;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+}
+.doc-header::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6, #10b981);
+}
+.doc-header h1 {
+  font-size: 28px; font-weight: 700; color: var(--text);
+  margin-bottom: 8px; display: flex; align-items: center; gap: 12px;
+}
+.doc-header h1 i { color: var(--primary); font-size: 28px; }
+.doc-header .subtitle { font-size: 15px; color: var(--text-secondary); margin-bottom: 20px; }
+.doc-meta { display: flex; gap: 24px; flex-wrap: wrap; }
+.doc-meta-item { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-secondary); }
+.doc-meta-item i { font-size: 14px; color: var(--primary); }
+.doc-meta-item strong { color: var(--text); font-weight: 600; }
+
+.section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 32px 36px;
+  margin-bottom: 20px;
+}
+.section-title {
+  font-size: 18px; font-weight: 700; color: var(--text);
+  margin-bottom: 20px; display: flex; align-items: center; gap: 10px;
+  padding-bottom: 14px; border-bottom: 1px solid var(--border);
+}
+.section-title i {
+  width: 32px; height: 32px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; color: white; flex-shrink: 0;
+}
+.icon-blue { background: var(--primary); }
+.icon-green { background: var(--green); }
+.icon-amber { background: var(--amber); }
+.icon-red { background: var(--red); }
+.icon-purple { background: var(--purple); }
+
+p { font-size: 14px; color: var(--text); margin-bottom: 12px; line-height: 1.8; }
+p:last-child { margin-bottom: 0; }
+
+.highlight-box {
+  border-radius: 10px; padding: 16px 20px; margin-bottom: 16px;
+  font-size: 14px; line-height: 1.8;
+}
+.highlight-box.blue { background: var(--primary-light); border: 1px solid var(--primary-border); color: #1e40af; }
+.highlight-box.green { background: var(--green-light); border: 1px solid var(--green-border); color: #065f46; }
+.highlight-box.amber { background: var(--amber-light); border: 1px solid var(--amber-border); color: #92400e; }
+.highlight-box.red { background: var(--red-light); border: 1px solid var(--red-border); color: #991b1b; }
+.highlight-box.purple { background: var(--purple-light); border: 1px solid var(--purple-border); color: #5b21b6; }
+.highlight-box i { margin-right: 6px; }
+
+pre {
+  background: #1e293b; color: #e2e8f0; border-radius: 10px;
+  padding: 20px 24px; margin-bottom: 16px; overflow-x: auto;
+  font-size: 13px; line-height: 1.7; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+}
+pre .comment { color: #64748b; }
+pre .keyword { color: #c084fc; }
+pre .string { color: #34d399; }
+pre .key { color: #60a5fa; }
+pre .func { color: #fbbf24; }
+
+table {
+  width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 13px;
+}
+th, td {
+  padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border);
+}
+th { background: #f8f9fb; font-weight: 600; color: var(--text-secondary); font-size: 12px; }
+td { color: var(--text); }
+tr:last-child td { border-bottom: none; }
+
+.flow-steps { display: flex; flex-direction: column; gap: 0; margin-bottom: 16px; }
+.flow-step {
+  display: flex; gap: 16px; padding: 14px 0;
+  border-bottom: 1px dashed var(--border);
+}
+.flow-step:last-child { border-bottom: none; }
+.flow-step-num {
+  width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; color: white;
+}
+.flow-step-content { flex: 1; }
+.flow-step-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.flow-step-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.7; }
+
+.tag {
+  display: inline-block; padding: 2px 10px; border-radius: 6px;
+  font-size: 11px; font-weight: 600; margin-right: 4px;
+}
+.tag-blue { background: var(--primary-light); color: #1e40af; border: 1px solid var(--primary-border); }
+.tag-green { background: var(--green-light); color: #065f46; border: 1px solid var(--green-border); }
+.tag-amber { background: var(--amber-light); color: #92400e; border: 1px solid var(--amber-border); }
+.tag-red { background: var(--red-light); color: #991b1b; border: 1px solid var(--red-border); }
+.tag-purple { background: var(--purple-light); color: #5b21b6; border: 1px solid var(--purple-border); }
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="doc-header">
+  <h1><i class="ri-refresh-line"></i> 增量获取数据算法</h1>
+  <div class="subtitle">基于时间戳的增量数据同步与拼音自动生成机制</div>
+  <div class="doc-meta">
+    <div class="doc-meta-item"><i class="ri-calendar-line"></i> 创建：<strong>2026-05-16</strong></div>
+    <div class="doc-meta-item"><i class="ri-file-code-line"></i> 模块：<strong>get_cus_pro.html</strong></div>
+    <div class="doc-meta-item"><i class="ri-database-2-line"></i> 接口：<strong>load_data</strong></div>
+  </div>
+</div>
+
+<!-- 第1章：背景与目标 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-blue"><i class="ri-lightbulb-line"></i></i>
+    1. 背景与目标
+  </div>
+  <p>智能制单系统需要从后台数据库获取客户和产品数据，并在前端生成拼音索引用于语音匹配。随着数据量增长，每次全量获取所有记录效率低下。</p>
+  <p>增量获取的目标：<strong>只请求上次同步后新增或修改的记录</strong>，减少网络传输和前端处理开销。</p>
+  <div class="highlight-box blue">
+    <i class="ri-information-line"></i>
+    <strong>核心思路：</strong>利用数据库的更新时间字段（客户表 <code>amstamp</code>，产品表 <code>modstm</code>），在 <code>load_data</code> 接口的 <code>where</code> 条件中过滤出晚于上次同步时间的记录。
+  </div>
+</div>
+
+<!-- 第2章：数据表时间字段 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-green"><i class="ri-database-2-line"></i></i>
+    2. 数据表时间字段
+  </div>
+  <table>
+    <thead>
+      <tr><th>数据表</th><th>dtname</th><th>更新时间字段</th><th>字段含义</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>客户表</td><td><code>customer</code></td><td><code>amstamp</code></td><td>客户信息最后更新时间</td></tr>
+      <tr><td>产品表</td><td><code>product</code></td><td><code>modstm</code></td><td>产品信息最后修改时间</td></tr>
+    </tbody>
+  </table>
+  <div class="highlight-box amber">
+    <i class="ri-alert-line"></i>
+    <strong>前提条件：</strong>这两个字段必须由后台在记录创建和修改时自动维护。如果字段不存在或未正确更新，增量获取将无法正常工作。
+  </div>
+</div>
+
+<!-- 第3章：localStorage 键值设计 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-purple"><i class="ri-key-2-line"></i></i>
+    3. localStorage 键值设计
+  </div>
+  <table>
+    <thead>
+      <tr><th>LS Key</th><th>类型</th><th>说明</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>pinyin_tool_customers</code></td><td>Array</td><td>客户数据（id, name）</td></tr>
+      <tr><td><code>pinyin_tool_products</code></td><td>Array</td><td>产品数据（id, name, model, spec）</td></tr>
+      <tr><td><code>pinyin_tool_customer_pinyin</code></td><td>Object</td><td>客户拼音索引（以id为key）</td></tr>
+      <tr><td><code>pinyin_tool_product_pinyin</code></td><td>Object</td><td>产品拼音索引（以id为key）</td></tr>
+      <tr><td><code>pinyin_tool_sync_time</code></td><td>String</td><td>最后同步时间（显示用）</td></tr>
+      <tr><td><code>pinyin_tool_incremental_time</code></td><td>String</td><td><span class="tag tag-green">新增</span> 增量同步基准时间戳</td></tr>
+    </tbody>
+  </table>
+  <div class="highlight-box blue">
+    <i class="ri-information-line"></i>
+    <strong>时间戳格式：</strong><code>YYYY-MM-DD HH:mm:ss</code>，与SQL标准兼容。例如 <code>2026-05-16 14:30:00</code>。
+  </div>
+</div>
+
+<!-- 第4章：全量获取流程 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-blue"><i class="ri-download-line"></i></i>
+    4. 全量获取流程
+  </div>
+  <div class="flow-steps">
+    <div class="flow-step">
+      <div class="flow-step-num" style="background:var(--primary);">1</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">请求客户数据</div>
+        <div class="flow-step-desc">
+          请求参数：<code>field: "id,cu_name,amstamp"</code>，无 where 条件，获取全部客户记录。<br>
+          返回数据标准化为 <code>{ id, name }</code> 格式，直接覆盖写入 LS。
+        </div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num" style="background:var(--primary);">2</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">请求产品数据</div>
+        <div class="flow-step-desc">
+          请求参数：<code>field: "id,pro_name,model,spec,modstm"</code>，无 where 条件，获取全部产品记录。<br>
+          返回数据标准化为 <code>{ id, name, model, spec }</code> 格式，直接覆盖写入 LS。
+        </div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num" style="background:var(--green);">3</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">记录时间戳</div>
+        <div class="flow-step-desc">
+          同时写入 <code>pinyin_tool_sync_time</code> 和 <code>pinyin_tool_incremental_time</code>，值为当前时间。<br>
+          此时间戳作为后续增量获取的基准。
+        </div>
+      </div>
+    </div>
+  </div>
+  <pre><span class="comment">// 全量获取请求参数</span>
+{
+  <span class="key">"cmd"</span>: <span class="string">"load_data"</span>,
+  <span class="key">"dtname"</span>: <span class="string">"customer"</span>,
+  <span class="key">"field"</span>: <span class="string">"id,cu_name,amstamp"</span>,
+  <span class="key">"flag"</span>: 1
+}
+
+<span class="comment">// 完成后记录时间戳</span>
+<span class="keyword">var</span> now = <span class="keyword">new</span> Date().toISOString().replace(<span class="string">'T'</span>, <span class="string">' '</span>).substring(0, 19);
+localStorage.setItem(LS_KEY_SYNC_TIME, now);
+localStorage.setItem(LS_KEY_INCREMENTAL_TIME, now);</pre>
+</div>
+
+<!-- 第5章：增量获取流程 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-green"><i class="ri-refresh-line"></i></i>
+    5. 增量获取流程
+  </div>
+  <div class="flow-steps">
+    <div class="flow-step">
+      <div class="flow-step-num" style="background:var(--amber);">0</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">前置检查</div>
+        <div class="flow-step-desc">
+          读取 <code>pinyin_tool_incremental_time</code>。如果不存在，说明从未进行过全量获取，<br>
+          提示用户"请先全量获取"并终止。
+        </div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num" style="background:var(--primary);">1</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">增量请求客户数据</div>
+        <div class="flow-step-desc">
+          where 条件：<code>amstamp > '上次时间戳'</code>，只返回有变更的客户记录。<br>
+          与 LS 中已有数据按 id 做 Map 合并（新数据覆盖旧数据），写回 LS。
+        </div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num" style="background:var(--primary);">2</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">增量请求产品数据</div>
+        <div class="flow-step-desc">
+          where 条件：<code>modstm > '上次时间戳'</code>，只返回有变更的产品记录。<br>
+          同样按 id 合并到 LS。
+        </div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num" style="background:var(--purple);">3</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">自动增量生成拼音</div>
+        <div class="flow-step-desc">
+          调用 <code>generateIncrementalPinyin(newCustomerIds, newProductIds)</code>，<br>
+          只为本次新增/变更的记录生成拼音，已有拼音数据保持不变。
+        </div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num" style="background:var(--green);">4</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">更新时间戳</div>
+        <div class="flow-step-desc">
+          将当前时间写入 <code>pinyin_tool_sync_time</code> 和 <code>pinyin_tool_incremental_time</code>，<br>
+          作为下次增量获取的基准。
+        </div>
+      </div>
+    </div>
+  </div>
+  <pre><span class="comment">// 增量获取请求参数（客户）</span>
+{
+  <span class="key">"cmd"</span>: <span class="string">"load_data"</span>,
+  <span class="key">"dtname"</span>: <span class="string">"customer"</span>,
+  <span class="key">"field"</span>: <span class="string">"id,cu_name,amstamp"</span>,
+  <span class="key">"where"</span>: <span class="string">"amstamp > '2026-05-16 14:30:00'"</span>,
+  <span class="key">"flag"</span>: 1
+}
+
+<span class="comment">// 增量获取请求参数（产品）</span>
+{
+  <span class="key">"cmd"</span>: <span class="string">"load_data"</span>,
+  <span class="key">"dtname"</span>: <span class="string">"product"</span>,
+  <span class="key">"field"</span>: <span class="string">"id,pro_name,model,spec,modstm"</span>,
+  <span class="key">"where"</span>: <span class="string">"modstm > '2026-05-16 14:30:00'"</span>,
+  <span class="key">"flag"</span>: 1
+}</pre>
+</div>
+
+<!-- 第6章：数据合并策略 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-amber"><i class="ri-merge-cells-horizontal"></i></i>
+    6. 数据合并策略
+  </div>
+  <p>增量获取的数据需要与 LS 中已有数据合并，采用 <strong>按 id 覆盖</strong> 策略：</p>
+  <pre><span class="comment">// 合并算法</span>
+<span class="keyword">var</span> existing = getCustomers();          <span class="comment">// LS中已有数据</span>
+<span class="keyword">var</span> existingMap = {};
+existing.forEach(<span class="keyword">function</span>(c) { existingMap[c.id] = c; });  <span class="comment">// 按id建Map</span>
+normalized.forEach(<span class="keyword">function</span>(c) { existingMap[c.id] = c; }); <span class="comment">// 新数据覆盖</span>
+<span class="keyword">var</span> merged = Object.values(existingMap);  <span class="comment">// 合并结果</span>
+setStore(LS_KEY_CUSTOMER, merged);</pre>
+  <div class="highlight-box green">
+    <i class="ri-check-line"></i>
+    <strong>效果：</strong>相同 id 的记录被新数据覆盖（更新），不同 id 的记录保留（新增），LS 中有但接口未返回的记录也保留。
+  </div>
+  <div class="highlight-box amber">
+    <i class="ri-alert-line"></i>
+    <strong>5万上限约束：</strong>增量合并后，如果客户或产品的总条数超过 50,000，将自动截断为前 50,000 条，弹出 toast 提示"总量超界，只取5万数据"，保障 IndexedDB 中客户和产品的最大条数不超过各5万条。
+    <pre><span class="comment">// 增量合并后截断检查</span>
+<span class="keyword">if</span> (merged.length > <span class="num">50000</span>) {
+  merged = merged.slice(<span class="num">0</span>, <span class="num">50000</span>);
+  showToast(<span class="string">'总量超界，只取5万数据'</span>, <span class="string">'error'</span>);
+}</pre>
+  </div>
+</div>
+
+<!-- 第7章：增量拼音生成 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-purple"><i class="ri-text"></i></i>
+    7. 增量拼音生成
+  </div>
+  <p>增量获取后自动调用 <code>generateIncrementalPinyin(customerIds, productIds)</code>，只处理变更的记录：</p>
+  <pre><span class="keyword">function</span> <span class="func">generateIncrementalPinyin</span>(customerIds, productIds) {
+  <span class="keyword">var</span> cp = getCustomerPinyin();   <span class="comment">// 读取已有拼音（不重置）</span>
+  <span class="keyword">var</span> pp = getProductPinyin();
+
+  customerIds.forEach(<span class="keyword">function</span>(id) {
+    <span class="keyword">var</span> c = customerMap[id];
+    <span class="keyword">var</span> py = generatePinyinForText(c.name);
+    cp[id] = { id, name, pinyin, pinyin_abbr };  <span class="comment">// 覆盖或新增</span>
+  });
+
+  productIds.forEach(<span class="keyword">function</span>(id) {
+    <span class="keyword">var</span> p = productMap[id];
+    <span class="keyword">var</span> combined = [p.name, p.model, p.spec].filter(...).join(<span class="string">' '</span>);
+    <span class="keyword">var</span> py = generatePinyinForText(combined);
+    pp[id] = { id, name, model, spec, pinyin, pinyin_abbr };
+  });
+
+  setStore(LS_KEY_PINYIN_CUSTOMER, cp);
+  setStore(LS_KEY_PINYIN_PRODUCT, pp);
+}</pre>
+  <div class="highlight-box purple">
+    <i class="ri-contrast-2-line"></i>
+    <strong>与全量拼音生成的区别：</strong>全量生成 <code>generateAllPinyin</code> 从 <code>cp={}</code> <code>pp={}</code> 开始重写所有拼音；增量生成从 <code>getCustomerPinyin()</code> 读取已有数据，只覆盖变更部分。
+  </div>
+</div>
+
+<!-- 第8章：全量 vs 增量对比 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-amber"><i class="ri-scales-3-line"></i></i>
+    8. 全量 vs 增量对比
+  </div>
+  <table>
+    <thead>
+      <tr><th>维度</th><th>全量获取</th><th>增量获取</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>where 条件</td><td>无</td><td><code>amstamp/modstm > 上次时间</code></td></tr>
+      <tr><td>返回数据量</td><td>全部记录</td><td>仅变更记录</td></tr>
+      <tr><td>LS 写入策略</td><td>直接覆盖</td><td>按 id Map 合并</td></tr>
+      <tr><td>拼音生成</td><td>需手动触发全量生成</td><td>自动增量生成</td></tr>
+      <tr><td>时间戳更新</td><td>✅ 同步更新</td><td>✅ 同步更新</td></tr>
+      <tr><td>清除已删除记录</td><td>✅ 自然清除</td><td>❌ 无法感知删除</td></tr>
+      <tr><td>适用场景</td><td>首次使用 / 定期清理</td><td>日常同步</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- 第9章：已删除记录的处理 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-red"><i class="ri-delete-bin-line"></i></i>
+    9. 已删除记录的处理
+  </div>
+  <div class="highlight-box red">
+    <i class="ri-error-warning-line"></i>
+    <strong>已知限制：</strong>增量获取的 where 条件只能筛选出新增和修改的记录，无法感知后台已删除的记录。LS 中可能残留已删除的脏数据。
+  </div>
+  <p><strong>推荐做法：</strong></p>
+  <table>
+    <thead>
+      <tr><th>方案</th><th>做法</th><th>适用场景</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><span class="tag tag-green">推荐</span> 定期全量</td><td>每天首次使用时点一次全量获取，其余时间用增量</td><td>数据变更不频繁</td></tr>
+      <tr><td><span class="tag tag-blue">可选</span> 增量后校验</td><td>增量获取后，再用 <code>field:"id"</code> 查一次全量 ID 列表，LS 中不在列表的删除</td><td>对数据一致性要求高</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- 第10章：时序图 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-blue"><i class="ri-flow-chart"></i></i>
+    10. 增量获取时序
+  </div>
+  <pre>
+用户点击"增量获取"
+    │
+    ▼
+读取 pinyin_tool_incremental_time ──── 不存在 ──→ 提示"请先全量获取" ──→ 结束
+    │
+    │ 存在（如 2026-05-16 14:30:00）
+    ▼
+POST /system/api.xt ──── customer where: amstamp > '2026-05-16 14:30:00'
+    │
+    ▼
+返回变更客户 ──→ 按 id 合并到 LS ──→ 记录 newCustomerIds
+    │
+    ▼
+POST /system/api.xt ──── product where: modstm > '2026-05-16 14:30:00'
+    │
+    ▼
+返回变更产品 ──→ 按 id 合并到 LS ──→ 记录 newProductIds
+    │
+    ▼
+generateIncrementalPinyin(newCustomerIds, newProductIds)
+    │  只为变更记录生成拼音，已有拼音保持不变
+    ▼
+更新 pinyin_tool_incremental_time = 当前时间
+    │
+    ▼
+完成 ✅
+  </pre>
+</div>
+
+</div>
+</body>
+</html>

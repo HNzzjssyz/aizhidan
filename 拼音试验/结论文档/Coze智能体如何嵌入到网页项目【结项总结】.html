@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coze智能体如何嵌入到网页项目【结项总结】</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; line-height: 1.8; color: #1f2937; background: linear-gradient(135deg, #f0f4ff 0%, #faf5ff 100%); padding: 40px 20px; }
+.container { max-width: 1100px; margin: 0 auto; background: white; border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.08); padding: 40px 48px; }
+h1 { font-size: 28px; color: #1e40af; border-bottom: 4px solid #3b82f6; padding-bottom: 12px; margin-bottom: 8px; }
+.subtitle { color: #6b7280; font-size: 14px; margin-bottom: 24px; }
+.core-tag { display: inline-block; background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: white; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; margin-left: 8px; vertical-align: middle; }
+h2 { font-size: 22px; color: #1e40af; margin-top: 36px; margin-bottom: 16px; padding-left: 12px; border-left: 5px solid #3b82f6; }
+h2.core { border-left: 8px solid #f59e0b; background: linear-gradient(90deg, #fffbeb 0%, transparent 60%); padding-top: 8px; padding-bottom: 8px; }
+h3 { font-size: 17px; color: #4338ca; margin-top: 20px; margin-bottom: 10px; padding: 6px 12px; background: #eef2ff; border-radius: 6px; }
+h4 { font-size: 15px; color: #7c3aed; margin-top: 14px; margin-bottom: 8px; }
+p { margin-bottom: 12px; text-align: justify; }
+ul, ol { margin: 8px 0 16px 24px; }
+li { margin-bottom: 6px; }
+code { background: #f1f5f9; color: #be185d; padding: 2px 6px; border-radius: 4px; font-family: "SFMono-Regular", Consolas, monospace; font-size: 13px; }
+pre { background: #1e293b; color: #e2e8f0; padding: 16px 20px; border-radius: 8px; overflow-x: auto; margin: 12px 0; font-size: 13px; line-height: 1.6; }
+pre code { background: transparent; color: inherit; padding: 0; font-size: 13px; }
+pre.comment { background: #f8fafc; color: #475569; border-left: 4px solid #06b6d4; }
+pre.comment code { color: #0e7490; }
+.toc { background: linear-gradient(135deg, #eff6ff 0%, #f5f3ff 100%); border: 1px solid #c7d2fe; border-radius: 10px; padding: 18px 24px; margin-bottom: 28px; }
+.toc-title { font-weight: 700; color: #4338ca; margin-bottom: 10px; font-size: 15px; }
+.toc ol { list-style: none; counter-reset: toc; }
+.toc li { counter-increment: toc; margin-bottom: 4px; }
+.toc li::before { content: counters(toc, ".") " "; color: #6366f1; font-weight: 600; }
+.toc .core-item { color: #f59e0b; font-weight: 600; }
+.toc .core-item::before { content: "★ " !important; color: #f59e0b; }
+.box { padding: 16px 20px; border-radius: 8px; margin: 14px 0; }
+.info { background: #ecfeff; border-left: 4px solid #06b6d4; }
+.warn { background: #fef3c7; border-left: 4px solid #f59e0b; }
+.tip { background: #ecfdf5; border-left: 4px solid #10b981; }
+.danger { background: #fef2f2; border-left: 4px solid #ef4444; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+th, td { border: 1px solid #e5e7eb; padding: 8px 12px; text-align: left; }
+th { background: #f3f4f6; color: #374151; font-weight: 600; }
+tr:nth-child(even) td { background: #fafafa; }
+.flow { background: #fafafa; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 16px 20px; font-family: monospace; font-size: 13px; margin: 12px 0; white-space: pre; overflow-x: auto; }
+.highlight { color: #be185d; font-weight: 600; }
+.term { color: #0e7490; font-weight: 600; }
+.appendix { background: #fafafa; border-radius: 8px; padding: 12px 20px; margin-top: 12px; color: #6b7280; font-size: 14px; }
+.summary { background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border: 1px solid #fde68a; border-radius: 10px; padding: 18px 24px; margin: 24px 0; }
+.summary h4 { color: #92400e; margin-bottom: 8px; }
+.summary ul { color: #78350f; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1><i class="ri-robot-2-line"></i> Coze 智能体如何嵌入到网页项目<span class="core-tag">结项总结</span></h1>
+<p class="subtitle">基于"超兔-AI 制单"项目实战经验 · 主线聚焦"加载方式 + 鉴权方式"两个核心点</p>
+
+<div class="toc">
+  <div class="toc-title">📑 目录</div>
+  <ol>
+    <li class="core-item"><a href="#summary">核心结论：5 句话讲清</a></li>
+    <li class="core-item"><a href="#loading">【核心】加载方式：CDN Script 1 行引入</a></li>
+    <li class="core-item"><a href="#auth-overview">【核心】鉴权方式：双轨制（后端代理 + 用户 PAT 覆盖）</a></li>
+    <li class="core-item"><a href="#auth-backend">【核心】后端代理发 Token 的实现细节</a></li>
+    <li class="core-item"><a href="#auth-frontend">【核心】前端 Token 生命周期管理</a></li>
+    <li class="core-item"><a href="#auth-hybrid">【核心】双轨制仲裁逻辑：何时用后端？何时用 PAT？</a></li>
+    <li class="core-item"><a href="#auth-why">【核心】为什么这样设计？安全/灵活性/降级 三平衡</a></li>
+    <li><a href="#appendix-init">附录 A：initCozeSDK 完整流程</a></li>
+    <li><a href="#appendix-multi">附录 B：多智能体切换（PAT 覆盖场景）</a></li>
+    <li><a href="#appendix-paste">附录 C：图片粘贴转发（增强体验）</a></li>
+    <li><a href="#appendix-pitfalls">附录 D：常见坑与避雷清单</a></li>
+  </ol>
+</div>
+
+<div class="summary">
+<h4>★ 5 句话讲清核心</h4>
+<ul>
+  <li><strong>加载</strong>：用 Coze 官方 CDN（<code>lf-cdn.coze.cn</code>） 1 行 &lt;script&gt;，全局对象 <code>CozeWebSDK.WebChatClient</code> 即开即用</li>
+  <li><strong>鉴权主轨</strong>：<span class="highlight">前端永不接触 PAT</span>，每次启动调自家后端 <code>/system/bot/token.xt</code> 拿一个短期 token</li>
+  <li><strong>鉴权辅轨</strong>：高级用户可手动粘贴 PAT（存 IndexedDB），用于调试个人智能体</li>
+  <li><strong>token 刷新</strong>：实现 <code>onRefreshToken</code> 回调，过期时 SDK 自动续期</li>
+  <li><strong>核心代码量</strong>：<span class="highlight">3 个函数 + 30 行</span>（<code>fetchCozeToken</code> / <code>initCozeSDK</code> / <code>onRefreshToken</code>）即可完成全链路</li>
+</ul>
+</div>
+
+<h2 id="loading" class="core">【核心 1】加载方式：CDN Script 1 行引入</h2>
+
+<h3>1.1 选择 CDN Script 而不是 NPM 打包</h3>
+<table>
+  <tr><th>对比项</th><th>CDN Script 引入（✅本项目用）</th><th>NPM 打包（webpack/vite）</th></tr>
+  <tr><td>接入成本</td><td>1 行 script</td><td>安装依赖 + 配置构建</td></tr>
+  <tr><td>首屏体积</td><td>不占主 bundle，浏览器并行下载</td><td>增加主 bundle 体积</td></tr>
+  <tr><td>版本升级</td><td>改 URL 中的版本号即可</td><td>升级 npm 依赖 + 重新构建</td></tr>
+  <tr><td>多页面项目</td><td>所有页面共享浏览器缓存</td><td>每个 bundle 都要打一份</td></tr>
+  <tr><td>国内访问</td><td>用 <code>lf-cdn.coze.cn</code>，速度快</td><td>不影响</td></tr>
+</table>
+
+<p><strong>结论</strong>：本项目是"嵌入到现有 CRM 系统"的工具型页面，<span class="highlight">用 CDN Script 引入最划算</span>。</p>
+
+<h3>1.2 完整加载代码（[index.html L8](file:///Users/guorui/同步空间/20021218/临时开发/智能制单/拼音试验/dexiedb/index.html#L8)）</h3>
+<pre><code>&lt;head&gt;
+  ...
+  &lt;!-- Coze Web Chat SDK（国内版，含中文 UI） --&gt;
+  &lt;script src="https://lf-cdn.coze.cn/obj/unpkg/flow-platform/chat-app-sdk/1.2.0-beta.19/libs/cn/index.js"&gt;&lt;/script&gt;
+&lt;/head&gt;</code></pre>
+
+<div class="box info">
+<p><strong>URL 拆解</strong>：</p>
+<ul>
+  <li><code>lf-cdn.coze.cn</code>：字节跳动 CDN，国内访问稳定</li>
+  <li><code>obj/unpkg/flow-platform/chat-app-sdk</code>：SDK 名称</li>
+  <li><code>1.2.0-beta.19</code>：版本号（锁定版本，避免破坏性更新）</li>
+  <li><code>libs/cn</code>：国内版（中文 UI）；海外版用 <code>libs/oversea</code></li>
+</ul>
+</div>
+
+<h3>1.3 SDK 全局对象</h3>
+<p>脚本加载后，浏览器挂一个 <code>CozeWebSDK</code> 全局变量。所有 API 从这里出：</p>
+<pre><code>// 创建客户端
+var client = new CozeWebSDK.WebChatClient({ ... });
+
+// 常用方法
+client.showChatBot();      // 显示聊天浮窗
+client.hideChatBot();      // 隐藏
+client.destroy();          // 销毁（切换智能体时必须调用）</code></pre>
+
+<h3>1.4 加载时机检测（防未加载就调用）</h3>
+<pre><code>if (typeof CozeWebSDK === 'undefined') {
+  throw new Error('Coze SDK 未加载，请检查网络后刷新页面');
+}</code></pre>
+
+<div class="box warn">
+<p><strong>坑</strong>：如果 CDN 加载慢或失败，直接调用 <code>new CozeWebSDK.WebChatClient(...)</code> 会报 <code>CozeWebSDK is undefined</code>。在 <code>initCozeSDK</code> 开头加上面这层保护。</p>
+</div>
+
+<h2 id="auth-overview" class="core">【核心 2】鉴权方式：双轨制</h2>
+
+<h3>2.1 本项目使用的双轨制鉴权</h3>
+<p>本系统采用 <span class="highlight">"后端代理发 Token" + "用户可手动覆盖 PAT"</span> 的双轨方案：</p>
+
+<table>
+  <tr><th>轨道</th><th>触发条件</th><th>Token 来源</th><th>存哪</th><th>适用场景</th></tr>
+  <tr>
+    <td><strong>主轨：后端代理</strong></td>
+    <td>用户没有配置自定义智能体</td>
+    <td>后端 <code>/system/bot/token.xt</code> 动态生成</td>
+    <td>仅在 JS 内存</td>
+    <td>99% 场景（生产）</td>
+  </tr>
+  <tr>
+    <td><strong>辅轨：用户 PAT</strong></td>
+    <td>用户在配置面板添加并启用了自定义智能体</td>
+    <td>用户从 Coze 平台手动粘贴</td>
+    <td>IndexedDB（加密可选）</td>
+    <td>个人/调试/演示</td>
+  </tr>
+</table>
+
+<h3>2.2 双轨制整体流程</h3>
+<div class="flow">┌────────────────────────────────────────────────────────────────────────┐
+│                          浏览器 (index.html)                            │
+├────────────────────────────────────────────────────────────────────────┤
+│  1. 启动：业务初始化完成                                               │
+│     └─► initCozeSDK()                                                 │
+│           │                                                            │
+│           │ 2. 查 IndexedDB，看用户是否配置了"激活的智能体"？           │
+│           ▼                                                            │
+│  ┌────────────────────┐         YES          ┌────────────────────┐   │
+│  │ 查到激活智能体？    │ ───────────────────► │ 用该智能体的 PAT    │   │
+│  └─────────┬──────────┘                     │ (IndexedDB 读出)    │   │
+│            │ NO                              └─────────┬──────────┘   │
+│            ▼                                          │               │
+│  ┌────────────────────┐                               │               │
+│  │ 调 fetchCozeToken  │                               │               │
+│  │ GET /bot/token.xt  │                               │               │
+│  └─────────┬──────────┘                               │               │
+│            │                                          │               │
+│            ▼                                          ▼               │
+│  ┌──────────────────────────────────────────────────────────────┐     │
+│  │ new CozeWebSDK.WebChatClient({ auth: { type:'token', token }})│     │
+│  │        token 仅存活于本次会话的 JS 内存                       │     │
+│  └──────────────────────────────────────────────────────────────┘     │
+│            │                                                          │
+│            ▼                                                          │
+│  ┌──────────────────────────────────────────────────────────────┐     │
+│  │  [运行中] SDK 内部发现 token 过期                             │     │
+│  │        └─► 回调 onRefreshToken()                              │     │
+│  │              ├─ 用户 PAT 模式：直接返回原 PAT                  │     │
+│  │              └─ 后端代理模式：再 fetch 一次                    │     │
+│  └──────────────────────────────────────────────────────────────┘     │
+└────────────────────────────────────────────────────────────────────────┘</div>
+
+<h2 id="auth-backend" class="core">【核心 3】后端代理发 Token 的实现细节</h2>
+
+<h3>3.1 为什么不直接把 PAT 写前端？</h3>
+<div class="box danger">
+<p><strong>致命风险</strong>：Coze PAT（Personal Access Token）相当于 Coze 平台的 <span class="highlight">超级用户凭证</span>，拿到后可以：</p>
+<ul>
+  <li>调用该账号下所有智能体</li>
+  <li>读取所有知识库</li>
+  <li>消耗所有付费额度</li>
+</ul>
+<p>如果写死在 JS 里，<strong>任何用户打开 DevTools 都能看到</strong>，等于把钥匙挂在门上。</p>
+</div>
+
+<h3>3.2 前端调用：<code>fetchCozeToken()</code>（[L1786-1797](file:///Users/guorui/同步空间/20021218/临时开发/智能制单/拼音试验/dexiedb/index.html#L1786-L1797)）</h3>
+<pre><code>var API_BASE = '/system';
+
+async function fetchCozeToken() {
+  var response = await fetch(API_BASE + '/bot/token.xt', {
+    method: 'GET',
+    credentials: 'include',   // 携带 CRM 自身的登录态 cookie
+    headers: { 'Content-Type': 'application/json' }
+  });
+  var data = await response.json();
+  if (data.ok !== 1 || !data.accessToken) {
+    throw new Error(data.msg || '获取 Coze 令牌失败');
+  }
+  return data.accessToken;   // ← 短期 token，仅本次有效
+}</code></pre>
+
+<h3>3.3 后端 <code>/system/bot/token.xt</code> 的内部实现（伪代码）</h3>
+<pre><code>// 伪代码：项目后端实现示意（不暴露真实凭证）
+async function handleTokenRequest(req, res) {
+  // ① 校验调用方身份（CRM 自身的 session/cookie）
+  var session = checkSession(req);
+  if (!session) return res.json({ ok: 0, msg: '未登录' });
+
+  // ② 检查是否已有未过期的 token（缓存复用）
+  var cached = getCachedToken(session.userId);
+  if (cached && cached.expiresAt > Date.now() + 60000) {
+    return res.json({ ok: 1, accessToken: cached.token });
+  }
+
+  // ③ 调 Coze 鉴权服务，生成短期 token
+  //    关键：服务端的 PAT 凭证从环境变量读，绝不出现在请求/响应中
+  var cozeRes = await fetch('https://api.coze.cn/v1/oauth/token', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + process.env.COZE_SERVICE_PAT  // ← 服务端凭证
+    },
+    body: JSON.stringify({
+      grant_type: 'client_credentials',
+      duration_seconds: 3600   // 1 小时有效期
+    })
+  });
+  var cozeData = await cozeRes.json();
+
+  // ④ 缓存到 Redis（按 user 隔离）
+  saveCachedToken(session.userId, cozeData.access_token, cozeData.expires_in);
+
+  // ⑤ 只返回给浏览器短期 token
+  return res.json({ ok: 1, accessToken: cozeData.access_token });
+}</code></pre>
+
+<h3>3.4 服务端凭证的安全保护</h3>
+<table>
+  <tr><th>措施</th><th>说明</th></tr>
+  <tr><td>环境变量存储</td><td><code>COZE_SERVICE_PAT</code> 存 <code>.env</code>，不进 git</td></tr>
+  <tr><td>Redis 缓存</td><td>避免每次都调 Coze 鉴权（限流友好）</td></tr>
+  <tr><td>短期 token</td><td>返回给浏览器的 token 仅 1 小时有效</td></tr>
+  <tr><td>Session 校验</td><td>未登录的请求直接拒绝</td></tr>
+  <tr><td>服务端 PAT 永不下发</td><td>浏览器永远拿不到真正的"主人钥匙"</td></tr>
+</table>
+
+<div class="box tip">
+<p><strong>关键设计</strong>：前端拿到的是<span class="highlight">"客房钥匙"</span>（短期、有限权限、丢了无所谓），真正的"主人钥匙"（服务端 PAT）永远锁在保险箱里（服务端环境变量）。</p>
+</div>
+
+<h2 id="auth-frontend" class="core">【核心 4】前端 Token 生命周期管理</h2>
+
+<h3>4.1 完整生命周期</h3>
+<div class="flow">                    ┌──────────────┐
+                    │  initCozeSDK │
+                    └──────┬───────┘
+                           │
+                           ▼
+              ┌────────────────────────┐
+              │ ① fetch token（一次）  │
+              │   /bot/token.xt        │
+              └────────────┬───────────┘
+                           │
+                           ▼
+              ┌────────────────────────┐
+              │ ② 注入 SDK：           │
+              │   auth.token = xxx     │
+              └────────────┬───────────┘
+                           │
+                           ▼
+              ┌────────────────────────┐
+              │ ③ SDK 使用 token       │◄────────┐
+              │    调 Coze API         │         │
+              └────────────┬───────────┘         │
+                           │                     │
+                  token 过期（~1h）               │
+                           │                     │
+                           ▼                     │
+              ┌────────────────────────┐         │
+              │ ④ SDK 回调             │         │
+              │   onRefreshToken()     │         │
+              └────────────┬───────────┘         │
+                           │                     │
+              ┌────────────┴───────────┐         │
+              │                        │         │
+              ▼                        ▼         │
+   ┌──────────────────┐    ┌──────────────────┐  │
+   │ 用户 PAT 模式     │    │ 后端代理模式      │  │
+   │ 直接返回原 PAT    │    │ 再 fetch 一次     │  │
+   └────────┬─────────┘    └────────┬─────────┘  │
+            │                       │            │
+            └───────────┬───────────┘            │
+                        │                        │
+                        ▼                        │
+              ┌────────────────────────┐         │
+              │ ⑤ 返回新 token         │─────────┘
+              │    SDK 自动重试         │
+              └────────────────────────┘</div>
+
+<h3>4.2 核心代码：<code>onRefreshToken</code> 回调（[L1823-1832](file:///Users/guorui/同步空间/20021218/临时开发/智能制单/拼音试验/dexiedb/index.html#L1823-L1832)）</h3>
+<pre><code>cozeClient = new CozeWebSDK.WebChatClient({
+  config: { bot_id: useBotId },
+  auth: {
+    type: 'token',
+    token: useToken,                       // 首次 token
+    onRefreshToken: async function () {     // ← 过期时 SDK 回调
+      if (agent &&amp; agent.token) {
+        // 辅轨：用户 PAT 模式，直接返回原 PAT
+        return agent.token;
+      }
+      // 主轨：后端代理模式，再 fetch 一次
+      cozeAccessToken = await fetchCozeToken();
+      return cozeAccessToken;
+    }
+  },
+  ...
+});</code></pre>
+
+<h3>4.3 异常分支：fetch 失败的降级</h3>
+<pre><code>// 业务层容错：fetch 失败时给出友好提示
+async function initCozeSDK() {
+  try {
+    var agent = await loadActiveAgent();
+    var useToken = (agent &amp;&amp; agent.token) ? agent.token : await fetchCozeToken();
+    // ...创建 client...
+  } catch (err) {
+    console.error('Coze SDK 初始化失败:', err);
+    showToast('智能助手加载失败：' + err.message, 'error');
+    // 不阻塞主业务（拼音匹配仍可用）
+  }
+}</code></pre>
+
+<h2 id="auth-hybrid" class="core">【核心 5】双轨制仲裁逻辑：何时用后端？何时用 PAT？</h2>
+
+<h3>5.1 仲裁代码：<code>loadActiveAgent()</code></h3>
+<pre><code>// 从 IndexedDB 读用户配置的"激活"智能体
+async function loadActiveAgent() {
+  var all = await AgentConfig.getAll();   // 读 IndexedDB
+  var active = all.find(function (a) { return a.active === true; });
+  return active || null;   // null = 没配置，走后端代理
+}</code></pre>
+
+<h3>5.2 仲裁决策表</h3>
+<table>
+  <tr><th>条件</th><th>结果</th><th>Token 来源</th></tr>
+  <tr>
+    <td>没配置任何智能体 OR 没有"激活"的</td>
+    <td>走主轨</td>
+    <td><code>fetch('/system/bot/token.xt')</code></td>
+  </tr>
+  <tr>
+    <td>配置了智能体但 PAT 为空</td>
+    <td>走主轨</td>
+    <td><code>fetch('/system/bot/token.xt')</code></td>
+  </tr>
+  <tr>
+    <td>配置了智能体且 PAT 非空</td>
+    <td>走辅轨</td>
+    <td>用 IndexedDB 中的 PAT</td>
+  </tr>
+  <tr>
+    <td>辅轨的 PAT 也失效（onRefreshToken 回调）</td>
+    <td>仍走辅轨</td>
+    <td>返回原 PAT（用户自行去 Coze 平台续期）</td>
+  </tr>
+</table>
+
+<h3>5.3 切换智能体 → 触发重新初始化</h3>
+<pre><code>function selectAgent(id) {
+  AgentConfig.setActive(id).then(function () {
+    return loadActiveAgent();
+  }).then(function (agent) {
+    renderAgentConfigList();
+    showToast('已切换智能体，正在重新连接...');
+    initCozeSDK();   // ← 销毁旧 client，重新走仲裁
+  });
+}</code></pre>
+
+<h2 id="auth-why" class="core">【核心 6】为什么这样设计？三平衡考量</h2>
+
+<h3>6.1 三个核心目标</h3>
+<table>
+  <tr><th>目标</th><th>主轨如何满足</th><th>辅轨如何满足</th></tr>
+  <tr>
+    <td><strong>安全</strong></td>
+    <td>PAT 不出服务端，浏览器拿到的 token 短期+可撤销</td>
+    <td>PAT 由用户自己保管，泄露责任自担</td>
+  </tr>
+  <tr>
+    <td><strong>灵活性</strong></td>
+    <td>统一管理，多用户共享同一智能体</td>
+    <td>个人可挂自己的 Bot 调试，不影响主流程</td>
+  </tr>
+  <tr>
+    <td><strong>降级</strong></td>
+    <td>辅轨可独立使用，即使后端宕机也能跑</td>
+    <td>主轨可独立使用，即使没配 PAT 也能跑</td>
+  </tr>
+</table>
+
+<h3>6.2 与"全后端代理"和"全前端 PAT"方案的对比</h3>
+<table>
+  <tr><th>方案</th><th>安全</th><th>灵活</th><th>降级</th><th>实现成本</th><th>本项目选择</th></tr>
+  <tr>
+    <td>全后端代理（无 PAT 覆盖）</td>
+    <td>✅✅✅</td>
+    <td>❌</td>
+    <td>❌（后端宕就全废）</td>
+    <td>低</td>
+    <td>—</td>
+  </tr>
+  <tr>
+    <td>全前端 PAT（无后端代理）</td>
+    <td>❌</td>
+    <td>✅✅✅</td>
+    <td>✅</td>
+    <td>低</td>
+    <td>—</td>
+  </tr>
+  <tr>
+    <td><strong>双轨制（本项目）</strong></td>
+    <td>✅✅</td>
+    <td>✅✅</td>
+    <td>✅✅</td>
+    <td>中</td>
+    <td>✅</td>
+  </tr>
+</table>
+
+<h3>6.3 适用边界</h3>
+<div class="box info">
+<p>本系统作为<strong>内部业务系统</strong>，用户数有限、需要快速试错各种 Bot，双轨制收益最大。</p>
+<p>如果做<strong>对外 SaaS</strong>，建议只用主轨（更安全），辅轨对管理员开放即可。</p>
+</div>
+
+<div class="appendix">
+<strong>★ 主线已结束 ★</strong> 下面是周边内容（如已掌握主线可跳过）：<br>
+· 附录 A：<code>initCozeSDK</code> 完整流程<br>
+· 附录 B：多智能体切换（PAT 覆盖场景）<br>
+· 附录 C：图片粘贴转发（增强体验）<br>
+· 附录 D：常见坑与避雷清单
+</div>
+
+<h2 id="appendix-init">附录 A：initCozeSDK 完整流程</h2>
+<pre><code>var cozeClient = null;
+var cozeAccessToken = null;
+
+async function initCozeSDK() {
+  // ① 拉取当前激活的智能体配置
+  var agent = await loadActiveAgent();
+  var useBotId = (agent &&amp; agent.bot_id) ? agent.bot_id : '7638933573109792777';
+  var useToken = (agent &&amp; agent.token) ? agent.token : await fetchCozeToken();
+  cozeAccessToken = useToken;
+
+  if (typeof CozeWebSDK === 'undefined') {
+    throw new Error('Coze SDK 未加载，请刷新页面');
+  }
+
+  // ② 销毁旧实例（重要！否则会重复挂载）
+  if (cozeClient &&amp; typeof cozeClient.destroy === 'function') {
+    cozeClient.destroy();
+  }
+
+  // ③ 创建新客户端
+  cozeClient = new CozeWebSDK.WebChatClient({
+    config: { bot_id: useBotId },
+    auth: {
+      type: 'token',
+      token: useToken,
+      onRefreshToken: async function () {
+        if (agent &amp;&amp; agent.token) return agent.token;
+        cozeAccessToken = await fetchCozeToken();
+        return cozeAccessToken;
+      }
+    },
+    ui: {
+      base: { lang: 'zh-CN', zIndex: 50 },
+      asstBtn: { isNeed: true },
+      chatBot: {
+        title: agent?.name || '智能制单助手',
+        uploadable: true,
+        width: 460
+      },
+      header: { isShow: true, isNeedClose: false }
+    }
+  });
+
+  // ④ 显示聊天窗口
+  setTimeout(function () {
+    if (cozeClient &amp;&amp; typeof cozeClient.showChatBot === 'function') {
+      cozeClient.showChatBot();
+    }
+  }, 500);
+}</code></pre>
+
+<h2 id="appendix-multi">附录 B：多智能体切换（PAT 覆盖场景）</h2>
+<p>用户可在配置面板增删改多个智能体，存到 IndexedDB：</p>
+<pre><code>// IndexedDB schema
+AgentConfigDB
+  └─ agent_configs: { id, name, bot_id, token, active }</code></pre>
+
+<p>切换时调用 <code>selectAgent(id)</code> → 重新 <code>initCozeSDK()</code>，自动 destroy 旧 client + 创建新 client + 走仲裁逻辑。详见 [index.html L1702-1709](file:///Users/guorui/同步空间/20021218/临时开发/智能制单/拼音试验/dexiedb/index.html#L1702-L1709)。</p>
+
+<h2 id="appendix-paste">附录 C：图片粘贴转发（增强体验）</h2>
+<p>用户在网页任意位置 <code>Ctrl+V</code> 粘贴图片时，自动转发到 Coze SDK 上传框：</p>
+<pre><code>document.addEventListener('paste', function (e) {
+  // 1. 检测是否包含图片
+  var hasImage = Array.from(e.clipboardData.items).some(function (it) {
+    return it.kind === 'file' &amp;&amp; it.type.indexOf('image/') === 0;
+  });
+  if (!hasImage) return;
+
+  // 2. 不要重复（如果光标在 SDK 输入区，让 SDK 自己处理）
+  if (isInCozeSDKArea(e.target)) return;
+
+  // 3. 把文件喂给 SDK 的隐藏 file input
+  e.preventDefault();
+  var fileInput = document.querySelector('input.coze-chat-sdk-semi-upload-hidden-input');
+  if (fileInput) {
+    var dt = new DataTransfer();
+    Array.from(e.clipboardData.files).forEach(function (f) { dt.items.add(f); });
+    fileInput.files = dt.files;
+    fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+}, true);  // 捕获阶段</code></pre>
+
+<h2 id="appendix-pitfalls">附录 D：常见坑与避雷清单</h2>
+<table>
+  <tr><th>坑</th><th>症状</th><th>解决方案</th></tr>
+  <tr><td>PAT 硬编码在 JS</td><td>DevTools 一打开就泄露</td><td>走后端代理，前端永不接触 PAT</td></tr>
+  <tr><td>不 <code>destroy</code> 直接 new</td><td>浮窗重复挂载、事件多次触发</td><td>init 开头 <code>if (cozeClient) cozeClient.destroy();</code></td></tr>
+  <tr><td>Token 过期没处理</td><td>对话几分钟后 401</td><td>实现 <code>onRefreshToken</code></td></tr>
+  <tr><td>zIndex 设太大</td><td>Coze 浮窗盖住业务弹窗</td><td>Coze 设 50，业务弹窗 1000+</td></tr>
+  <tr><td>CDN 加载慢</td><td>页面卡白几秒</td><td>加 <code>async</code>/<code>defer</code>，初始化失败有提示</td></tr>
+  <tr><td>SDK 未加载就调用</td><td><code>CozeWebSDK is undefined</code></td><td>用 <code>typeof CozeWebSDK === 'undefined'</code> 检测</td></tr>
+</table>
+
+<hr style="margin: 36px 0; border: none; border-top: 1px dashed #cbd5e1;">
+<p style="color: #9ca3af; font-size: 13px; text-align: center;">结项总结 · 主线（加载+鉴权）已固化 · 周边内容仅作附录参考 · 2026-06-11</p>
+
+</div>
+</body>
+</html>

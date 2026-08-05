@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>远端增量更新方案 — 支持删除同步</title>
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+<style>
+:root {
+  --bg: #f8f9fb;
+  --card: #ffffff;
+  --border: #e8ecf0;
+  --text: #1f2937;
+  --text-secondary: #6b7280;
+  --primary: #3b82f6;
+  --primary-light: #eff6ff;
+  --primary-border: #bfdbfe;
+  --green: #10b981;
+  --green-light: #ecfdf5;
+  --green-border: #a7f3d0;
+  --amber: #f59e0b;
+  --amber-light: #fffbeb;
+  --amber-border: #fde68a;
+  --red: #ef4444;
+  --red-light: #fef2f2;
+  --red-border: #fecaca;
+  --purple: #8b5cf6;
+  --purple-light: #f5f3ff;
+  --purple-border: #ddd6fe;
+  --teal: #14b8a6;
+  --teal-light: #f0fdfa;
+  --teal-border: #99f6e4;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  padding: 32px 20px;
+}
+.container { max-width: 960px; margin: 0 auto; }
+
+.doc-header {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px 48px;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+}
+.doc-header::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ef4444, #10b981);
+}
+.doc-header h1 {
+  font-size: 28px; font-weight: 700; color: var(--text);
+  margin-bottom: 8px; display: flex; align-items: center; gap: 12px;
+}
+.doc-header h1 i { color: var(--primary); font-size: 28px; }
+.doc-header .subtitle { font-size: 15px; color: var(--text-secondary); margin-bottom: 20px; }
+.doc-meta { display: flex; gap: 24px; flex-wrap: wrap; }
+.doc-meta-item { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-secondary); }
+.doc-meta-item i { font-size: 14px; color: var(--primary); }
+.doc-meta-item strong { color: var(--text); font-weight: 600; }
+
+.section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 32px 36px;
+  margin-bottom: 20px;
+}
+.section-title {
+  font-size: 18px; font-weight: 700; color: var(--text);
+  margin-bottom: 20px; display: flex; align-items: center; gap: 10px;
+  padding-bottom: 14px; border-bottom: 1px solid var(--border);
+}
+.section-title i {
+  width: 32px; height: 32px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; color: white; flex-shrink: 0;
+}
+.icon-blue { background: var(--primary); }
+.icon-green { background: var(--green); }
+.icon-amber { background: var(--amber); }
+.icon-red { background: var(--red); }
+.icon-purple { background: var(--purple); }
+.icon-teal { background: var(--teal); }
+
+p { font-size: 14px; color: var(--text); margin-bottom: 12px; line-height: 1.8; }
+p:last-child { margin-bottom: 0; }
+
+.highlight-box {
+  border-radius: 10px; padding: 16px 20px; margin-bottom: 16px;
+  font-size: 14px; line-height: 1.8;
+}
+.highlight-box.blue { background: var(--primary-light); border: 1px solid var(--primary-border); color: #1e40af; }
+.highlight-box.green { background: var(--green-light); border: 1px solid var(--green-border); color: #065f46; }
+.highlight-box.amber { background: var(--amber-light); border: 1px solid var(--amber-border); color: #92400e; }
+.highlight-box.red { background: var(--red-light); border: 1px solid var(--red-border); color: #991b1b; }
+.highlight-box.purple { background: var(--purple-light); border: 1px solid var(--purple-border); color: #5b21b6; }
+.highlight-box.teal { background: var(--teal-light); border: 1px solid var(--teal-border); color: #134e4a; }
+.highlight-box i { margin-right: 6px; }
+
+pre {
+  background: #1e293b; color: #e2e8f0; border-radius: 10px;
+  padding: 20px 24px; margin-bottom: 16px; overflow-x: auto;
+  font-size: 13px; line-height: 1.7; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+}
+pre .comment { color: #64748b; }
+pre .keyword { color: #c084fc; }
+pre .string { color: #34d399; }
+pre .key { color: #60a5fa; }
+pre .func { color: #fbbf24; }
+
+table {
+  width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 13px;
+}
+th, td {
+  padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border);
+}
+th { background: #f8f9fb; font-weight: 600; color: var(--text-secondary); font-size: 12px; }
+td { color: var(--text); }
+tr:last-child td { border-bottom: none; }
+
+.flow-steps { display: flex; flex-direction: column; gap: 0; margin-bottom: 16px; }
+.flow-step {
+  display: flex; gap: 16px; padding: 14px 0;
+  border-bottom: 1px dashed var(--border);
+}
+.flow-step:last-child { border-bottom: none; }
+.flow-step-num {
+  width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; color: white;
+}
+.flow-step-content { flex: 1; }
+.flow-step-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.flow-step-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.7; }
+
+.tag {
+  display: inline-block; padding: 2px 10px; border-radius: 6px;
+  font-size: 11px; font-weight: 600; margin-right: 4px;
+}
+.tag-blue { background: var(--primary-light); color: #1e40af; border: 1px solid var(--primary-border); }
+.tag-green { background: var(--green-light); color: #065f46; border: 1px solid var(--green-border); }
+.tag-amber { background: var(--amber-light); color: #92400e; border: 1px solid var(--amber-border); }
+.tag-red { background: var(--red-light); color: #991b1b; border: 1px solid var(--red-border); }
+.tag-purple { background: var(--purple-light); color: #5b21b6; border: 1px solid var(--purple-border); }
+.tag-teal { background: var(--teal-light); color: #134e4a; border: 1px solid var(--teal-border); }
+
+.compare-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;
+}
+.compare-card {
+  border-radius: 12px; padding: 20px 24px;
+  border: 1px solid var(--border);
+}
+.compare-card.soft { background: var(--amber-light); border-color: var(--amber-border); }
+.compare-card.hard { background: var(--red-light); border-color: var(--red-border); }
+.compare-card h4 { font-size: 15px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+.compare-card ul { list-style: none; padding: 0; }
+.compare-card li { font-size: 13px; line-height: 1.8; padding-left: 20px; position: relative; }
+.compare-card li::before { content: '•'; position: absolute; left: 6px; color: var(--text-secondary); }
+
+.todo-list { list-style: none; padding: 0; }
+.todo-item {
+  display: flex; gap: 12px; padding: 12px 16px;
+  border-radius: 10px; margin-bottom: 8px;
+  background: #f8fafc; border: 1px solid var(--border);
+}
+.todo-check {
+  width: 22px; height: 22px; border-radius: 6px; flex-shrink: 0;
+  border: 2px solid #d1d5db; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; color: white; margin-top: 2px;
+}
+.todo-check.done { background: var(--green); border-color: var(--green); }
+.todo-check.pending { background: #e5e7eb; border-color: #d1d5db; }
+.todo-content { flex: 1; }
+.todo-title { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+.todo-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+.todo-tag { margin-left: 8px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="doc-header">
+  <h1><i class="ri-cloud-line"></i> 远端增量更新方案</h1>
+  <div class="subtitle">支持新增、修改、删除全场景的增量数据同步设计</div>
+  <div class="doc-meta">
+    <div class="doc-meta-item"><i class="ri-calendar-line"></i> 创建：<strong>2026-05-19</strong></div>
+    <div class="doc-meta-item"><i class="ri-user-line"></i> 对接：<strong>后端开发</strong></div>
+    <div class="doc-meta-item"><i class="ri-database-2-line"></i> 涉及表：<strong>customer / product / 回收站 / 清空日志</strong></div>
+  </div>
+</div>
+
+<!-- 第1章：背景与问题 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-blue"><i class="ri-lightbulb-line"></i></i>
+    1. 背景与问题
+  </div>
+  <p>智能制单系统已实现基于时间戳的增量数据获取（详见《增量获取数据的算法》），通过客户表 <code>amstamp</code> 和产品表 <code>modstm</code> 字段筛选变更记录，实现了<strong>新增和修改</strong>数据的增量同步。</p>
+  <p>但当前方案存在一个关键缺陷：</p>
+  <div class="highlight-box red">
+    <i class="ri-error-warning-line"></i>
+    <strong>无法感知删除：</strong>增量获取只能筛选出"有变更"的记录，无法获知哪些记录已被后台删除。前端 IndexedDB 中会残留已删除的脏数据，导致用户搜索到已失效的客户或产品。
+  </div>
+  <p>此外，当前增量获取的合并策略是"新数据覆盖旧数据、旧数据保留"，这意味着：</p>
+  <table>
+    <thead>
+      <tr><th>操作类型</th><th>当前能否同步</th><th>说明</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><span class="tag tag-green">新增</span></td><td>✅ 可以</td><td>新记录的时间戳晚于基准时间，能被 where 条件筛选出来</td></tr>
+      <tr><td><span class="tag tag-blue">修改</span></td><td>✅ 可以</td><td>修改后时间戳更新，能被筛选并覆盖旧数据</td></tr>
+      <tr><td><span class="tag tag-red">删除</span></td><td>❌ 不可以</td><td>删除后记录消失，无时间戳变化，前端无法感知</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- 第2章：方案总览 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-green"><i class="ri-flow-chart"></i></i>
+    2. 方案总览
+  </div>
+  <p>为解决删除同步问题，同时保持增量获取的小数据量优势，设计如下完整方案：</p>
+  <div class="highlight-box teal">
+    <i class="ri-route-line"></i>
+    <strong>核心思路：</strong>将删除拆分为<strong>软删除</strong>（放入回收站）和<strong>硬删除</strong>（清空回收站）两个阶段，分别记录删除信息，每日增量同步时一并处理。
+  </div>
+  <div class="flow-steps">
+    <div class="flow-step">
+      <div class="flow-step-num" style="background:var(--primary);">1</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">更新时间戳增量同步</div>
+        <div class="flow-step-desc">
+          客户表和产品表添加更新时间戳字段，通过 <code>where</code> 条件筛选出新增/修改的记录，<br>
+          与前端 IndexedDB 按 id 合并——<strong>与现有逻辑一致，无需改动</strong>。
+        </div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num" style="background:var(--amber);">2</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">软删除记录同步</div>
+        <div class="flow-step-desc">
+          后台删除操作改为"放入回收站"（软删除），记录删除日期。<br>
+          增量同步时查询回收站中当日新增的软删除记录，从前端 IndexedDB 中删除对应条目。
+        </div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num" style="background:var(--red);">3</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">硬删除清空日志同步</div>
+        <div class="flow-step-desc">
+          回收站清空时，写入硬删除清空日志（记录被清空的记录 id 和类型）。<br>
+          增量同步时查询清空日志，确保前端 IndexedDB 中对应条目被彻底删除。
+        </div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num" style="background:var(--green);">4</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">每日增量小批量更新</div>
+        <div class="flow-step-desc">
+          结合上述三种数据源（变更记录 + 软删除 + 硬删除日志），<br>
+          每日执行一次增量同步，实现与远端服务器的数据一致性。
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 第3章：软删除与硬删除 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-amber"><i class="ri-delete-bin-line"></i></i>
+    3. 软删除与硬删除
+  </div>
+  <p>将删除操作拆分为两个阶段，每个阶段都有可追溯的记录：</p>
+  <div class="compare-grid">
+    <div class="compare-card soft">
+      <h4><i class="ri-recycle-line" style="color:var(--amber);"></i> 软删除（放入回收站）</h4>
+      <ul>
+        <li>用户在主系统中删除客户/产品时，记录移入回收站</li>
+        <li>记录标记为"已删除"状态，但数据仍保留在数据库中</li>
+        <li>需要记录<strong>删除日期</strong>（<code>deleted_at</code>）</li>
+        <li>回收站中的记录可恢复（还原操作）</li>
+        <li>前端增量同步时，根据删除日期从 IndexedDB 中移除</li>
+      </ul>
+    </div>
+    <div class="compare-card hard">
+      <h4><i class="ri-fire-line" style="color:var(--red);"></i> 硬删除（清空回收站）</h4>
+      <ul>
+        <li>管理员清空回收站时，记录从数据库中物理删除</li>
+        <li>数据不可恢复</li>
+        <li>清空时写入<strong>硬删除清空日志</strong></li>
+        <li>日志记录被清空的记录 id、类型（客户/产品）、清空时间</li>
+        <li>前端增量同步时，根据清空日志从 IndexedDB 中移除</li>
+      </ul>
+    </div>
+  </div>
+  <div class="highlight-box amber">
+    <i class="ri-alert-line"></i>
+    <strong>为什么要区分两种删除？</strong>软删除是业务操作，有明确的删除时间和记录 id，可直接同步；硬删除是数据清理，记录已物理消失，必须依赖清空日志来追溯。如果只有硬删除而无日志，前端将无法获知哪些记录被彻底删除。
+  </div>
+</div>
+
+<!-- 第4章：数据库变更 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-purple"><i class="ri-database-2-line"></i></i>
+    4. 数据库变更（后端需实现）
+  </div>
+  <p>为实现上述方案，后端数据库需要以下变更：</p>
+
+  <h4 style="font-size:15px;font-weight:700;margin:20px 0 12px;display:flex;align-items:center;gap:8px;">
+    <span style="width:24px;height:24px;border-radius:6px;background:var(--primary);color:white;display:inline-flex;align-items:center;justify-content:center;font-size:12px;">A</span>
+    客户表 / 产品表 — 添加更新时间戳
+  </h4>
+  <table>
+    <thead>
+      <tr><th>表</th><th>现有字段</th><th>新增字段</th><th>说明</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>客户表 <code>customer</code></td><td><code>id, cu_name, amstamp</code></td><td>无需新增</td><td><code>amstamp</code> 已满足需求</td></tr>
+      <tr><td>产品表 <code>product</code></td><td><code>id, pro_name, model, spec, modstm</code></td><td>无需新增</td><td><code>modstm</code> 已满足需求</td></tr>
+    </tbody>
+  </table>
+  <div class="highlight-box green">
+    <i class="ri-check-line"></i>
+    <strong>好消息：</strong>客户表和产品表已有更新时间戳字段（<code>amstamp</code> / <code>modstm</code>），新增/修改的增量同步无需额外改动。
+  </div>
+
+  <h4 style="font-size:15px;font-weight:700;margin:20px 0 12px;display:flex;align-items:center;gap:8px;">
+    <span style="width:24px;height:24px;border-radius:6px;background:var(--amber);color:white;display:inline-flex;align-items:center;justify-content:center;font-size:12px;">B</span>
+    回收站表 — 添加删除日期字段
+  </h4>
+  <table>
+    <thead>
+      <tr><th>字段</th><th>类型</th><th>说明</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>id</code></td><td>INT</td><td>回收站记录 id</td></tr>
+      <tr><td><code>source_id</code></td><td>INT</td><td>原始记录 id（客户 id 或产品 id）</td></tr>
+      <tr><td><code>source_type</code></td><td>VARCHAR</td><td>来源类型：<code>customer</code> 或 <code>product</code></td></tr>
+      <tr><td><code>source_name</code></td><td>VARCHAR</td><td>原始记录名称（便于展示）</td></tr>
+      <tr><td><code>deleted_at</code></td><td>DATETIME</td><td><span class="tag tag-amber">关键</span> 删除日期时间</td></tr>
+      <tr><td><code>restored_at</code></td><td>DATETIME</td><td>还原日期时间（可为空）</td></tr>
+    </tbody>
+  </table>
+  <div class="highlight-box amber">
+    <i class="ri-alert-line"></i>
+    <strong>关键要求：</strong>回收站表必须有 <code>deleted_at</code> 字段，且在记录放入回收站时自动写入当前时间。增量同步通过 <code>where: deleted_at > '上次同步时间'</code> 查询当日新增的软删除记录。
+  </div>
+
+  <h4 style="font-size:15px;font-weight:700;margin:20px 0 12px;display:flex;align-items:center;gap:8px;">
+    <span style="width:24px;height:24px;border-radius:6px;background:var(--red);color:white;display:inline-flex;align-items:center;justify-content:center;font-size:12px;">C</span>
+    硬删除清空日志表 — 新增
+  </h4>
+  <table>
+    <thead>
+      <tr><th>字段</th><th>类型</th><th>说明</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>id</code></td><td>INT</td><td>日志 id（自增主键）</td></tr>
+      <tr><td><code>purge_time</code></td><td>DATETIME</td><td>清空操作执行时间</td></tr>
+      <tr><td><code>source_type</code></td><td>VARCHAR</td><td>来源类型：<code>customer</code> 或 <code>product</code></td></tr>
+      <tr><td><code>source_ids</code></td><td>TEXT / JSON</td><td>被清空的原始记录 id 列表（JSON 数组格式）</td></tr>
+      <tr><td><code>operator</code></td><td>VARCHAR</td><td>执行清空操作的用户</td></tr>
+      <tr><td><code>count</code></td><td>INT</td><td>被清空的记录数量</td></tr>
+    </tbody>
+  </table>
+  <div class="highlight-box red">
+    <i class="ri-error-warning-line"></i>
+    <strong>核心要求：</strong>回收站清空功能必须写入此日志表。<code>source_ids</code> 字段以 JSON 数组格式存储被清空的记录 id，例如 <code>["1","3","7"]</code>。前端增量同步通过 <code>where: purge_time > '上次同步时间'</code> 查询新增的清空日志。
+  </div>
+</div>
+
+<!-- 第5章：接口设计 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-teal"><i class="ri-plug-line"></i></i>
+    5. 接口设计（后端需实现）
+  </div>
+  <p>在现有 <code>load_data</code> 接口基础上，新增两个查询：</p>
+
+  <h4 style="font-size:15px;font-weight:700;margin:20px 0 12px;">接口1：查询软删除记录</h4>
+  <pre><span class="comment">// 查询回收站中当日新增的软删除记录</span>
+{
+  <span class="key">"cmd"</span>: <span class="string">"load_data"</span>,
+  <span class="key">"dtname"</span>: <span class="string">"recycle_bin"</span>,
+  <span class="key">"field"</span>: <span class="string">"id,source_id,source_type,source_name,deleted_at"</span>,
+  <span class="key">"where"</span>: <span class="string">"deleted_at > '2026-05-18 14:30:00' AND restored_at IS NULL"</span>,
+  <span class="key">"flag"</span>: 1
+}</pre>
+  <div class="highlight-box blue">
+    <i class="ri-information-line"></i>
+    <strong>返回字段说明：</strong><code>source_id</code> 为原始客户/产品 id，<code>source_type</code> 区分客户或产品，<code>restored_at IS NULL</code> 排除已还原的记录。
+  </div>
+
+  <h4 style="font-size:15px;font-weight:700;margin:20px 0 12px;">接口2：查询硬删除清空日志</h4>
+  <pre><span class="comment">// 查询上次同步后的硬删除清空日志</span>
+{
+  <span class="key">"cmd"</span>: <span class="string">"load_data"</span>,
+  <span class="key">"dtname"</span>: <span class="string">"purge_log"</span>,
+  <span class="key">"field"</span>: <span class="string">"id,purge_time,source_type,source_ids,count"</span>,
+  <span class="key">"where"</span>: <span class="string">"purge_time > '2026-05-18 14:30:00'"</span>,
+  <span class="key">"flag"</span>: 1
+}</pre>
+  <div class="highlight-box blue">
+    <i class="ri-information-line"></i>
+    <strong>返回字段说明：</strong><code>source_ids</code> 为 JSON 数组字符串，前端解析后得到被清空的 id 列表。<code>source_type</code> 区分客户或产品。
+  </div>
+</div>
+
+<!-- 第6章：增量同步流程 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-blue"><i class="ri-refresh-line"></i></i>
+    6. 每日增量同步流程
+  </div>
+  <div class="flow-steps">
+    <div class="flow-step">
+      <div class="flow-step-num" style="background:var(--primary);">1</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">读取上次同步时间戳</div>
+        <div class="flow-step-desc">
+          从 IndexedDB 的 <code>sync_status</code> 表读取 <code>incremental_time</code>，<br>
+          作为本次增量查询的基准时间。如不存在则提示先全量获取。
+        </div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num" style="background:var(--primary);">2</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">增量获取变更数据（新增/修改）</div>
+        <div class="flow-step-desc">
+          客户：<code>where: amstamp > '基准时间'</code><br>
+          产品：<code>where: modstm > '基准时间'</code><br>
+          按 id 合并到前端 IndexedDB，已有拼音字段保留。
+        </div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num" style="background:var(--amber);">3</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">查询软删除记录</div>
+        <div class="flow-step-desc">
+          回收站：<code>where: deleted_at > '基准时间' AND restored_at IS NULL</code><br>
+          根据 <code>source_type</code> 和 <code>source_id</code>，从前端 IndexedDB 的 customer / product 表中删除对应记录。<br>
+          同时删除对应的拼音数据。
+        </div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num" style="background:var(--red);">4</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">查询硬删除清空日志</div>
+        <div class="flow-step-desc">
+          清空日志：<code>where: purge_time > '基准时间'</code><br>
+          解析每条日志的 <code>source_ids</code>（JSON 数组），根据 <code>source_type</code>，<br>
+          从前端 IndexedDB 中删除对应记录及拼音数据。<br>
+          <strong>注：</strong>如果步骤3已删除，则步骤4是兜底确认，不会重复报错。
+        </div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num" style="background:var(--purple);">5</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">增量生成拼音</div>
+        <div class="flow-step-desc">
+          为步骤2中新增/修改的记录生成拼音，已有拼音保持不变。
+        </div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num" style="background:var(--green);">6</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">5万上限截断检查</div>
+        <div class="flow-step-desc">
+          合并完成后，检查客户和产品的总条数是否超过 50,000。<br>
+          超出时自动截断为前 50,000 条，弹出 toast 提示"总量超界，只取5万数据"，<br>
+          保障 IndexedDB 中客户和产品的最大条数不超过各5万条。
+        </div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num" style="background:var(--green);">7</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">更新同步时间戳</div>
+        <div class="flow-step-desc">
+          将当前时间写入 <code>incremental_time</code>，作为下次增量同步的基准。
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 第7章：时序图 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-purple"><i class="ri-flow-chart"></i></i>
+    7. 增量同步时序
+  </div>
+  <pre>
+用户点击"增量获取"
+    │
+    ▼
+读取 incremental_time ──── 不存在 ──→ 提示"请先全量获取" ──→ 结束
+    │
+    │ 存在（如 2026-05-18 14:30:00）
+    ▼
+┌─────────────────────────────────────────────────────────┐
+│  步骤1：增量获取变更数据                                   │
+│  POST customer where: amstamp > '2026-05-18 14:30:00'   │
+│  POST product  where: modstm  > '2026-05-18 14:30:00'   │
+│  → 按 id 合并到 IndexedDB → 记录变更 id 列表              │
+└─────────────────────────────────────────────────────────┘
+    │
+    ▼
+┌─────────────────────────────────────────────────────────┐
+│  步骤2：查询软删除记录                                     │
+│  POST recycle_bin where: deleted_at > '...' AND restored_at IS NULL │
+│  → 从 IndexedDB 中删除 source_id 对应的记录和拼音          │
+└─────────────────────────────────────────────────────────┘
+    │
+    ▼
+┌─────────────────────────────────────────────────────────┐
+│  步骤3：查询硬删除清空日志                                  │
+│  POST purge_log where: purge_time > '...'                │
+│  → 解析 source_ids → 从 IndexedDB 中删除对应记录           │
+└─────────────────────────────────────────────────────────┘
+    │
+    ▼
+┌─────────────────────────────────────────────────────────┐
+│  步骤4：增量生成拼音                                       │
+│  generateIncrementalPinyin(newCustomerIds, newProductIds) │
+└─────────────────────────────────────────────────────────┘
+    │
+    ▼
+┌─────────────────────────────────────────────────────────┐
+│  步骤5：5万上限截断检查                                    │
+│  if (merged.length > 50000) merged = merged.slice(0, 50000) │
+│  超出时 toast 提示"总量超界，只取5万数据"                    │
+└─────────────────────────────────────────────────────────┘
+    │
+    ▼
+┌─────────────────────────────────────────────────────────┐
+│  步骤6：更新时间戳                                        │
+│  incremental_time = 当前时间                               │
+└─────────────────────────────────────────────────────────┘
+    │
+    ▼
+完成 ✅
+  </pre>
+</div>
+
+<!-- 第8章：数据流转示意 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-green"><i class="ri-exchange-line"></i></i>
+    8. 删除数据流转示意
+  </div>
+  <pre>
+主业务系统                              前端 IndexedDB
+──────────                              ──────────────
+
+用户删除客户/产品
+    │
+    ▼
+放入回收站（软删除）
+    │ 写入 deleted_at
+    │
+    ├──→ 回收站表记录 ──→ 增量同步查询 ──→ 从 IndexedDB 删除 ✅
+    │
+    │  （用户可选择还原）
+    ├──→ 还原操作 ──→ 写入 restored_at ──→ 增量同步排除此记录 ──→ 不删除 ✅
+    │
+    │  （管理员清空回收站）
+    ▼
+物理删除（硬删除）
+    │ 写入清空日志
+    │
+    └──→ 清空日志表 ──→ 增量同步查询 ──→ 从 IndexedDB 删除（兜底） ✅
+  </pre>
+</div>
+
+<!-- 第9章：前端处理逻辑 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-teal"><i class="ri-code-s-slash-line"></i></i>
+    9. 前端处理逻辑（伪代码）
+  </div>
+  <pre><span class="keyword">async function</span> <span class="func">fetchIncrementalData</span>() {
+  <span class="keyword">var</span> lastTime = <span class="keyword">await</span> getSyncStatus(<span class="string">'incremental_time'</span>);
+  <span class="keyword">if</span> (!lastTime) { showToast(<span class="string">'请先全量获取'</span>); <span class="keyword">return</span>; }
+
+  <span class="comment">// 步骤1：增量获取变更数据（现有逻辑）</span>
+  <span class="keyword">var</span> customerData = <span class="keyword">await</span> sendLoadData({
+    cmd: <span class="string">'load_data'</span>, dtname: <span class="string">'customer'</span>,
+    field: <span class="string">'id,cu_name,amstamp'</span>,
+    where: <span class="string">"amstamp > '"</span> + lastTime + <span class="string">"'"</span>, flag: 1
+  });
+  <span class="comment">// ... 合并到 IndexedDB ...</span>
+
+  <span class="keyword">var</span> productData = <span class="keyword">await</span> sendLoadData({
+    cmd: <span class="string">'load_data'</span>, dtname: <span class="string">'product'</span>,
+    field: <span class="string">'id,pro_name,model,spec,modstm'</span>,
+    where: <span class="string">"modstm > '"</span> + lastTime + <span class="string">"'"</span>, flag: 1
+  });
+  <span class="comment">// ... 合并到 IndexedDB ...</span>
+
+  <span class="comment">// 步骤2：查询软删除记录（新增）</span>
+  <span class="keyword">var</span> recycleData = <span class="keyword">await</span> sendLoadData({
+    cmd: <span class="string">'load_data'</span>, dtname: <span class="string">'recycle_bin'</span>,
+    field: <span class="string">'id,source_id,source_type,deleted_at'</span>,
+    where: <span class="string">"deleted_at > '"</span> + lastTime + <span class="string">"' AND restored_at IS NULL"</span>,
+    flag: 1
+  });
+  <span class="keyword">var</span> recycleList = parseLoadDataResponse(recycleData);
+  <span class="keyword">for</span> (<span class="keyword">var</span> i = 0; i &lt; recycleList.length; i++) {
+    <span class="keyword">var</span> item = recycleList[i];
+    <span class="keyword">if</span> (item.source_type === <span class="string">'customer'</span>) {
+      <span class="keyword">await</span> db.customer.delete(String(item.source_id));
+    } <span class="keyword">else if</span> (item.source_type === <span class="string">'product'</span>) {
+      <span class="keyword">await</span> db.product.delete(String(item.source_id));
+    }
+  }
+
+  <span class="comment">// 步骤3：查询硬删除清空日志（新增）</span>
+  <span class="keyword">var</span> purgeData = <span class="keyword">await</span> sendLoadData({
+    cmd: <span class="string">'load_data'</span>, dtname: <span class="string">'purge_log'</span>,
+    field: <span class="string">'id,purge_time,source_type,source_ids'</span>,
+    where: <span class="string">"purge_time > '"</span> + lastTime + <span class="string">"'"</span>,
+    flag: 1
+  });
+  <span class="keyword">var</span> purgeList = parseLoadDataResponse(purgeData);
+  <span class="keyword">for</span> (<span class="keyword">var</span> j = 0; j &lt; purgeList.length; j++) {
+    <span class="keyword">var</span> log = purgeList[j];
+    <span class="keyword">var</span> ids = JSON.parse(log.source_ids || <span class="string">'[]'</span>);
+    <span class="keyword">for</span> (<span class="keyword">var</span> k = 0; k &lt; ids.length; k++) {
+      <span class="keyword">if</span> (log.source_type === <span class="string">'customer'</span>) {
+        <span class="keyword">await</span> db.customer.delete(String(ids[k]));
+      } <span class="keyword">else if</span> (log.source_type === <span class="string">'product'</span>) {
+        <span class="keyword">await</span> db.product.delete(String(ids[k]));
+      }
+    }
+  }
+
+  <span class="comment">// 步骤4：增量生成拼音</span>
+  <span class="keyword">await</span> generateIncrementalPinyin(newCustomerIds, newProductIds);
+
+  <span class="comment">// 步骤5：5万上限截断检查</span>
+  <span class="keyword">var</span> customers = <span class="keyword">await</span> getCustomers();
+  <span class="keyword">var</span> products = <span class="keyword">await</span> getProducts();
+  <span class="keyword">if</span> (customers.length > <span class="num">50000</span>) {
+    customers = customers.slice(<span class="num">0</span>, <span class="num">50000</span>);
+    <span class="keyword">await</span> setCustomers(customers);
+    showToast(<span class="string">'客户总量超界，只取5万数据'</span>, <span class="string">'error'</span>);
+  }
+  <span class="keyword">if</span> (products.length > <span class="num">50000</span>) {
+    products = products.slice(<span class="num">0</span>, <span class="num">50000</span>);
+    <span class="keyword">await</span> setProducts(products);
+    showToast(<span class="string">'产品总量超界，只取5万数据'</span>, <span class="string">'error'</span>);
+  }
+
+  <span class="comment">// 步骤6：更新时间戳</span>
+  <span class="keyword">var</span> now = <span class="keyword">new</span> Date().toISOString().replace(<span class="string">'T'</span>, <span class="string">' '</span>).substring(0, 19);
+  <span class="keyword">await</span> setSyncStatus(<span class="string">'incremental_time'</span>, now);
+  <span class="keyword">await</span> setSyncStatus(<span class="string">'sync_time'</span>, now);
+}</pre>
+</div>
+
+<!-- 第10章：实施任务清单 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-red"><i class="ri-list-check-2"></i></i>
+    10. 实施任务清单
+  </div>
+
+  <h4 style="font-size:15px;font-weight:700;margin:20px 0 12px;color:var(--red);">
+    <i class="ri-server-line"></i> 后端任务
+  </h4>
+  <ul class="todo-list">
+    <li class="todo-item">
+      <div class="todo-check pending"></div>
+      <div class="todo-content">
+        <div class="todo-title">回收站表添加 <code>deleted_at</code> 字段 <span class="tag tag-amber todo-tag">关键</span></div>
+        <div class="todo-desc">在现有回收站表中添加 <code>deleted_at</code> DATETIME 字段，删除操作时自动写入当前时间。同时添加 <code>restored_at</code> 字段记录还原时间。</div>
+      </div>
+    </li>
+    <li class="todo-item">
+      <div class="todo-check pending"></div>
+      <div class="todo-content">
+        <div class="todo-title">新增硬删除清空日志表 <code>purge_log</code> <span class="tag tag-red todo-tag">关键</span></div>
+        <div class="todo-desc">创建 <code>purge_log</code> 表，包含 id、purge_time、source_type、source_ids、operator、count 字段。</div>
+      </div>
+    </li>
+    <li class="todo-item">
+      <div class="todo-check pending"></div>
+      <div class="todo-content">
+        <div class="todo-title">修改回收站清空逻辑 <span class="tag tag-red todo-tag">关键</span></div>
+        <div class="todo-desc">清空回收站时，先读取即将清空的记录 id 和类型，写入 <code>purge_log</code> 表，再执行物理删除。</div>
+      </div>
+    </li>
+    <li class="todo-item">
+      <div class="todo-check pending"></div>
+      <div class="todo-content">
+        <div class="todo-title">开放回收站和清空日志的 <code>load_data</code> 查询</div>
+        <div class="todo-desc">确保 <code>load_data</code> 接口支持 <code>dtname: 'recycle_bin'</code> 和 <code>dtname: 'purge_log'</code> 的查询，且 where 条件可正常过滤。</div>
+      </div>
+    </li>
+  </ul>
+
+  <h4 style="font-size:15px;font-weight:700;margin:24px 0 12px;color:var(--primary);">
+    <i class="ri-layout-line"></i> 前端任务
+  </h4>
+  <ul class="todo-list">
+    <li class="todo-item">
+      <div class="todo-check pending"></div>
+      <div class="todo-content">
+        <div class="todo-title">增量同步增加软删除查询步骤</div>
+        <div class="todo-desc">在 <code>fetchIncrementalData</code> 中新增对 <code>recycle_bin</code> 表的查询，根据返回的 source_id 和 source_type 从 IndexedDB 中删除对应记录。</div>
+      </div>
+    </li>
+    <li class="todo-item">
+      <div class="todo-check pending"></div>
+      <div class="todo-content">
+        <div class="todo-title">增量同步增加硬删除日志查询步骤</div>
+        <div class="todo-desc">在 <code>fetchIncrementalData</code> 中新增对 <code>purge_log</code> 表的查询，解析 source_ids JSON 数组，从 IndexedDB 中删除对应记录。</div>
+      </div>
+    </li>
+    <li class="todo-item">
+      <div class="todo-check pending"></div>
+      <div class="todo-content">
+        <div class="todo-title">更新同步进度提示</div>
+        <div class="todo-desc">增量同步进度条中增加"处理删除记录"步骤的提示，让用户了解同步进度。</div>
+      </div>
+    </li>
+  </ul>
+</div>
+
+<!-- 第11章：风险与注意事项 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-amber"><i class="ri-shield-check-line"></i></i>
+    11. 风险与注意事项
+  </div>
+  <table>
+    <thead>
+      <tr><th>风险点</th><th>影响</th><th>应对措施</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>回收站清空时未写入日志</td>
+        <td><span class="tag tag-red">高</span> 前端无法感知硬删除</td>
+        <td>后端必须在清空操作中强制写入 purge_log，作为事务的一部分</td>
+      </tr>
+      <tr>
+        <td>软删除后用户还原</td>
+        <td><span class="tag tag-amber">中</span> 前端已删除但记录实际未删除</td>
+        <td>还原操作会更新 amstamp/modstm，下次增量同步会重新获取该记录</td>
+      </tr>
+      <tr>
+        <td>source_ids JSON 过大</td>
+        <td><span class="tag tag-amber">中</span> 单次清空大量记录时日志过大</td>
+        <td>可按批次写入日志，每批最多 1000 个 id</td>
+      </tr>
+      <tr>
+        <td>增量同步期间新增删除</td>
+        <td><span class="tag tag-blue">低</span> 边界时间点的数据可能遗漏</td>
+        <td>下次增量同步会补上；定期全量获取可彻底消除差异</td>
+      </tr>
+      <tr>
+        <td>前端 IndexedDB 删除失败</td>
+        <td><span class="tag tag-blue">低</span> 脏数据残留</td>
+        <td>删除操作使用 Dexie 事务，失败会自动回滚；定期全量获取可清理</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="highlight-box green">
+    <i class="ri-check-double-line"></i>
+    <strong>兜底方案：</strong>无论增量同步逻辑多么完善，建议保留"定期全量获取"作为兜底。例如每天首次使用时自动全量获取一次，或每周手动全量获取一次，确保数据最终一致。
+  </div>
+</div>
+
+</div>
+</body>
+</html>

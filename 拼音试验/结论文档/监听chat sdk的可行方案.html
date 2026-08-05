@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>监听Chat SDK输出的可行方案 — 技术文档</title>
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+<style>
+:root {
+  --bg: #f8f9fb;
+  --card: #ffffff;
+  --border: #e8ecf0;
+  --text: #1f2937;
+  --text-secondary: #6b7280;
+  --primary: #3b82f6;
+  --primary-light: #eff6ff;
+  --primary-border: #bfdbfe;
+  --green: #10b981;
+  --green-light: #ecfdf5;
+  --green-border: #a7f3d0;
+  --amber: #f59e0b;
+  --amber-light: #fffbeb;
+  --amber-border: #fde68a;
+  --red: #ef4444;
+  --red-light: #fef2f2;
+  --red-border: #fecaca;
+  --purple: #8b5cf6;
+  --purple-light: #f5f3ff;
+  --purple-border: #ddd6fe;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  padding: 32px 20px;
+}
+.container { max-width: 960px; margin: 0 auto; }
+
+.doc-header {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px 48px;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+}
+.doc-header::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6, #10b981);
+}
+.doc-header h1 {
+  font-size: 28px; font-weight: 700; color: var(--text);
+  margin-bottom: 8px; display: flex; align-items: center; gap: 12px;
+}
+.doc-header h1 i { color: var(--primary); font-size: 28px; }
+.doc-header .subtitle { font-size: 15px; color: var(--text-secondary); margin-bottom: 20px; }
+.doc-meta { display: flex; gap: 24px; flex-wrap: wrap; }
+.doc-meta-item { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-secondary); }
+.doc-meta-item i { font-size: 14px; color: var(--primary); }
+.doc-meta-item strong { color: var(--text); font-weight: 600; }
+
+.section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 32px 36px;
+  margin-bottom: 20px;
+}
+.section-title {
+  font-size: 18px; font-weight: 700; color: var(--text);
+  margin-bottom: 20px; display: flex; align-items: center; gap: 10px;
+  padding-bottom: 14px; border-bottom: 1px solid var(--border);
+}
+.section-title i {
+  width: 32px; height: 32px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; color: white; flex-shrink: 0;
+}
+.icon-blue { background: var(--primary); }
+.icon-green { background: var(--green); }
+.icon-amber { background: var(--amber); }
+.icon-red { background: var(--red); }
+.icon-purple { background: var(--purple); }
+
+p { font-size: 14px; color: var(--text); margin-bottom: 12px; line-height: 1.8; }
+p:last-child { margin-bottom: 0; }
+
+.highlight-box {
+  border-radius: 10px; padding: 16px 20px; margin-bottom: 16px;
+  font-size: 14px; line-height: 1.8;
+}
+.highlight-box.blue { background: var(--primary-light); border: 1px solid var(--primary-border); color: #1e40af; }
+.highlight-box.green { background: var(--green-light); border: 1px solid var(--green-border); color: #065f46; }
+.highlight-box.amber { background: var(--amber-light); border: 1px solid var(--amber-border); color: #92400e; }
+.highlight-box.red { background: var(--red-light); border: 1px solid var(--red-border); color: #991b1b; }
+.highlight-box.purple { background: var(--purple-light); border: 1px solid var(--purple-border); color: #5b21b6; }
+.highlight-box i { margin-right: 6px; }
+
+pre {
+  background: #1e293b; color: #e2e8f0; border-radius: 10px;
+  padding: 20px 24px; margin-bottom: 16px; overflow-x: auto;
+  font-size: 13px; line-height: 1.7; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+}
+pre .comment { color: #64748b; }
+pre .keyword { color: #c084fc; }
+pre .string { color: #34d399; }
+pre .key { color: #60a5fa; }
+pre .func { color: #fbbf24; }
+
+table {
+  width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 13px;
+}
+th, td {
+  padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border);
+}
+th { background: #f8f9fb; font-weight: 600; color: var(--text-secondary); font-size: 12px; }
+td { color: var(--text); }
+tr:last-child td { border-bottom: none; }
+
+.flow-steps { display: flex; flex-direction: column; gap: 0; margin-bottom: 16px; }
+.flow-step {
+  display: flex; gap: 16px; padding: 14px 0;
+  border-bottom: 1px dashed var(--border);
+}
+.flow-step:last-child { border-bottom: none; }
+.flow-step-num {
+  width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; color: white;
+}
+.flow-step-content { flex: 1; }
+.flow-step-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.flow-step-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.7; }
+
+.tag {
+  display: inline-block; padding: 2px 10px; border-radius: 6px;
+  font-size: 11px; font-weight: 600; margin-right: 4px;
+}
+.tag-blue { background: var(--primary-light); color: #1e40af; border: 1px solid var(--primary-border); }
+.tag-green { background: var(--green-light); color: #065f46; border: 1px solid var(--green-border); }
+.tag-amber { background: var(--amber-light); color: #92400e; border: 1px solid var(--amber-border); }
+.tag-red { background: var(--red-light); color: #991b1b; border: 1px solid var(--red-border); }
+.tag-purple { background: var(--purple-light); color: #5b21b6; border: 1px solid var(--purple-border); }
+
+.pitfall-card {
+  border-radius: 12px; padding: 20px 24px; margin-bottom: 14px;
+  border-left: 4px solid;
+}
+.pitfall-card.fatal { background: var(--red-light); border-left-color: var(--red); }
+.pitfall-card.warning { background: var(--amber-light); border-left-color: var(--amber); }
+.pitfall-card.resolved { background: var(--green-light); border-left-color: var(--green); }
+.pitfall-card .pitfall-title {
+  font-size: 14px; font-weight: 700; margin-bottom: 8px;
+  display: flex; align-items: center; gap: 8px;
+}
+.pitfall-card .pitfall-detail { font-size: 13px; line-height: 1.8; }
+.pitfall-card .pitfall-detail code {
+  background: rgba(0,0,0,0.08); padding: 1px 6px; border-radius: 4px;
+  font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px;
+}
+
+.compare-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;
+}
+.compare-card {
+  border-radius: 12px; padding: 20px; border: 1px solid var(--border);
+}
+.compare-card h4 { font-size: 15px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.compare-card ul { list-style: none; padding: 0; }
+.compare-card li { font-size: 13px; padding: 6px 0; border-bottom: 1px dashed var(--border); display: flex; align-items: flex-start; gap: 8px; }
+.compare-card li:last-child { border-bottom: none; }
+.compare-card li i { margin-top: 3px; flex-shrink: 0; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="doc-header">
+  <h1><i class="ri-chat-voice-line"></i> 监听Chat SDK输出的可行方案</h1>
+  <div class="subtitle">Coze WebChatClient 消息获取的踩坑记录与最终技术方案</div>
+  <div class="doc-meta">
+    <div class="doc-meta-item"><i class="ri-calendar-line"></i> 创建：<strong>2026-05-16</strong></div>
+    <div class="doc-meta-item"><i class="ri-file-code-line"></i> 实现：<strong>index2.html</strong></div>
+    <div class="doc-meta-item"><i class="ri-stack-line"></i> SDK：<strong>Coze WebChatClient</strong></div>
+    <div class="doc-meta-item"><i class="ri-api-line"></i> API：<strong>Coze OpenAPI v1</strong></div>
+  </div>
+</div>
+
+<!-- 第1章：背景与需求 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-blue ri-question-line"></i> 1. 背景与需求
+  </div>
+  <p>智能制单系统中，用户通过Coze智能体进行语音/文字对话，Coze解析后输出结构化JSON订单数据。原始方案（index.html）依赖<strong>剪贴板</strong>：用户手动复制Coze输出 → 监听剪贴板 → 解析JSON → 触发拼音匹配。</p>
+  <p>这个流程存在两个核心痛点：</p>
+  <div class="highlight-box amber">
+    <i class="ri-alert-line"></i> <strong>痛点1</strong>：用户必须手动复制Coze输出，操作繁琐，容易遗漏<br>
+    <i class="ri-alert-line"></i> <strong>痛点2</strong>：剪贴板方案不支持语音输入场景——用户说话后Coze自动回复，但用户不会去手动复制
+  </div>
+  <p>因此需要一种<strong>自动获取Coze对话结果</strong>的方案，实现"用户说话 → Coze回复 → 自动匹配"的闭环。</p>
+</div>
+
+<!-- 第2章：方案评估 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-purple ri-scales-3-line"></i> 2. 方案评估与对比
+  </div>
+
+  <div class="compare-grid">
+    <div class="compare-card" style="border-color: var(--amber-border); background: var(--amber-light);">
+      <h4><i class="ri-close-circle-line" style="color:var(--amber)"></i> 方案A：SDK回调监听</h4>
+      <ul>
+        <li><i class="ri-code-line" style="color:var(--amber)"></i> 监听 <code>onMessage</code> 回调</li>
+        <li><i class="ri-close-line" style="color:var(--red)"></i> Coze WebChatClient <strong>不暴露消息回调</strong></li>
+        <li><i class="ri-close-line" style="color:var(--red)"></i> SDK是UI组件，非纯API库</li>
+        <li><i class="ri-close-line" style="color:var(--red)"></i> 无语音输入能力</li>
+      </ul>
+    </div>
+    <div class="compare-card" style="border-color: var(--green-border); background: var(--green-light);">
+      <h4><i class="ri-check-circle-line" style="color:var(--green)"></i> 方案B：OpenAPI轮询</h4>
+      <ul>
+        <li><i class="ri-code-line" style="color:var(--green)"></i> 定时调用Coze OpenAPI查询消息</li>
+        <li><i class="ri-check-line" style="color:var(--green)"></i> 不依赖SDK内部实现</li>
+        <li><i class="ri-check-line" style="color:var(--green)"></i> 支持语音输入场景</li>
+        <li><i class="ri-check-line" style="color:var(--green)"></i> 与Chat SDK UI共存</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="highlight-box green">
+    <i class="ri-lightbulb-line"></i> <strong>结论</strong>：方案B（OpenAPI轮询）是唯一可行方案。Coze WebChatClient是封装好的UI组件，不提供消息级回调接口，无法从SDK内部获取对话内容。而OpenAPI轮询可以独立于SDK工作，同时保留SDK的语音输入和UI交互能力。
+  </div>
+</div>
+
+<!-- 第3章：踩坑记录 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-red ri-bug-line"></i> 3. 踩坑记录（按时间顺序）
+  </div>
+
+  <div class="pitfall-card fatal">
+    <div class="pitfall-title"><i class="ri-close-circle-fill" style="color:var(--red)"></i> 坑1：API路径错误</div>
+    <div class="pitfall-detail">
+      <strong>错误</strong>：使用了 <code>/v3/conversation/list</code>，返回404<br>
+      <strong>原因</strong>：Coze API版本是v1，且路径命名不同<br>
+      <strong>正确</strong>：<code>/v1/conversations</code>（会话列表），<code>/v1/conversation/message/list</code>（消息列表）<br>
+      <strong>响应格式差异</strong>：<code>res.data.conversations[0]</code> 而非 <code>res.data[0]</code>
+    </div>
+  </div>
+
+  <div class="pitfall-card fatal">
+    <div class="pitfall-title"><i class="ri-close-circle-fill" style="color:var(--red)"></i> 坑2：消息列表API方法错误</div>
+    <div class="pitfall-detail">
+      <strong>错误</strong>：使用GET请求 <code>/v1/conversation/message/list</code>，返回方法不允许<br>
+      <strong>原因</strong>：Coze官方文档明确该接口是POST方法<br>
+      <strong>修复</strong>：新增 <code>cozeApiPost</code> 函数，支持POST请求+JSON body
+    </div>
+  </div>
+
+  <div class="pitfall-card fatal">
+    <div class="pitfall-title"><i class="ri-close-circle-fill" style="color:var(--red)"></i> 坑3：sort_order参数大小写</div>
+    <div class="pitfall-detail">
+      <strong>错误</strong>：传了 <code>sort_order=DESC</code>，API返回400<br>
+      <strong>错误信息</strong>：<code>请求参数 sort_order 不合法，该参数应当满足格式 should either be empty or in list ["asc", "desc"]</code><br>
+      <strong>修复</strong>：改为小写 <code>desc</code>
+    </div>
+  </div>
+
+  <div class="pitfall-card fatal">
+    <div class="pitfall-title"><i class="ri-close-circle-fill" style="color:var(--red)"></i> 坑4：connector_id缺失导致会话列表为空</div>
+    <div class="pitfall-detail">
+      <strong>现象</strong>：API返回 <code>conversations: []</code>，明明Chat SDK中有会话<br>
+      <strong>原因</strong>：不传 <code>connector_id</code> 默认查询API渠道(1024)的会话，而Chat SDK创建的会话属于渠道999<br>
+      <strong>修复</strong>：请求参数加上 <code>connector_id=999</code>
+    </div>
+  </div>
+
+  <div class="pitfall-card warning">
+    <div class="pitfall-title"><i class="ri-error-warning-fill" style="color:var(--amber)"></i> 坑5：SDK参数命名风格</div>
+    <div class="pitfall-detail">
+      <strong>错误</strong>：将 <code>bot_id</code> 改为 <code>botId</code>（驼峰命名），导致Chat SDK对话框不显示<br>
+      <strong>原因</strong>：旧版Coze WebChatClient SDK使用下划线命名（snake_case）<br>
+      <strong>修复</strong>：改回 <code>bot_id</code>
+    </div>
+  </div>
+
+  <div class="pitfall-card fatal">
+    <div class="pitfall-title"><i class="ri-close-circle-fill" style="color:var(--red)"></i> 坑6：JSON格式不匹配</div>
+    <div class="pitfall-detail">
+      <strong>现象</strong>：Coze输出 <code>customer_name</code> + <code>products</code>，但 <code>extractJSONFromText</code> 只识别 <code>customer</code>/<code>客户</code>/<code>customerName</code><br>
+      <strong>修复</strong>：增加 <code>customer_name</code> 格式支持，正则列表中添加 <code>/\{[\s\S]*?"customer_name"[\s\S]*?"products"[\s\S]*?\}/</code>
+    </div>
+  </div>
+
+  <div class="pitfall-card fatal">
+    <div class="pitfall-title"><i class="ri-close-circle-fill" style="color:var(--red)"></i> 坑7：误标记已处理（最关键的Bug）</div>
+    <div class="pitfall-detail">
+      <strong>现象</strong>：第一次轮询提取到JSON后，<code>handleClipboardText</code> 静默失败，之后消息被标记为"已处理过"一直跳过<br>
+      <strong>根因</strong>：<code>handleClipboardText</code> 内部调用 <code>extractJSON</code> 做二次解析，但 <code>extractJSON</code> 的正则匹配逻辑与 <code>extractJSONFromText</code> 不完全兼容，解析失败后 <code>if (!data) return</code> 静默退出，而外层轮询代码无条件标记 <code>cozeLastMsgIds[msgKey] = true</code><br>
+      <strong>修复</strong>：不再调用 <code>handleClipboardText</code>，轮询模块直接 <code>JSON.parse</code> → 构建orderDraft → 调用 <code>showMatchProgress</code>，且标记在 <code>showMatchProgress</code> 成功之后
+    </div>
+  </div>
+
+  <div class="pitfall-card warning">
+    <div class="pitfall-title"><i class="ri-error-warning-fill" style="color:var(--amber)"></i> 坑8：CORS跨域问题</div>
+    <div class="pitfall-detail">
+      <strong>现象</strong>：浏览器直接调用 <code>api.coze.cn</code> 可能被CORS策略阻止<br>
+      <strong>降级方案</strong>：封装 <code>cozeApiGetWithProxy</code> / <code>cozeApiPostWithProxy</code>，先尝试直接请求，CORS失败后降级处理<br>
+      <strong>现状</strong>：当前SaaS服务器场景下CORS未触发，但保留降级逻辑作为防御
+    </div>
+  </div>
+
+  <div class="pitfall-card fatal">
+    <div class="pitfall-title"><i class="ri-close-circle-fill" style="color:var(--red)"></i> 坑9：遍历所有消息导致重复处理旧内容</div>
+    <div class="pitfall-detail">
+      <strong>现象</strong>：如果最新消息没有JSON，轮询会继续遍历下一条旧消息，触发之前已处理过的订单<br>
+      <strong>根因</strong>：代码逻辑是 <code>for (var i = 0; i < answerMsgs.length; i++)</code>，没有限制只处理最新一条<br>
+      <strong>修复</strong>：简化逻辑，只处理 <code>answerMsgs[0]</code>（最新一条消息），不再遍历所有历史消息
+    </div>
+  </div>
+
+  <div class="pitfall-card fatal">
+    <div class="pitfall-title"><i class="ri-close-circle-fill" style="color:var(--red)"></i> 坑10：页面加载时触发已有历史消息</div>
+    <div class="pitfall-detail">
+      <strong>现象</strong>：进入页面时，如果会话中已有历史订单消息，轮询会立即触发这些旧消息的匹配<br>
+      <strong>根因</strong>：没有区分"页面加载前已存在的消息"和"页面加载后新出现的消息"<br>
+      <strong>修复</strong>：新增 <code>initialMessageIds</code> 变量记录初始基准，在 <code>startCozePolling</code> 时先获取当前所有消息并记录ID，轮询时只处理基准之后的新消息
+    </div>
+  </div>
+</div>
+
+<!-- 第4章：最终技术方案 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-green ri-check-double-line"></i> 4. 最终技术方案
+  </div>
+
+  <p>方案整体架构：Chat SDK负责UI交互和语音输入，OpenAPI轮询负责获取对话结果，两者通过会话ID关联。</p>
+
+  <div class="flow-steps">
+    <div class="flow-step">
+      <div class="flow-step-num" style="background:var(--primary)">1</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">初始化Chat SDK</div>
+        <div class="flow-step-desc">加载Coze WebChatClient，配置bot_id和auth，渲染聊天UI组件。SDK初始化成功后启动轮询初始化。</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num" style="background:var(--purple)">0</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">【前置】记录初始消息基准</div>
+        <div class="flow-step-desc">在正式开始轮询前，先调用API获取当前会话的所有消息，记录它们的ID到 <code>initialMessageIds</code> 作为基准。这些基准消息不会被处理。</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num" style="background:var(--primary)">2</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">定时轮询会话列表</div>
+        <div class="flow-step-desc">每3秒调用 <code>GET /v1/conversations?bot_id=xxx&connector_id=999&page_size=1&sort_order=desc</code>，获取最新会话。</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num" style="background:var(--primary)">3</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">查询会话消息</div>
+        <div class="flow-step-desc">调用 <code>POST /v1/conversation/message/list?conversation_id=xxx</code>，body为 <code>{"order":"desc","limit":10}</code>，获取最近10条消息。</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num" style="background:var(--amber)">4</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">过滤最新answer消息 + 双层去重</div>
+        <div class="flow-step-desc">只取 <code>answerMsgs[0]</code>（最新一条），用 <code>conv.id + "_" + latestAnswer.id</code> 作为key，检查：①是否在 <code>initialMessageIds</code>（初始基准）②是否在 <code>cozeLastMsgIds</code>（已处理）。任一存在则跳过。</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num" style="background:var(--amber)">5</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">提取JSON</div>
+        <div class="flow-step-desc">对<strong>最新这一条消息</strong>的content，用 <code>extractJSONFromText</code> 提取结构化JSON。支持 <code>customer_name</code>/<code>customerName</code>/<code>customer</code>/<code>客户</code> 等多种字段名格式，支持markdown代码块。</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num" style="background:var(--green)">6</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">直接解析 + 构建orderDraft</div>
+        <div class="flow-step-desc"><code>JSON.parse</code> 解析提取的JSON字符串，直接构建orderDraft对象（不经过handleClipboardText的二次解析），兼容多种字段命名风格。</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num" style="background:var(--green)">7</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">触发匹配 + 标记已处理</div>
+        <div class="flow-step-desc">调用 <code>showMatchProgress(orderDraft)</code> 触发拼音匹配和UI渲染。<strong>匹配成功后</strong>才标记 <code>cozeLastMsgIds[msgKey]=true</code>，失败时下次轮询会重试。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 第5章：核心代码 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-blue ri-code-s-slash-line"></i> 5. 核心代码结构
+  </div>
+
+  <p><strong>全局状态变量</strong>：</p>
+<pre>
+<span class="comment">// 基础变量</span>
+<span class="keyword">var</span> cozePollTimer = <span class="keyword">null</span>;
+<span class="keyword">var</span> cozeLastMsgIds = {};
+<span class="keyword">var</span> cozePollConversationId = <span class="keyword">null</span>;
+
+<span class="comment">// 新增：初始消息基准</span>
+<span class="keyword">var</span> initialMessageIds = {};  <span class="comment">// 记录页面加载时已存在的消息ID</span>
+<span class="keyword">var</span> isPollingInitialized = <span class="keyword">false</span>;  <span class="comment">// 标记是否已完成初始化</span>
+</pre>
+
+  <p><strong>API封装层</strong>（支持CORS降级）：</p>
+<pre>
+<span class="keyword">function</span> <span class="func">cozeApiGetWithProxy</span>(path) {
+  <span class="comment">// 先尝试直接请求 api.coze.cn</span>
+  <span class="comment">// CORS失败时降级处理</span>
+}
+
+<span class="keyword">function</span> <span class="func">cozeApiPostWithProxy</span>(path, body) {
+  <span class="comment">// POST请求，body为JSON</span>
+  <span class="comment">// 同样支持CORS降级</span>
+}</pre>
+
+  <p><strong>数据获取层</strong>：</p>
+<pre>
+<span class="keyword">function</span> <span class="func">fetchLatestConversation</span>() {
+  <span class="keyword">return</span> cozeApiGetWithProxy(
+    <span class="string">'/v1/conversations?bot_id='</span> + botId +
+    <span class="string">'&connector_id=999&page_size=1&sort_order=desc'</span>
+  ).then(<span class="keyword">function</span>(res) {
+    <span class="keyword">return</span> res.data.conversations[<span class="string">0</span>];
+  });
+}
+
+<span class="keyword">function</span> <span class="func">fetchConversationMessages</span>(conversationId) {
+  <span class="keyword">return</span> cozeApiPostWithProxy(
+    <span class="string">'/v1/conversation/message/list?conversation_id='</span> + conversationId,
+    { order: <span class="string">'desc'</span>, limit: <span class="string">10</span> }
+  );
+}</pre>
+
+  <p><strong>JSON提取层</strong>（支持多种格式）：</p>
+<pre>
+<span class="keyword">function</span> <span class="func">extractJSONFromText</span>(text) {
+  <span class="comment">// 正则匹配优先级：</span>
+  <span class="comment">// 1. customer + products</span>
+  <span class="comment">// 2. 客户 + 产品</span>
+  <span class="comment">// 3. customerName + items</span>
+  <span class="comment">// 4. customer_name + products  ← Coze实际输出格式</span>
+  <span class="comment">// 5. ```json ... ``` markdown代码块</span>
+  <span class="comment">// 6. 直接JSON.parse兜底</span>
+}</pre>
+
+  <p><strong>轮询初始化函数</strong>（新增）：</p>
+<pre>
+<span class="keyword">function</span> <span class="func">startCozePolling</span>() {
+  <span class="keyword">if</span> (cozePollTimer) clearInterval(cozePollTimer);
+  <span class="keyword">var</span> pollEl = document.getElementById(<span class="string">'pollStatus'</span>);
+  <span class="keyword">if</span> (pollEl) pollEl.style.display = <span class="string">'flex'</span>;
+  updatePollUI(<span class="string">'listening'</span>);
+
+  <span class="comment">// 初始化：先获取当前所有消息，记录它们的ID作为基准，不处理这些已有消息</span>
+  <span class="keyword">if</span> (!isPollingInitialized) {
+    updatePollUI(<span class="string">'checking'</span>);
+    fetchLatestConversation().then(<span class="keyword">function</span>(conv) {
+      <span class="keyword">if</span> (conv) {
+        fetchConversationMessages(conv.id).then(<span class="keyword">function</span>(messages) {
+          <span class="keyword">var</span> answerMsgs = messages.filter(<span class="keyword">function</span>(m) {
+            <span class="keyword">return</span> m.role === <span class="string">'assistant'</span> && m.type === <span class="string">'answer'</span>;
+          });
+          answerMsgs.forEach(<span class="keyword">function</span>(m) {
+            initialMessageIds[conv.id + <span class="string">'_'</span> + m.id] = <span class="keyword">true</span>;
+          });
+          isPollingInitialized = <span class="keyword">true</span>;
+          updatePollUI(<span class="string">'listening'</span>);
+        });
+      } <span class="keyword">else</span> {
+        isPollingInitialized = <span class="keyword">true</span>;
+        updatePollUI(<span class="string">'listening'</span>);
+      }
+    });
+  }
+
+  cozePollTimer = setInterval(pollCozeMessages, <span class="string">3000</span>);
+  setTimeout(pollCozeMessages, <span class="string">1000</span>);
+}</pre>
+
+  <p><strong>轮询核心逻辑</strong>（修改后）：</p>
+<pre>
+<span class="keyword">function</span> <span class="func">pollCozeMessages</span>() {
+  <span class="keyword">if</span> (!getCozeToken() || !getCozeBotId()) <span class="keyword">return</span>;
+  <span class="comment">// 未初始化时不处理消息</span>
+  <span class="keyword">if</span> (!isPollingInitialized) {
+    updatePollUI(<span class="string">'listening'</span>);
+    <span class="keyword">return</span>;
+  }
+
+  updatePollUI(<span class="string">'checking'</span>);
+
+  fetchLatestConversation().then(<span class="keyword">function</span>(conv) {
+    <span class="keyword">if</span> (!conv) { updatePollUI(<span class="string">'listening'</span>); <span class="keyword">return</span>; }
+
+    <span class="keyword">return</span> fetchConversationMessages(conv.id).then(<span class="keyword">function</span>(messages) {
+      <span class="keyword">var</span> answerMsgs = messages.filter(<span class="keyword">function</span>(m) {
+        <span class="keyword">return</span> m.role === <span class="string">'assistant'</span> && m.type === <span class="string">'answer'</span>;
+      });
+
+      <span class="keyword">if</span> (answerMsgs.length > <span class="string">0</span>) {
+        <span class="keyword">var</span> latestAnswer = answerMsgs[<span class="string">0</span>];  <span class="comment">// 只处理最新一条消息</span>
+        <span class="keyword">var</span> msgKey = conv.id + <span class="string">'_'</span> + latestAnswer.id;
+
+        <span class="comment">// 双层去重检查：初始基准 OR 已处理</span>
+        <span class="keyword">if</span> (initialMessageIds[msgKey] || cozeLastMsgIds[msgKey]) {
+          updatePollUI(<span class="string">'listening'</span>);
+        } <span class="keyword">else</span> {
+          <span class="keyword">var</span> jsonStr = extractJSONFromText(latestAnswer.content);
+
+          <span class="keyword">if</span> (jsonStr) {
+            updatePollUI(<span class="string">'found'</span>);
+
+            <span class="keyword">try</span> {
+              <span class="keyword">var</span> parsedObj = JSON.parse(jsonStr);
+
+              <span class="keyword">var</span> customerName = parsedObj.customer_name || parsedObj.customerName || parsedObj.customer || parsedObj[<span class="string">'客户'</span>] || <span class="string">''</span>;
+              <span class="keyword">var</span> rawProducts = parsedObj.products || parsedObj.items || parsedObj[<span class="string">'产品'</span>] || [];
+
+              <span class="keyword">var</span> orderDraft = { source: <span class="string">'coze_poll'</span>, ... };
+
+              showMatchProgress(orderDraft);
+              cozeLastMsgIds[msgKey] = <span class="keyword">true</span>;
+              lastDetectedJSON = jsonStr;
+              updatePollUI(<span class="string">'matched'</span>);
+              showToast(<span class="string">'Coze对话中检测到订单数据，已自动匹配'</span>, <span class="string">'success'</span>);
+            } <span class="keyword">catch</span> (e) {
+              updatePollUI(<span class="string">'listening'</span>);
+            }
+          } <span class="keyword">else</span> {
+            updatePollUI(<span class="string">'listening'</span>);
+          }
+        }
+      } <span class="keyword">else</span> {
+        updatePollUI(<span class="string">'listening'</span>);
+      }
+
+      pollRetryCount = <span class="string">0</span>;
+    });
+  }).catch(<span class="keyword">function</span>(e) {
+    pollRetryCount++;
+    <span class="comment">// ... 错误处理</span>
+  });
+}</pre>
+</div>
+
+<!-- 第6章：关键设计决策 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-purple ri-mind-map"></i> 6. 关键设计决策
+  </div>
+
+  <table>
+    <tr>
+      <th>决策点</th>
+      <th>选择</th>
+      <th>原因</th>
+    </tr>
+    <tr>
+      <td>消息获取方式</td>
+      <td><span class="tag tag-green">OpenAPI轮询</span></td>
+      <td>SDK不暴露消息回调，轮询是唯一可行方案</td>
+    </tr>
+    <tr>
+      <td>轮询间隔</td>
+      <td><span class="tag tag-blue">3秒</span></td>
+      <td>平衡实时性与API调用频率，Coze回复通常需5-10秒</td>
+    </tr>
+    <tr>
+      <td>connector_id</td>
+      <td><span class="tag tag-blue">999</span></td>
+      <td>Chat SDK创建的会话属于渠道999，不传则查不到</td>
+    </tr>
+    <tr>
+      <td>消息去重策略</td>
+      <td><span class="tag tag-blue">双层去重：initialMessageIds + cozeLastMsgIds</span></td>
+      <td>initialMessageIds过滤初始基准消息，cozeLastMsgIds过滤已处理过的消息</td>
+    </tr>
+    <tr>
+      <td>消息处理范围</td>
+      <td><span class="tag tag-green">只处理最新一条</span></td>
+      <td>避免触发旧消息，保证只对用户当前对话的最新回复做反应</td>
+    </tr>
+    <tr>
+      <td>JSON解析路径</td>
+      <td><span class="tag tag-green">直接JSON.parse</span></td>
+      <td>绕过handleClipboardText的extractJSON二次解析，避免格式不兼容</td>
+    </tr>
+    <tr>
+      <td>标记时机</td>
+      <td><span class="tag tag-green">showMatchProgress之后</span></td>
+      <td>匹配失败时不标记，下次轮询可重试</td>
+    </tr>
+    <tr>
+      <td>字段兼容</td>
+      <td><span class="tag tag-purple">多格式映射</span></td>
+      <td>Coze输出格式可能变化，需兼容customer_name/customerName/customer等</td>
+    </tr>
+    <tr>
+      <td>CORS处理</td>
+      <td><span class="tag tag-amber">降级策略</span></td>
+      <td>直接请求失败时降级，当前SaaS场景未触发但保留防御</td>
+    </tr>
+    <tr>
+      <td>重置逻辑</td>
+      <td><span class="tag tag-purple">重置initialMessageIds + 重新初始化</span></td>
+      <td>点击"重新录入"后重置所有状态，重新记录初始基准，避免触发旧内容</td>
+    </tr>
+  </table>
+</div>
+
+<!-- 第7章：数据流全景 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-blue ri-flow-chart"></i> 7. 数据流全景
+  </div>
+
+  <pre>
+页面加载
+   │
+   ▼
+┌──────────────────┐
+│  初始基准记录    │  ← 获取当前所有消息ID，存入initialMessageIds
+│  (startCozePoll)  │  ← 标记isPollingInitialized=true
+└────────┬─────────┘
+   │
+   ▼
+┌──────────────────┐
+│  3秒定时轮询     │
+│  pollCozeMessages│
+└────────┬─────────┘
+   │
+   ▼
+┌──────────────────┐
+│  获取最新会话    │
+│  fetchLatestConv │
+└────────┬─────────┘
+   │
+   ▼
+┌──────────────────┐
+│  获取消息列表    │
+│  fetchConvMsgs   │
+└────────┬─────────┘
+   │
+   ▼
+┌──────────────────┐
+│  取最新answer    │  ← answerMsgs[0]
+└────────┬─────────┘
+   │
+   ▼
+┌──────────────────┐
+│  双层去重检查    │  ← 初始基准？已处理？
+└────────┬─────────┘
+   │ 未命中任一
+   ▼
+┌──────────────────┐
+│  提取JSON        │  ← extractJSONFromText
+└────────┬─────────┘
+   │ 有JSON
+   ▼
+┌──────────────────┐
+│  JSON.parse      │  ← 直接解析，不走handleClipboardText
+│  + 字段兼容映射   │
+└────────┬─────────┘
+   │ 构建orderDraft
+   ▼
+┌──────────────────┐
+│  showMatchProgress│  ← 触发拼音匹配 + UI渲染
+│  + 拼音匹配引擎   │
+└────────┬─────────┘
+   │ 匹配成功
+   ▼
+┌──────────────────┐
+│ 标记已处理ID     │  ← cozeLastMsgIds[msgKey]=true
+└────────┬─────────┘
+   │
+   ▼
+┌──────────────────┐
+│   制单表单填充    │  ← 客户确认 + 产品确认 + 订单生成
+└──────────────────┘</pre>
+</div>
+
+<!-- 第8章：踩坑总结 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-amber ri-lightbulb-flash-line"></i> 8. 踩坑总结与经验
+  </div>
+
+  <div class="highlight-box purple">
+    <i class="ri-star-line"></i> <strong>经验1：SDK ≠ API</strong><br>
+    Coze WebChatClient是UI组件，不是API库。它封装了完整的聊天界面，但不暴露内部消息流。需要获取对话内容时，必须走独立的OpenAPI通道，不能指望SDK回调。
+  </div>
+
+  <div class="highlight-box purple">
+    <i class="ri-star-line"></i> <strong>经验2：渠道隔离</strong><br>
+    Coze的会话按渠道（connector）隔离。Chat SDK（渠道999）和OpenAPI（渠道1024）创建的会话互不可见。查询Chat SDK的会话时必须指定 <code>connector_id=999</code>，否则返回空列表。
+  </div>
+
+  <div class="highlight-box purple">
+    <i class="ri-star-line"></i> <strong>经验3：避免二次解析</strong><br>
+    两个独立的JSON提取函数（extractJSONFromText和extractJSON）格式兼容性有微妙差异。当A函数提取的结果交给B函数二次解析时，可能因格式不兼容而静默失败。最终方案是<strong>单一解析路径</strong>：extractJSONFromText提取 → JSON.parse直接解析 → 构建业务对象。
+  </div>
+
+  <div class="highlight-box purple">
+    <i class="ri-star-line"></i> <strong>经验4：标记时机决定重试能力</strong><br>
+    "已处理"标记必须在业务逻辑成功执行之后才设置。如果先标记再执行，一旦执行失败，该消息永远不会被重试。这是"误标记已处理"Bug的根因。
+  </div>
+
+  <div class="highlight-box purple">
+    <i class="ri-star-line"></i> <strong>经验5：API参数大小写敏感</strong><br>
+    Coze OpenAPI对参数值的大小写严格校验。<code>sort_order=DESC</code> 会被拒绝，必须是 <code>desc</code>。这种细节在官方文档中容易忽略，只能通过实际调试发现。
+  </div>
+
+  <div class="highlight-box purple">
+    <i class="ri-star-line"></i> <strong>经验6：SDK参数命名风格</strong><br>
+    不同版本的SDK可能使用不同的命名风格（snake_case vs camelCase）。Coze旧版WebChatClient SDK使用 <code>bot_id</code>，改为 <code>botId</code> 会导致SDK初始化失败但不报错。修改SDK参数前务必确认版本对应的命名规范。
+  </div>
+
+  <div class="highlight-box purple">
+    <i class="ri-star-line"></i> <strong>经验7：区分"初始已有"与"后续新增"消息</strong><br>
+    页面加载时会话中可能已存在历史消息，这些消息不应被触发。必须在正式轮询前先记录一个"初始基准"（initialMessageIds），后续只处理基准之后的新消息。
+  </div>
+
+  <div class="highlight-box purple">
+    <i class="ri-star-line"></i> <strong>经验8：限制消息处理范围</strong><br>
+    不要遍历所有历史消息，只处理最新一条（answerMsgs[0]）。否则如果最新消息没有JSON，可能会继续处理旧消息导致重复触发。
+  </div>
+</div>
+
+<!-- 第9章：后续优化方向 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-green ri-rocket-2-line"></i> 9. 后续优化方向
+  </div>
+
+  <table>
+    <tr>
+      <th>方向</th>
+      <th>说明</th>
+      <th>优先级</th>
+    </tr>
+    <tr>
+      <td>WebSocket实时推送</td>
+      <td>Coze若未来开放WebSocket消息推送接口，可替代轮询，实现毫秒级响应</td>
+      <td><span class="tag tag-amber">等待官方</span></td>
+    </tr>
+    <tr>
+      <td>后端代理</td>
+      <td>若CORS问题在非SaaS场景触发，需后端部署代理服务转发Coze API请求</td>
+      <td><span class="tag tag-blue">按需</span></td>
+    </tr>
+    <tr>
+      <td>增量消息查询</td>
+      <td>记录上次查询的最新消息ID，下次只查该ID之后的新消息，减少数据传输</td>
+      <td><span class="tag tag-green">低</span></td>
+    </tr>
+    <tr>
+      <td>多会话支持</td>
+      <td>当前只轮询最新会话，未来可能需要同时监听多个会话的消息</td>
+      <td><span class="tag tag-blue">按需</span></td>
+    </tr>
+    <tr>
+      <td>SDK版本升级</td>
+      <td>关注Coze WebChatClient SDK更新，若新版暴露消息回调可简化方案</td>
+      <td><span class="tag tag-amber">持续关注</span></td>
+    </tr>
+  </table>
+</div>
+
+</div>
+</body>
+</html>

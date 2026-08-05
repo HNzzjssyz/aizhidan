@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>剪贴板监听实验Demo — 智能制单</title>
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+<style>
+:root {
+  --bg: #f0f2f5;
+  --card: #ffffff;
+  --border: #e5e7eb;
+  --text: #1f2937;
+  --text-secondary: #6b7280;
+  --text-muted: #9ca3af;
+  --primary: #3b82f6;
+  --primary-light: #eff6ff;
+  --primary-dark: #2563eb;
+  --success: #10b981;
+  --success-light: #ecfdf5;
+  --warning: #f59e0b;
+  --warning-light: #fffbeb;
+  --danger: #ef4444;
+  --danger-light: #fef2f2;
+  --purple: #8b5cf6;
+  --purple-light: #f5f3ff;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 4px 20px rgba(0,0,0,0.08);
+  --shadow-lg: 0 10px 40px rgba(0,0,0,0.12);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+.header {
+  background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+  color: white;
+  padding: 20px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.header-icon {
+  width: 44px; height: 44px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+}
+.header h1 { font-size: 20px; font-weight: 700; }
+.header p { font-size: 12px; opacity: 0.8; margin-top: 2px; }
+.header-badge {
+  background: rgba(255,255,255,0.15);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.header-badge .dot {
+  width: 8px; height: 8px;
+  background: #4ade80;
+  border-radius: 50%;
+  animation: blink 2s infinite;
+}
+@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+.main-layout {
+  display: flex;
+  gap: 0;
+  height: calc(100vh - 84px);
+}
+
+.left-panel {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  min-width: 0;
+}
+
+.right-panel {
+  width: 420px;
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+}
+
+.section-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  margin-bottom: 16px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+.section-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.section-title {
+  font-size: 15px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-title i { color: var(--primary); font-size: 18px; }
+.section-body { padding: 20px; }
+
+.monitor-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 16px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.monitor-status.active {
+  background: var(--success-light);
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+.monitor-status.inactive {
+  background: var(--danger-light);
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+.monitor-status .status-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+}
+.monitor-status.active .status-dot { background: var(--success); animation: blink 2s infinite; }
+.monitor-status.inactive .status-dot { background: var(--danger); }
+
+.log-area {
+  background: #1e293b;
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  max-height: 200px;
+  overflow-y: auto;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 12px;
+  line-height: 1.8;
+}
+.log-entry {
+  display: flex;
+  gap: 8px;
+  padding: 2px 0;
+}
+.log-time { color: #64748b; flex-shrink: 0; }
+.log-type { flex-shrink: 0; padding: 1px 6px; border-radius: 3px; font-size: 10px; font-weight: 600; }
+.log-type.clip { background: rgba(59,130,246,0.2); color: #93c5fd; }
+.log-type.parse { background: rgba(139,92,246,0.2); color: #c4b5fd; }
+.log-type.fill { background: rgba(16,185,129,0.2); color: #6ee7b7; }
+.log-type.error { background: rgba(239,68,68,0.2); color: #fca5a5; }
+.log-type.info { background: rgba(245,158,11,0.2); color: #fcd34d; }
+.log-msg { color: #e2e8f0; word-break: break-all; }
+
+.form-group {
+  margin-bottom: 16px;
+}
+.form-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.form-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  transition: all 0.2s;
+  background: var(--card);
+  color: var(--text);
+}
+.form-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+}
+.form-input.filled {
+  border-color: var(--success);
+  background: var(--success-light);
+}
+.form-input::placeholder { color: var(--text-muted); }
+
+.product-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.product-table thead th {
+  text-align: left;
+  padding: 10px 12px;
+  background: #f8fafc;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border);
+}
+.product-table tbody td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+.product-table tbody td:first-child { color: var(--text); font-weight: 500; }
+.product-table tbody tr.filled { background: var(--success-light); }
+.product-table tbody tr.filled td { color: #065f46; }
+
+.empty-products {
+  text-align: center;
+  padding: 32px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+.empty-products i { font-size: 32px; display: block; margin-bottom: 8px; opacity: 0.4; }
+
+.action-bar {
+  display: flex;
+  gap: 10px;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+  background: #fafbfc;
+}
+.btn {
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-primary {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+.btn-primary:hover { background: var(--primary-dark); }
+.btn-primary:disabled { background: #93c5fd; cursor: not-allowed; }
+.btn-secondary {
+  background: var(--card);
+  color: var(--text);
+}
+.btn-secondary:hover { background: #f3f4f6; }
+.btn-success {
+  background: var(--success);
+  color: white;
+  border-color: var(--success);
+}
+.btn-danger {
+  background: var(--danger);
+  color: white;
+  border-color: var(--danger);
+}
+
+.right-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.right-header .chat-avatar {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-size: 18px;
+}
+.right-header .chat-info h3 { font-size: 14px; font-weight: 600; }
+.right-header .chat-info p { font-size: 11px; color: var(--text-muted); }
+
+.chat-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+
+.chat-msg {
+  display: flex;
+  gap: 10px;
+  max-width: 95%;
+}
+.chat-msg.user { align-self: flex-end; flex-direction: row-reverse; }
+.chat-msg .msg-avatar {
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; flex-shrink: 0;
+}
+.chat-msg.agent .msg-avatar { background: var(--primary-light); color: var(--primary); }
+.chat-msg.user .msg-avatar { background: var(--purple-light); color: var(--purple); }
+.chat-bubble {
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.6;
+  word-break: break-word;
+}
+.chat-msg.agent .chat-bubble {
+  background: #f1f5f9;
+  color: var(--text);
+}
+.chat-msg.user .chat-bubble {
+  background: var(--primary);
+  color: white;
+}
+.chat-bubble pre {
+  background: #1e293b;
+  color: #e2e8f0;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  line-height: 1.6;
+  overflow-x: auto;
+  margin: 8px 0 0;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+}
+.chat-bubble .copy-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+  padding: 4px 10px;
+  background: rgba(59,130,246,0.1);
+  color: var(--primary);
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.chat-bubble .copy-hint:hover { background: rgba(59,130,246,0.2); }
+
+.chat-input-area {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: #fafbfc;
+}
+.chat-input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  background: var(--card);
+}
+.chat-input:focus { outline: none; border-color: var(--primary); }
+.chat-send {
+  width: 38px; height: 38px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  transition: background 0.2s;
+}
+.chat-send:hover { background: var(--primary-dark); }
+
+.quick-samples {
+  padding: 8px 16px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--border);
+  background: #fafbfc;
+}
+.quick-sample {
+  padding: 4px 12px;
+  background: var(--primary-light);
+  color: var(--primary);
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.quick-sample:hover { background: #dbeafe; }
+
+.config-section {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  background: #fafbfc;
+}
+.config-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.config-row:last-child { margin-bottom: 0; }
+.config-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  min-width: 50px;
+}
+.config-input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: 'SF Mono', monospace;
+  background: var(--card);
+}
+.config-input:focus { outline: none; border-color: var(--primary); }
+
+.match-result {
+  padding: 14px 18px;
+  border-radius: var(--radius-sm);
+  margin-top: 12px;
+  font-size: 13px;
+}
+.match-result.success {
+  background: var(--success-light);
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+}
+.match-result.error {
+  background: var(--danger-light);
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+.match-result.pending {
+  background: var(--warning-light);
+  border: 1px solid #fde68a;
+  color: #92400e;
+}
+
+.json-preview {
+  background: #1e293b;
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  margin-top: 12px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 11px;
+  color: #e2e8f0;
+  line-height: 1.7;
+  max-height: 180px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.json-key { color: #93c5fd; }
+.json-str { color: #86efac; }
+.json-num { color: #fcd34d; }
+
+@media (max-width: 900px) {
+  .main-layout { flex-direction: column; height: auto; }
+  .right-panel { width: 100%; height: 50vh; border-left: none; border-top: 1px solid var(--border); }
+  .left-panel { height: 50vh; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="header-icon"><i class="ri-clipboard-line"></i></div>
+    <div>
+      <h1>剪贴板监听实验 Demo</h1>
+      <p>右侧 Coze 对话 → 复制 JSON → 左侧自动填充 → 后台匹配查询</p>
+    </div>
+  </div>
+  <div class="header-badge">
+    <span class="dot"></span>
+    <span id="monitorBadge">监听中</span>
+  </div>
+</div>
+
+<div class="main-layout">
+  <div class="left-panel">
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-title"><i class="ri-radar-line"></i> 剪贴板监听状态</div>
+        <button class="btn btn-secondary" onclick="clearLogs()" style="padding:6px 12px;font-size:11px;"><i class="ri-delete-bin-line"></i> 清空日志</button>
+      </div>
+      <div class="section-body">
+        <div class="monitor-status active" id="monitorStatus">
+          <span class="status-dot"></span>
+          <span id="monitorText">剪贴板监听已激活 — 在右侧对话区复制 JSON 内容即可自动填充</span>
+        </div>
+        <div class="log-area" id="logArea">
+          <div class="log-entry">
+            <span class="log-time">--:--:--</span>
+            <span class="log-type info">SYS</span>
+            <span class="log-msg">系统就绪，等待剪贴板事件...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-title"><i class="ri-file-list-3-line"></i> 单据草稿</div>
+        <div style="display:flex;gap:6px;">
+          <span id="fillStatus" style="font-size:11px;color:var(--text-muted);padding:4px 10px;background:#f8fafc;border-radius:20px;">未填充</span>
+        </div>
+      </div>
+      <div class="section-body">
+        <div class="form-group">
+          <label class="form-label">单据类型</label>
+          <input type="text" class="form-input" id="docType" placeholder="自动填充：销售订单 / 报价单 / 出库单" readonly>
+        </div>
+        <div class="form-group">
+          <label class="form-label">客户名称</label>
+          <input type="text" class="form-input" id="customerName" placeholder="自动填充：从剪贴板JSON提取" readonly>
+        </div>
+        <div class="form-group">
+          <label class="form-label">付款方式</label>
+          <input type="text" class="form-input" id="paymentTerm" placeholder="自动填充" readonly>
+        </div>
+        <div class="form-group">
+          <label class="form-label">备注</label>
+          <input type="text" class="form-input" id="remark" placeholder="自动填充" readonly>
+        </div>
+
+        <div style="margin-top:8px;margin-bottom:12px;">
+          <label class="form-label">产品明细</label>
+        </div>
+        <table class="product-table" id="productTable">
+          <thead>
+            <tr>
+              <th>产品名称</th>
+              <th>规格</th>
+              <th>数量</th>
+              <th>单价</th>
+              <th>金额</th>
+            </tr>
+          </thead>
+          <tbody id="productBody">
+            <tr>
+              <td colspan="5">
+                <div class="empty-products">
+                  <i class="ri-shopping-bag-line"></i>
+                  等待剪贴板数据填充...
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div id="matchResultArea"></div>
+      </div>
+      <div class="action-bar">
+        <button class="btn btn-secondary" onclick="resetForm()"><i class="ri-refresh-line"></i> 重置</button>
+        <button class="btn btn-primary" id="submitBtn" onclick="submitMatch()" disabled><i class="ri-search-eye-line"></i> 提交匹配查询</button>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-title"><i class="ri-code-s-slash-line"></i> 最近解析的 JSON</div>
+      </div>
+      <div class="section-body">
+        <div class="json-preview" id="jsonPreview">等待剪贴板 JSON 数据...</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="right-panel">
+    <div class="right-header">
+      <div class="chat-avatar"><i class="ri-robot-2-line"></i></div>
+      <div class="chat-info">
+        <h3>智能制单助手</h3>
+        <p>Coze Chat SDK · 剪贴板通信</p>
+      </div>
+    </div>
+
+    <div class="config-section">
+      <div class="config-row">
+        <span class="config-label">Bot ID</span>
+        <input type="text" class="config-input" id="botIdInput" placeholder="输入 Coze Bot ID 后回车" onkeydown="if(event.key==='Enter')initCozeSDK()">
+      </div>
+      <div class="config-row">
+        <span class="config-label">Token</span>
+        <input type="password" class="config-input" id="tokenInput" placeholder="输入 PAT Token 后回车" onkeydown="if(event.key==='Enter')initCozeSDK()">
+      </div>
+      <div style="margin-top:8px;display:flex;gap:6px;">
+        <button class="btn btn-primary" onclick="initCozeSDK()" style="padding:6px 14px;font-size:11px;"><i class="ri-link"></i> 连接 Coze</button>
+        <button class="btn btn-secondary" onclick="useMockChat()" style="padding:6px 14px;font-size:11px;"><i class="ri-test-tube-line"></i> 模拟对话</button>
+      </div>
+    </div>
+
+    <div class="chat-container" id="chatContainer">
+      <div class="chat-msg agent">
+        <div class="msg-avatar"><i class="ri-robot-2-line"></i></div>
+        <div class="chat-bubble">
+          你好！我是智能制单助手。<br><br>
+          请告诉我客户和产品信息，我会返回结构化 JSON。<br>
+          <strong>复制 JSON 内容</strong>后，左侧表单将自动填充。<br><br>
+          <span style="font-size:11px;color:#6b7280;">💡 点击上方"连接 Coze"接入真实智能体，或点击"模拟对话"使用内置模拟数据</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="quick-samples">
+      <span class="quick-sample" onclick="useQuickSample(0)">6产品订单</span>
+      <span class="quick-sample" onclick="useQuickSample(1)">7产品订单</span>
+      <span class="quick-sample" onclick="useQuickSample(2)">口语化表达</span>
+    </div>
+
+    <div class="chat-input-area">
+      <input class="chat-input" id="chatInput" placeholder="输入客户和产品信息..." onkeydown="if(event.key==='Enter')sendChat()">
+      <button class="chat-send" onclick="sendChat()"><i class="ri-send-plane-line"></i></button>
+    </div>
+  </div>
+</div>
+
+<script>
+const mockResponses = [
+  {
+    input_hint: '深圳华创科技要A3打印纸100箱...',
+    response: {
+      doc_type: "销售订单",
+      customer_name: "深圳华创科技有限公司",
+      customer_pinyin: "shen_zhen_hua_chuang_ke_ji_you_xian_gong_si",
+      payment_term: "月结30天",
+      remark: "本周五前发货",
+      products: [
+        { name: "A3打印纸", pinyin: "A3_da_yin_zhi", spec: "70g 500张/包", spec_pinyin: "70g_500zhang_bao", qty: 100, unit: "箱", price: 280 },
+        { name: "A4打印纸", pinyin: "A4_da_yin_zhi", spec: "80g 500张/包", spec_pinyin: "80g_500zhang_bao", qty: 200, unit: "箱", price: 180 },
+        { name: "B5笔记本", pinyin: "B5_bi_ji_ben", spec: "100页 胶装", spec_pinyin: "100ye_jiao_zhuang", qty: 500, unit: "本", price: 12 },
+        { name: "无线鼠标", pinyin: "wu_xian_shu_biao", spec: "2.4G 静音", spec_pinyin: "2.4g_jing_yin", qty: 50, unit: "个", price: 35 },
+        { name: "机械键盘", pinyin: "ji_xie_jian_pan", spec: "青轴 104键", spec_pinyin: "qing_zhou_104jian", qty: 30, unit: "个", price: 299 },
+        { name: "惠普墨盒", pinyin: "hui_pu_mo_he", spec: "黑色 大容量", spec_pinyin: "hei_se_da_rong_liang", qty: 20, unit: "套", price: 158 }
+      ]
+    }
+  },
+  {
+    input_hint: '北京宏达科技订购...',
+    response: {
+      doc_type: "销售订单",
+      customer_name: "北京宏达科技有限公司",
+      customer_pinyin: "bei_jing_hong_da_ke_ji_you_xian_gong_si",
+      payment_term: "月结60天",
+      remark: "下周二前送达",
+      products: [
+        { name: "A4打印纸", pinyin: "A4_da_yin_zhi", spec: "70g 500张/包", spec_pinyin: "70g_500zhang_bao", qty: 150, unit: "箱", price: 180 },
+        { name: "B5笔记本", pinyin: "B5_bi_ji_ben", spec: "200页 线装", spec_pinyin: "200ye_xian_zhuang", qty: 1000, unit: "本", price: 12 },
+        { name: "无线鼠标", pinyin: "wu_xian_shu_biao", spec: "2.4G 静音", spec_pinyin: "2.4g_jing_yin", qty: 100, unit: "个", price: 35 },
+        { name: "有线鼠标", pinyin: "you_xian_shu_biao", spec: "USB 办公款", spec_pinyin: "USB_ban_gong_kuan", qty: 80, unit: "个", price: 25 },
+        { name: "机械键盘", pinyin: "ji_xie_jian_pan", spec: "青轴 104键", spec_pinyin: "qing_zhou_104jian", qty: 50, unit: "个", price: 299 },
+        { name: "惠普墨盒", pinyin: "hui_pu_mo_he", spec: "彩色 套装", spec_pinyin: "cai_se_tao_zhuang", qty: 30, unit: "套", price: 268 },
+        { name: "文件夹", pinyin: "wen_jian_jia", spec: "A4 加厚 50个/盒", spec_pinyin: "A4_jia_hou_50ge_he", qty: 200, unit: "盒", price: 45 }
+      ]
+    }
+  },
+  {
+    input_hint: '上海鼎盛贸易订购多种办公用品...',
+    response: {
+      doc_type: "报价单",
+      customer_name: "上海鼎盛贸易有限公司",
+      customer_pinyin: "shang_hai_ding_sheng_mao_yi_you_xian_gong_si",
+      payment_term: "款到发货",
+      remark: "急单，请优先处理",
+      products: [
+        { name: "A4打印纸", pinyin: "A4_da_yin_zhi", spec: "80g 500张/包", spec_pinyin: "80g_500zhang_bao", qty: 300, unit: "箱", price: 175 },
+        { name: "B5笔记本", pinyin: "B5_bi_ji_ben", spec: "100页 胶装", spec_pinyin: "100ye_jiao_zhuang", qty: 800, unit: "本", price: 11 },
+        { name: "无线鼠标", pinyin: "wu_xian_shu_biao", spec: "2.4G 静音", spec_pinyin: "2.4g_jing_yin", qty: 120, unit: "个", price: 32 },
+        { name: "机械键盘", pinyin: "ji_xie_jian_pan", spec: "红轴 87键", spec_pinyin: "hong_zhou_87jian", qty: 60, unit: "个", price: 289 },
+        { name: "签字笔", pinyin: "qian_zi_bi", spec: "0.5mm 黑色 12支/盒", spec_pinyin: "0.5mm_hei_se_12zhi_he", qty: 500, unit: "盒", price: 28 }
+      ]
+    }
+  }
+];
+
+let cozeSDK = null;
+let isCozeConnected = false;
+
+function log(type, msg) {
+  const area = document.getElementById('logArea');
+  const now = new Date();
+  const time = [now.getHours(), now.getMinutes(), now.getSeconds()]
+    .map(n => String(n).padStart(2, '0')).join(':');
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  entry.innerHTML = `<span class="log-time">${time}</span><span class="log-type ${type}">${type.toUpperCase()}</span><span class="log-msg">${msg}</span>`;
+  area.appendChild(entry);
+  area.scrollTop = area.scrollHeight;
+}
+
+function clearLogs() {
+  document.getElementById('logArea').innerHTML = '';
+  log('info', '日志已清空');
+}
+
+function extractJSON(text) {
+  const patterns = [
+    /```json\s*([\s\S]*?)```/,
+    /```\s*([\s\S]*?)```/,
+    /(\{[\s\S]*"doc_type"[\s\S]*\})/,
+    /(\{[\s\S]*"customer_name"[\s\S]*\})/,
+    /(\{[\s\S]*"products"[\s\S]*\})/
+  ];
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match && match[1]) {
+      try {
+        const obj = JSON.parse(match[1].trim());
+        if (obj.doc_type || obj.customer_name || obj.products) return obj;
+      } catch (e) { continue; }
+    }
+  }
+  try {
+    const obj = JSON.parse(text.trim());
+    if (obj.doc_type || obj.customer_name || obj.products) return obj;
+  } catch (e) {}
+  return null;
+}
+
+function fillForm(data) {
+  log('fill', `开始填充表单 — 单据类型: ${data.doc_type || '-'}, 客户: ${data.customer_name || '-'}`);
+
+  const fields = {
+    docType: data.doc_type,
+    customerName: data.customer_name,
+    paymentTerm: data.payment_term,
+    remark: data.remark
+  };
+
+  let filledCount = 0;
+  for (const [id, value] of Object.entries(fields)) {
+    const input = document.getElementById(id);
+    if (input && value) {
+      input.value = value;
+      input.classList.add('filled');
+      filledCount++;
+    }
+  }
+
+  if (data.products && data.products.length > 0) {
+    const tbody = document.getElementById('productBody');
+    tbody.innerHTML = '';
+    data.products.forEach(function(p) {
+      const amount = (p.qty || 0) * (p.price || 0);
+      const tr = document.createElement('tr');
+      tr.className = 'filled';
+      tr.innerHTML = `<td>${p.name || '-'}</td><td>${p.spec || '-'}</td><td>${p.qty || 0}${p.unit || ''}</td><td>¥${p.price || 0}</td><td>¥${amount.toLocaleString()}</td>`;
+      tbody.appendChild(tr);
+    });
+    filledCount += data.products.length;
+    log('fill', `产品明细已填充 ${data.products.length} 条`);
+  }
+
+  const total = data.products ? data.products.reduce(function(s, p) { return s + (p.qty || 0) * (p.price || 0); }, 0) : 0;
+  log('fill', `表单填充完成 — ${filledCount} 个字段，合计 ¥${total.toLocaleString()}`);
+
+  document.getElementById('fillStatus').textContent = '已填充';
+  document.getElementById('fillStatus').style.background = '#ecfdf5';
+  document.getElementById('fillStatus').style.color = '#065f46';
+  document.getElementById('submitBtn').disabled = false;
+}
+
+function highlightJSON(obj) {
+  const json = JSON.stringify(obj, null, 2);
+  return json.replace(/"([^"]+)":/g, '<span class="json-key">"$1"</span>:')
+             .replace(/: "([^"]*)"/g, ': <span class="json-str">"$1"</span>')
+             .replace(/: (\d+\.?\d*)/g, ': <span class="json-num">$1</span>');
+}
+
+function resetForm() {
+  ['docType', 'customerName', 'paymentTerm', 'remark'].forEach(function(id) {
+    const input = document.getElementById(id);
+    input.value = '';
+    input.classList.remove('filled');
+  });
+  document.getElementById('productBody').innerHTML = '<tr><td colspan="5"><div class="empty-products"><i class="ri-shopping-bag-line"></i>等待剪贴板数据填充...</div></td></tr>';
+  document.getElementById('jsonPreview').textContent = '等待剪贴板 JSON 数据...';
+  document.getElementById('matchResultArea').innerHTML = '';
+  document.getElementById('fillStatus').textContent = '未填充';
+  document.getElementById('fillStatus').style.background = '#f8fafc';
+  document.getElementById('fillStatus').style.color = '#9ca3af';
+  document.getElementById('submitBtn').disabled = true;
+  log('info', '表单已重置');
+}
+
+function submitMatch() {
+  const customerName = document.getElementById('customerName').value;
+  if (!customerName) {
+    log('error', '客户名称为空，无法提交匹配');
+    return;
+  }
+
+  log('info', `提交匹配查询 — 客户: ${customerName}`);
+  const resultArea = document.getElementById('matchResultArea');
+  resultArea.innerHTML = '<div class="match-result pending"><i class="ri-loader-4-line" style="animation:spin 1s linear infinite;display:inline-block;"></i> 正在查询客户库和产品库匹配...</div>';
+
+  setTimeout(function() {
+    const matchScore = Math.floor(Math.random() * 15) + 85;
+    resultArea.innerHTML = `<div class="match-result success"><strong>✓ 匹配成功</strong><br>客户「${customerName}」匹配度 ${matchScore}%，已命中客户库记录<br>产品明细匹配完成，共 ${document.getElementById('productBody').querySelectorAll('tr.filled').length} 条</div>`;
+    log('fill', `匹配查询完成 — 客户匹配度 ${matchScore}%`);
+  }, 1200);
+}
+
+function handleClipboardText(text) {
+  log('clip', `捕获剪贴板内容 (${text.length} 字符)`);
+
+  const data = extractJSON(text);
+  if (data) {
+    log('parse', `JSON 解析成功 — doc_type: ${data.doc_type || '-'}, customer: ${data.customer_name || '-'}, products: ${(data.products || []).length} 条`);
+    document.getElementById('jsonPreview').innerHTML = highlightJSON(data);
+    fillForm(data);
+  } else {
+    log('error', '未检测到有效的制单 JSON 结构');
+  }
+}
+
+document.addEventListener('copy', function(e) {
+  const selection = window.getSelection().toString();
+  if (selection) {
+    setTimeout(function() { handleClipboardText(selection); }, 100);
+  }
+});
+
+document.addEventListener('paste', function(e) {
+  const text = (e.clipboardData || window.clipboardData).getData('text');
+  if (text) {
+    setTimeout(function() { handleClipboardText(text); }, 100);
+  }
+});
+
+let clipboardPollTimer = null;
+let lastClipboardContent = '';
+
+function startClipboardPoll() {
+  if (clipboardPollTimer) return;
+  clipboardPollTimer = setInterval(function() {
+    if (navigator.clipboard && navigator.clipboard.readText) {
+      navigator.clipboard.readText().then(function(text) {
+        if (text && text !== lastClipboardContent && text.length > 10) {
+          lastClipboardContent = text;
+          handleClipboardText(text);
+        }
+      }).catch(function() {});
+    }
+  }, 1000);
+}
+
+function addChatBubble(role, content, isHTML) {
+  const container = document.getElementById('chatContainer');
+  const msg = document.createElement('div');
+  msg.className = `chat-msg ${role}`;
+  const avatarIcon = role === 'agent' ? 'ri-robot-2-line' : 'ri-user-line';
+  let bubbleContent = isHTML ? content : content.replace(/\n/g, '<br>');
+  msg.innerHTML = `<div class="msg-avatar"><i class="${avatarIcon}"></i></div><div class="chat-bubble">${bubbleContent}</div>`;
+  container.appendChild(msg);
+  container.scrollTop = container.scrollHeight;
+}
+
+function useQuickSample(index) {
+  const sample = mockResponses[index];
+  if (!sample) return;
+  document.getElementById('chatInput').value = sample.input_hint;
+  sendChat();
+}
+
+function sendChat() {
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  addChatBubble('user', text);
+
+  if (isCozeConnected && cozeSDK) {
+    log('info', '消息已发送至 Coze 智能体，等待回复...');
+    return;
+  }
+
+  setTimeout(function() {
+    let matchedIndex = 0;
+    if (text.includes('北京') || text.includes('宏达')) matchedIndex = 1;
+    else if (text.includes('上海') || text.includes('鼎盛')) matchedIndex = 2;
+
+    const resp = mockResponses[matchedIndex].response;
+    const jsonStr = JSON.stringify(resp, null, 2);
+
+    const bubbleContent = `已识别您的制单需求，结构化数据如下：<pre>${jsonStr}</pre><div class="copy-hint" onclick="copyJSON(this)"><i class="ri-clipboard-line"></i> 点击复制 JSON（复制后左侧自动填充）</div>`;
+
+    addChatBubble('agent', bubbleContent, true);
+    log('info', '模拟智能体返回 JSON，请点击复制按钮或手动选中 JSON 复制');
+  }, 800);
+}
+
+function copyJSON(el) {
+  const pre = el.parentElement.querySelector('pre');
+  if (pre) {
+    const text = pre.textContent;
+    navigator.clipboard.writeText(text).then(function() {
+      el.innerHTML = '<i class="ri-check-line"></i> 已复制！左侧正在填充...';
+      el.style.background = 'rgba(16,185,129,0.15)';
+      el.style.color = '#10b981';
+      handleClipboardText(text);
+      setTimeout(function() {
+        el.innerHTML = '<i class="ri-clipboard-line"></i> 点击复制 JSON（复制后左侧自动填充）';
+        el.style.background = '';
+        el.style.color = '';
+      }, 2000);
+    }).catch(function() {
+      const range = document.createRange();
+      range.selectNodeContents(pre);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      document.execCommand('copy');
+      sel.removeAllRanges();
+      handleClipboardText(text);
+    });
+  }
+}
+
+function useMockChat() {
+  isCozeConnected = false;
+  log('info', '已启用模拟对话模式 — 使用内置 mock 数据');
+  addChatBubble('agent', '模拟模式已激活！<br><br>请输入客户和产品信息（如"深圳华创科技要A3打印纸100箱"），或点击下方快捷示例。<br><br>返回的 JSON 可通过 <strong>点击复制按钮</strong> 或 <strong>手动选中复制</strong> 触发左侧表单自动填充。', true);
+}
+
+function initCozeSDK() {
+  const botId = document.getElementById('botIdInput').value.trim();
+  const token = document.getElementById('tokenInput').value.trim();
+
+  if (!botId) {
+    log('error', '请输入 Bot ID');
+    return;
+  }
+  if (!token) {
+    log('error', '请输入 PAT Token');
+    return;
+  }
+
+  log('info', `正在连接 Coze 智能体 (Bot ID: ${botId.substring(0, 8)}...)`);
+
+  if (typeof CozeWebSDK === 'undefined') {
+    const script = document.createElement('script');
+    script.src = 'https://lf-cdn.coze.cn/obj/unpkg/flow-platform/chat-app-sdk/1.2.0-beta.8/libs/cn/index.js';
+    script.onload = function() {
+      createCozeClient(botId, token);
+    };
+    script.onerror = function() {
+      log('error', 'Coze SDK 加载失败，请检查网络连接');
+    };
+    document.head.appendChild(script);
+  } else {
+    createCozeClient(botId, token);
+  }
+}
+
+function createCozeClient(botId, token) {
+  try {
+    cozeSDK = new CozeWebSDK.WebChatClient({
+      config: {
+        botId: botId,
+        isIframe: false,
+      },
+      auth: {
+        type: 'token',
+        token: token,
+        onRefreshToken: async function() { return token; },
+      },
+      ui: {
+        base: { lang: 'zh-CN' },
+        asstBtn: { isNeed: false },
+        chatBot: { position: { right: '20px', bottom: '20px' } }
+      }
+    });
+    isCozeConnected = true;
+    log('info', 'Coze 智能体连接成功！在弹出的对话窗口中对话，复制返回的 JSON 即可触发左侧填充');
+    addChatBubble('agent', 'Coze 智能体已连接！<br><br>对话窗口已弹出，请在其中输入客户和产品信息。<br>智能体返回 JSON 后，<strong>复制 JSON 内容</strong>即可触发左侧表单自动填充。', true);
+  } catch (e) {
+    log('error', `Coze SDK 初始化失败: ${e.message}`);
+  }
+}
+
+startClipboardPoll();
+log('info', '剪贴板轮询已启动（1秒间隔），同时监听 copy/paste 事件');
+
+const style = document.createElement('style');
+style.textContent = '@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }';
+document.head.appendChild(style);
+</script>
+
+</body>
+</html>

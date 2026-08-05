@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>模拟订单截图数据</title>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; background: #f0f2f5; padding: 20px; }
+.screenshot-container { max-width: 800px; margin: 0 auto; }
+.order-card { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 24px; overflow: hidden; }
+.order-header { background: #1890ff; color: #fff; padding: 12px 20px; font-size: 16px; font-weight: 600; display: flex; justify-content: space-between; }
+.order-header .order-no { font-size: 13px; opacity: 0.9; }
+.order-body { padding: 16px 20px; }
+.info-row { display: flex; margin-bottom: 8px; font-size: 14px; line-height: 1.8; }
+.info-label { color: #999; width: 80px; flex-shrink: 0; }
+.info-value { color: #333; font-weight: 500; }
+.product-table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13px; }
+.product-table th { background: #fafafa; padding: 8px 12px; text-align: left; border: 1px solid #e8e8e8; color: #666; font-weight: 500; }
+.product-table td { padding: 8px 12px; border: 1px solid #e8e8e8; color: #333; }
+.product-table .amount { text-align: right; font-weight: 600; color: #f5222d; }
+.order-footer { padding: 12px 20px; background: #fafafa; border-top: 1px solid #e8e8e8; display: flex; justify-content: space-between; font-size: 13px; color: #666; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-left: 8px; }
+.badge-urgent { background: #fff1f0; color: #f5222d; border: 1px solid #ffa39e; }
+.badge-normal { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
+.badge-invoice { background: #e6f7ff; color: #1890ff; border: 1px solid #91d5ff; }
+.badge-monthly { background: #fff7e6; color: #fa8c16; border: 1px solid #ffd591; }
+h2 { color: #333; margin-bottom: 16px; }
+</style>
+</head>
+<body>
+<div class="screenshot-container">
+<h2>📋 模拟订单截图数据（共15条）</h2>
+<div class="order-card">
+  <div class="order-header">
+    <span>销售订单<span class="badge badge-urgent">加急</span></span>
+    <span class="order-no">ORD20260518001</span>
+  </div>
+  <div class="order-body">
+    <div class="info-row"><span class="info-label">客户名称</span><span class="info-value">南海装饰材料有限公司</span></div>
+    <div class="info-row"><span class="info-label">联系人</span><span class="info-value">刘总 18507437181</span></div>
+    <div class="info-row"><span class="info-label">收货地址</span><span class="info-value">广州市天河区天河路385号</span></div>
+    <table class="product-table">
+      <tr><th>产品名称</th><th>型号</th><th>规格</th><th>数量</th><th>单价</th><th>金额</th></tr>
+      <tr>
+        <td>烟雾报警器</td>
+        <td></td>
+        <td>-</td>
+        <td>25件</td>
+        <td>¥49,268.47</td>
+        <td class="amount">¥1,231,711.75</td>
+      </tr>
+      <tr>
+        <td>三星画面分割器</td>
+        <td>SOMC-420T</td>
+        <td>-</td>
+        <td>28台</td>
+        <td>¥43,390.94</td>
+        <td class="amount">¥1,214,946.32</td>
+      </tr>
+      <tr>
+        <td>岡祈家用智能燃气报警器</td>
+        <td>HM-710</td>
+        <td>-</td>
+        <td>13件</td>
+        <td>¥22,943.81</td>
+        <td class="amount">¥298,269.53</td>
+      </tr>
+    </table>
+  </div>
+  <div class="order-footer">
+    <span>下单日期：2026-05-18</span>
+    <span>合计：¥2,744,927.60</span>
+  </div>
+</div>
+<div class="order-card">
+  <div class="order-header">
+    <span>销售订单</span>
+    <span class="order-no">ORD20260519002</span>
+  </div>
+  <div class="order-body">
+    <div class="info-row"><span class="info-label">客户名称</span><span class="info-value">北京安助置业地产公司</span></div>
+    <div class="info-row"><span class="info-label">联系人</span><span class="info-value">赵主任 13699251800</span></div>
+    <div class="info-row"><span class="info-label">收货地址</span><span class="info-value">广州市天河区天河路385号</span></div>
+    <table class="product-table">
+      <tr><th>产品名称</th><th>型号</th><th>规格</th><th>数量</th><th>单价</th><th>金额</th></tr>
+      <tr>
+        <td>防护服</td>
+        <td>3M白</td>
+        <td>-</td>
+        <td>18台</td>
+        <td>¥8,588.42</td>
+        <td class="amount">¥154,591.56</td>
+      </tr>
+      <tr>
+        <td>脚手架</td>
+        <td>120x</td>
+        <td>-</td>
+        <td>13件</td>
+        <td>¥49,481.41</td>
+        <td class="amount">¥643,258.33</td>
+      </tr>
+    </table>
+  </div>
+  <div class="order-footer">
+    <span>下单日期：2026-05-19</span>
+    <span>合计：¥797,849.89</span>
+  </div>
+</div>
+<div class="order-card">
+  <div class="order-header">
+    <span>销售订单<span class="badge badge-invoice">需开票</span></span>
+    <span class="order-no">ORD20260520003</span>
+  </div>
+  <div class="order-body">
+    <div class="info-row"><span class="info-label">客户名称</span><span class="info-value">天津天地伟业数码科技有限公司</span></div>
+    <div class="info-row"><span class="info-label">联系人</span><span class="info-value">王工 15201239876</span></div>
+    <div class="info-row"><span class="info-label">收货地址</span><span class="info-value">杭州市西湖区文三路200号</span></div>
+    <table class="product-table">
+      <tr><th>产品名称</th><th>型号</th><th>规格</th><th>数量</th><th>单价</th><th>金额</th></tr>
+      <tr>
+        <td>针式打印机</td>
+        <td>ZSP4</td>
+        <td>-</td>
+        <td>30箱</td>
+        <td>¥43,880.20</td>
+        <td class="amount">¥1,316,406.00</td>
+      </tr>
+      <tr>
+        <td>惠普笔记本</td>
+        <td>i7-3632QM/GT650M</td>
+        <td>-</td>
+        <td>11台</td>
+        <td>¥32,944.21</td>
+        <td class="amount">¥362,386.31</td>
+      </tr>
+      <tr>
+        <td>烟雾报警器</td>
+        <td></td>
+        <td>-</td>
+        <td>13套</td>
+        <td>¥7,572.14</td>
+        <td class="amount">¥98,437.82</td>
+      </tr>
+      <tr>
+        <td>台式电脑</td>
+        <td>DN-837A</td>
+        <td>-</td>
+        <td>5台</td>
+        <td>¥37,376.95</td>
+        <td class="amount">¥186,884.75</td>
+      </tr>
+    </table>
+  </div>
+  <div class="order-footer">
+    <span>下单日期：2026-05-20</span>
+    <span>合计：¥1,964,114.88</span>
+  </div>
+</div>
+<div class="order-card">
+  <div class="order-header">
+    <span>销售订单<span class="badge badge-normal">常规</span></span>
+    <span class="order-no">ORD20260521004</span>
+  </div>
+  <div class="order-body">
+    <div class="info-row"><span class="info-label">客户名称</span><span class="info-value">赐金商贸有限公司</span></div>
+    <div class="info-row"><span class="info-label">联系人</span><span class="info-value">周经理 13875340444</span></div>
+    <div class="info-row"><span class="info-label">收货地址</span><span class="info-value">上海市浦东新区张江路88号</span></div>
+    <table class="product-table">
+      <tr><th>产品名称</th><th>型号</th><th>规格</th><th>数量</th><th>单价</th><th>金额</th></tr>
+      <tr>
+        <td>硬件设备</td>
+        <td>wr</td>
+        <td>-</td>
+        <td>3个</td>
+        <td>¥43,124.59</td>
+        <td class="amount">¥129,373.77</td>
+      </tr>
+      <tr>
+        <td>金士顿CF(8G)</td>
+        <td>CF8G</td>
+        <td>-</td>
+        <td>5台</td>
+        <td>¥39,707.93</td>
+        <td class="amount">¥198,539.65</td>
+      </tr>
+      <tr>
+        <td>视频会议</td>
+        <td>DSNNY DSN-D40</td>
+        <td>-</td>
+        <td>14箱</td>
+        <td>¥3,644.62</td>
+        <td class="amount">¥51,024.68</td>
+      </tr>
+    </table>
+  </div>
+  <div class="order-footer">
+    <span>下单日期：2026-05-21</span>
+    <span>合计：¥378,938.10</span>
+  </div>
+</div>
+<div class="order-card">
+  <div class="order-header">
+    <span>销售订单<span class="badge badge-normal">常规</span></span>
+    <span class="order-no">ORD20260522005</span>
+  </div>
+  <div class="order-body">
+    <div class="info-row"><span class="info-label">客户名称</span><span class="info-value">陕西艾诺威</span></div>
+    <div class="info-row"><span class="info-label">联系人</span><span class="info-value">王工 19906248900</span></div>
+    <div class="info-row"><span class="info-label">收货地址</span><span class="info-value">北京市海淀区中关村大街1号</span></div>
+    <table class="product-table">
+      <tr><th>产品名称</th><th>型号</th><th>规格</th><th>数量</th><th>单价</th><th>金额</th></tr>
+      <tr>
+        <td>扫描仪</td>
+        <td>SMY3</td>
+        <td>-</td>
+        <td>25件</td>
+        <td>¥6,021.83</td>
+        <td class="amount">¥150,545.75</td>
+      </tr>
+      <tr>
+        <td>惠普笔记本</td>
+        <td>i7-3632QM/GT650M</td>
+        <td>-</td>
+        <td>14台</td>
+        <td>¥22,959.32</td>
+        <td class="amount">¥321,430.48</td>
+      </tr>
+    </table>
+  </div>
+  <div class="order-footer">
+    <span>下单日期：2026-05-22</span>
+    <span>合计：¥471,976.23</span>
+  </div>
+</div>
+<div class="order-card">
+  <div class="order-header">
+    <span>销售订单<span class="badge badge-monthly">月结</span></span>
+    <span class="order-no">ORD20260523006</span>
+  </div>
+  <div class="order-body">
+    <div class="info-row"><span class="info-label">客户名称</span><span class="info-value">山东佰特商贸有限公司</span></div>
+    <div class="info-row"><span class="info-label">联系人</span><span class="info-value">王工 13964411347</span></div>
+    <div class="info-row"><span class="info-label">收货地址</span><span class="info-value">深圳市南山区科技园路66号</span></div>
+    <table class="product-table">
+      <tr><th>产品名称</th><th>型号</th><th>规格</th><th>数量</th><th>单价</th><th>金额</th></tr>
+      <tr>
+        <td>15mm木塑197-29-3</td>
+        <td></td>
+        <td>基准</td>
+        <td>18箱</td>
+        <td>¥45,965.43</td>
+        <td class="amount">¥827,377.74</td>
+      </tr>
+      <tr>
+        <td>琳娜贝尔</td>
+        <td></td>
+        <td>-</td>
+        <td>20件</td>
+        <td>¥24,685.98</td>
+        <td class="amount">¥493,719.60</td>
+      </tr>
+      <tr>
+        <td>脚手架</td>
+        <td>120x</td>
+        <td>-</td>
+        <td>4件</td>
+        <td>¥43,996.73</td>
+        <td class="amount">¥175,986.92</td>
+      </tr>
+    </table>
+  </div>
+  <div class="order-footer">
+    <span>下单日期：2026-05-23</span>
+    <span>合计：¥1,497,084.26</span>
+  </div>
+</div>
+<div class="order-card">
+  <div class="order-header">
+    <span>销售订单<span class="badge badge-monthly">月结</span></span>
+    <span class="order-no">ORD20260524007</span>
+  </div>
+  <div class="order-body">
+    <div class="info-row"><span class="info-label">客户名称</span><span class="info-value">180club</span></div>
+    <div class="info-row"><span class="info-label">联系人</span><span class="info-value">吴主管 17853573823</span></div>
+    <div class="info-row"><span class="info-label">收货地址</span><span class="info-value">北京市海淀区中关村大街1号</span></div>
+    <table class="product-table">
+      <tr><th>产品名称</th><th>型号</th><th>规格</th><th>数量</th><th>单价</th><th>金额</th></tr>
+      <tr>
+        <td>烟雾报警器</td>
+        <td></td>
+        <td>-</td>
+        <td>6件</td>
+        <td>¥26,619.85</td>
+        <td class="amount">¥159,719.10</td>
+      </tr>
+      <tr>
+        <td>扫描仪</td>
+        <td>SMY3</td>
+        <td>-</td>
+        <td>20套</td>
+        <td>¥48,235.96</td>
+        <td class="amount">¥964,719.20</td>
+      </tr>
+      <tr>
+        <td>硬件设备</td>
+        <td>wr</td>
+        <td>-</td>
+        <td>30箱</td>
+        <td>¥37,885.63</td>
+        <td class="amount">¥1,136,568.90</td>
+      </tr>
+      <tr>
+        <td>CPU风扇</td>
+        <td>双12CM风扇</td>
+        <td>基准</td>
+        <td>23台</td>
+        <td>¥35,790.97</td>
+        <td class="amount">¥823,192.31</td>
+      </tr>
+      <tr>
+        <td>kindle</td>
+        <td>黑色</td>
+        <td>-</td>
+        <td>13件</td>
+        <td>¥22,185.95</td>
+        <td class="amount">¥288,417.35</td>
+      </tr>
+    </table>
+  </div>
+  <div class="order-footer">
+    <span>下单日期：2026-05-24</span>
+    <span>合计：¥3,372,616.86</span>
+  </div>
+</div>
+<div class="order-card">
+  <div class="order-header">
+    <span>销售订单<span class="badge badge-normal">常规</span></span>
+    <span class="order-no">ORD20260525008</span>
+  </div>
+  <div class="order-body">
+    <div class="info-row"><span class="info-label">客户名称</span><span class="info-value">河北绿健康生物有限公司</span></div>
+    <div class="info-row"><span class="info-label">联系人</span><span class="info-value">李总 18726563708</span></div>
+    <div class="info-row"><span class="info-label">收货地址</span><span class="info-value">深圳市南山区科技园路66号</span></div>
+    <table class="product-table">
+      <tr><th>产品名称</th><th>型号</th><th>规格</th><th>数量</th><th>单价</th><th>金额</th></tr>
+      <tr>
+        <td>模拟半球安防监控</td>
+        <td>2.8mm</td>
+        <td>-</td>
+        <td>8箱</td>
+        <td>¥11,400.76</td>
+        <td class="amount">¥91,206.08</td>
+      </tr>
+      <tr>
+        <td>kindle</td>
+        <td>黑色</td>
+        <td>-</td>
+        <td>3个</td>
+        <td>¥11,832.62</td>
+        <td class="amount">¥35,497.86</td>
+      </tr>
+    </table>
+  </div>
+  <div class="order-footer">
+    <span>下单日期：2026-05-25</span>
+    <span>合计：¥126,703.94</span>
+  </div>
+</div>
+<div class="order-card">
+  <div class="order-header">
+    <span>销售订单<span class="badge badge-monthly">月结</span></span>
+    <span class="order-no">ORD20260526009</span>
+  </div>
+  <div class="order-body">
+    <div class="info-row"><span class="info-label">客户名称</span><span class="info-value">费尔工贸有限公司</span></div>
+    <div class="info-row"><span class="info-label">联系人</span><span class="info-value">刘总 17853573823</span></div>
+    <div class="info-row"><span class="info-label">收货地址</span><span class="info-value">北京市海淀区中关村大街1号</span></div>
+    <table class="product-table">
+      <tr><th>产品名称</th><th>型号</th><th>规格</th><th>数量</th><th>单价</th><th>金额</th></tr>
+      <tr>
+        <td>台式电脑</td>
+        <td>DN-837A</td>
+        <td>-</td>
+        <td>8套</td>
+        <td>¥40,471.10</td>
+        <td class="amount">¥323,768.80</td>
+      </tr>
+      <tr>
+        <td>扫描仪</td>
+        <td>SMY3</td>
+        <td>-</td>
+        <td>7个</td>
+        <td>¥5,298.08</td>
+        <td class="amount">¥37,086.56</td>
+      </tr>
+      <tr>
+        <td>硬件设备</td>
+        <td>wr</td>
+        <td>-</td>
+        <td>14件</td>
+        <td>¥21,467.14</td>
+        <td class="amount">¥300,539.96</td>
+      </tr>
+      <tr>
+        <td>防水罩</td>
+        <td>FHZ2014</td>
+        <td>基准</td>
+        <td>15个</td>
+        <td>¥33,831.55</td>
+        <td class="amount">¥507,473.25</td>
+      </tr>
+      <tr>
+        <td>CPU风扇</td>
+        <td>双12CM风扇</td>
+        <td>基准</td>
+        <td>21个</td>
+        <td>¥3,500.33</td>
+        <td class="amount">¥73,506.93</td>
+      </tr>
+    </table>
+  </div>
+  <div class="order-footer">
+    <span>下单日期：2026-05-26</span>
+    <span>合计：¥1,242,375.50</span>
+  </div>
+</div>
+<div class="order-card">
+  <div class="order-header">
+    <span>销售订单<span class="badge badge-monthly">月结</span></span>
+    <span class="order-no">ORD20260527010</span>
+  </div>
+  <div class="order-body">
+    <div class="info-row"><span class="info-label">客户名称</span><span class="info-value">富豪酒店</span></div>
+    <div class="info-row"><span class="info-label">联系人</span><span class="info-value">李总 17853573823</span></div>
+    <div class="info-row"><span class="info-label">收货地址</span><span class="info-value">北京市海淀区中关村大街1号</span></div>
+    <table class="product-table">
+      <tr><th>产品名称</th><th>型号</th><th>规格</th><th>数量</th><th>单价</th><th>金额</th></tr>
+      <tr>
+        <td>排线</td>
+        <td>PM1200</td>
+        <td>20米</td>
+        <td>15台</td>
+        <td>¥43,787.05</td>
+        <td class="amount">¥656,805.75</td>
+      </tr>
+      <tr>
+        <td>主板</td>
+        <td>四核工控研能</td>
+        <td>-</td>
+        <td>3套</td>
+        <td>¥40,497.10</td>
+        <td class="amount">¥121,491.30</td>
+      </tr>
+      <tr>
+        <td>惠普笔记本</td>
+        <td>i7-3632QM/GT650M</td>
+        <td>-</td>
+        <td>28箱</td>
+        <td>¥5,346.48</td>
+        <td class="amount">¥149,701.44</td>
+      </tr>
+    </table>
+  </div>
+  <div class="order-footer">
+    <span>下单日期：2026-05-27</span>
+    <span>合计：¥927,998.49</span>
+  </div>
+</div>
+<div class="order-card">
+  <div class="order-header">
+    <span>销售订单</span>
+    <span class="order-no">ORD20260528011</span>
+  </div>
+  <div class="order-body">
+    <div class="info-row"><span class="info-label">客户名称</span><span class="info-value">电信景小斌</span></div>
+    <div class="info-row"><span class="info-label">联系人</span><span class="info-value">李总 15201239876</span></div>
+    <div class="info-row"><span class="info-label">收货地址</span><span class="info-value">广州市天河区天河路385号</span></div>
+    <table class="product-table">
+      <tr><th>产品名称</th><th>型号</th><th>规格</th><th>数量</th><th>单价</th><th>金额</th></tr>
+      <tr>
+        <td>台式电脑</td>
+        <td>DN-837A</td>
+        <td>-</td>
+        <td>1套</td>
+        <td>¥13,627.55</td>
+        <td class="amount">¥13,627.55</td>
+      </tr>
+      <tr>
+        <td>针式打印机</td>
+        <td>ZSP4</td>
+        <td>-</td>
+        <td>26套</td>
+        <td>¥14,619.84</td>
+        <td class="amount">¥380,115.84</td>
+      </tr>
+      <tr>
+        <td>红外探头KL900</td>
+        <td>白色</td>
+        <td>-</td>
+        <td>23箱</td>
+        <td>¥33,262.63</td>
+        <td class="amount">¥765,040.49</td>
+      </tr>
+      <tr>
+        <td>脚手架</td>
+        <td>120x</td>
+        <td>-</td>
+        <td>16台</td>
+        <td>¥9,899.94</td>
+        <td class="amount">¥158,399.04</td>
+      </tr>
+      <tr>
+        <td>手机</td>
+        <td>r11s</td>
+        <td>-</td>
+        <td>7个</td>
+        <td>¥29,169.42</td>
+        <td class="amount">¥204,185.94</td>
+      </tr>
+    </table>
+  </div>
+  <div class="order-footer">
+    <span>下单日期：2026-05-28</span>
+    <span>合计：¥1,521,368.86</span>
+  </div>
+</div>
+<div class="order-card">
+  <div class="order-header">
+    <span>销售订单<span class="badge badge-invoice">需开票</span></span>
+    <span class="order-no">ORD20260529012</span>
+  </div>
+  <div class="order-body">
+    <div class="info-row"><span class="info-label">客户名称</span><span class="info-value">个人零售商</span></div>
+    <div class="info-row"><span class="info-label">联系人</span><span class="info-value">李总 13875340444</span></div>
+    <div class="info-row"><span class="info-label">收货地址</span><span class="info-value">深圳市南山区科技园路66号</span></div>
+    <table class="product-table">
+      <tr><th>产品名称</th><th>型号</th><th>规格</th><th>数量</th><th>单价</th><th>金额</th></tr>
+      <tr>
+        <td>红外探头KL900</td>
+        <td>白色</td>
+        <td>-</td>
+        <td>28台</td>
+        <td>¥3,891.81</td>
+        <td class="amount">¥108,970.68</td>
+      </tr>
+      <tr>
+        <td>金士顿CF(8G)</td>
+        <td>CF8G</td>
+        <td>-</td>
+        <td>3台</td>
+        <td>¥20,486.89</td>
+        <td class="amount">¥61,460.67</td>
+      </tr>
+      <tr>
+        <td>金士顿Micro SD卡(16G)</td>
+        <td>Micro5</td>
+        <td>-</td>
+        <td>29箱</td>
+        <td>¥12,687.66</td>
+        <td class="amount">¥367,942.14</td>
+      </tr>
+    </table>
+  </div>
+  <div class="order-footer">
+    <span>下单日期：2026-05-29</span>
+    <span>合计：¥538,373.49</span>
+  </div>
+</div>
+<div class="order-card">
+  <div class="order-header">
+    <span>销售订单<span class="badge badge-monthly">月结</span></span>
+    <span class="order-no">ORD20260530013</span>
+  </div>
+  <div class="order-body">
+    <div class="info-row"><span class="info-label">客户名称</span><span class="info-value">华魏门业有限公司</span></div>
+    <div class="info-row"><span class="info-label">联系人</span><span class="info-value">陈经理 17853573823</span></div>
+    <div class="info-row"><span class="info-label">收货地址</span><span class="info-value">杭州市西湖区文三路200号</span></div>
+    <table class="product-table">
+      <tr><th>产品名称</th><th>型号</th><th>规格</th><th>数量</th><th>单价</th><th>金额</th></tr>
+      <tr>
+        <td>散热器Frostflow</td>
+        <td>240L-R</td>
+        <td>基准</td>
+        <td>13台</td>
+        <td>¥33,748.67</td>
+        <td class="amount">¥438,732.71</td>
+      </tr>
+      <tr>
+        <td>摄像头-400万半球网络</td>
+        <td>DS-2CD2F45F(D)-I(W)(S)</td>
+        <td>-</td>
+        <td>10套</td>
+        <td>¥16,150.77</td>
+        <td class="amount">¥161,507.70</td>
+      </tr>
+      <tr>
+        <td>视频会议</td>
+        <td>POLYCOM HDX 6000-720</td>
+        <td>-</td>
+        <td>25个</td>
+        <td>¥961.12</td>
+        <td class="amount">¥24,028.00</td>
+      </tr>
+    </table>
+  </div>
+  <div class="order-footer">
+    <span>下单日期：2026-05-30</span>
+    <span>合计：¥624,268.41</span>
+  </div>
+</div>
+<div class="order-card">
+  <div class="order-header">
+    <span>销售订单</span>
+    <span class="order-no">ORD20260531014</span>
+  </div>
+  <div class="order-body">
+    <div class="info-row"><span class="info-label">客户名称</span><span class="info-value">珠海市太川电子企业有限公司</span></div>
+    <div class="info-row"><span class="info-label">联系人</span><span class="info-value">陈经理 18507437181</span></div>
+    <div class="info-row"><span class="info-label">收货地址</span><span class="info-value">广州市天河区天河路385号</span></div>
+    <table class="product-table">
+      <tr><th>产品名称</th><th>型号</th><th>规格</th><th>数量</th><th>单价</th><th>金额</th></tr>
+      <tr>
+        <td>烟雾报警器</td>
+        <td></td>
+        <td>-</td>
+        <td>6套</td>
+        <td>¥41,770.38</td>
+        <td class="amount">¥250,622.28</td>
+      </tr>
+      <tr>
+        <td>摄像头-400万半球网络</td>
+        <td>DS-2CD2F45F(D)-I(W)(S)</td>
+        <td>-</td>
+        <td>23件</td>
+        <td>¥30,778.05</td>
+        <td class="amount">¥707,895.15</td>
+      </tr>
+      <tr>
+        <td>琳娜贝尔</td>
+        <td></td>
+        <td>-</td>
+        <td>26箱</td>
+        <td>¥887.24</td>
+        <td class="amount">¥23,068.24</td>
+      </tr>
+      <tr>
+        <td>iPhone6</td>
+        <td></td>
+        <td>-</td>
+        <td>27箱</td>
+        <td>¥15,319.25</td>
+        <td class="amount">¥413,619.75</td>
+      </tr>
+    </table>
+  </div>
+  <div class="order-footer">
+    <span>下单日期：2026-05-31</span>
+    <span>合计：¥1,395,205.42</span>
+  </div>
+</div>
+<div class="order-card">
+  <div class="order-header">
+    <span>销售订单<span class="badge badge-invoice">需开票</span></span>
+    <span class="order-no">ORD20260601015</span>
+  </div>
+  <div class="order-body">
+    <div class="info-row"><span class="info-label">客户名称</span><span class="info-value">深圳市世通工业软管有限公司</span></div>
+    <div class="info-row"><span class="info-label">联系人</span><span class="info-value">王工 18507437181</span></div>
+    <div class="info-row"><span class="info-label">收货地址</span><span class="info-value">南京市鼓楼区汉中路100号</span></div>
+    <table class="product-table">
+      <tr><th>产品名称</th><th>型号</th><th>规格</th><th>数量</th><th>单价</th><th>金额</th></tr>
+      <tr>
+        <td>iPhone6</td>
+        <td></td>
+        <td>-</td>
+        <td>7件</td>
+        <td>¥25,517.75</td>
+        <td class="amount">¥178,624.25</td>
+      </tr>
+      <tr>
+        <td>防护服</td>
+        <td>3M白</td>
+        <td>-</td>
+        <td>9个</td>
+        <td>¥5,068.77</td>
+        <td class="amount">¥45,618.93</td>
+      </tr>
+      <tr>
+        <td>台式电脑</td>
+        <td>DN-837A</td>
+        <td>-</td>
+        <td>14件</td>
+        <td>¥2,682.29</td>
+        <td class="amount">¥37,552.06</td>
+      </tr>
+      <tr>
+        <td>15mm木塑197-29-3</td>
+        <td></td>
+        <td>张</td>
+        <td>11台</td>
+        <td>¥32,037.11</td>
+        <td class="amount">¥352,408.21</td>
+      </tr>
+    </table>
+  </div>
+  <div class="order-footer">
+    <span>下单日期：2026-06-01</span>
+    <span>合计：¥614,203.45</span>
+  </div>
+</div>
+</div>
+</body>
+</html>

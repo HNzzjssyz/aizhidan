@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>扣子智能体的 OAUTH 鉴权方式</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; background: #f8fafc; color: #1e293b; line-height: 1.8; }
+  .container { max-width: 960px; margin: 0 auto; padding: 40px 32px; }
+
+  .hero { background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 50%, #7c3aed 100%); color: white; padding: 48px 40px; border-radius: 16px; margin-bottom: 36px; position: relative; overflow: hidden; }
+  .hero::before { content: ''; position: absolute; top: -50%; right: -20%; width: 400px; height: 400px; background: rgba(255,255,255,0.05); border-radius: 50%; }
+  .hero h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+  .hero .subtitle { font-size: 15px; opacity: 0.85; }
+  .hero .badge { display: inline-block; background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 12px; margin-top: 12px; }
+
+  h2 { font-size: 20px; font-weight: 700; color: #1e293b; margin: 36px 0 16px; padding-left: 12px; border-left: 4px solid #2563eb; }
+  h3 { font-size: 16px; font-weight: 600; color: #334155; margin: 24px 0 12px; }
+  h4 { font-size: 14px; font-weight: 600; color: #475569; margin: 16px 0 8px; }
+
+  p { margin-bottom: 12px; font-size: 14px; color: #475569; }
+  ul, ol { margin: 8px 0 16px 24px; font-size: 14px; color: #475569; }
+  li { margin-bottom: 6px; }
+
+  .card { background: white; border-radius: 12px; padding: 20px 24px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04); border: 1px solid #e2e8f0; }
+  .card.warn { border-left: 4px solid #f59e0b; background: #fffbeb; }
+  .card.danger { border-left: 4px solid #ef4444; background: #fef2f2; }
+  .card.success { border-left: 4px solid #16a34a; background: #f0fdf4; }
+  .card.info { border-left: 4px solid #3b82f6; background: #eff6ff; }
+  .card-title { font-weight: 600; font-size: 14px; margin-bottom: 8px; }
+
+  table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 13px; }
+  th { background: #f1f5f9; padding: 10px 14px; text-align: left; font-weight: 600; color: #334155; border-bottom: 2px solid #e2e8f0; }
+  td { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; color: #475569; }
+  tr:hover td { background: #f8fafc; }
+
+  pre { background: #1e293b; color: #e2e8f0; padding: 20px; border-radius: 10px; margin: 12px 0 20px; overflow-x: auto; font-size: 13px; line-height: 1.6; }
+  code { font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; }
+  .inline-code { background: #f1f5f9; color: #7c3aed; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+
+  .flow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 16px 0; }
+  .flow-step { background: white; border: 2px solid #3b82f6; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; color: #1e40af; }
+  .flow-step.backend { border-color: #f59e0b; color: #92400e; background: #fffbeb; }
+  .flow-step.coze { border-color: #7c3aed; color: #6d28d9; background: #f5f3ff; }
+  .flow-arrow { color: #94a3b8; font-size: 18px; }
+
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  .tag-red { background: #fef2f2; color: #dc2626; }
+  .tag-green { background: #f0fdf4; color: #16a34a; }
+  .tag-blue { background: #eff6ff; color: #2563eb; }
+  .tag-yellow { background: #fffbeb; color: #d97706; }
+  .tag-purple { background: #f5f3ff; color: #7c3aed; }
+
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0; }
+  .compare > div { padding: 16px 20px; border-radius: 8px; }
+  .compare-bad { background: #fef2f2; border: 1px solid #fecaca; }
+  .compare-bad h4 { color: #dc2626; margin-top: 0; }
+  .compare-good { background: #f0fdf4; border: 1px solid #bbf7d0; }
+  .compare-good h4 { color: #16a34a; margin-top: 0; }
+  @media (max-width: 720px) { .compare { grid-template-columns: 1fr; } }
+
+  .footer { text-align: center; margin-top: 48px; padding-top: 24px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #94a3b8; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="hero">
+  <h1>扣子智能体的 OAUTH 鉴权方式</h1>
+  <div class="subtitle">后端代理签发 JWT · 前端零密钥暴露 · 自动续期</div>
+  <div class="badge">AI智能制单系统 · 鉴权实现文档</div>
+</div>
+
+<h2>一、概述：两种鉴权模式</h2>
+
+<p>本系统的 Coze 智能体支持两种鉴权模式，在 <span class="inline-code">initCozeSDK()</span> 中通过 Agent 配置自动选择：</p>
+
+<div class="compare">
+<div class="compare-bad">
+  <h4>PAT 模式（agent.token）</h4>
+  <ul>
+    <li>Token 直接写在前端 IndexedDB 中</li>
+    <li>F12 可见，存在泄露风险</li>
+    <li>无需后端参与，配置简单</li>
+    <li>Token 长期有效，不会自动过期</li>
+    <li>适合开发调试或单人使用</li>
+  </ul>
+</div>
+<div class="compare-good">
+  <h4>OAuth 模式（本文档）</h4>
+  <ul>
+    <li>密钥（RT）只存在后端，前端不可见</li>
+    <li>前端只拿到临时 JWT（access_token）</li>
+    <li>JWT 有过期时间，SDK 自动续期</li>
+    <li>支持多用户、多会话隔离</li>
+    <li>适合生产环境部署</li>
+  </ul>
+</div>
+</div>
+
+<p><strong>选择逻辑</strong>（[index.html 1803-1805 行](file:///Users/guorui/同步空间/20021218/临时开发/智能制单/拼音试验/dexiedb/index.html#L1803-L1805)）：</p>
+<pre><code>var agent = await loadActiveAgent();
+var useBotId = (agent &amp;&amp; agent.bot_id) ? agent.bot_id : '7638933573109792777';
+var useToken = (agent &amp;&amp; agent.token) ? agent.token : await fetchCozeToken();
+//                                         ↑ 有 PAT 用 PAT          ↑ 无 PAT 走 OAuth</code></pre>
+
+<div class="card info">
+  <div class="card-title">📘 核心判断</div>
+  <p>如果 AgentConfig 中 <span class="inline-code">agent.token</span> 有值 → PAT 模式；为空 → OAuth 模式（本文档内容）。</p>
+</div>
+
+<h2>二、OAuth 鉴权全流程</h2>
+
+<p>整个流程涉及三个角色：<strong>前端浏览器</strong>、<strong>业务后端</strong>（PHP，<span class="inline-code">/system/bot/token.xt</span>）、<strong>Coze 平台</strong>。</p>
+
+<div class="flow">
+  <div class="flow-step">前端 initCozeSDK()</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">fetchCozeToken()</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step backend">后端 /bot/token.xt</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step coze">Coze OAuth API</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step coze">返回 JWT</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step backend">透传给前端</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">SDK 初始化</div>
+</div>
+
+<h3>2.1 各阶段职责</h3>
+
+<table>
+  <tr><th>阶段</th><th>执行方</th><th>动作</th><th>持有密钥</th></tr>
+  <tr>
+    <td>1. 触发</td>
+    <td>前端</td>
+    <td>用户点击"启动智能体"按钮，调用 <span class="inline-code">initCozeSDK()</span></td>
+    <td>无</td>
+  </tr>
+  <tr>
+    <td>2. 请求令牌</td>
+    <td>前端</td>
+    <td><span class="inline-code">fetch('/system/bot/token.xt')</span> 向后端要 token</td>
+    <td>无</td>
+  </tr>
+  <tr>
+    <td>3. 签发 JWT</td>
+    <td>业务后端</td>
+    <td>后端用持有的 RT（密钥）向 Coze OAuth API 请求 access_token</td>
+    <td><span class="tag tag-yellow">RT（密钥）</span></td>
+  </tr>
+  <tr>
+    <td>4. 返回</td>
+    <td>Coze 平台</td>
+    <td>签发 JWT 格式的 access_token，返回给业务后端</td>
+    <td>—</td>
+  </tr>
+  <tr>
+    <td>5. 透传</td>
+    <td>业务后端</td>
+    <td>将 access_token 包装成 <span class="inline-code">{ok:1, accessToken:"xxx"}</span> 返回前端</td>
+    <td>—</td>
+  </tr>
+  <tr>
+    <td>6. 注入 SDK</td>
+    <td>前端</td>
+    <td>将 access_token 传入 <span class="inline-code">CozeWebSDK.WebChatClient</span> 的 <span class="inline-code">auth.token</span></td>
+    <td>临时 JWT</td>
+  </tr>
+  <tr>
+    <td>7. 续期</td>
+    <td>SDK → 前端 → 后端</td>
+    <td>JWT 过期时，SDK 调 <span class="inline-code">onRefreshToken</span> 回调，重新走步骤 2-5</td>
+    <td>无</td>
+  </tr>
+</table>
+
+<h3>2.2 为什么需要后端代理</h3>
+
+<div class="card warn">
+  <div class="card-title">⚠️ 如果把 RT 直接放在前端</div>
+  <ul>
+    <li>F12 → Sources / Network 中密钥完全暴露</li>
+    <li>任何人打开开发者工具就能拿到 RT</li>
+    <li>RT 长期有效，泄露后等于完全失控</li>
+    <li>无法做会话隔离、无法按用户限流</li>
+  </ul>
+</div>
+
+<div class="card success">
+  <div class="card-title">✅ 后端代理的好处</div>
+  <ul>
+    <li>RT 只存在后端代码 / 环境变量中，前端永远拿不到</li>
+    <li>前端只持有临时 JWT，过期后自动失效</li>
+    <li>后端可附加业务逻辑：鉴权、限流、日志、会话隔离</li>
+    <li>RT 轮换时只改后端，前端无感知</li>
+  </ul>
+</div>
+
+<h2>三、后端接口：/bot/token.xt</h2>
+
+<h3>3.1 接口规格</h3>
+
+<table>
+  <tr><th>项目</th><th>值</th></tr>
+  <tr><td>请求地址</td><td><span class="inline-code">/system/bot/token.xt</span></td></tr>
+  <tr><td>请求方法</td><td>GET</td></tr>
+  <tr><td>请求参数</td><td>无（后端自行管理 RT）</td></tr>
+  <tr><td>Content-Type</td><td><span class="inline-code">application/json</span></td></tr>
+</table>
+
+<h3>3.2 响应格式</h3>
+
+<h4>成功响应</h4>
+<pre><code>{
+  "ok": 1,
+  "accessToken": "eyJhbGciOiJSUzI1NiIs..."  // JWT 格式
+}</code></pre>
+
+<h4>失败响应</h4>
+<pre><code>{
+  "ok": 0,
+  "msg": "Coze 授权失败: invalid_client"
+}</code></pre>
+
+<h3>3.3 后端内部流程（推演）</h3>
+
+<p>后端 <span class="inline-code">/bot/token.xt</span> 的实现代码不在本项目前端目录中（部署在服务器），基于 Coze OAuth 标准流程推演如下：</p>
+
+<pre><code>// 伪代码 — 后端 /system/bot/token.xt
+
+// 1. 读取 RT（Coze OAuth 应用的密钥，存储在后端环境变量或配置文件中）
+$rt = getenv('COZE_APP_SECRET');     // 或从配置文件读取
+$appId = getenv('COZE_APP_ID');
+
+// 2. 调用 Coze OAuth API 签发 access_token
+$ch = curl_init('https://api.coze.cn/v1/oauth/token');
+curl_setopt_array($ch, [
+  CURLOPT_POST => true,
+  CURLOPT_RETURNTRANSFER => true,
+  CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+  CURLOPT_POSTFIELDS => json_encode([
+    'grant_type' => 'client_credentials',  // 客户端凭证模式
+    'client_id' => $appId,
+    'client_secret' => $rt,                // RT 作为密钥
+  ]),
+]);
+$resp = json_decode(curl_exec($ch), true);
+
+// 3. 判断结果
+if (isset($resp['access_token'])) {
+  echo json_encode(['ok' => 1, 'accessToken' => $resp['access_token']]);
+} else {
+  echo json_encode(['ok' => 0, 'msg' => 'Coze 授权失败: ' . ($resp['error_description'] ?? 'unknown')]);
+}</code></pre>
+
+<div class="card info">
+  <div class="card-title">📘 RT 的角色</div>
+  <p>RT 是 Coze OAuth 应用创建时获得的<strong>应用密钥</strong>（App Secret）。后端用它 + App ID 向 Coze 请求 <span class="inline-code">client_credentials</span> 类型的 access_token。Coze 验证 RT 有效后，签发一个有时效的 JWT 返回给后端，后端再透传给前端。</p>
+  <p><strong>RT 只存在后端</strong>，前端代码、IndexedDB、Network 请求中均不出现 RT。</p>
+</div>
+
+<h2>四、前端实现</h2>
+
+<h3>4.1 全局变量</h3>
+
+<pre><code>var API_BASE = '/system';          // 后端 API 基础路径
+var cozeClient = null;              // SDK 客户端实例
+var cozeAccessToken = null;          // 当前持有的 JWT</code></pre>
+
+<h3>4.2 fetchCozeToken() — 向后端请求 JWT</h3>
+
+<p>（[index.html 1786-1797 行](file:///Users/guorui/同步空间/20021218/临时开发/智能制单/拼音试验/dexiedb/index.html#L1786-L1797)）</p>
+
+<pre><code>async function fetchCozeToken() {
+  try {
+    var response = await fetch(API_BASE + '/bot/token.xt');
+    if (!response.ok) throw new Error('令牌接口返回错误: ' + response.status);
+    var data = await response.json();
+    if (data.ok !== 1 || !data.accessToken) throw new Error(data.msg || '获取令牌失败');
+    return data.accessToken;
+  } catch (e) {
+    console.error('fetchCozeToken error:', e);
+    throw e;
+  }
+}</code></pre>
+
+<table>
+  <tr><th>步骤</th><th>代码</th><th>说明</th></tr>
+  <tr>
+    <td>1</td>
+    <td><span class="inline-code">fetch(API_BASE + '/bot/token.xt')</span></td>
+    <td>GET 请求后端令牌接口</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td><span class="inline-code">response.ok</span></td>
+    <td>检查 HTTP 状态码 200-299</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td><span class="inline-code">data.ok !== 1</span></td>
+    <td>检查业务层成功标记</td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td><span class="inline-code">!data.accessToken</span></td>
+    <td>检查 token 非空</td>
+  </tr>
+  <tr>
+    <td>5</td>
+    <td><span class="inline-code">return data.accessToken</span></td>
+    <td>返回 JWT 字符串</td>
+  </tr>
+</table>
+
+<h3>4.3 initCozeSDK() — OAuth 模式的初始化</h3>
+
+<p>当 <span class="inline-code">agent.token</span> 为空时，走 OAuth 分支（[index.html 1799-1869 行](file:///Users/guorui/同步空间/20021218/临时开发/智能制单/拼音试验/dexiedb/index.html#L1799-L1869)）：</p>
+
+<pre><code>async function initCozeSDK() {
+  document.getElementById('apiStatus').textContent = '正在获取授权...';
+
+  try {
+    // ① 读取 Agent 配置
+    var agent = await loadActiveAgent();
+    var useBotId = (agent &amp;&amp; agent.bot_id) ? agent.bot_id : '7638933573109792777';
+
+    // ② OAuth 模式：agent.token 为空 → 走后端签发
+    var useToken = (agent &amp;&amp; agent.token) ? agent.token : await fetchCozeToken();
+    cozeAccessToken = useToken;
+
+    // ③ 检查 SDK 是否加载
+    if (typeof CozeWebSDK === 'undefined') {
+      throw new Error('Coze SDK 未加载，请刷新页面');
+    }
+
+    // ④ 销毁旧实例
+    if (cozeClient &amp;&amp; typeof cozeClient.destroy === 'function') {
+      cozeClient.destroy();
+    }
+
+    // ⑤ 创建新实例
+    cozeClient = new CozeWebSDK.WebChatClient({
+      config: {
+        bot_id: useBotId,
+      },
+      auth: {
+        type: 'token',
+        token: useToken,           // OAuth 签发的 JWT
+        onRefreshToken: async function () {
+          // ⑥ JWT 过期时自动续期
+          try {
+            if (agent &amp;&amp; agent.token) return agent.token;  // PAT 模式不续期
+            cozeAccessToken = await fetchCozeToken();          // OAuth 重新签发
+            return cozeAccessToken;
+          } catch (e) {
+            console.error('onRefreshToken error:', e);
+            return cozeAccessToken;  // 降级：返回旧 token 保活
+          }
+        }
+      },
+      ui: {
+        base: { lang: 'zh-CN', zIndex: 50 },
+        asstBtn: { isNeed: true },
+        chatBot: {
+          title: (agent &amp;&amp; agent.name) ? agent.name : '智能制单助手',
+          uploadable: true,
+          width: 460,
+        },
+        header: { isShow: true, isNeedClose: false }
+      }
+    });
+
+    // ⑦ 弹出聊天窗口
+    setTimeout(function() {
+      if (cozeClient &amp;&amp; typeof cozeClient.showChatBot === 'function') {
+        cozeClient.showChatBot();
+      }
+    }, 500);
+
+    document.getElementById('apiStatus').textContent = '已连接 ✅';
+    document.getElementById('apiStatus').style.color = '#16a34a';
+
+  } catch (e) {
+    console.error('Coze SDK 初始化失败:', e);
+    document.getElementById('apiStatus').textContent = '启动失败: ' + e.message;
+    document.getElementById('apiStatus').style.color = '#e5484d';
+    showToast('智能体启动失败: ' + e.message);
+  }
+}</code></pre>
+
+<h3>4.4 关键代码段对照</h3>
+
+<table>
+  <tr><th>序号</th><th>代码段</th><th>OAuth 模式中的作用</th></tr>
+  <tr>
+    <td>①</td>
+    <td><span class="inline-code">loadActiveAgent()</span></td>
+    <td>从 IndexedDB 读取 Agent 配置，判断 token 字段是否为空</td>
+  </tr>
+  <tr>
+    <td>②</td>
+    <td><span class="inline-code">await fetchCozeToken()</span></td>
+    <td><strong>OAuth 核心</strong>：向后端请求 JWT</td>
+  </tr>
+  <tr>
+    <td>⑤</td>
+    <td><span class="inline-code">auth.token: useToken</span></td>
+    <td>将 JWT 注入 SDK 鉴权配置</td>
+  </tr>
+  <tr>
+    <td>⑥</td>
+    <td><span class="inline-code">onRefreshToken</span></td>
+    <td><strong>OAuth 核心</strong>：JWT 过期时自动重新签发</td>
+  </tr>
+</table>
+
+<h2>五、JWT 自动续期机制</h2>
+
+<h3>5.1 续期流程</h3>
+
+<div class="flow">
+  <div class="flow-step">SDK 检测 JWT 过期</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">调用 onRefreshToken()</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">fetchCozeToken()</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step backend">后端重新签发</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">返回新 JWT</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">SDK 自动替换</div>
+</div>
+
+<h3>5.2 续期回调代码</h3>
+
+<pre><code>onRefreshToken: async function () {
+  try {
+    // PAT 模式：token 不过期，直接返回原值
+    if (agent &amp;&amp; agent.token) return agent.token;
+
+    // OAuth 模式：重新请求后端签发
+    cozeAccessToken = await fetchCozeToken();
+    return cozeAccessToken;
+  } catch (e) {
+    console.error('onRefreshToken error:', e);
+    return cozeAccessToken;  // 降级：返回旧 token，尽量保活
+  }
+}</code></pre>
+
+<h3>5.3 降级策略</h3>
+
+<div class="card warn">
+  <div class="card-title">⚠️ 续期失败时的降级</div>
+  <p>当 <span class="inline-code">fetchCozeToken()</span> 在续期时失败（网络抖动、后端重启等），回调返回<strong>旧的 <span class="inline-code">cozeAccessToken</span></strong>而非抛错。</p>
+  <p><strong>目的</strong>：避免因一次续期失败就中断用户对话。旧 token 虽然已过期，但 SDK 内部会重试，用户感知不到短暂故障。</p>
+  <p><strong>风险</strong>：如果后端长时间不可用，旧 token 最终也会被 Coze 拒绝，此时对话会报鉴权错误。</p>
+</div>
+
+<h3>5.4 PAT vs OAuth 续期对比</h3>
+
+<table>
+  <tr><th>维度</th><th>PAT 模式</th><th>OAuth 模式</th></tr>
+  <tr>
+    <td>token 有效期</td>
+    <td>长期有效（手动撤销才失效）</td>
+    <td>短期（通常 1-2 小时）</td>
+  </tr>
+  <tr>
+    <td>续期方式</td>
+    <td>不续期，直接返回原值</td>
+    <td>重新调用后端 /bot/token.xt</td>
+  </tr>
+  <tr>
+    <td>续期失败影响</td>
+    <td>不会失败</td>
+    <td>降级返回旧 token，可能最终断连</td>
+  </tr>
+  <tr>
+    <td>网络依赖</td>
+    <td>无（token 在本地）</td>
+    <td>依赖后端可达 + Coze API 可达</td>
+  </tr>
+</table>
+
+<h2>六、Coze OAuth 应用配置指南</h2>
+
+<h3>6.1 在 Coze 平台创建 OAuth 应用</h3>
+
+<ol>
+  <li>登录 <a href="https://www.coze.cn" target="_blank">Coze 开放平台</a></li>
+  <li>进入「扣子 API」→「OAuth 应用」</li>
+  <li>点击「创建应用」，选择<strong>应用访问令牌</strong>类型</li>
+  <li>填写应用名称和描述</li>
+  <li>创建后获得：
+    <ul>
+      <li><strong>App ID</strong>（应用 ID）</li>
+      <li><strong>App Secret</strong>（即 RT / 应用密钥）</li>
+    </ul>
+  </li>
+  <li>在应用配置中关联目标 Bot（智能体）</li>
+</ol>
+
+<h3>6.2 后端配置</h3>
+
+<p>将 App ID 和 RT 配置到后端环境变量或配置文件中：</p>
+
+<pre><code># 环境变量示例
+COZE_APP_ID=xxxxxxxxxxxx
+COZE_APP_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx  # 即 RT</code></pre>
+
+<div class="card danger">
+  <div class="card-title">🔴 安全红线</div>
+  <ul>
+    <li>RT <strong>绝对不能</strong>出现在前端代码、HTML、JS、配置文件中</li>
+    <li>RT <strong>绝对不能</strong>提交到 Git 仓库（加入 .gitignore）</li>
+    <li>RT <strong>绝对不能</strong>出现在 F12 Network 请求参数中</li>
+    <li>后端日志中不要打印 RT 的完整值</li>
+    <li>定期在 Coze 平台轮换 RT（重新生成 App Secret）</li>
+  </ul>
+</div>
+
+<h3>6.3 前端配置（启用 OAuth 模式）</h3>
+
+<p>在智能体配置界面中，将 <strong>Token 字段留空</strong>即可启用 OAuth 模式：</p>
+
+<table>
+  <tr><th>字段</th><th>PAT 模式</th><th>OAuth 模式</th></tr>
+  <tr>
+    <td>Bot ID</td>
+    <td>填写</td>
+    <td>填写</td>
+  </tr>
+  <tr>
+    <td>Token</td>
+    <td>填写 PAT 令牌</td>
+    <td><strong>留空</strong></td>
+  </tr>
+  <tr>
+    <td>Name</td>
+    <td>填写（可选）</td>
+    <td>填写（可选）</td>
+  </tr>
+</table>
+
+<div class="card success">
+  <div class="card-title">✅ 一键切换</div>
+  <p>清空 Token 字段 → 保存 → 自动切换到 OAuth 模式。填入 Token 字段 → 保存 → 自动切换到 PAT 模式。无需改代码。</p>
+</div>
+
+<h2>七、安全分析</h2>
+
+<table>
+  <tr><th>安全维度</th><th>OAuth 模式状态</th><th>说明</th></tr>
+  <tr>
+    <td>RT（密钥）</td>
+    <td><span class="tag tag-green">后端隔离</span></td>
+    <td>前端代码、IndexedDB、Network 中均不出现 RT</td>
+  </tr>
+  <tr>
+    <td>access_token（JWT）</td>
+    <td><span class="tag tag-green">临时持有</span></td>
+    <td>存于内存变量 <span class="inline-code">cozeAccessToken</span>，有过期时间</td>
+  </tr>
+  <tr>
+    <td>Bot ID</td>
+    <td><span class="tag tag-yellow">前端可见</span></td>
+    <td>写在 JS 中，F12 可见，但 Bot ID 本身不是密钥</td>
+  </tr>
+  <tr>
+    <td>会话隔离</td>
+    <td><span class="tag tag-yellow">未启用</span></td>
+    <td><span class="inline-code">fetchCozeToken()</span> 未传 session_name，所有用户共享同一 token</td>
+  </tr>
+  <tr>
+    <td>HTTPS 传输</td>
+    <td><span class="tag tag-green">建议启用</span></td>
+    <td>JWT 在传输过程中应使用 HTTPS 加密</td>
+  </tr>
+  <tr>
+    <td>Token 轮换</td>
+    <td><span class="tag tag-green">自动</span></td>
+    <td>SDK 检测过期后自动调用 <span class="inline-code">onRefreshToken</span></td>
+  </tr>
+</table>
+
+<h2>八、故障排查</h2>
+
+<h3>Q1：启动时提示"获取令牌失败"</h3>
+<ol>
+  <li>检查后端 <span class="inline-code">/system/bot/token.xt</span> 是否可访问（直接在浏览器访问该 URL）</li>
+  <li>检查后端环境变量 <span class="inline-code">COZE_APP_ID</span> 和 <span class="inline-code">COZE_APP_SECRET</span> 是否配置正确</li>
+  <li>检查 RT 是否过期（在 Coze 平台确认 OAuth 应用状态）</li>
+  <li>查看后端日志，确认 Coze API 返回的错误信息</li>
+</ol>
+
+<h3>Q2：对话中途突然断连</h3>
+<ol>
+  <li>打开 F12 → Console，搜索 <span class="inline-code">onRefreshToken error</span></li>
+  <li>如果存在该日志，说明 JWT 续期失败（后端不可达或 Coze API 异常）</li>
+  <li>等待几秒后 SDK 会自动重试，或手动点击"启动智能体"重新初始化</li>
+</ol>
+
+<h3>Q3：F12 Network 中看到 /bot/token.xt 的响应</h3>
+<p>这是正常的。响应中的 <span class="inline-code">accessToken</span> 是临时 JWT，不是 RT。JWT 有过期时间，即使被截获，有效期也很短。</p>
+
+<h3>Q4：如何确认当前使用的是 OAuth 模式而非 PAT 模式</h3>
+<ol>
+  <li>打开 F12 → Console</li>
+  <li>在智能体配置中查看 Token 字段是否为空</li>
+  <li>Token 为空 → OAuth 模式；Token 有值 → PAT 模式</li>
+  <li>或检查 Network 中是否有 <span class="inline-code">/bot/token.xt</span> 请求（OAuth 模式独有）</li>
+</ol>
+
+<h2>九、与 PAT 模式的完整对比</h2>
+
+<table>
+  <tr><th>维度</th><th>PAT 模式</th><th>OAuth 模式（本文档）</th></tr>
+  <tr>
+    <td>密钥位置</td>
+    <td>前端 IndexedDB</td>
+    <td>后端环境变量</td>
+  </tr>
+  <tr>
+    <td>密钥类型</td>
+    <td>PAT（Personal Access Token）</td>
+    <td>RT（App Secret / OAuth 应用密钥）</td>
+  </tr>
+  <tr>
+    <td>前端获取 token 方式</td>
+    <td>直接读取 <span class="inline-code">agent.token</span></td>
+    <td>调用后端 <span class="inline-code">/bot/token.xt</span></td>
+  </tr>
+  <tr>
+    <td>token 有效期</td>
+    <td>长期（手动撤销才失效）</td>
+    <td>短期（1-2 小时，自动续期）</td>
+  </tr>
+  <tr>
+    <td>续期机制</td>
+    <td>不需要续期</td>
+    <td>SDK 自动调用 <span class="inline-code">onRefreshToken</span></td>
+  </tr>
+  <tr>
+    <td>网络依赖</td>
+    <td>无</td>
+    <td>依赖后端 + Coze API</td>
+  </tr>
+  <tr>
+    <td>F12 暴露面</td>
+    <td>PAT 完全可见</td>
+    <td>仅临时 JWT 可见</td>
+  </tr>
+  <tr>
+    <td>多用户隔离</td>
+    <td>无（共享 PAT）</td>
+    <td>可扩展（后端可按用户签发不同 session）</td>
+  </tr>
+  <tr>
+    <td>适用场景</td>
+    <td>开发调试 / 单人使用</td>
+    <td>生产环境 / 多用户</td>
+  </tr>
+  <tr>
+    <td>配置方式</td>
+    <td>Agent 配置中填 Token</td>
+    <td>Agent 配置中 Token 留空</td>
+  </tr>
+</table>
+
+<h2>十、相关文件索引</h2>
+
+<table>
+  <tr><th>文件</th><th>内容</th></tr>
+  <tr>
+    <td>[index.html 1786-1797](file:///Users/guorui/同步空间/20021218/临时开发/智能制单/拼音试验/dexiedb/index.html#L1786-L1797)</td>
+    <td><span class="inline-code">fetchCozeToken()</span> — 前端请求 JWT</td>
+  </tr>
+  <tr>
+    <td>[index.html 1799-1869](file:///Users/guorui/同步空间/20021218/临时开发/智能制单/拼音试验/dexiedb/index.html#L1799-L1869)</td>
+    <td><span class="inline-code">initCozeSDK()</span> — SDK 初始化 + OAuth/PAT 双模式选择</td>
+  </tr>
+  <tr>
+    <td>[index.html 1535-1625](file:///Users/guorui/同步空间/20021218/临时开发/智能制单/拼音试验/dexiedb/index.html#L1535-L1625)</td>
+    <td><span class="inline-code">AgentConfig</span> — IndexedDB 存储的智能体配置</td>
+  </tr>
+  <tr>
+    <td>[index.html 1784](file:///Users/guorui/同步空间/20021218/临时开发/智能制单/拼音试验/dexiedb/index.html#L1784)</td>
+    <td><span class="inline-code">API_BASE = '/system'</span></td>
+  </tr>
+  <tr>
+    <td>[Coze智能体鉴权方案.html](file:///Users/guorui/同步空间/20021218/临时开发/智能制单/拼音试验/结论文档/Coze智能体鉴权方案.html)</td>
+    <td>原文档（PAT + OAuth 混合描述）</td>
+  </tr>
+  <tr>
+    <td>后端 <span class="inline-code">/system/bot/token.xt</span></td>
+    <td>JWT 签发接口（代码在服务器，不在前端项目中）</td>
+  </tr>
+</table>
+
+<div class="footer">
+  AI智能制单系统 · 扣子智能体 OAuth 鉴权方式文档 · 2026年6月
+</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>拼音匹配阈值算法和处理规则</title>
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+<style>
+:root {
+  --bg: #f8f9fb;
+  --card: #ffffff;
+  --border: #e8ecf0;
+  --text: #1f2937;
+  --text-secondary: #6b7280;
+  --primary: #3b82f6;
+  --primary-light: #eff6ff;
+  --primary-border: #bfdbfe;
+  --green: #10b981;
+  --green-light: #ecfdf5;
+  --green-border: #a7f3d0;
+  --amber: #f59e0b;
+  --amber-light: #fffbeb;
+  --amber-border: #fde68a;
+  --red: #ef4444;
+  --red-light: #fef2f2;
+  --red-border: #fecaca;
+  --purple: #8b5cf6;
+  --purple-light: #f5f3ff;
+  --purple-border: #ddd6fe;
+  --cyan: #06b6d4;
+  --cyan-light: #ecfeff;
+  --cyan-border: #a5f3fc;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  padding: 32px 20px;
+}
+.container { max-width: 960px; margin: 0 auto; }
+
+.doc-header {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px 48px;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+}
+.doc-header::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6, #10b981);
+}
+.doc-header h1 {
+  font-size: 28px; font-weight: 700; color: var(--text);
+  margin-bottom: 8px; display: flex; align-items: center; gap: 12px;
+}
+.doc-header h1 i { color: var(--primary); font-size: 28px; }
+.doc-header .subtitle { font-size: 15px; color: var(--text-secondary); margin-bottom: 20px; }
+.doc-meta { display: flex; gap: 24px; flex-wrap: wrap; }
+.doc-meta-item { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-secondary); }
+.doc-meta-item i { font-size: 14px; color: var(--primary); }
+.doc-meta-item strong { color: var(--text); font-weight: 600; }
+
+.section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 32px 36px;
+  margin-bottom: 20px;
+}
+.section-title {
+  font-size: 18px; font-weight: 700; color: var(--text);
+  margin-bottom: 20px; display: flex; align-items: center; gap: 10px;
+  padding-bottom: 14px; border-bottom: 1px solid var(--border);
+}
+.section-title i {
+  width: 32px; height: 32px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; color: white; flex-shrink: 0;
+}
+.icon-blue { background: var(--primary); }
+.icon-green { background: var(--green); }
+.icon-amber { background: var(--amber); }
+.icon-red { background: var(--red); }
+.icon-purple { background: var(--purple); }
+.icon-cyan { background: var(--cyan); }
+
+p { font-size: 14px; color: var(--text); margin-bottom: 12px; line-height: 1.8; }
+p:last-child { margin-bottom: 0; }
+
+.highlight-box {
+  border-radius: 10px; padding: 16px 20px; margin-bottom: 16px;
+  font-size: 14px; line-height: 1.8;
+}
+.highlight-box.blue { background: var(--primary-light); border: 1px solid var(--primary-border); color: #1e40af; }
+.highlight-box.green { background: var(--green-light); border: 1px solid var(--green-border); color: #065f46; }
+.highlight-box.amber { background: var(--amber-light); border: 1px solid var(--amber-border); color: #92400e; }
+.highlight-box.red { background: var(--red-light); border: 1px solid var(--red-border); color: #991b1b; }
+.highlight-box.purple { background: var(--purple-light); border: 1px solid var(--purple-border); color: #5b21b6; }
+.highlight-box.cyan { background: var(--cyan-light); border: 1px solid var(--cyan-border); color: #155e75; }
+.highlight-box i { margin-right: 6px; }
+
+pre {
+  background: #1e293b; color: #e2e8f0; border-radius: 10px;
+  padding: 20px 24px; margin-bottom: 16px; overflow-x: auto;
+  font-size: 13px; line-height: 1.7; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+}
+pre .comment { color: #64748b; }
+pre .keyword { color: #c084fc; }
+pre .string { color: #34d399; }
+pre .key { color: #60a5fa; }
+pre .func { color: #fbbf24; }
+pre .num { color: #fb923c; }
+
+table {
+  width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 13px;
+}
+th, td {
+  padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border);
+}
+th { background: #f8f9fb; font-weight: 600; color: var(--text-secondary); font-size: 12px; }
+td { color: var(--text); }
+tr:last-child td { border-bottom: none; }
+
+.tag {
+  display: inline-block; padding: 2px 10px; border-radius: 6px;
+  font-size: 11px; font-weight: 600; margin-right: 4px;
+}
+.tag-blue { background: var(--primary-light); color: #1e40af; border: 1px solid var(--primary-border); }
+.tag-green { background: var(--green-light); color: #065f46; border: 1px solid var(--green-border); }
+.tag-amber { background: var(--amber-light); color: #92400e; border: 1px solid var(--amber-border); }
+.tag-red { background: var(--red-light); color: #991b1b; border: 1px solid var(--red-border); }
+.tag-purple { background: var(--purple-light); color: #5b21b6; border: 1px solid var(--purple-border); }
+.tag-cyan { background: var(--cyan-light); color: #155e75; border: 1px solid var(--cyan-border); }
+
+.formula-box {
+  background: #f8f9fb;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 16px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: 0.5px;
+}
+.formula-box .op { color: var(--primary); margin: 0 4px; }
+.formula-box .dim { color: var(--purple); }
+.formula-box .weight { color: var(--amber); font-size: 13px; }
+
+.threshold-card {
+  border-radius: 12px; padding: 20px 24px; margin-bottom: 14px;
+  border-left: 4px solid;
+  display: flex; gap: 20px; align-items: flex-start;
+}
+.threshold-card .threshold-left {
+  flex-shrink: 0;
+  text-align: center;
+  min-width: 80px;
+}
+.threshold-card .threshold-range {
+  font-size: 22px; font-weight: 700; line-height: 1.2;
+}
+.threshold-card .threshold-label {
+  font-size: 11px; font-weight: 600; margin-top: 4px;
+}
+.threshold-card .threshold-right { flex: 1; }
+.threshold-card .threshold-title {
+  font-size: 15px; font-weight: 700; margin-bottom: 6px;
+  display: flex; align-items: center; gap: 8px;
+}
+.threshold-card .threshold-desc {
+  font-size: 13px; line-height: 1.8; color: var(--text-secondary);
+}
+.threshold-card .threshold-desc code {
+  background: rgba(0,0,0,0.06); padding: 1px 6px; border-radius: 4px;
+  font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px;
+}
+
+.threshold-card.exact { background: var(--green-light); border-left-color: var(--green); }
+.threshold-card.exact .threshold-range { color: var(--green); }
+.threshold-card.exact .threshold-label { color: #065f46; }
+.threshold-card.auto { background: #ecfdf5; border-left-color: #34d399; }
+.threshold-card.auto .threshold-range { color: #059669; }
+.threshold-card.auto .threshold-label { color: #065f46; }
+.threshold-card.candidate { background: var(--amber-light); border-left-color: var(--amber); }
+.threshold-card.candidate .threshold-range { color: var(--amber); }
+.threshold-card.candidate .threshold-label { color: #92400e; }
+.threshold-card.fuzzy { background: #fff7ed; border-left-color: #fb923c; }
+.threshold-card.fuzzy .threshold-range { color: #ea580c; }
+.threshold-card.fuzzy .threshold-label { color: #9a3412; }
+.threshold-card.nomatch { background: var(--red-light); border-left-color: var(--red); }
+.threshold-card.nomatch .threshold-range { color: var(--red); }
+.threshold-card.nomatch .threshold-label { color: #991b1b; }
+
+.dim-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px 22px;
+  margin-bottom: 12px;
+}
+.dim-card .dim-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 10px;
+}
+.dim-card .dim-name {
+  font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px;
+}
+.dim-card .dim-weight {
+  font-size: 20px; font-weight: 700; color: var(--primary);
+}
+.dim-card .dim-desc {
+  font-size: 13px; color: var(--text-secondary); line-height: 1.8;
+}
+.dim-card .dim-desc code {
+  background: #f1f5f9; padding: 1px 6px; border-radius: 4px;
+  font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px;
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="doc-header">
+  <h1><i class="ri-scales-2-line"></i> 拼音匹配阈值算法和处理规则</h1>
+  <div class="subtitle">四维加权评分模型 · 阈值分级策略 · 自动确认规则</div>
+  <div class="doc-meta">
+    <div class="doc-meta-item"><i class="ri-calendar-line"></i> 创建：<strong>2026-05-16</strong></div>
+    <div class="doc-meta-item"><i class="ri-file-code-line"></i> 实现：<strong>index.html / index2.html</strong></div>
+    <div class="doc-meta-item"><i class="ri-database-2-line"></i> 数据：<strong>localStorage拼音KV</strong></div>
+    <div class="doc-meta-item"><i class="ri-settings-3-line"></i> 最低阈值：<strong>0.45 (45%)</strong></div>
+    <div class="doc-meta-item"><i class="ri-refresh-line"></i> 更新：<strong>2026-05-17</strong>（五维→四维，移除业务权重）</div>
+    <div class="doc-meta-item"><i class="ri-refresh-line"></i> 更新：<strong>2026-05-24</strong>（三种匹配模式拆分）</div>
+  </div>
+</div>
+
+<!-- 第1章：算法概述 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-blue ri-function-line"></i> 1. 算法概述
+  </div>
+  <p>拼音匹配算法将ASR语音识别结果（或用户输入文本）与后台数据库中的客户/产品记录进行模糊匹配。核心思路是：<strong>将中文文本转为拼音，在拼音空间中计算多维度相似度，加权汇总后按阈值分级处理</strong>。</p>
+  <p>算法由三个层次组成：</p>
+  <div class="highlight-box blue">
+    <i class="ri-stack-line"></i> <strong>第一层：拼音生成</strong> — 中英混合文本分段处理，中文段转拼音，非中文段保留原字符<br>
+    <i class="ri-stack-line"></i> <strong>第二层：四维评分</strong> — 从4个独立维度计算相似度，加权汇总为最终得分<br>
+    <i class="ri-stack-line"></i> <strong>第三层：阈值分级</strong> — 按得分和候选数量决定匹配状态（自动确认/候选/模糊/不匹配）
+  </div>
+
+  <div class="highlight-box purple">
+    <i class="ri-toggle-line"></i> <strong>三种匹配模式</strong>（2026-05-24新增）<br>
+    产品匹配现已拆分为三种独立可选模式，用户可在产品选择界面实时切换：<br>
+    — <strong>分词模式 (keyword)</strong>：仅使用中文分词关键词匹配，默认模式，适合参数描述型输入<br>
+    — <strong>拼音模式 (pinyin)</strong>：仅使用拼音四维评分，适合精确品名匹配和同音字纠错<br>
+    — <strong>混合模式 (mixed)</strong>：拼音+关键词双路融合（拼音55%+关键词45%），兼顾全面性<br>
+    调度函数 <code>fuzzyMatchProducts</code> 根据全局变量 <code>_matchMode</code> 分发到对应匹配函数。详见《分词关键词匹配算法》第3章。
+  </div>
+</div>
+
+<!-- 第2章：拼音生成 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-cyan ri-translate-2"></i> 2. 拼音生成规则
+  </div>
+  <p>输入文本可能是中英混合（如"排线 PM1200 20米"），需要分段处理：</p>
+  <table>
+    <tr>
+      <th>字符类型</th>
+      <th>处理方式</th>
+      <th>示例</th>
+      <th>全拼输出</th>
+      <th>首字母输出</th>
+    </tr>
+    <tr>
+      <td>中文</td>
+      <td>pinyin-pro转拼音</td>
+      <td>排线</td>
+      <td>pai_xian</td>
+      <td>px</td>
+    </tr>
+    <tr>
+      <td>英文/数字/符号</td>
+      <td>原样保留，空格转下划线</td>
+      <td>PM1200</td>
+      <td>pm1200</td>
+      <td>pm1200</td>
+    </tr>
+    <tr>
+      <td>混合</td>
+      <td>按段分别处理后拼接</td>
+      <td>排线 PM1200 20米</td>
+      <td>pai_xian_pm1200_20_mi</td>
+      <td>pxpm120020m</td>
+    </tr>
+  </table>
+  <div class="highlight-box cyan">
+    <i class="ri-information-line"></i> <strong>关键设计</strong>：全拼中各段用 <code>_</code> 分隔，便于后续词袋模型按 <code>_</code> 分词。首字母拼接不分隔，用于快速首字母匹配。
+  </div>
+</div>
+
+<!-- 第3章：四维评分模型 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-purple ri-radar-line"></i> 3. 四维评分模型
+  </div>
+
+  <div class="formula-box">
+    <span class="dim">拼音相似度</span> <span class="op">×</span> <span class="weight">35%</span>
+    <span class="op">+</span> <span class="dim">首字母匹配</span> <span class="op">×</span> <span class="weight">25%</span>
+    <span class="op">+</span> <span class="dim">词袋余弦</span> <span class="op">×</span> <span class="weight">30%</span>
+    <span class="op">+</span> <span class="dim">长度匹配</span> <span class="op">×</span> <span class="weight">10%</span>
+    <span class="op">=</span> 最终得分
+  </div>
+
+  <div class="dim-card">
+    <div class="dim-header">
+      <div class="dim-name"><i class="ri-text" style="color:var(--primary)"></i> 维度1：拼音相似度</div>
+      <div class="dim-weight">35%</div>
+    </div>
+    <div class="dim-desc">
+      计算ASR全拼与记录全拼的字符串相似度。底层由两个子指标取平均：<br>
+      <strong>编辑距离得分</strong>：<code>1 - levenshteinDistance(a, b) / maxLen</code>，衡量插入/删除/替换的代价<br>
+      <strong>LCS得分</strong>：<code>2 × lcsLength / (a.length + b.length)</code>，衡量最长公共子序列占比<br>
+      最终：<code>calcStringSimilarity = (编辑距离得分 + LCS得分) / 2</code><br>
+      <strong>性能优化</strong>：为避免长产品名（含详细描述，拼音200+字符）导致 <code>levenshteinDistance</code> 计算量爆炸，评分前对拼音字符串做截断——全拼截断120字符（约覆盖前30个汉字），首字母截断60字符。核心区分信息（品类+型号+品牌）几乎都在前30字内，截断不影响匹配准确度，但计算量减少64%。
+    </div>
+  </div>
+
+  <div class="dim-card">
+    <div class="dim-header">
+      <div class="dim-name"><i class="ri-font-size" style="color:var(--purple)"></i> 维度2：首字母匹配</div>
+      <div class="dim-weight">25%</div>
+    </div>
+    <div class="dim-desc">
+      计算ASR首字母缩写与记录首字母缩写的字符串相似度。算法同维度1（编辑距离+LCS取平均）。<br>
+      首字母生成规则：中文段用pinyin-pro的 <code>pattern:'first'</code> 取首字母；拼音格式的非中文段按 <code>_</code> 拆分后取每个音节首字母。<br>
+      示例：<code>fei_er_gong_mao</code> → 首字母 <code>fegm</code>（按音节取首字母，而非整体去空格）
+    </div>
+  </div>
+
+  <div class="dim-card">
+    <div class="dim-header">
+      <div class="dim-name"><i class="ri-bubble-chart-line" style="color:var(--green)"></i> 维度3：词袋余弦相似度</div>
+      <div class="dim-weight">30%</div>
+    </div>
+    <div class="dim-desc">
+      按 <code>_</code> 分词后做余弦相似度计算，解决<strong>词序不同</strong>导致的匹配失败。<br>
+      算法步骤：<br>
+      1. 将全拼按 <code>_</code> 分词，统计词频向量<br>
+      2. 计算两个向量的余弦相似度：<code>dotProduct / (‖A‖ × ‖B‖)</code><br>
+      示例：<code>gong_kong_yan_neng_zhu_ban</code> vs <code>zhu_ban_si_he_gong_kong_yan_neng</code>，虽然词序不同，但词袋相同，余弦相似度=1.0
+    </div>
+  </div>
+
+  <div class="dim-card">
+    <div class="dim-header">
+      <div class="dim-name"><i class="ri-ruler-line" style="color:var(--amber)"></i> 维度4：长度匹配</div>
+      <div class="dim-weight">10%</div>
+    </div>
+    <div class="dim-desc">
+      衡量ASR拼音与记录拼音的长度差异：<code>1 - |lenA - lenB| / max(lenA, lenB)</code><br>
+      长度差异越大，得分越低。防止短查询误匹配长记录。
+    </div>
+  </div>
+
+  <div class="highlight-box purple">
+    <i class="ri-lightbulb-line"></i> <strong>特殊路径：精确匹配加速</strong><br>
+    如果记录的原始名称（name字段）与输入完全相同，直接返回满分：<code>pinyin=1, abbr=1, wordBag=1, length=1</code><br>
+    如果记录名称包含输入文本，返回近满分：<code>pinyin=0.95, abbr=0.9, wordBag=1, length=0.9</code>
+  </div>
+
+  <div class="highlight-box cyan">
+    <i class="ri-information-line"></i> <strong>关于业务权重</strong>：原设计包含第5维"业务权重"（15%），但实际使用中从未赋值（始终为0），相当于浪费了15%的权重空间。已于2026-05-17移除，权重重新分配给前4个维度。详细判断条件见《自动确认和人工确认的判断条件》。
+  </div>
+</div>
+
+<!-- 第4章：阈值分级策略 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-green ri-speed-line"></i> 4. 阈值分级策略
+  </div>
+
+  <p>四维加权得分计算完成后，根据得分和候选数量进行分级处理。产品和客户采用相同的分级逻辑：</p>
+
+  <div class="threshold-card exact">
+    <div class="threshold-left">
+      <div class="threshold-range">≥90%</div>
+      <div class="threshold-label"><span class="tag tag-green">自动确认</span></div>
+    </div>
+    <div class="threshold-right">
+      <div class="threshold-title"><i class="ri-check-double-line" style="color:var(--green)"></i> 精确匹配 · 自动确认</div>
+      <div class="threshold-desc">
+        匹配得分≥90%，视为精确匹配，<strong>自动确认</strong>，状态标记为 <code>confirmed</code>，UI显示绿色边框。<br>
+        产品匹配额外逻辑：如果同名产品有多条，依次尝试<strong>型号精确匹配→型号部分匹配→规格匹配</strong>；如果都无法区分，返回pending需人工选择；如果同名只有一条，直接确认。
+      </div>
+    </div>
+  </div>
+
+  <div class="threshold-card auto">
+    <div class="threshold-left">
+      <div class="threshold-range">≥80%</div>
+      <div class="threshold-label"><span class="tag tag-green">自动确认</span></div>
+    </div>
+    <div class="threshold-right">
+      <div class="threshold-title"><i class="ri-check-line" style="color:#059669"></i> 唯一候选 · 自动确认</div>
+      <div class="threshold-desc">
+        匹配得分≥80% 且<strong>只有一个匹配结果</strong>，自动确认，状态标记为 <code>confirmed</code>，UI显示绿色边框。<br>
+        设计理由：只有一个候选且得分较高时，用户确认的概率极高，自动确认可减少操作步骤。
+      </div>
+    </div>
+  </div>
+
+  <div class="threshold-card candidate">
+    <div class="threshold-left">
+      <div class="threshold-range">70-90%</div>
+      <div class="threshold-label"><span class="tag tag-amber">候选推荐</span></div>
+    </div>
+    <div class="threshold-right">
+      <div class="threshold-title"><i class="ri-question-line" style="color:var(--amber)"></i> 高置信候选 · 待确认</div>
+      <div class="threshold-desc">
+        匹配得分在70%-90%之间，有匹配结果但置信度不够高，状态标记为 <code>pending</code>，UI显示黄色边框。<br>
+        用户可点击产品/客户卡片，在候选列表中选择或搜索其他选项。
+      </div>
+    </div>
+  </div>
+
+  <div class="threshold-card fuzzy">
+    <div class="threshold-left">
+      <div class="threshold-range">45-70%</div>
+      <div class="threshold-label"><span class="tag tag-amber">模糊提示</span></div>
+    </div>
+    <div class="threshold-right">
+      <div class="threshold-title"><i class="ri-error-warning-line" style="color:#ea580c"></i> 低置信匹配 · 待确认</div>
+      <div class="threshold-desc">
+        匹配得分在45%-70%之间，匹配结果置信度较低，但仍有参考价值，状态标记为 <code>pending</code>，UI显示黄色边框。<br>
+        包括两种情况：<br>
+        — 只有1个匹配结果，得分45-70%<br>
+        — 有多个匹配结果，最高得分45-70%
+      </div>
+    </div>
+  </div>
+
+  <div class="threshold-card nomatch">
+    <div class="threshold-left">
+      <div class="threshold-range">&lt;45%</div>
+      <div class="threshold-label"><span class="tag tag-red">不匹配</span></div>
+    </div>
+    <div class="threshold-right">
+      <div class="threshold-title"><i class="ri-close-circle-line" style="color:var(--red)"></i> 低于阈值 · 不匹配</div>
+      <div class="threshold-desc">
+        匹配得分低于45%（最低阈值），视为不匹配，不返回任何结果，状态标记为 <code>error</code>，UI显示红色边框。<br>
+        用户可通过搜索弹窗手动查找，或新建产品/客户。
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 第5章：产品匹配决策流程 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-amber ri-flow-chart"></i> 5. 产品匹配决策流程
+  </div>
+
+  <pre>
+输入：品名+型号合并文本 combinedName, 规格值 specValue, 型号值 modelValue
+  │
+  ▼
+┌────────────────────────────────────┐
+│  pinyinMatch(combinedName, db)     │  ← 四维加权评分，threshold=0.45
+│  返回 candidates[]                │
+└──────────┬─────────────────────────┘
+           │
+     candidates.length?
+           │
+    ┌──────┴──────┐
+    │ 0           │ ≥1
+    ▼             ▼
+┌─────────┐  ┌──────────────────────────┐
+│ 不匹配  │  │  best = candidates[0]     │
+│ error   │  │  score = best.score       │
+│ none    │  └──────────┬───────────────┘
+└─────────┘             │
+                  score ≥ 0.9?
+                  ┌──────┴──────┐
+                  │ Yes         │ No
+                  ▼             ▼
+           ┌──────────┐  candidates.length === 1
+           │ 同名产品 │  && score ≥ 0.8?
+           │ 多条?    │  ┌──────┴──────┐
+           └────┬─────┘  │ Yes         │ No
+           ┌────┴────┐   ▼             ▼
+           │Yes    │No│ ┌──────────┐  score ≥ 0.7?
+           ▼       ▼  │ 自动确认  │  ┌──────┴──────┐
+      ┌────────┐ ┌──┐ │ confirmed │  │ Yes         │ No
+      │型号匹配│ │自│ │ name      │  ▼             ▼
+      │有model?│ │动│ └──────────┘ ┌──────────┐  score ≥ 0.4?
+      └──┬─────┘ │确│              │ 候选推荐  │  ┌──────┴──────┐
+    ┌────┴────┐  │认│              │ pending   │  │ Yes         │ No
+    │Yes    │No│  │  │              │ name      │  ▼             ▼
+    ▼       ▼  └──┘              └──────────┘ ┌──────────┐ ┌─────────┐
+┌────────┐┌──────┐                            │ 模糊提示 │ │ 不匹配  │
+│型号/规格││默认首│                            │ pending  │ │ error   │
+│匹配确认││条候选│                            │ name     │ │ none    │
+│ sku    ││pending│                            └──────────┘ └─────────┘
+└────────┘│ name │
+          └──────┘</pre>
+
+  <div class="highlight-box cyan">
+    <i class="ri-information-line"></i> <strong>查询输入一致性</strong>：产品匹配时，查询端将品名+型号合并为 <code>combinedName</code> 传入 <code>pinyinMatch</code>，与数据库端拼音生成方式（品名+型号+规格合并生成拼音）保持一致，确保拼音空间对齐。
+  </div>
+
+  <div class="highlight-box amber">
+    <i class="ri-filter-line"></i> <strong>占位符过滤（isPlaceholder）</strong>：合并生成拼音时，空值、<code>"-"</code>、<code>"[未填写]"</code>、<code>"[空]"</code> 等方括号占位符不参与合并。例如：model=<code>"[未填写]"</code> 表示型号为空，不应生成拼音，否则无意义的占位文本会严重干扰匹配得分（曾导致100%匹配降至55%）。过滤逻辑统一使用 <code>isPlaceholder()</code> 函数：<code>.filter(s =&gt; !isPlaceholder(s))</code>，判断规则：<code>!val || val.trim() === '-' || val.trim() === '[未填写]' || /^\[.*\]$/.test(val.trim())</code>
+  </div>
+</div>
+
+<!-- 第6章：客户匹配决策流程 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-purple ri-user-line"></i> 6. 客户匹配决策流程
+  </div>
+
+  <pre>
+输入：客户名称 customerName
+  │
+  ▼
+┌──────────────────────────────────┐
+│  pinyinMatch(customerName, db)   │  ← 四维加权评分，threshold=0.45
+│  返回 matches[]                  │
+└──────────┬───────────────────────┘
+           │
+     matches.length?
+           │
+    ┌──────┴──────┐
+    │ 0           │ ≥1
+    ▼             ▼
+┌─────────┐  matches[0].score ≥ 0.9?
+│ 未匹配  │  ┌──────┴──────┐
+│ pending │  │ Yes         │ No
+│ none    │  ▼             ▼
+└─────────┘ ┌──────────┐  matches.length === 1
+            │ 自动确认  │  && matches[0].score ≥ 0.8?
+            │ selectCus │  ┌──────┴──────┐
+            │ exact     │  │ Yes         │ No
+            └──────────┘  ▼             ▼
+                        ┌──────────┐  ┌──────────┐
+                        │ 自动确认  │  │ 候选推荐  │
+                        │ selectCus │  │ pending   │
+                        │ exact     │  │ fuzzy     │
+                        └──────────┘  └──────────┘</pre>
+
+  <div class="highlight-box purple">
+    <i class="ri-star-line"></i> <strong>客户与产品的差异</strong>：客户匹配没有"规格匹配"的额外逻辑，但增加了"唯一候选≥80%自动确认"规则。客户确认后自动调用 <code>selectCustomer</code>，将标准客户名、地址、联系人回填到表单。
+  </div>
+</div>
+
+<!-- 第7章：核心代码 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-blue ri-code-s-slash-line"></i> 7. 核心代码
+  </div>
+
+  <p><strong>四维加权评分</strong>：</p>
+<pre>
+<span class="keyword">var</span> finalScore =
+  scores.pinyin  <span class="op">*</span> <span class="num">0.35</span> <span class="op">+</span>
+  scores.abbr    <span class="op">*</span> <span class="num">0.25</span> <span class="op">+</span>
+  scores.wordBag <span class="op">*</span> <span class="num">0.30</span> <span class="op">+</span>
+  scores.length  <span class="op">*</span> <span class="num">0.10</span>;
+</pre>
+
+  <p><strong>产品匹配阈值判断</strong>：</p>
+<pre>
+<span class="keyword">if</span> (best.score >= <span class="num">0.9</span>) {
+  <span class="keyword">var</span> sameNameProducts = products.filter(p => p.name === best.name);
+  <span class="keyword">if</span> (sameNameProducts.length > <span class="num">1</span>) {
+    <span class="comment">// 优先级1：型号精确匹配</span>
+    <span class="keyword">var</span> modelMatch = sameNameProducts.find(p =>
+      p.model.toLowerCase() === modelValue.toLowerCase());
+    <span class="keyword">if</span> (modelMatch)
+      <span class="keyword">return</span> { matchId: modelMatch.id, status: <span class="string">'confirmed'</span>, matchType: <span class="string">'sku'</span> };
+    <span class="comment">// 优先级2：型号部分匹配（双向包含）</span>
+    <span class="keyword">var</span> modelPartial = sameNameProducts.find(p =>
+      p.model.indexOf(modelValue) !== -<span class="num">1</span> || modelValue.indexOf(p.model) !== -<span class="num">1</span>);
+    <span class="keyword">if</span> (modelPartial)
+      <span class="keyword">return</span> { matchId: modelPartial.id, status: <span class="string">'confirmed'</span>, matchType: <span class="string">'sku'</span> };
+    <span class="comment">// 优先级3：规格匹配</span>
+    <span class="keyword">var</span> specMatch = sameNameProducts.find(p =>
+      p.spec.indexOf(specValue) !== -<span class="num">1</span>);
+    <span class="keyword">if</span> (specMatch)
+      <span class="keyword">return</span> { matchId: specMatch.id, status: <span class="string">'confirmed'</span>, matchType: <span class="string">'sku'</span> };
+    <span class="comment">// 无法区分：人工选择</span>
+    <span class="keyword">return</span> { matchId: best.id, status: <span class="string">'pending'</span>, matchType: <span class="string">'name'</span> };
+  }
+  <span class="comment">// 同名唯一：自动确认</span>
+  <span class="keyword">return</span> { matchId: best.id, status: <span class="string">'confirmed'</span>, matchType: best.score >= <span class="num">0.95</span> ? <span class="string">'exact'</span> : <span class="string">'name'</span> };
+}
+<span class="keyword">if</span> (matches.length === <span class="num">1</span> && best.score >= <span class="num">0.8</span>) {
+  <span class="comment">// 唯一候选且≥80%：自动确认</span>
+  <span class="keyword">return</span> { matchId: best.id, status: <span class="string">'confirmed'</span>, matchType: <span class="string">'name'</span> };
+}
+<span class="keyword">if</span> (best.score >= <span class="num">0.7</span>) {
+  <span class="comment">// 高置信候选：待确认</span>
+  <span class="keyword">return</span> { matchId: best.id, status: <span class="string">'pending'</span>, matchType: <span class="string">'name'</span> };
+}
+<span class="keyword">if</span> (matches.length === <span class="num">1</span> && best.score >= <span class="num">0.4</span>) {
+  <span class="comment">// 唯一低置信候选：待确认</span>
+  <span class="keyword">return</span> { matchId: best.id, status: <span class="string">'pending'</span>, matchType: <span class="string">'name'</span> };
+}
+<span class="keyword">if</span> (matches.length > <span class="num">1</span> && best.score >= <span class="num">0.4</span>) {
+  <span class="comment">// 多个低置信候选：待确认</span>
+  <span class="keyword">return</span> { matchId: best.id, status: <span class="string">'pending'</span>, matchType: <span class="string">'name'</span> };
+}
+<span class="comment">// 低于阈值：不匹配</span>
+<span class="keyword">return</span> { matchId: <span class="keyword">null</span>, status: <span class="string">'error'</span>, matchType: <span class="string">'none'</span> };
+</pre>
+
+  <p><strong>词袋余弦相似度</strong>：</p>
+<pre>
+<span class="keyword">function</span> <span class="func">pinyinWordBagSimilarity</span>(asrFull, recordFull) {
+  <span class="keyword">var</span> asrWords = asrFull.split(<span class="string">'_'</span>).filter(w => w.length > <span class="num">0</span>);
+  <span class="keyword">var</span> recWords = recordFull.split(<span class="string">'_'</span>).filter(w => w.length > <span class="num">0</span>);
+  <span class="comment">// 统计词频 → 构建向量 → 计算余弦相似度</span>
+  <span class="keyword">var</span> dotProduct = <span class="num">0</span>, asrNorm = <span class="num">0</span>, recNorm = <span class="num">0</span>;
+  allWords.forEach(<span class="keyword">function</span>(w) {
+    dotProduct += asrCount[w] * recCount[w];
+    asrNorm += asrCount[w] ** <span class="num">2</span>;
+    recNorm += recCount[w] ** <span class="num">2</span>;
+  });
+  <span class="keyword">return</span> dotProduct / (sqrt(asrNorm) * sqrt(recNorm));
+}
+</pre>
+</div>
+
+<!-- 第8章：阈值策略总结 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-amber ri-lightbulb-flash-line"></i> 8. 阈值策略总结
+  </div>
+
+  <table>
+    <tr>
+      <th>得分范围</th>
+      <th>候选数</th>
+      <th>状态</th>
+      <th>UI颜色</th>
+      <th>用户操作</th>
+    </tr>
+    <tr>
+      <td><strong>≥90%</strong></td>
+      <td>任意</td>
+      <td><span class="tag tag-green">confirmed</span></td>
+      <td>🟢 绿色</td>
+      <td>无需操作，自动确认</td>
+    </tr>
+    <tr>
+      <td><strong>≥80%</strong></td>
+      <td>仅1个</td>
+      <td><span class="tag tag-green">confirmed</span></td>
+      <td>🟢 绿色</td>
+      <td>无需操作，自动确认</td>
+    </tr>
+    <tr>
+      <td><strong>70-90%</strong></td>
+      <td>任意</td>
+      <td><span class="tag tag-amber">pending</span></td>
+      <td>🟡 黄色</td>
+      <td>点击确认/选择其他候选</td>
+    </tr>
+    <tr>
+      <td><strong>45-70%</strong></td>
+      <td>任意</td>
+      <td><span class="tag tag-amber">pending</span></td>
+      <td>🟡 黄色</td>
+      <td>点击确认/搜索/新建</td>
+    </tr>
+    <tr>
+      <td><strong>&lt;45%</strong></td>
+      <td>—</td>
+      <td><span class="tag tag-red">error</span></td>
+      <td>🔴 红色</td>
+      <td>搜索其他/新建</td>
+    </tr>
+  </table>
+
+  <div class="highlight-box green">
+    <i class="ri-lightbulb-line"></i> <strong>核心设计原则</strong><br>
+    <strong>高置信自动确认</strong>：得分≥90%或唯一候选≥80%时自动确认，减少用户操作步骤<br>
+    <strong>低置信人工介入</strong>：得分70-90%需要用户确认，70%以下需要用户主动选择<br>
+    <strong>不匹配提供出路</strong>：得分低于45%时提供搜索和新建功能，确保用户始终有操作路径
+  </div>
+
+  <div class="highlight-box amber">
+    <i class="ri-alert-line"></i> <strong>阈值调优建议</strong><br>
+    当前最低阈值0.45（45%）是基于实际业务数据调优的结果。如果出现误匹配过多，可上调至0.5；如果漏匹配过多，可下调至0.4。建议在调整阈值前，先用 <code>get_cus_pro.html</code> 工具页的测试功能验证效果。
+  </div>
+</div>
+
+</div>
+</body>
+</html>

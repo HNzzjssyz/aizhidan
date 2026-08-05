@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IndexedDB 产品查询效率改善方案</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;color:#1e293b;background:#f1f5f9;line-height:1.75;font-size:15px}
+.container{max-width:960px;margin:0 auto;padding:0 24px}
+.header{background:linear-gradient(135deg,#0f0c29 0%,#302b63 40%,#24243e 100%);color:#fff;padding:60px 0 50px;text-align:center;position:relative;overflow:hidden}
+.header::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at 30% 50%,rgba(99,102,241,.35) 0%,transparent 50%),radial-gradient(ellipse at 70% 50%,rgba(16,185,129,.25) 0%,transparent 50%);animation:pulse 6s ease-in-out infinite}
+.header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#6366f1,#10b981,#f59e0b,#6366f1);background-size:300% 100%;animation:shimmer 4s linear infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}
+@keyframes shimmer{0%{background-position:0% 50%}100%{background-position:300% 50%}}
+.header h1{font-size:2em;font-weight:800;margin-bottom:10px;position:relative;letter-spacing:2px;background:linear-gradient(135deg,#fff,#e0e7ff,#a7f3d0,#fff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 2px 8px rgba(99,102,241,.3))}
+.header .subtitle{font-size:1.05em;color:#e0e7ff;position:relative;text-shadow:0 0 20px rgba(99,102,241,.4)}
+.section{background:#fff;border-radius:12px;padding:36px 40px;margin:24px 0;box-shadow:0 2px 12px rgba(0,0,0,.04)}
+.section h2{font-size:1.4em;color:#1e40af;margin-bottom:20px;padding-bottom:10px;border-bottom:3px solid #2563eb;display:flex;align-items:center;gap:10px}
+.section h3{font-size:1.15em;color:#1e40af;margin:24px 0 12px;padding-left:12px;border-left:4px solid #2563eb}
+.section h4{font-size:1.05em;color:#334155;margin:16px 0 8px;font-weight:600}
+p{margin-bottom:12px;color:#475569}
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:.93em}
+th,td{border:1px solid #e5e7eb;padding:10px 14px;text-align:left}
+th{background:#eff6ff;color:#1e40af;font-weight:600;white-space:nowrap}
+tr:nth-child(even) td{background:#f9fafb}
+pre{background:#1e293b;color:#e2e8f0;padding:16px 20px;border-radius:8px;overflow-x:auto;font-size:13px;line-height:1.6;margin:12px 0}
+code{font-family:"SF Mono","Fira Code",Consolas,monospace;font-size:.9em}
+.inline-code{background:#eff6ff;color:#1e40af;padding:1px 6px;border-radius:4px}
+.highlight-box{border-radius:8px;padding:16px 20px;margin:16px 0;display:flex;align-items:flex-start;gap:10px;font-size:.93em}
+.highlight-box .hi-icon{font-size:18px;flex-shrink:0;margin-top:1px}
+.hi-info{background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af}
+.hi-warning{background:#fffbeb;border:1px solid #fde68a;color:#b45309}
+.hi-danger{background:#fef2f2;border:1px solid #fecaca;color:#dc2626}
+.hi-success{background:#f0fdf4;border:1px solid #bbf7d0;color:#16a34a}
+.before-after{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0}
+.before-after>div{border-radius:8px;padding:16px 20px}
+.ba-before{background:#fef2f2;border:1px solid #fecaca}
+.ba-after{background:#f0fdf4;border:1px solid #bbf7d0}
+.ba-label{font-weight:700;font-size:.9em;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.ba-before .ba-label{color:#dc2626}
+.ba-after .ba-label{color:#16a34a}
+.flow-diagram{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:20px 24px;margin:16px 0;font-family:monospace;font-size:13px;line-height:1.8;white-space:pre;overflow-x:auto;color:#334155}
+.flow-diagram .fn{color:#2563eb;font-weight:600}
+.flow-diagram .io{color:#dc2626}
+.flow-diagram .cache{color:#16a34a;font-weight:600}
+.flow-diagram .comment{color:#94a3b8}
+.metric-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:16px 0}
+.metric-card{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:20px;text-align:center}
+.metric-card .metric-value{font-size:2em;font-weight:800;color:#1e40af;line-height:1.2}
+.metric-card .metric-label{font-size:.85em;color:#64748b;margin-top:4px}
+.metric-card .metric-change{font-size:.85em;margin-top:6px;font-weight:600}
+.metric-card .metric-change.up{color:#16a34a}
+.metric-card .metric-change.down{color:#dc2626}
+@media(max-width:640px){
+.header h1{font-size:1.5em}
+.section{padding:20px 16px}
+.before-after{grid-template-columns:1fr}
+.metric-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+<div class="container">
+<h1>IndexedDB 产品查询效率改善方案</h1>
+<p class="subtitle">方案1：内存缓存 · 方案2：消除重复构建</p>
+</div>
+</div>
+
+<div class="container">
+
+<!-- ==================== 问题分析 ==================== -->
+
+<div class="section">
+<h2>🔍 一、问题分析</h2>
+
+<h3>1.1 当前数据规模</h3>
+
+<div class="metric-grid">
+<div class="metric-card">
+<div class="metric-value">3,822</div>
+<div class="metric-label">客户记录</div>
+</div>
+<div class="metric-card">
+<div class="metric-value">9,201</div>
+<div class="metric-label">产品记录</div>
+</div>
+<div class="metric-card">
+<div class="metric-value">~2.5MB</div>
+<div class="metric-label">IndexedDB 总量</div>
+</div>
+</div>
+
+<h3>1.2 核心瓶颈：重复全量读取</h3>
+
+<p>当前 <code class="inline-code">findProductFuzzyMatchFromLS()</code> 每次被调用时，都会从 IndexedDB 执行两次全量读取：</p>
+
+<div class="flow-diagram"><span class="fn">findProductFuzzyMatchFromLS()</span> 被调用
+  ├─ <span class="io">await getProductsAsync()</span>        ← 从 IndexedDB 读取 9,201 条产品
+  ├─ <span class="io">await getProductPinyinAsync()</span>   ← 从 IndexedDB 读取 9,201 条产品（重复！）
+  │   └─ 遍历 9,201 条，重建 {id: {pinyin, pinyin_abbr}} 对象
+  ├─ 构建 indexDb（9,201 条 map）         ← 每次重建！
+  └─ 执行 pinyinMatch() 匹配
+</div>
+
+<p>而 <code class="inline-code">matchProductsFromRawList()</code> 对每个原始产品调用一次 <code class="inline-code">findProductFuzzyMatchFromLS()</code>，导致：</p>
+
+<div class="flow-diagram"><span class="fn">matchProductsFromRawList(10个产品)</span>
+  ├─ 循环 10 次：
+  │   ├─ <span class="io">getProductsAsync()</span>        × 10  ← 10次全量读取
+  │   ├─ <span class="io">getProductPinyinAsync()</span>   × 10  ← 10次全量读取+重建
+  │   ├─ 构建 indexDb              × 10  ← 10次重建
+  │   └─ 匹配成功后 <span class="io">getProductsAsync()</span> × 10  ← 又10次全量读取
+  └─ <span class="comment">合计：30次 IndexedDB 全量读取 + 10次对象重建</span>
+</div>
+
+<div class="highlight-box hi-danger">
+<span class="hi-icon">🔴</span>
+<span><strong>核心问题：</strong>10个产品的批量匹配，产生 30 次 IndexedDB 全量读取（每次 9,201 条），以及 10 次拼音对象的重复构建。IndexedDB 的异步读取每次约 5-20ms，30次就是 150-600ms 的纯 I/O 等待，远超匹配算法本身的计算耗时。</span>
+</div>
+
+<h3>1.3 次要瓶颈：getProductPinyinAsync 重复构建</h3>
+
+<p>拼音数据已经存储在 product 表的 <code class="inline-code">pinyin</code> 和 <code class="inline-code">pinyin_abbr</code> 字段中，但当前代码仍然：</p>
+
+<ol>
+<li>全量读取 product 表（9,201条）</li>
+<li>遍历所有记录，提取 pinyin/pinyin_abbr 字段</li>
+<li>构建 <code class="inline-code">{id: {pinyin, pinyin_abbr}}</code> 格式的对象</li>
+<li>在 <code class="inline-code">findProductFuzzyMatchFromLS</code> 中又把该对象拆解回扁平结构</li>
+</ol>
+
+<p>这是"先拆后合再拆"的无效转换：</p>
+
+<div class="before-after">
+<div class="ba-before">
+<div class="ba-label">❌ 当前流程</div>
+<pre><code>product 表 → 读取9201条
+  → 提取pinyin字段
+  → 构建 {id:{pinyin,abbr}}
+  → 在findProduct中
+  → 又拆解为扁平indexDb
+  → {id, name, pinyin, abbr}</code></pre>
+</div>
+<div class="ba-after">
+<div class="ba-label">✅ 优化后流程</div>
+<pre><code>product 表 → 读取9201条（缓存）
+  → 直接构建扁平indexDb
+  → {id, name, pinyin, abbr}
+  → 无中间转换</code></pre>
+</div>
+</div>
+
+<h3>1.4 性能量化估算</h3>
+
+<table>
+<thead>
+<tr><th>操作</th><th>单次耗时</th><th>批量10次</th><th>占比</th></tr>
+</thead>
+<tbody>
+<tr><td>IndexedDB 全量读取 (9201条)</td><td>5-20ms</td><td>150-600ms</td><td>60-70%</td></tr>
+<tr><td>拼音对象重建 (9201条遍历)</td><td>2-5ms</td><td>20-50ms</td><td>10-15%</td></tr>
+<tr><td>indexDb 构建 (9201条map)</td><td>1-3ms</td><td>10-30ms</td><td>5-10%</td></tr>
+<tr><td>pinyinMatch 算法计算</td><td>50-200ms</td><td>500-2000ms</td><td>20-25%</td></tr>
+<tr><td><strong>合计</strong></td><td><strong>58-228ms</strong></td><td><strong>680-2680ms</strong></td><td>100%</td></tr>
+</tbody>
+</table>
+
+<div class="highlight-box hi-warning">
+<span class="hi-icon">⚠️</span>
+<span><strong>关键发现：</strong>在批量匹配场景下，I/O 等待（60-70%）远超算法计算（20-25%）。优化 I/O 是投入产出比最高的方向。</span>
+</div>
+
+</div>
+
+<!-- ==================== 方案1 ==================== -->
+
+<div class="section">
+<h2>⚡ 二、方案1：内存缓存</h2>
+
+<h3>2.1 设计思路</h3>
+
+<p>首次从 IndexedDB 读取数据后，将结果缓存到 JavaScript 内存变量中。后续调用直接从内存读取，不再访问 IndexedDB。当数据发生变更（同步、导入、清空）时，主动使缓存失效。</p>
+
+<h3>2.2 缓存层设计</h3>
+
+<pre><code>// ===== 内存缓存层 =====
+
+var _productsCache = null;
+var _customersCache = null;
+var _indexDbCache = null;
+var _customerIndexDbCache = null;
+
+async function getProductsCached() {
+  if (_productsCache) return _productsCache;
+  _productsCache = await getProductsAsync();
+  return _productsCache;
+}
+
+async function getCustomersCached() {
+  if (_customersCache) return _customersCache;
+  _customersCache = await getCustomersAsync();
+  return _customersCache;
+}
+
+async function getProductIndexDbCached() {
+  if (_indexDbCache) return _indexDbCache;
+  var products = await getProductsCached();
+  _indexDbCache = products.filter(function(p) {
+    return p.pinyin || p.pinyin_abbr;
+  }).map(function(p) {
+    return {
+      id: p.id,
+      name: p.name,
+      model: p.model || '',
+      spec: p.spec || '',
+      pinyin: p.pinyin || '',
+      pinyin_abbr: p.pinyin_abbr || ''
+    };
+  });
+  return _indexDbCache;
+}
+
+async function getCustomerIndexDbCached() {
+  if (_customerIndexDbCache) return _customerIndexDbCache;
+  var customers = await getCustomersCached();
+  _customerIndexDbCache = customers.filter(function(c) {
+    return c.pinyin || c.pinyin_abbr;
+  }).map(function(c) {
+    return {
+      id: c.id,
+      name: c.name,
+      pinyin: c.pinyin || '',
+      pinyin_abbr: c.pinyin_abbr || ''
+    };
+  });
+  return _customerIndexDbCache;
+}
+
+function invalidateCache() {
+  _productsCache = null;
+  _customersCache = null;
+  _indexDbCache = null;
+  _customerIndexDbCache = null;
+}
+
+function invalidateProductCache() {
+  _productsCache = null;
+  _indexDbCache = null;
+}
+
+function invalidateCustomerCache() {
+  _customersCache = null;
+  _customerIndexDbCache = null;
+}</code></pre>
+
+<h3>2.3 缓存失效时机</h3>
+
+<p>缓存必须在数据变更时主动失效，否则会出现数据不一致：</p>
+
+<table>
+<thead>
+<tr><th>触发操作</th><th>失效范围</th><th>说明</th></tr>
+</thead>
+<tbody>
+<tr><td><code class="inline-code">setProductsAsync()</code></td><td>产品缓存 + indexDb</td><td>全量/增量同步后</td></tr>
+<tr><td><code class="inline-code">setCustomersAsync()</code></td><td>客户缓存 + indexDb</td><td>全量/增量同步后</td></tr>
+<tr><td><code class="inline-code">clearAllDataAsync()</code></td><td>全部缓存</td><td>清空数据时</td></tr>
+<tr><td><code class="inline-code">importDataAsync()</code></td><td>全部缓存</td><td>导入数据后</td></tr>
+<tr><td>新建产品成功</td><td>产品缓存 + indexDb</td><td>添加新产品后</td></tr>
+<tr><td>页面初始化</td><td>不失效（首次加载）</td><td>首次访问走 IndexedDB</td></tr>
+</tbody>
+</table>
+
+<h3>2.4 改造 findProductFuzzyMatchFromLS</h3>
+
+<div class="before-after">
+<div class="ba-before">
+<div class="ba-label">❌ 改造前（当前代码）</div>
+<pre><code>async function findProductFuzzyMatchFromLS(
+    name, hasSpec, specValue, modelValue) {
+  // 每次都从 IndexedDB 读取
+  var products = await getProductsAsync();
+  var pp = await getProductPinyinAsync();
+
+  // 每次都重建 indexDb
+  var indexDb = products.map(function(p) {
+    var py = pp[p.id] || {};
+    return {
+      id: p.id, name: p.name,
+      model: p.model || '', spec: p.spec || '',
+      pinyin: py.pinyin || '',
+      pinyin_abbr: py.pinyin_abbr || ''
+    };
+  });
+
+  var matches = pinyinMatch(name, indexDb,
+    { threshold: 0.45 });
+  // ... 后续匹配逻辑不变
+}</code></pre>
+</div>
+<div class="ba-after">
+<div class="ba-label">✅ 改造后</div>
+<pre><code>async function findProductFuzzyMatchFromLS(
+    name, hasSpec, specValue, modelValue) {
+  // 从内存缓存读取（首次走 IndexedDB，后续走内存）
+  var products = await getProductsCached();
+  var indexDb = await getProductIndexDbCached();
+
+  var matches = pinyinMatch(name, indexDb,
+    { threshold: 0.45 });
+  // ... 后续匹配逻辑不变
+}</code></pre>
+</div>
+</div>
+
+<h3>2.5 改造 matchProductsFromRawList</h3>
+
+<p>批量匹配时，先加载缓存，再循环匹配，避免循环内重复读取：</p>
+
+<div class="before-after">
+<div class="ba-before">
+<div class="ba-label">❌ 改造前</div>
+<pre><code>async function matchProductsFromRawList(rawProducts) {
+  var results = [];
+  for (var i = 0; i &lt; rawProducts.length; i++) {
+    var p = rawProducts[i];
+    // 每次循环都重复读取和构建
+    var match = await findProductFuzzyMatchFromLS(
+      combinedName, hasSpec, String(pSpec), modelValue);
+    var matchedProduct = null;
+    if (match.matchId) {
+      // 又一次全量读取
+      var lsProducts = await getProductsAsync();
+      for (var j = 0; j &lt; lsProducts.length; j++) {
+        if (String(lsProducts[j].id)
+            === String(match.matchId)) {
+          matchedProduct = { ... };
+          break;
+        }
+      }
+    }
+    results.push({ ... });
+  }
+  return results;
+}</code></pre>
+</div>
+<div class="ba-after">
+<div class="ba-label">✅ 改造后</div>
+<pre><code>async function matchProductsFromRawList(rawProducts) {
+  // 预加载缓存（只读一次 IndexedDB）
+  var products = await getProductsCached();
+  var indexDb = await getProductIndexDbCached();
+
+  // 构建 id→product 快速查找表
+  var productMap = {};
+  products.forEach(function(p) {
+    productMap[String(p.id)] = p;
+  });
+
+  var results = [];
+  for (var i = 0; i &lt; rawProducts.length; i++) {
+    var p = rawProducts[i];
+    // 直接使用内存中的 indexDb
+    var matches = pinyinMatch(combinedName,
+      indexDb, { threshold: 0.45 });
+
+    // ... 同名产品区分逻辑（同当前代码）
+
+    // 匹配成功后从 productMap 直接查找
+    var matchedProduct = null;
+    if (match.matchId) {
+      var mp = productMap[String(match.matchId)];
+      if (mp) {
+        matchedProduct = {
+          id: mp.id, name: mp.name,
+          code: 'PRD-' + mp.id,
+          sku: mp.model || '-',
+          spec: mp.spec || ''
+        };
+      }
+    }
+    results.push({ ... });
+  }
+  return results;
+}</code></pre>
+</div>
+</div>
+
+<div class="highlight-box hi-success">
+<span class="hi-icon">✅</span>
+<span><strong>关键改进：</strong>① 循环外预加载缓存，10个产品只读1次 IndexedDB（而非30次）；② 用 <code class="inline-code">productMap</code> 替代线性查找，O(1) 替代 O(N)；③ <code class="inline-code">matchProductsFromRawList</code> 内部直接调用 <code class="inline-code">pinyinMatch()</code>，不再经过 <code class="inline-code">findProductFuzzyMatchFromLS</code> 的间接层。</span>
+</div>
+
+</div>
+
+<!-- ==================== 方案2 ==================== -->
+
+<div class="section">
+<h2>🔄 三、方案2：消除重复构建</h2>
+
+<h3>3.1 问题根源</h3>
+
+<p>当前 Dexie 表结构中，拼音数据已经作为字段存储在 product/customer 表中：</p>
+
+<pre><code>db.version(1).stores({
+  customer: 'id, name, pinyin, pinyin_abbr, update_time',
+  product:  'id, name, model, sku, pinyin, pinyin_abbr, update_time',
+  sync_status: 'key'
+});</code></pre>
+
+<p>但代码仍然维护了独立的 <code class="inline-code">getProductPinyinAsync()</code> 函数，将拼音数据提取为独立对象格式：</p>
+
+<pre><code>// 当前代码：从 product 表读取 → 提取 → 重建对象
+async function getProductPinyinAsync() {
+  var products = await db.product.toArray();  // 全量读取
+  var result = {};
+  products.forEach(function(p) {
+    result[p.id] = { pinyin: p.pinyin, pinyin_abbr: p.pinyin_abbr };
+  });
+  return result;  // {id1: {pinyin, pinyin_abbr}, id2: ...}
+}</code></pre>
+
+<p>然后在 <code class="inline-code">findProductFuzzyMatchFromLS</code> 中又把该对象拆解回扁平结构：</p>
+
+<pre><code>// 当前代码：从 {id:{pinyin,abbr}} 拆解为扁平 indexDb
+var indexDb = products.map(function(p) {
+  var py = pp[p.id] || {};  // 从独立对象中查找
+  return {
+    id: p.id, name: p.name, model: p.model || '', spec: p.spec || '',
+    pinyin: py.pinyin || '', pinyin_abbr: py.pinyin_abbr || ''
+  };
+});</code></pre>
+
+<p>这完全是多余的转换——拼音数据已经在 product 记录的 <code class="inline-code">pinyin</code>/<code class="inline-code">pinyin_abbr</code> 字段中。</p>
+
+<h3>3.2 优化方案</h3>
+
+<p><strong>直接从 product 表构建 indexDb，跳过 getProductPinyinAsync 中间步骤：</strong></p>
+
+<pre><code>async function getProductIndexDbCached() {
+  if (_indexDbCache) return _indexDbCache;
+  var products = await getProductsCached();  // 缓存读取
+  _indexDbCache = products.filter(function(p) {
+    return p.pinyin || p.pinyin_abbr;  // 只保留有拼音的
+  }).map(function(p) {
+    return {
+      id: p.id,
+      name: p.name,
+      model: p.model || '',
+      spec: p.spec || '',
+      pinyin: p.pinyin || '',         // 直接从 product 记录读取
+      pinyin_abbr: p.pinyin_abbr || '' // 直接从 product 记录读取
+    };
+  });
+  return _indexDbCache;
+}</code></pre>
+
+<h3>3.3 可移除的函数</h3>
+
+<p>优化后以下函数不再需要（或可标记为 deprecated）：</p>
+
+<table>
+<thead>
+<tr><th>函数</th><th>当前用途</th><th>优化后</th></tr>
+</thead>
+<tbody>
+<tr><td><code class="inline-code">getProductPinyinAsync()</code></td><td>提取拼音为独立对象</td><td>❌ 移除，由 <code class="inline-code">getProductIndexDbCached()</code> 替代</td></tr>
+<tr><td><code class="inline-code">getCustomerPinyinAsync()</code></td><td>提取拼音为独立对象</td><td>❌ 移除，由 <code class="inline-code">getCustomerIndexDbCached()</code> 替代</td></tr>
+</tbody>
+</table>
+
+<div class="highlight-box hi-info">
+<span class="hi-icon">💡</span>
+<span><strong>注意：</strong>如果 <code class="inline-code">getProductPinyinAsync</code>/<code class="inline-code">getCustomerPinyinAsync</code> 在其他地方（如 get_cus_pro.html）有使用，需保留但标记为 deprecated，逐步迁移。</span>
+</div>
+
+</div>
+
+<!-- ==================== 完整改造代码 ==================== -->
+
+<div class="section">
+<h2>📝 四、完整改造代码</h2>
+
+<h3>4.1 pinyin_match.js 新增缓存层</h3>
+
+<p>在 <code class="inline-code">var db = null;</code> 之后插入缓存变量和函数：</p>
+
+<pre><code>var db = null;
+
+// ===== 内存缓存层 =====
+var _productsCache = null;
+var _customersCache = null;
+var _indexDbCache = null;
+var _customerIndexDbCache = null;
+
+async function getProductsCached() {
+  if (_productsCache) return _productsCache;
+  _productsCache = await getProductsAsync();
+  return _productsCache;
+}
+
+async function getCustomersCached() {
+  if (_customersCache) return _customersCache;
+  _customersCache = await getCustomersAsync();
+  return _customersCache;
+}
+
+async function getProductIndexDbCached() {
+  if (_indexDbCache) return _indexDbCache;
+  var products = await getProductsCached();
+  _indexDbCache = products.filter(function(p) {
+    return p.pinyin || p.pinyin_abbr;
+  }).map(function(p) {
+    return {
+      id: p.id, name: p.name,
+      model: p.model || '', spec: p.spec || '',
+      pinyin: p.pinyin || '', pinyin_abbr: p.pinyin_abbr || ''
+    };
+  });
+  return _indexDbCache;
+}
+
+async function getCustomerIndexDbCached() {
+  if (_customerIndexDbCache) return _customerIndexDbCache;
+  var customers = await getCustomersCached();
+  _customerIndexDbCache = customers.filter(function(c) {
+    return c.pinyin || c.pinyin_abbr;
+  }).map(function(c) {
+    return {
+      id: c.id, name: c.name,
+      pinyin: c.pinyin || '', pinyin_abbr: c.pinyin_abbr || ''
+    };
+  });
+  return _customerIndexDbCache;
+}
+
+function invalidateCache() {
+  _productsCache = null;
+  _customersCache = null;
+  _indexDbCache = null;
+  _customerIndexDbCache = null;
+}
+
+function invalidateProductCache() {
+  _productsCache = null;
+  _indexDbCache = null;
+}
+
+function invalidateCustomerCache() {
+  _customersCache = null;
+  _customerIndexDbCache = null;
+}</code></pre>
+
+<h3>4.2 改造 findProductFuzzyMatchFromLS</h3>
+
+<pre><code>async function findProductFuzzyMatchFromLS(name, hasSpec, specValue, modelValue) {
+  var products = await getProductsCached();
+  var indexDb = await getProductIndexDbCached();
+
+  if (products.length === 0) {
+    return { matchId: null, status: 'error', matchType: 'none' };
+  }
+
+  var matches = pinyinMatch(name, indexDb, { threshold: 0.45 });
+  if (matches.length === 0) {
+    return { matchId: null, status: 'error', matchType: 'none' };
+  }
+
+  var best = matches[0];
+
+  if (best.score >= 0.9) {
+    var sameNameProducts = products.filter(function(p) { return p.name === best.name; });
+    if (sameNameProducts.length > 1) {
+      var modelMatches = sameNameProducts;
+      if (modelValue) {
+        var modelExact = sameNameProducts.find(function(p) {
+          return p.model && p.model.toLowerCase() === modelValue.toLowerCase();
+        });
+        if (modelExact) {
+          modelMatches = sameNameProducts.filter(function(p) {
+            return p.model && p.model.toLowerCase() === modelValue.toLowerCase();
+          });
+        } else {
+          var modelPartial = sameNameProducts.find(function(p) {
+            return p.model && (p.model.toLowerCase().indexOf(modelValue.toLowerCase()) !== -1 || modelValue.toLowerCase().indexOf(p.model.toLowerCase()) !== -1);
+          });
+          if (modelPartial) {
+            modelMatches = sameNameProducts.filter(function(p) {
+              return p.model && (p.model.toLowerCase().indexOf(modelValue.toLowerCase()) !== -1 || modelValue.toLowerCase().indexOf(p.model.toLowerCase()) !== -1);
+            });
+          }
+        }
+      }
+      if (modelMatches.length === 1) {
+        return { matchId: modelMatches[0].id, status: 'confirmed', matchType: 'sku' };
+      }
+      if (!isPlaceholder(specValue) && modelMatches.length > 1) {
+        var specMatch = modelMatches.find(function(p) {
+          return p.spec && p.spec.toLowerCase().indexOf(specValue.toLowerCase()) !== -1;
+        });
+        if (specMatch) {
+          return { matchId: specMatch.id, status: 'confirmed', matchType: 'sku' };
+        }
+      }
+      return { matchId: best.id, status: 'pending', matchType: 'name' };
+    }
+    return { matchId: best.id, status: 'confirmed', matchType: best.score >= 0.95 ? 'exact' : 'name' };
+  }
+
+  if (matches.length === 1 && best.score >= 0.8) {
+    return { matchId: best.id, status: 'confirmed', matchType: 'name' };
+  }
+  if (best.score >= 0.7) {
+    return { matchId: best.id, status: 'pending', matchType: 'name' };
+  }
+  if (matches.length === 1 && best.score >= 0.4) {
+    return { matchId: best.id, status: 'pending', matchType: 'name' };
+  }
+  if (matches.length > 1 && best.score >= 0.4) {
+    return { matchId: best.id, status: 'pending', matchType: 'name' };
+  }
+  return { matchId: null, status: 'error', matchType: 'none' };
+}</code></pre>
+
+<h3>4.3 改造 matchProductsFromRawList</h3>
+
+<pre><code>async function matchProductsFromRawList(rawProducts) {
+  var products = await getProductsCached();
+  var indexDb = await getProductIndexDbCached();
+
+  var productMap = {};
+  products.forEach(function(p) {
+    productMap[String(p.id)] = p;
+  });
+
+  var results = [];
+  for (var i = 0; i < rawProducts.length; i++) {
+    var p = rawProducts[i];
+    var pName = p.originalName || p.name || '';
+    var pModel = p.model || '';
+    var pSpec = p.spec || '';
+    var combinedParts = [pName];
+    if (pModel && !isPlaceholder(pModel) && pName.toLowerCase().indexOf(pModel.toLowerCase()) === -1) {
+      combinedParts.push(pModel);
+    }
+    var combinedName = combinedParts.join(' ');
+    var hasSpec = !isPlaceholder(pSpec);
+
+    var matches = pinyinMatch(combinedName, indexDb, { threshold: 0.45 });
+    var match = { matchId: null, status: 'error', matchType: 'none' };
+
+    if (matches.length > 0) {
+      var best = matches[0];
+      if (best.score >= 0.9) {
+        var sameNameProducts = products.filter(function(pr) { return pr.name === best.name; });
+        if (sameNameProducts.length > 1) {
+          var modelMatches = sameNameProducts;
+          var modelValue = isPlaceholder(pModel) ? '' : pModel;
+          if (modelValue) {
+            var modelExact = sameNameProducts.find(function(pr) {
+              return pr.model && pr.model.toLowerCase() === modelValue.toLowerCase();
+            });
+            if (modelExact) {
+              modelMatches = sameNameProducts.filter(function(pr) {
+                return pr.model && pr.model.toLowerCase() === modelValue.toLowerCase();
+              });
+            } else {
+              var modelPartial = sameNameProducts.find(function(pr) {
+                return pr.model && (pr.model.toLowerCase().indexOf(modelValue.toLowerCase()) !== -1 || modelValue.toLowerCase().indexOf(pr.model.toLowerCase()) !== -1);
+              });
+              if (modelPartial) {
+                modelMatches = sameNameProducts.filter(function(pr) {
+                  return pr.model && (pr.model.toLowerCase().indexOf(modelValue.toLowerCase()) !== -1 || modelValue.toLowerCase().indexOf(pr.model.toLowerCase()) !== -1);
+                });
+              }
+            }
+          }
+          if (modelMatches.length === 1) {
+            match = { matchId: modelMatches[0].id, status: 'confirmed', matchType: 'sku' };
+          } else if (!isPlaceholder(pSpec) && modelMatches.length > 1) {
+            var specMatch = modelMatches.find(function(pr) {
+              return pr.spec && pr.spec.toLowerCase().indexOf(pSpec.toLowerCase()) !== -1;
+            });
+            if (specMatch) {
+              match = { matchId: specMatch.id, status: 'confirmed', matchType: 'sku' };
+            } else {
+              match = { matchId: best.id, status: 'pending', matchType: 'name' };
+            }
+          } else {
+            match = { matchId: best.id, status: 'pending', matchType: 'name' };
+          }
+        } else {
+          match = { matchId: best.id, status: 'confirmed', matchType: best.score >= 0.95 ? 'exact' : 'name' };
+        }
+      } else if (matches.length === 1 && best.score >= 0.8) {
+        match = { matchId: best.id, status: 'confirmed', matchType: 'name' };
+      } else if (best.score >= 0.7) {
+        match = { matchId: best.id, status: 'pending', matchType: 'name' };
+      } else if (best.score >= 0.4) {
+        match = { matchId: best.id, status: 'pending', matchType: 'name' };
+      }
+    }
+
+    var matchedProduct = null;
+    if (match.matchId) {
+      var mp = productMap[String(match.matchId)];
+      if (mp) {
+        matchedProduct = {
+          id: mp.id, name: mp.name,
+          code: 'PRD-' + mp.id,
+          sku: mp.model || '-',
+          spec: mp.spec || ''
+        };
+      }
+    }
+
+    results.push({
+      originalName: pName,
+      model: pModel,
+      searchName: combinedName,
+      originalQty: p.qty ? (String(p.qty) + (p.unit || '')) : '',
+      originalPrice: p.price ? ('¥' + p.price) : '',
+      originalSpec: String(pSpec),
+      matchedId: match.matchId,
+      matchedName: matchedProduct ? matchedProduct.name : '',
+      matchedCode: matchedProduct ? matchedProduct.code : '',
+      matchedSku: matchedProduct ? matchedProduct.sku : '',
+      matchedSpec: matchedProduct ? matchedProduct.spec : '',
+      matchType: match.matchType,
+      status: match.status,
+      qty: p.qty ? (String(p.qty) + (p.unit || '')) : '',
+      price: p.price ? ('¥' + p.price) : '',
+      spec: pSpec,
+      note: p.note || ''
+    });
+  }
+  return results;
+}</code></pre>
+
+<h3>4.4 缓存失效：改造写入函数</h3>
+
+<pre><code>async function setCustomersAsync(customers) {
+  initDB();
+  var normalized = customers.map(function(c) {
+    var obj = Object.assign({}, c);
+    obj.id = String(obj.id);
+    return obj;
+  });
+  await db.customer.bulkPut(normalized);
+  invalidateCustomerCache();  // ← 新增：写入后使缓存失效
+}
+
+async function setProductsAsync(products) {
+  initDB();
+  var normalized = products.map(function(p) {
+    var obj = Object.assign({}, p);
+    obj.id = String(obj.id);
+    return obj;
+  });
+  await db.product.bulkPut(normalized);
+  invalidateProductCache();  // ← 新增：写入后使缓存失效
+}
+
+async function clearAllDataAsync() {
+  initDB();
+  await db.customer.clear();
+  await db.product.clear();
+  await db.sync_status.clear();
+  invalidateCache();  // ← 新增：清空后使全部缓存失效
+}</code></pre>
+
+<h3>4.5 导出 API 更新</h3>
+
+<pre><code>return {
+  // ... 原有导出 ...
+  getProductsCached: getProductsCached,
+  getCustomersCached: getCustomersCached,
+  getProductIndexDbCached: getProductIndexDbCached,
+  getCustomerIndexDbCached: getCustomerIndexDbCached,
+  invalidateCache: invalidateCache,
+  invalidateProductCache: invalidateProductCache,
+  invalidateCustomerCache: invalidateCustomerCache,
+  // 以下标记为 deprecated，逐步移除
+  getProductPinyinAsync: getProductPinyinAsync,
+  getCustomerPinyinAsync: getCustomerPinyinAsync,
+};</code></pre>
+
+</div>
+
+<!-- ==================== 预期效果 ==================== -->
+
+<div class="section">
+<h2>📊 五、预期效果</h2>
+
+<h3>5.1 单次匹配</h3>
+
+<div class="before-after">
+<div class="ba-before">
+<div class="ba-label">❌ 改造前</div>
+<pre><code>findProductFuzzyMatchFromLS() 调用1次：
+  IndexedDB 读取: 2次 × 10ms = 20ms
+  对象重建: 5ms
+  indexDb构建: 3ms
+  算法计算: 100ms
+  ─────────────────
+  合计: ~128ms</code></pre>
+</div>
+<div class="ba-after">
+<div class="ba-label">✅ 改造后</div>
+<pre><code>findProductFuzzyMatchFromLS() 调用1次：
+  首次：IndexedDB 读取 1次 × 10ms = 10ms
+        indexDb构建 3ms
+  后续：内存读取 0ms
+        缓存命中 0ms
+  算法计算: 100ms（不变）
+  ─────────────────
+  首次合计: ~113ms
+  后续合计: ~100ms</code></pre>
+</div>
+</div>
+
+<h3>5.2 批量匹配（10个产品）</h3>
+
+<div class="metric-grid">
+<div class="metric-card">
+<div class="metric-value" style="color:#dc2626">2,680ms</div>
+<div class="metric-label">改造前（最差情况）</div>
+<div class="metric-change down">30次IndexedDB读取</div>
+</div>
+<div class="metric-card">
+<div class="metric-value" style="color:#16a34a">1,113ms</div>
+<div class="metric-label">改造后（首次）</div>
+<div class="metric-change up">1次IndexedDB读取</div>
+</div>
+<div class="metric-card">
+<div class="metric-value" style="color:#16a34a">1,000ms</div>
+<div class="metric-label">改造后（缓存命中）</div>
+<div class="metric-change up">0次IndexedDB读取</div>
+</div>
+</div>
+
+<h3>5.3 提升幅度汇总</h3>
+
+<table>
+<thead>
+<tr><th>场景</th><th>改造前</th><th>改造后</th><th>提升</th></tr>
+</thead>
+<tbody>
+<tr><td>单次匹配（首次）</td><td>128ms</td><td>113ms</td><td>12%</td></tr>
+<tr><td>单次匹配（缓存命中）</td><td>128ms</td><td>100ms</td><td>22%</td></tr>
+<tr><td>批量10个产品（首次）</td><td>2,680ms</td><td>1,113ms</td><td><strong>58%</strong></td></tr>
+<tr><td>批量10个产品（缓存命中）</td><td>2,680ms</td><td>1,000ms</td><td><strong>63%</strong></td></tr>
+<tr><td>重新匹配弹窗（缓存命中）</td><td>128ms</td><td>100ms</td><td>22%</td></tr>
+<tr><td>IndexedDB 读取次数（批量10）</td><td>30次</td><td>1次</td><td><strong>97%</strong></td></tr>
+</tbody>
+</table>
+
+<div class="highlight-box hi-success">
+<span class="hi-icon">✅</span>
+<span><strong>核心收益：</strong>批量匹配场景下，IndexedDB 读取从 30 次降至 1 次，总耗时减少 58-63%。匹配算法本身不受影响，准确率和召回率完全不变。</span>
+</div>
+
+</div>
+
+<!-- ==================== 风险与注意事项 ==================== -->
+
+<div class="section">
+<h2>⚠️ 六、风险与注意事项</h2>
+
+<h3>6.1 内存占用</h3>
+
+<p>缓存 9,201 条产品 + 3,822 条客户到内存，约增加 3-5MB 内存占用。对于现代浏览器来说完全可接受。</p>
+
+<h3>6.2 数据一致性</h3>
+
+<p>缓存失效机制确保数据一致性。但需注意：</p>
+<ul>
+<li>多标签页场景：如果用户在标签页A同步数据，标签页B的缓存不会自动失效</li>
+<li>解决方案：监听 <code class="inline-code">storage</code> 事件或使用 <code class="inline-code">BroadcastChannel</code> 通知其他标签页刷新缓存</li>
+</ul>
+
+<h3>6.3 兼容性</h3>
+
+<p>保留 <code class="inline-code">getProductPinyinAsync</code>/<code class="inline-code">getCustomerPinyinAsync</code> 的导出，标记为 deprecated，确保 get_cus_pro.html 等外部调用方不受影响。</p>
+
+<h3>6.4 测试要点</h3>
+
+<table>
+<thead>
+<tr><th>测试场景</th><th>验证点</th></tr>
+</thead>
+<tbody>
+<tr><td>首次加载页面</td><td>缓存为空，走 IndexedDB 读取，结果正确</td></tr>
+<tr><td>批量匹配10个产品</td><td>只读1次 IndexedDB，结果与改造前一致</td></tr>
+<tr><td>数据同步后重新匹配</td><td>缓存已失效，重新从 IndexedDB 读取</td></tr>
+<tr><td>清空数据后匹配</td><td>返回"无数据"错误，不使用旧缓存</td></tr>
+<tr><td>多标签页场景</td><td>标签页A同步后，标签页B能感知数据变化</td></tr>
+<tr><td>匹配准确率</td><td>改造前后匹配结果完全一致（逐条对比）</td></tr>
+</tbody>
+</table>
+
+</div>
+
+<div style="text-align:center;padding:30px 0;color:#94a3b8;font-size:.85em">
+AI智能制单系统 · IndexedDB 产品查询效率改善方案 · 2026-05-17
+</div>
+
+</div>
+
+</body>
+</html>

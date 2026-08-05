@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>获取历史最近价格的方法</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --panel: #1e293b;
+    --panel-light: #334155;
+    --text: #e2e8f0;
+    --text-dim: #94a3b8;
+    --accent: #38bdf8;
+    --accent2: #fbbf24;
+    --good: #4ade80;
+    --bad: #f87171;
+    --warn: #fb923c;
+    --code-bg: #0b1220;
+    --border: #334155;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    padding: 40px 20px;
+  }
+  .container { max-width: 1080px; margin: 0 auto; }
+  header {
+    text-align: center;
+    margin-bottom: 50px;
+    padding-bottom: 30px;
+    border-bottom: 2px solid var(--border);
+  }
+  header h1 {
+    font-size: 2.4em;
+    margin: 0 0 10px 0;
+    color: var(--accent);
+    letter-spacing: 1px;
+  }
+  header .subtitle {
+    color: var(--text-dim);
+    font-size: 1em;
+  }
+  header .meta {
+    margin-top: 15px;
+    font-size: 0.85em;
+    color: var(--text-dim);
+  }
+  h2 {
+    font-size: 1.6em;
+    color: var(--accent);
+    border-left: 4px solid var(--accent);
+    padding-left: 14px;
+    margin: 50px 0 20px 0;
+  }
+  h3 {
+    font-size: 1.2em;
+    color: var(--accent2);
+    margin: 30px 0 12px 0;
+  }
+  h4 {
+    font-size: 1em;
+    color: var(--good);
+    margin: 20px 0 10px 0;
+  }
+  p, li { color: var(--text); }
+  code {
+    background: var(--code-bg);
+    color: #fde68a;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: "SF Mono", Monaco, "Cascadia Code", monospace;
+    font-size: 0.9em;
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    border-radius: 6px;
+    padding: 16px 20px;
+    overflow-x: auto;
+    font-size: 0.85em;
+    line-height: 1.5;
+  }
+  pre code { background: none; color: var(--text); padding: 0; }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 26px;
+    margin: 16px 0;
+  }
+  .panel.warning { border-left: 4px solid var(--bad); }
+  .panel.tip     { border-left: 4px solid var(--good); }
+  .panel.info    { border-left: 4px solid var(--accent); }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 0.9em;
+  }
+  th, td {
+    text-align: left;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+  }
+  th { background: var(--panel-light); color: var(--accent); }
+  tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+  .step {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 26px;
+    margin: 18px 0;
+    position: relative;
+  }
+  .step .num {
+    position: absolute;
+    top: -14px;
+    left: 20px;
+    background: var(--bad);
+    color: #0f172a;
+    font-weight: bold;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.85em;
+  }
+  .step.fix .num { background: var(--good); }
+  .step .title { font-weight: bold; color: var(--accent2); margin-bottom: 8px; font-size: 1.05em; }
+  .step .symptom { color: var(--bad); }
+  .step .cause   { color: var(--warn); }
+  .step .fix     { color: var(--good); }
+  ul, ol { padding-left: 24px; }
+  li { margin: 4px 0; }
+  .flow {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin: 16px 0;
+    font-family: "SF Mono", Monaco, monospace;
+    font-size: 0.9em;
+  }
+  .flow .arrow { color: var(--accent); margin: 0 6px; }
+  .flow .node  { color: var(--accent2); }
+  footer {
+    margin-top: 60px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 0.85em;
+  }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75em;
+    font-weight: bold;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  .badge.bad  { background: var(--bad); color: #0f172a; }
+  .badge.fix  { background: var(--good); color: #0f172a; }
+  .badge.warn { background: var(--warn); color: #0f172a; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <h1>获取历史最近价格的方法</h1>
+  <div class="subtitle">智能制单 · 一键价格（B 来源）· 调试回溯与最终方案</div>
+  <div class="meta">
+    模块：<code>dexiedb/index.html</code> &nbsp;|&nbsp; 目标：通过 <code>load_data</code> 接口获取"当前客户 × 当前产品"的最近成交价
+  </div>
+</header>
+
+<!-- ========== 一、需求背景 ========== -->
+<h2>一、需求背景</h2>
+<div class="panel info">
+  <p>在智能制单界面，用户已经完成：</p>
+  <ul>
+    <li>选择客户 → 拿到 <code>customer.cu_id</code>（客户ID）</li>
+    <li>录入产品 → 通过拼音匹配拿到 <code>product.matchedId</code>（产品ID）、<code>matchedName</code>、<code>matchedSku</code></li>
+  </ul>
+  <p>点击"一键价格" → 切换到 <strong>B 来源（历史成交）</strong> → 需要对<strong>当前客户 + 当前每个产品</strong>取最近一条历史成交价，回填到价格列。</p>
+</div>
+
+<!-- ========== 二、API 接口 ========== -->
+<h2>二、API 接口</h2>
+<table>
+  <tr><th>项目</th><th>说明</th></tr>
+  <tr><td>请求方式</td><td><code>POST /system/api.xt</code>，body 为 JSON（<strong>不要用 GET</strong>，规避 where/order 里的空格/中文编码问题）</td></tr>
+  <tr><td>cmd</td><td><code>load_data</code></td></tr>
+  <tr><td>dtname</td><td><code>goods</code>（交付计划/订单明细表）</td></tr>
+  <tr><td>field</td><td><code>id,name,cu_id,un_price,micro_zk,sum</code></td></tr>
+  <tr><td>where</td><td><code>cu_id=客户ID AND (name=产品ID1 OR name=产品ID2 OR ...)</code></td></tr>
+  <tr><td>order</td><td><code>id desc</code>（按记录主键倒序，最新在前）</td></tr>
+  <tr><td>limit</td><td>不传（一次取所有匹配，前端按产品分组取首条）</td></tr>
+</table>
+
+<p>请求体示例：</p>
+<pre><code>{
+  "cmd":   "load_data",
+  "dtname":"goods",
+  "field": "id,name,cu_id,un_price,micro_zk,sum",
+  "where": "cu_id=107 AND (name=6 OR name=8)",
+  "order": "id desc"
+}</code></pre>
+
+<!-- ========== 三、响应字段语义 ========== -->
+<h2>三、响应字段语义（重要！）</h2>
+<div class="panel warning">
+  <p><span class="badge bad">坑</span> 请求 where 里的 <code>name=6</code> 看上去是"产品ID=6"，但<strong>响应里 <code>name</code> 字段返回的不是 ID，而是人类可读的完整规格名</strong>。</p>
+</div>
+
+<p>实际响应示例（见 <code>历史价格返回值.json</code>）：</p>
+<pre><code>{
+  "ok": 1, "msg": "读取成功",
+  "data": [
+    { "id": "884", "name": "金士顿CF(8G)\/CF8G[个]",       "cu_id": "〖飞奥德〗", "un_price": "64",   "micro_zk": " ",                       "sum": "640"    },
+    { "id": "883", "name": "爱国者迷你王 商务型L8202(16G)\/IP23[套]", "cu_id": "〖飞奥德〗", "un_price": "64",   "micro_zk": " ",                       "sum": "192"    },
+    { "id": "882", "name": "金士顿CF(8G)\/CF8G[个]",       "cu_id": "〖飞奥德〗", "un_price": "64",   "micro_zk": "-RMB76.80(88%)",          "sum": "563.2"  },
+    { "id": "881", "name": "爱国者迷你王 商务型L8202(16G)\/IP23[套]", "cu_id": "〖飞奥德〗", "un_price": "64",   "micro_zk": "-RMB21.12(89%)",          "sum": "170.88" }
+  ],
+  "info": { "table": "goods", "tablename": "交付计划/订单明细", "fields": { ... } }
+}</code></pre>
+
+<table>
+  <tr><th>字段</th><th>实际含义</th><th>容易误解为</th></tr>
+  <tr>
+    <td><code>id</code></td>
+    <td><strong>记录主键</strong>（自增 ID，与产品无关）</td>
+    <td>产品 ID ❌</td>
+  </tr>
+  <tr>
+    <td><code>name</code></td>
+    <td><strong>完整规格名</strong>（如 <code>"金士顿CF(8G)/CF8G[个]"</code>）<br>= 基础产品名 + "/" + SKU + "[单位]"</td>
+    <td>产品 ID ❌</td>
+  </tr>
+  <tr>
+    <td><code>cu_id</code></td>
+    <td><strong>客户名称</strong>（如 <code>"〖飞奥德〗"</code>）</td>
+    <td>数字客户 ID ❌</td>
+  </tr>
+  <tr>
+    <td><code>un_price</code></td>
+    <td>单价（字符串数字）</td>
+    <td>—</td>
+  </tr>
+  <tr>
+    <td><code>micro_zk</code></td>
+    <td>折扣，格式 <code>"-RMB21.12(89%)"</code> 或 <code>" "</code>（空格=无折扣）</td>
+    <td>—</td>
+  </tr>
+  <tr>
+    <td><code>sum</code></td>
+    <td>成交金额（= un_price × 数量 × 折扣）</td>
+    <td>—</td>
+  </tr>
+</table>
+
+<!-- ========== 四、调试过程 ========== -->
+<h2>四、调试过程（踩坑 → 修复）</h2>
+
+<!-- Step 1 -->
+<div class="step">
+  <span class="num">错误 1</span>
+  <div class="title">GET 请求的 queryString 编码问题</div>
+  <p class="symptom"><span class="badge bad">症状</span> where 含空格/中文时，<code>encodeURIComponent</code> 漏写或重复转义，导致 <code>where=name=6%20and%20cu_id=107</code> 解析为单条条件，<code>and</code> 后半段被吞。</p>
+  <p class="cause"><span class="badge warn">根因</span> URL 拼接不规范，特殊字符依赖多次手工转义。</p>
+  <p class="fix"><span class="badge fix">修复</span> 改用 <code>POST</code> + <code>Content-Type: application/json</code>，由后端 <code>JSON.parse</code> 解析 <code>where/order/limit/field</code>。</p>
+</div>
+
+<!-- Step 2 -->
+<div class="step">
+  <span class="num">错误 2</span>
+  <div class="title">用了不存在的字段 <code>pro_id</code></div>
+  <p class="symptom"><span class="badge bad">症状</span> 响应里没有 <code>pro_id</code>，<code>row.pro_id</code> 始终 <code>undefined</code>，分组键全部 <code>"undefined"</code>。</p>
+  <p class="fix"><span class="badge fix">修复</span> 改用 goods 表实际存在的字段：<code>id,name,cu_id,un_price,micro_zk,sum</code>。</p>
+</div>
+
+<!-- Step 3 -->
+<div class="step">
+  <span class="num">错误 3</span>
+  <div class="title">把响应 <code>name</code> 当产品 ID 解析</div>
+  <p class="symptom"><span class="badge bad">症状</span> 用 <code>row.name</code>（完整规格名"金士顿CF(8G)/CF8G[个]"）去做产品匹配，等值比较永远不成立。</p>
+  <p class="fix"><span class="badge fix">修复</span> 意识到 <code>row.name</code> 是"基础名 + "/" + SKU + "[单位]""，需要<strong>先剥掉单位再匹配</strong>，且匹配的是"我们的产品品名 + SKU"，而不是产品 ID。</p>
+</div>
+
+<!-- Step 4 -->
+<div class="step">
+  <span class="num">错误 4</span>
+  <div class="title">把响应 <code>cu_id</code> 当数字 ID 与当前 <code>customer.cu_id</code> 比对</div>
+  <p class="symptom"><span class="badge bad">症状</span> 响应 <code>cu_id="〖飞奥德〗"</code>（客户名称），当前 <code>customer.cu_id=107</code>（数字 ID），永远不等，误以为"响应数据不属于当前客户"。</p>
+  <p class="fix"><span class="badge fix">修复</span> 客户过滤放在 <strong>请求 where</strong> 里（<code>cu_id=107</code> 用数字 ID），不在响应里做二次过滤；响应里的 <code>cu_id</code> 只用于展示。</p>
+</div>
+
+<!-- Step 5 -->
+<div class="step">
+  <span class="num">错误 5</span>
+  <div class="title">产品匹配只做了"去单位后精确等值"，命中率 0</div>
+  <p class="symptom"><span class="badge bad">症状</span> 我们的产品 <code>matchedName="金士顿CF(8G)"</code>，响应 <code>stripped="金士顿CF(8G)/CF8G"</code>，两者不相等，匹配不上。</p>
+  <p class="cause"><span class="badge warn">根因</span> 我们的产品名只存了"基础品名"，缺少 SKU 后缀。</p>
+  <p class="fix"><span class="badge fix">修复</span> 在构造匹配键时，<strong>把产品品名补充为"品名 + '/' + SKU"</strong>，与 goods.name 剥单位后的格式保持一致：</p>
+  <pre><code>function _getFullProductName(p) {
+  if (!p) return '';
+  var name = (p.matchedName || p.originalName || p.pro_name || p.name || '').toString().trim();
+  var sku  = (p.matchedSku || p.newSku || '').toString().trim();
+  if (sku && sku !== '-' && sku !== '无') return name ? (name + '/' + sku) : '';
+  return name;
+}</code></pre>
+</div>
+
+<!-- Step 6 -->
+<div class="step">
+  <span class="num">错误 6</span>
+  <div class="title">只匹配上 1 个产品，另 1 个（"爱国者"）没匹配上</div>
+  <p class="symptom"><span class="badge bad">症状</span> 4 条响应 → 应该 2 个产品各命中 1 条 → 实际只命中 1 个（金士顿CF），爱国者迷你王始终未命中。</p>
+  <p class="cause"><span class="badge warn">根因排查</span> 起初怀疑 <code>matchedSku</code> 没赋值，于是加诊断日志打印 <code>matchedSku</code> 和完整的 <code>ourNameKeys</code>。</p>
+  <p class="fix"><span class="badge fix">修复</span> 日志显示 SKU 是有的，但部分产品 <code>ourNameKeys</code> 里确实缺少某些变体，匹配漏掉。</p>
+  <p>为此进一步<strong>把匹配策略从 1 层扩到 4 层兜底</strong>（见第五节）。</p>
+</div>
+
+<!-- Step 7 -->
+<div class="step">
+  <span class="num">错误 7</span>
+  <div class="title">缓存脏数据：第二次查询时 grouped 缺失新加产品</div>
+  <p class="symptom"><span class="badge bad">症状</span> 用户增删产品后再次点"一键价格"，UI 仍显示旧的 grouped 结果，新加的产品没有"无记录"占位。</p>
+  <p class="cause"><span class="badge warn">根因</span> <code>_priceCache.goods_history</code> 在第一次查询后被缓存，后续直接复用，未与 <code>currentProducts</code> 对齐。</p>
+  <p class="fix"><span class="badge fix">修复</span> 给缓存加上 <strong>productIds 快照比对</strong>，不一致时强制重建：</p>
+  <pre><code>if (_priceCache.goods_history !== null) {
+  var cachedKey = _priceCache.goods_history_productIds
+    ? _priceCache.goods_history_productIds.join(',') : '';
+  var currentKey = productIds.slice().sort().map(String).join(',');
+  if (cachedKey === currentKey) {
+    return { ok: 1, grouped: _priceCache.goods_history };
+  }
+  _priceCache.goods_history = null;   // 强制重建
+}</code></pre>
+</div>
+
+<!-- ========== 五、最终方案 ========== -->
+<h2>五、最终方案</h2>
+
+<h3>5.1 核心调用链</h3>
+<div class="flow">
+  <span class="node">UI 切到 B</span>
+  <span class="arrow">→</span>
+  <span class="node">_fetchAndCacheHistory(customerId)</span>
+  <span class="arrow">→</span>
+  <span class="node">_loadHistoryPrices(customerId, productIds)</span>
+  <span class="arrow">→</span>
+  <span class="node">POST load_data (goods 表)</span>
+  <span class="arrow">→</span>
+  <span class="node">rows.forEach</span>
+  <span class="arrow">→</span>
+  <span class="node">_findOurProductByRowName(rowName)  // 4 层匹配</span>
+  <span class="arrow">→</span>
+  <span class="node">grouped[productKey] = 首条</span>
+  <span class="arrow">→</span>
+  <span class="node">_renderHistorySummary(grouped)</span>
+</div>
+
+<h3>5.2 辅助函数：去末尾单位</h3>
+<p>响应 <code>name</code> 末尾常带 <code>[个]</code>、<code>[套]</code>、<code>（个）</code>、<code>【套】</code> 等单位，匹配前先剥掉：</p>
+<pre><code>function _stripTrailingUnit(s) {
+  if (!s || typeof s !== 'string') return '';
+  return s.replace(/[\[【（(][^)\]】]*[\]】）)]\s*$/, '').trim();
+}
+
+// 示例
+_stripTrailingUnit('金士顿CF(8G)/CF8G[个]')
+  → '金士顿CF(8G)/CF8G'
+_stripTrailingUnit('爱国者迷你王 商务型L8202(16G)/IP23[套]')
+  → '爱国者迷你王 商务型L8202(16G)/IP23'</code></pre>
+
+<h3>5.3 辅助函数：构造我们的"完整产品名"</h3>
+<p>把拼音匹配产物的 <code>matchedName + matchedSku</code> 拼成 <code>品名/SKU</code>，与 <code>goods.name</code> 剥单位后的格式一致：</p>
+<pre><code>function _getFullProductName(p) {
+  if (!p) return '';
+  var name = (p.matchedName || p.originalName || p.pro_name || p.name || '').toString().trim();
+  var sku  = (p.matchedSku  || p.newSku       || '').toString().trim();
+  if (sku && sku !== '-' && sku !== '无') return name ? (name + '/' + sku) : '';
+  return name;
+}</code></pre>
+
+<h3>5.4 核心：4 层匹配策略</h3>
+<p>用 <code>ourNameList</code> 装下每个产品多个变体键（full / matchedName / originalName / matchedCode / matchedId），逐层试：</p>
+<pre><code>function _findOurProductByRowName(rowName) {
+  var stripped = _stripTrailingUnit(rowName);
+
+  // (a) 去单位后精确等值（首选，最稳）
+  for (var i = 0; i < ourNameList.length; i++) {
+    if (ourNameList[i].key === stripped) {
+      return { product: ourNameList[i].product, matchType: 'exact-stripped', keyKind: ourNameList[i].kind };
+    }
+  }
+  // (b) 原值精确等值（响应本身没单位时）
+  for (var i = 0; i < ourNameList.length; i++) {
+    if (ourNameList[i].key === rowName) {
+      return { product: ourNameList[i].product, matchType: 'exact-raw', keyKind: ourNameList[i].kind };
+    }
+  }
+  // (c) 双向"去单位后"前缀（SKU 缺失/多带尾巴时兜底）
+  for (var i = 0; i < ourNameList.length; i++) {
+    var key = ourNameList[i].key;
+    if (key && key.length > 0) {
+      if (stripped.indexOf(key) === 0)              return { product: ourNameList[i].product, matchType: 'prefix-stripped',            keyKind: ourNameList[i].kind };
+      if (key.indexOf(stripped) === 0 && stripped.length >= 2)
+                                                return { product: ourNameList[i].product, matchType: 'reverse-prefix-stripped',  keyKind: ourNameList[i].kind };
+    }
+  }
+  // (d) 双向原值前缀（最后兜底）
+  for (var i = 0; i < ourNameList.length; i++) {
+    var key = ourNameList[i].key;
+    if (key && key.length > 0) {
+      if (rowName.indexOf(key) === 0)              return { product: ourNameList[i].product, matchType: 'prefix-raw',            keyKind: ourNameList[i].kind };
+      if (key.indexOf(rowName) === 0 && rowName.length >= 2)
+                                                return { product: ourNameList[i].product, matchType: 'reverse-prefix-raw',  keyKind: ourNameList[i].kind };
+    }
+  }
+  return null;
+}</code></pre>
+
+<h3>5.5 分组取首条</h3>
+<p>服务端已 <code>order by id desc</code>，故遍历 rows 时，<strong>每个 productKey 第一次出现的那条就是最近成交</strong>：</p>
+<pre><code>var grouped = {};
+for (var i = 0; i < currentProducts.length; i++) {
+  grouped[String(currentProducts[i].matchedId)] = null;   // 初始化所有产品
+}
+for (var j = 0; j < rows.length; j++) {
+  var row = rows[j];
+  var matchResult = _findOurProductByRowName(String(row.name).trim());
+  if (!matchResult) { unmatchedRowNames.push(row.name); continue; }
+  var productKey = String(matchResult.product.matchedId);
+  if (grouped[productKey] === null) {                   // 仅取首条
+    grouped[productKey] = {
+      recId:     row.id,
+      proId:     matchResult.product.matchedId,
+      proName:   _getFullProductName(matchResult.product) || row.name,
+      matchType: matchResult.matchType,
+      un_price:  _toPriceNum(row.un_price),
+      micro_zk:  row.micro_zk || '',
+      discount:  _parseDiscount(row.micro_zk),
+      sum:       _toPriceNum(row.sum)
+    };
+  }
+}</code></pre>
+
+<h3>5.6 缓存失效检查</h3>
+<p>产品列表变化时强制重建 grouped：</p>
+<pre><code>if (_priceCache.goods_history !== null) {
+  var cachedKey  = _priceCache.goods_history_productIds
+                 ? _priceCache.goods_history_productIds.join(',') : '';
+  var currentKey = productIds.slice().sort().map(String).join(',');
+  if (cachedKey === currentKey) return { ok: 1, grouped: _priceCache.goods_history };
+  _priceCache.goods_history = null;     // 强制重建
+}</code></pre>
+
+<!-- ========== 六、诊断日志 ========== -->
+<h2>六、诊断日志</h2>
+<p>在 <code>_fetchAndCacheHistory</code> 末尾打印完整诊断信息，便于定位匹配失败：</p>
+<pre><code>console.log('[一键价格/B] 分组完成：', {
+  totalProducts:     currentProducts.length,
+  responseRows:      rows.length,                          // 服务端实际返回几条
+  matchedProducts:   matchedCount,
+  matchedNames:      matchedNames,                         // 每条 row 匹配到了什么
+  unmatchedRowNames: Array.from(new Set(unmatchedRowNames)),  // 未命中的 row name
+  ourProducts: ourMatchedNames,                            // 我们的产品概况（含 matchedSku）
+  ourNameKeys:  ourNameList.map(function (it) {            // 我们构造的所有匹配键
+    return { key: it.key, kind: it.kind, pIdx: currentProducts.indexOf(it.product) };
+  })
+});</code></pre>
+
+<div class="panel tip">
+  <p><span class="badge fix">Tip</span> 出现匹配异常时，先看：</p>
+  <ul>
+    <li><code>responseRows</code>：是否真的返回了多条？</li>
+    <li><code>ourProducts[].matchedSku</code>：SKU 是不是真的没值？</li>
+    <li><code>ourNameKeys</code> 里有没有目标产品的 <code>full</code> 键（品名/SKU）？</li>
+    <li><code>unmatchedRowNames</code>：哪条 row 没匹配上，对应的 stripped 是什么？</li>
+  </ul>
+</div>
+
+<!-- ========== 七、注意事项 ========== -->
+<h2>七、注意事项 & 易踩的坑</h2>
+<table>
+  <tr><th>坑</th><th>说明</th><th>规避</th></tr>
+  <tr>
+    <td>GET 拼接 where</td>
+    <td>含空格/中文的 where 容易被 <code>encodeURIComponent</code> 转义错</td>
+    <td>统一用 <strong>POST + JSON</strong>，由后端 <code>JSON.parse</code></td>
+  </tr>
+  <tr>
+    <td>响应 <code>name</code> 含单位</td>
+    <td><code>[个][套]</code> 等单位挂在末尾，精确等值必失败</td>
+    <td>用 <code>_stripTrailingUnit</code> 剥掉</td>
+  </tr>
+  <tr>
+    <td>我们的产品没有 SKU</td>
+    <td>只存品名，缺 <code>/SKU</code> 后缀，与 <code>goods.name</code> 对不上</td>
+    <td>用 <code>_getFullProductName</code> 拼成 <code>品名/SKU</code></td>
+  </tr>
+  <tr>
+    <td>缓存脏数据</td>
+    <td>产品列表增删后，缓存 grouped 仍为旧值</td>
+    <td>缓存加 <code>productIds</code> 快照比对，不一致时强制重建</td>
+  </tr>
+  <tr>
+    <td>把 <code>row.id</code> 当产品 ID</td>
+    <td><code>id</code> 是<strong>记录主键</strong>，与产品无关</td>
+    <td>产品 ID 始终用 <code>matchedProduct.matchedId</code></td>
+  </tr>
+  <tr>
+    <td>把 <code>row.cu_id</code> 当客户 ID</td>
+    <td><code>cu_id</code> 是<strong>客户名称</strong>，不是数字 ID</td>
+    <td>客户过滤放在请求 where 里；响应用作展示</td>
+  </tr>
+  <tr>
+    <td>同产品多条历史</td>
+    <td>同一产品可能有多条历史记录</td>
+    <td><code>order by id desc</code> + 首次出现即取首条</td>
+  </tr>
+</table>
+
+<!-- ========== 八、涉及文件 ========== -->
+<h2>八、相关文件</h2>
+<table>
+  <tr><th>文件</th><th>作用</th></tr>
+  <tr><td><code>dexiedb/index.html</code></td><td>主实现：<code>_loadHistoryPrices</code> / <code>_fetchAndCacheHistory</code> / <code>_findOurProductByRowName</code> / <code>_renderHistorySummary</code></td></tr>
+  <tr><td><code>读取数据接口/读取产品的价格.md</code></td><td>接口与 <code>str_ps</code> 解析的通用文档</td></tr>
+  <tr><td><code>读取数据接口/历史价格返回值.json</code></td><td>本次调试的样例响应（4 条记录，2 个产品）</td></tr>
+  <tr><td><code>dexiedb/pinyin_match.js</code></td><td>拼音匹配，含 <code>getProductMapCached</code>，提供 <code>matchedSku</code></td></tr>
+</table>
+
+<footer>
+  文档版本：v1.0 &nbsp;|&nbsp; 维护：智能制单 / 一键价格模块
+</footer>
+
+</div>
+</body>
+</html>

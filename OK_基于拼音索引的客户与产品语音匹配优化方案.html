@@ -1,0 +1,2264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>基于拼音索引的客户与产品语音匹配优化方案</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Noto+Sans+SC:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+<style>
+:root {
+  --bg-primary: #0c0e12;
+  --bg-secondary: #13161c;
+  --bg-card: #181c24;
+  --bg-card-hover: #1e2330;
+  --border: #2a2f3a;
+  --border-light: #353b4a;
+  --text-primary: #e8e6e1;
+  --text-secondary: #9a9b9e;
+  --text-muted: #5f6168;
+  --accent: #3ecfa5;
+  --accent-light: #6eecc8;
+  --accent-dim: #1f7a5e;
+  --accent-glow: rgba(62, 207, 165, 0.12);
+  --accent2: #f0a050;
+  --accent2-dim: rgba(240, 160, 80, 0.12);
+  --success: #4ade80;
+  --success-dim: rgba(74, 222, 128, 0.10);
+  --warning: #fb923c;
+  --warning-dim: rgba(251, 146, 60, 0.10);
+  --info: #60a5fa;
+  --info-dim: rgba(96, 165, 250, 0.10);
+  --serif: 'Noto Serif SC', serif;
+  --sans: 'Noto Sans SC', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html {
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) var(--bg-primary);
+}
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection { background: var(--accent); color: var(--bg-primary); }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: rgba(12, 14, 18, 0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  transition: transform 0.3s ease;
+}
+
+nav .nav-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+}
+
+nav .nav-brand {
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--accent);
+  letter-spacing: 0.5px;
+}
+
+nav .nav-links { display: flex; gap: 6px; flex-wrap: wrap; }
+
+nav .nav-links a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 12.5px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  letter-spacing: 0.3px;
+}
+
+nav .nav-links a:hover,
+nav .nav-links a.active {
+  color: var(--accent);
+  background: var(--accent-glow);
+}
+
+.hero {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  padding: 80px 40px;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(ellipse at 30% 20%, rgba(62, 207, 165, 0.06) 0%, transparent 50%),
+              radial-gradient(ellipse at 70% 80%, rgba(240, 160, 80, 0.04) 0%, transparent 50%);
+  animation: heroGlow 20s ease-in-out infinite alternate;
+}
+
+@keyframes heroGlow {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  100% { transform: translate(-5%, 3%) rotate(3deg); }
+}
+
+.hero-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(42, 47, 58, 0.3) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(42, 47, 58, 0.3) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse at center, black 20%, transparent 70%);
+  -webkit-mask-image: radial-gradient(ellipse at center, black 20%, transparent 70%);
+}
+
+.hero-content {
+  position: relative;
+  text-align: center;
+  max-width: 800px;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--accent-glow);
+  border: 1px solid var(--accent-dim);
+  color: var(--accent);
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 6px 16px;
+  border-radius: 20px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 32px;
+  animation: fadeInUp 0.8s ease both;
+}
+
+.hero-badge .dot {
+  width: 6px;
+  height: 6px;
+  background: var(--accent);
+  border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.hero h1 {
+  font-family: var(--serif);
+  font-size: clamp(32px, 5vw, 52px);
+  font-weight: 900;
+  line-height: 1.2;
+  margin-bottom: 20px;
+  animation: fadeInUp 0.8s ease 0.15s both;
+}
+
+.hero h1 .accent { color: var(--accent); position: relative; }
+
+.hero h1 .accent::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--accent);
+  border-radius: 2px;
+  opacity: 0.4;
+}
+
+.hero .subtitle {
+  font-size: 16px;
+  color: var(--text-secondary);
+  line-height: 1.8;
+  max-width: 600px;
+  margin: 0 auto 36px;
+  animation: fadeInUp 0.8s ease 0.3s both;
+}
+
+.hero-meta {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  animation: fadeInUp 0.8s ease 0.45s both;
+}
+
+.hero-meta .meta-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.hero-meta .meta-label {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-weight: 600;
+}
+
+.hero-meta .meta-value {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 40px;
+}
+
+section { padding: 100px 0; position: relative; }
+
+.section-header { margin-bottom: 56px; }
+
+.section-number {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--accent);
+  font-weight: 500;
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+  display: block;
+}
+
+.section-title {
+  font-family: var(--serif);
+  font-size: clamp(28px, 3.5vw, 40px);
+  font-weight: 700;
+  line-height: 1.25;
+  margin-bottom: 16px;
+}
+
+.section-desc {
+  font-size: 15.5px;
+  color: var(--text-secondary);
+  max-width: 640px;
+  line-height: 1.8;
+}
+
+.divider {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border), transparent);
+  margin: 0;
+}
+
+.card-grid { display: grid; gap: 20px; }
+.card-grid-2 { grid-template-columns: repeat(2, 1fr); }
+.card-grid-3 { grid-template-columns: repeat(3, 1fr); }
+.card-grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+@media (max-width: 900px) {
+  .card-grid-2, .card-grid-3, .card-grid-4 {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1100px) {
+  .card-grid-3 { grid-template-columns: repeat(2, 1fr); }
+  .card-grid-4 { grid-template-columns: repeat(2, 1fr); }
+}
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.card:hover {
+  border-color: var(--border-light);
+  background: var(--bg-card-hover);
+  transform: translateY(-2px);
+}
+
+.card:hover::before { opacity: 1; }
+
+.card-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  margin-bottom: 18px;
+}
+
+.card-icon.accent { background: var(--accent-glow); color: var(--accent); }
+.card-icon.accent2 { background: var(--accent2-dim); color: var(--accent2); }
+.card-icon.success { background: var(--success-dim); color: var(--success); }
+.card-icon.info { background: var(--info-dim); color: var(--info); }
+.card-icon.warning { background: var(--warning-dim); color: var(--warning); }
+
+.card h3 {
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+
+.card p {
+  color: var(--text-secondary);
+  font-size: 13.5px;
+  line-height: 1.75;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.tag-accent { background: var(--accent-glow); color: var(--accent); }
+.tag-accent2 { background: var(--accent2-dim); color: var(--accent2); }
+.tag-success { background: var(--success-dim); color: var(--success); }
+.tag-info { background: var(--info-dim); color: var(--info); }
+.tag-warning { background: var(--warning-dim); color: var(--warning); }
+
+.table-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.spec-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+.spec-table thead th {
+  text-align: left;
+  padding: 12px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-secondary);
+}
+
+.spec-table thead th:first-child { border-radius: var(--radius-sm) 0 0 0; }
+.spec-table thead th:last-child { border-radius: 0 var(--radius-sm) 0 0; }
+
+.spec-table tbody td {
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(42, 47, 58, 0.5);
+  color: var(--text-secondary);
+  vertical-align: top;
+}
+
+.spec-table tbody tr:hover td { background: var(--bg-card); }
+
+.spec-table tbody td:first-child {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.callout {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px 28px;
+  display: flex;
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.callout-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.callout-body h4 {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.callout-body p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.callout.warning { border-left: 3px solid var(--warning); }
+.callout.info { border-left: 3px solid var(--info); }
+.callout.success { border-left: 3px solid var(--success); }
+.callout.accent { border-left: 3px solid var(--accent); }
+
+.feature-detail {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px;
+  margin-bottom: 24px;
+}
+
+.feature-detail .feature-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.feature-detail .feature-num {
+  font-family: var(--mono);
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--accent);
+  opacity: 0.35;
+  line-height: 1;
+}
+
+.feature-detail h3 {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.feature-detail .feature-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+}
+
+@media (max-width: 900px) {
+  .feature-detail .feature-body { grid-template-columns: 1fr; }
+}
+
+.feature-detail .feature-col h4 {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+}
+
+.feature-detail .feature-col ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.feature-detail .feature-col li {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  padding-left: 18px;
+  position: relative;
+  line-height: 1.6;
+}
+
+.feature-detail .feature-col li::before {
+  content: '▸';
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+  font-size: 11px;
+}
+
+.flow-steps {
+  display: flex;
+  gap: 0;
+  align-items: stretch;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.flow-step {
+  flex: 1;
+  min-width: 180px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 24px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.flow-step:first-child { border-radius: var(--radius) 0 0 var(--radius); }
+.flow-step:last-child { border-radius: 0 var(--radius) var(--radius) 0; }
+
+.flow-step:not(:last-child)::after {
+  content: '→';
+  position: absolute;
+  right: -14px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  color: var(--accent);
+  font-size: 18px;
+  font-weight: 700;
+  background: var(--bg-primary);
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+}
+
+.flow-step .step-num {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.flow-step h4 {
+  font-size: 14.5px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.flow-step p {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.task-list {
+  list-style: none;
+  counter-reset: task-counter;
+}
+
+.task-list li {
+  counter-increment: task-counter;
+  font-size: 14px;
+  color: var(--text-secondary);
+  padding: 12px 16px 12px 48px;
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 10px;
+  transition: all 0.2s ease;
+}
+
+.task-list li:hover {
+  border-color: var(--accent-dim);
+  background: var(--bg-card-hover);
+}
+
+.task-list li::before {
+  content: counter(task-counter);
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  background: var(--accent-glow);
+  border: 1px solid var(--accent-dim);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.footer {
+  border-top: 1px solid var(--border);
+  padding: 48px 0;
+  text-align: center;
+}
+
+.footer p {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  line-height: 1.8;
+}
+
+.footer .footer-brand {
+  font-family: var(--serif);
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.animate-in {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.animate-in.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ========== 示例组件样式 ========== */
+.example-box {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+  position: relative;
+}
+
+.example-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.example-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  background: var(--accent-glow);
+  color: var(--accent);
+  border: 1px solid var(--accent-dim);
+}
+
+.example-title {
+  font-family: var(--serif);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.example-scenario {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px 20px;
+  margin-bottom: 20px;
+}
+
+.scenario-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 6px;
+}
+
+.scenario-content {
+  font-size: 15px;
+  color: var(--text-primary);
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+.hl-warn {
+  color: var(--warning);
+  text-decoration: underline;
+  text-decoration-style: wavy;
+  text-underline-offset: 3px;
+}
+
+.hl-ok {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.example-flow {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin-bottom: 20px;
+}
+
+.flow-node {
+  flex: 1;
+  min-width: 140px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  text-align: center;
+}
+
+.flow-node-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+
+.flow-node-value {
+  font-size: 12.5px;
+  color: var(--text-primary);
+  font-weight: 500;
+  line-height: 1.5;
+  margin-bottom: 4px;
+}
+
+.flow-node-note {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.flow-node.asr { border-top: 2px solid var(--warning); }
+.flow-node.pinyin { border-top: 2px solid var(--info); }
+.flow-node.match { border-top: 2px solid var(--accent2); }
+.flow-node.result { border-top: 2px solid var(--accent); }
+
+.flow-arrow {
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+  color: var(--text-muted);
+  font-size: 16px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.rank-badge {
+  display: inline-block;
+  background: var(--accent-glow);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-family: var(--mono);
+}
+
+.example-detail {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.detail-row {
+  display: grid;
+  grid-template-columns: 100px 1fr 100px 1fr;
+  gap: 12px;
+  padding: 12px 16px;
+  font-size: 12.5px;
+  border-bottom: 1px solid rgba(42, 47, 58, 0.5);
+  align-items: center;
+}
+
+.detail-row:last-child { border-bottom: none; }
+
+.detail-row.header-row {
+  background: rgba(42, 47, 58, 0.3);
+  font-weight: 600;
+  color: var(--text-muted);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 11.5px;
+}
+
+.detail-value {
+  color: var(--text-secondary);
+}
+
+.detail-score {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.detail-score.high { color: var(--accent); }
+.detail-score.mid { color: var(--warning); }
+.detail-score.low { color: var(--text-muted); }
+
+.detail-reason {
+  color: var(--text-muted);
+  font-size: 11.5px;
+}
+
+.example-conclusion {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 14px 18px;
+  background: var(--accent-glow);
+  border: 1px solid var(--accent-dim);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.7;
+}
+
+.conclusion-icon {
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 15px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.example-note-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: var(--warning-dim);
+  border: 1px solid rgba(251, 146, 60, 0.2);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.note-icon { flex-shrink: 0; font-size: 15px; }
+
+/* 智能补全对比示例 */
+.example-compare {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0;
+  align-items: stretch;
+}
+
+@media (max-width: 900px) {
+  .example-compare {
+    grid-template-columns: 1fr;
+  }
+  .compare-divider { display: none; }
+  .example-flow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .flow-arrow {
+    justify-content: center;
+    padding: 4px 0;
+    transform: rotate(90deg);
+  }
+  .detail-row {
+    grid-template-columns: 80px 1fr;
+    gap: 6px;
+  }
+  .detail-score, .detail-reason {
+    grid-column: 2;
+  }
+}
+
+.compare-col {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 20px;
+}
+
+.compare-ok { border-top: 2px solid var(--accent); }
+.compare-warn { border-top: 2px solid var(--warning); }
+
+.compare-label {
+  font-size: 13.5px;
+  font-weight: 600;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.compare-ok .compare-label { color: var(--accent); }
+.compare-warn .compare-label { color: var(--warning); }
+
+.compare-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.compare-ok .compare-icon { background: var(--accent-glow); }
+.compare-warn .compare-icon { background: var(--warning-dim); }
+
+.compare-scenario {
+  background: var(--bg-secondary);
+  border-radius: 6px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+
+.compare-scenario .scenario-content {
+  font-size: 13.5px;
+}
+
+.compare-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.compare-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.step-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.step-tag.ok { background: var(--accent-glow); color: var(--accent); }
+.step-tag.warn { background: var(--warning-dim); color: var(--warning); }
+
+.compare-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+}
+
+.compare-divider span {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ========== 代码块样式 ========== */
+.code-block {
+  background: #0d1117;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  margin-top: 16px;
+}
+
+.code-block pre {
+  margin: 0;
+  padding: 20px 24px;
+  overflow-x: auto;
+}
+
+.code-block code {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.8;
+  color: #c9d1d9;
+}
+
+/* 代码高亮 */
+.code-block .keyword { color: #ff7b72; }
+.code-block .string { color: #a5d6ff; }
+.code-block .comment { color: #8b949e; font-style: italic; }
+.code-block .number { color: #79c0ff; }
+.code-block .function { color: #d2a8ff; }
+.code-block .operator { color: #ff7b72; }
+
+/* ========== 性能优化流程样式 ========== */
+.optimization-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.opt-step {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px 20px;
+  transition: all 0.2s ease;
+}
+
+.opt-step:hover {
+  border-color: var(--accent-dim);
+  background: var(--bg-card-hover);
+}
+
+.opt-step-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent-glow);
+  border: 1px solid var(--accent-dim);
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.opt-step-content {
+  flex: 1;
+}
+
+.opt-step-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.opt-step-desc {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 8px;
+}
+
+.opt-step-code {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--text-muted);
+  background: var(--bg-secondary);
+  padding: 8px 12px;
+  border-radius: 6px;
+  line-height: 1.7;
+}
+
+.opt-highlight {
+  color: var(--accent);
+  font-weight: 600;
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <div class="nav-brand">智能制单 · 技术方案</div>
+    <div class="nav-links">
+      <a href="#background">背景</a>
+      <a href="#customer">客户匹配</a>
+      <a href="#product">产品匹配</a>
+      <a href="#tech">技术实现</a>
+      <a href="#tasks">任务清单</a>
+    </div>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <div class="hero-badge"><span class="dot"></span> TECHNICAL PROPOSAL</div>
+    <h1>基于<span class="accent">拼音索引</span>的<br>客户与产品语音匹配优化方案</h1>
+    <p class="subtitle">针对中大型工贸企业海量客户与SKU场景，通过拼音索引、冷热分离、分层匹配等策略，实现高精度、低延迟的语音制单匹配</p>
+    <div class="hero-meta">
+      <div class="meta-item">
+        <span class="meta-label">场景</span>
+        <span class="meta-value">智能制单</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">优化目标</span>
+        <span class="meta-value">匹配精度 + 速度</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">日期</span>
+        <span class="meta-value">2026-05-11</span>
+      </div>
+    </div>
+
+    <div class="feature-detail animate-in">
+      <div class="feature-header">
+        <span class="feature-num">04</span>
+        <h3>公司名多音字全读音索引</h3>
+      </div>
+      <p style="color: var(--text-secondary); margin-bottom: 20px;">公司名称属于自定义名称，上下文语义判断无法解决其中的多音字读音问题。本方案仅针对公司名（产品名因有行业/常规语境可自动处理，无需特殊处理），为公司名中的多音字同时存储全部可能读音的拼音索引，语音识别时无论匹配到哪个读音都能找到对应公司，全程零人工维护。</p>
+      <div class="feature-body">
+        <div class="feature-col">
+          <h4>核心策略</h4>
+          <ul>
+            <li>公司名中的多音字，同时存储所有读音的拼音索引</li>
+            <li>ASR无论识别为哪个读音，都能命中对应公司</li>
+            <li>产品名无需特殊处理（行业语境可自动消歧）</li>
+          </ul>
+        </div>
+        <div class="feature-col">
+          <h4>设计原则</h4>
+          <ul>
+            <li>零人工维护：建索引时自动展开多音字</li>
+            <li>覆盖优先：宁可多存几条冗余索引，不可漏匹配</li>
+            <li>权重兜底：多读音命中后，由权重排序选出正确结果</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 多音字示例 -->
+      <div class="example-box" style="margin-top: 24px;">
+        <div class="example-header">
+          <span class="example-tag">示例</span>
+          <span class="example-title">公司名多音字 — 全读音索引匹配</span>
+        </div>
+        <div class="example-scenario">
+          <div class="scenario-label">语音输入</div>
+          <div class="scenario-content">"给重庆<span class="hl-warn">重钢</span>物资发一批货"</div>
+        </div>
+        <div class="example-note-bar">
+          <span class="note-icon">⚠️</span>
+          <span>"重"是多音字：<strong>zhòng</strong>（重量、重大）和 <strong>chóng</strong>（重复、重庆）。ASR可能识别为"zhòng_gāng"或"chóng_gāng"，取决于语音模型对"重庆"这个词的切分方式。</span>
+        </div>
+        <div class="example-detail" style="margin-top: 16px;">
+          <div class="detail-row header-row">
+            <span class="detail-label">索引条目</span>
+            <span class="detail-value">存储的拼音</span>
+            <span class="detail-score">ASR识别</span>
+            <span class="detail-reason">匹配结果</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">索引1</span>
+            <span class="detail-value">chóng_qìng_chóng_gāng_wù_zī</span>
+            <span class="detail-score high">chóng_gāng ✓</span>
+            <span class="detail-reason">读音一命中，正确匹配</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">索引2</span>
+            <span class="detail-value">chóng_qìng_zhòng_gāng_wù_zī</span>
+            <span class="detail-score high">zhòng_gāng ✓</span>
+            <span class="detail-reason">读音二命中，同样正确匹配</span>
+          </div>
+        </div>
+        <div class="example-conclusion">
+          <span class="conclusion-icon">✓</span>
+          <span>无论ASR将"重钢"识别为"chóng_gāng"还是"zhòng_gāng"，都能命中同一家公司。全读音索引确保<strong>零漏匹配</strong>，无需人工干预。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="background">
+  <div class="container">
+    <div class="section-header animate-in">
+      <span class="section-number">01</span>
+      <h2 class="section-title">背景与目标</h2>
+      <p class="section-desc">理解项目背景与核心挑战，明确优化方向</p>
+    </div>
+
+    <div class="card-grid card-grid-2 animate-in">
+      <div class="card">
+        <div class="card-icon accent">📋</div>
+        <h3>项目背景</h3>
+        <p>本项目是一款颠覆传统的AI智能制单工具，通过语音或自然语言输入，自动识别并生成销售订单、报价单、出库单等业务单据。系统支持语音输入和文件上传两种方式录入订单信息，自动识别客户信息、产品明细、数量、价格等关键字段。</p>
+      </div>
+      <div class="card">
+        <div class="card-icon warning">⚠️</div>
+        <h3>核心挑战</h3>
+        <p>中大型工贸企业客户数量达几万级别，匹配压力大；SKU差异极小，产品名称相似度高，精确匹配困难；语音输入存在同音字、口音、噪音等干扰因素；原有客户表数据量大，存在锁表和负载重的问题。</p>
+      </div>
+    </div>
+
+    <div class="callout accent animate-in" style="margin-top: 32px;">
+      <div class="callout-icon">🎯</div>
+      <div class="callout-body">
+        <h4>优化目标</h4>
+        <p>提升匹配速度和精度，减少人工干预 • 降低主业务库负载，避免锁表风险 • 满足工业场景的使用需求</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="customer">
+  <div class="container">
+    <div class="section-header animate-in">
+      <span class="section-number">02</span>
+      <h2 class="section-title">客户名称匹配优化方案</h2>
+      <p class="section-desc">通过拼音索引、权重排序、语义理解等多维度优化客户匹配</p>
+    </div>
+
+    <div class="feature-detail animate-in">
+      <div class="feature-header">
+        <span class="feature-num">01</span>
+        <h3>拼音索引基础方案</h3>
+      </div>
+      <p style="color: var(--text-secondary); margin-bottom: 20px;">将拼音匹配作为客户名称多模态智能匹配的基础方案。语音输入时，系统将识别结果转换为拼音，与客户库中的拼音索引进行匹配，有效解决同音字问题。</p>
+      <div style="background: var(--accent-glow); border: 1px solid var(--accent); border-radius: 8px; padding: 14px 18px; margin-bottom: 16px;">
+        <h4 style="font-size: 14px; font-weight: 600; color: var(--accent); margin-bottom: 8px;"><i class="ri-text" style="margin-right: 4px;"></i> 拼音格式规范（2026-05-12更新）</h4>
+        <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.7; margin-bottom: 8px;">全链路统一使用<strong>下划线分词</strong>格式：每个汉字的拼音之间用 <code>_</code> 分隔，英文和数字保留原字符。</p>
+        <ul style="font-size: 12px; color: var(--text-secondary); line-height: 1.8; padding-left: 16px;">
+          <li>"深圳华创科技" → <code>shen_zhen_hua_chuang_ke_ji</code></li>
+          <li>"A3打印纸" → <code>A3_da_yin_zhi</code></li>
+          <li>"无线鼠标" → <code>wu_xian_shu_biao</code></li>
+        </ul>
+        <p style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;">优势：词边界清晰、前缀索引精确、编辑距离容错性更好。智能体输出和数据库索引必须使用相同格式。</p>
+      </div>
+      <div class="feature-body">
+        <div class="feature-col">
+          <h4>核心实现</h4>
+          <ul>
+            <li>给客户表添加拼音和拼音首字母索引</li>
+            <li>分离客户索引与主业务库，降低主库压力</li>
+            <li>用Redis缓存高频客户，提升检索速度</li>
+          </ul>
+        </div>
+        <div class="feature-col">
+          <h4>技术优势</h4>
+          <ul>
+            <li>解决语音输入同音字问题</li>
+            <li>支持模糊匹配和容错</li>
+            <li>毫秒级响应速度</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 客户匹配示例 -->
+      <div class="example-box" style="margin-top: 24px;">
+        <div class="example-header">
+          <span class="example-tag">示例</span>
+          <span class="example-title">客户同音不同字匹配</span>
+        </div>
+        <div class="example-scenario">
+          <div class="scenario-label">语音输入</div>
+          <div class="scenario-content">"给深圳华创科技发100箱A3打印纸"</div>
+        </div>
+        <div class="example-flow">
+          <div class="flow-node asr">
+            <div class="flow-node-label">ASR识别</div>
+            <div class="flow-node-value">"给深圳<span class="hl-warn">华创科技</span>发100箱A3打印纸"</div>
+            <div class="flow-node-note">"创"可能被识别为"创/闯/窗"</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node pinyin">
+            <div class="flow-node-label">拼音转换</div>
+            <div class="flow-node-value">shen_zhen_hua_chuang_ke_ji</div>
+            <div class="flow-node-note">同音字干扰被消除</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node match">
+            <div class="flow-node-label">索引匹配</div>
+            <div class="flow-node-value">命中 3 条候选</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node result">
+            <div class="flow-node-label">权重排序</div>
+            <div class="flow-node-value">深圳<span class="hl-ok">华创科技</span>有限公司 <span class="rank-badge">98%</span></div>
+          </div>
+        </div>
+        <div class="example-detail">
+          <div class="detail-row">
+            <span class="detail-label">候选1</span>
+            <span class="detail-value">深圳华创科技有限公司</span>
+            <span class="detail-score high">相似度 98%</span>
+            <span class="detail-reason">拼音完全匹配 + 近30天有3笔订单</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">候选2</span>
+            <span class="detail-value">深圳华创商贸有限公司</span>
+            <span class="detail-score mid">相似度 85%</span>
+            <span class="detail-reason">拼音完全匹配 + 近6个月无订单</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">候选3</span>
+            <span class="detail-value">深圳华闯建材有限公司</span>
+            <span class="detail-score low">相似度 72%</span>
+            <span class="detail-reason">拼音匹配但"闯"字不同 + 历史无关联</span>
+          </div>
+        </div>
+        <div class="example-conclusion">
+          <span class="conclusion-icon">✓</span>
+          <span>拼音索引消除了同音字干扰，权重排序将正确客户排在首位，无需人工干预即可自动确认。</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="feature-detail animate-in">
+      <div class="feature-header">
+        <span class="feature-num">02</span>
+        <h3>权重排序优化</h3>
+      </div>
+      <p style="color: var(--text-secondary); margin-bottom: 20px;">针对大数量客户匹配场景，引入业务权重调整检索排序，将最可能的目标客户排在前面。</p>
+      <div class="feature-body">
+        <div class="feature-col">
+          <h4>权重因子</h4>
+          <ul>
+            <li><strong>创建时间权重</strong>：新客户优先级更高</li>
+            <li><strong>最近沟通时间权重</strong>：近期有业务往来的客户优先</li>
+            <li><strong>历史订单金额权重</strong>：大客户优先</li>
+          </ul>
+        </div>
+        <div class="feature-col">
+          <h4>预处理优化</h4>
+          <ul>
+            <li><strong>拼音同音归一化</strong>：将多音字统一为最常见的读音</li>
+            <li><strong>缩写联想预处理</strong>：如"华创科技"自动关联"深圳华创科技有限公司"</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="feature-detail animate-in">
+      <div class="feature-header">
+        <span class="feature-num">03</span>
+        <h3>大模型语义理解</h3>
+      </div>
+      <p style="color: var(--text-secondary); margin-bottom: 20px;">引入大模型做语义理解，结合上下文自动映射客户，实现零人工干预的自动化匹配。</p>
+      <div class="feature-body">
+        <div class="feature-col">
+          <h4>核心能力</h4>
+          <ul>
+            <li><strong>SaaS通用兜底方案</strong>：在多租户场景下替代ASR热词功能，解决热词配额限制（单表500个/10表共5000个）无法覆盖数千企业的痛点</li>
+            <li>全程无需人工维护热词库</li>
+            <li>根据对话上下文智能推断客户意图</li>
+            <li>解决手动热词维护绕路、不智能的问题</li>
+          </ul>
+        </div>
+        <div class="feature-col">
+          <h4>应用场景</h4>
+          <ul>
+            <li>模糊描述识别："上次那个深圳的客户"</li>
+            <li>上下文关联："还是上次那个订单的客户"</li>
+            <li>智能纠错："华创"自动匹配"华创科技有限公司"</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout success animate-in" style="margin-top: 24px;">
+      <div class="callout-icon"><i class="ri-shield-check-line"></i></div>
+      <div class="callout-body">
+        <h4>SaaS多租户场景下的核心定位（2026-05-12补充）</h4>
+        <p>阿里云ASR热词功能存在配额限制（单表500个热词、最多10张表共5000个），在通用SaaS场景下无法承载数千上万家企业的差异化热词需求。<strong>拼音索引匹配方案是通用SaaS场景下热词问题的核心兜底机制</strong>，无需依赖ASR层热词，在后端匹配环节即可解决同音字、近音字导致的识别偏差。热词方案保留为大客户个性化优化的可选项。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="product">
+  <div class="container">
+    <div class="section-header animate-in">
+      <span class="section-number">03</span>
+      <h2 class="section-title">产品名称匹配优化方案</h2>
+      <p class="section-desc">通过细粒度索引和分层匹配策略，解决SKU差异极小的产品匹配难题</p>
+    </div>
+
+    <div class="feature-detail animate-in">
+      <div class="feature-header">
+        <span class="feature-num">01</span>
+        <h3>细粒度参数索引</h3>
+      </div>
+      <p style="color: var(--text-secondary); margin-bottom: 20px;">针对SKU差异极小的产品，采用细粒度参数字段拆分索引，支持小误差容错匹配。</p>
+      <div class="feature-body">
+        <div class="feature-col">
+          <h4>索引维度</h4>
+          <ul>
+            <li>产品名称索引</li>
+            <li>规格型号索引</li>
+            <li>材质/颜色等属性索引</li>
+          </ul>
+        </div>
+        <div class="feature-col">
+          <h4>容错机制</h4>
+          <ul>
+            <li>支持小误差容错匹配</li>
+            <li>多维度联合匹配</li>
+            <li>相似度评分排序</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 产品匹配示例 -->
+      <div class="example-box" style="margin-top: 24px;">
+        <div class="example-header">
+          <span class="example-tag">示例</span>
+          <span class="example-title">产品小参数差异匹配</span>
+        </div>
+        <div class="example-scenario">
+          <div class="scenario-label">语音输入</div>
+          <div class="scenario-content">"要50个M8的<span class="hl-warn">内六角螺栓</span>，长度20的，不锈钢的"</div>
+        </div>
+        <div class="example-note-bar">
+          <span class="note-icon">⚠️</span>
+          <span>关键词"内六角螺栓"在产品库中有 <strong>26个</strong> SKU，仅靠名称无法区分，核心差异在于小参数：直径、长度、材质、等级。</span>
+        </div>
+        <div class="example-detail" style="margin-top: 16px;">
+          <div class="detail-row header-row">
+            <span class="detail-label">匹配阶段</span>
+            <span class="detail-value">操作</span>
+            <span class="detail-score">结果</span>
+            <span class="detail-reason">说明</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label" style="background: var(--accent-glow); color: var(--accent);">第一层 粗筛</span>
+            <span class="detail-value">关键词"内六角螺栓"检索</span>
+            <span class="detail-score mid">26个 → 8个</span>
+            <span class="detail-reason">锁定M8直径，排除M6/M10/M12等</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label" style="background: var(--info-dim); color: var(--info);">第二层 精匹配</span>
+            <span class="detail-value">长度=20 + 材质=不锈钢</span>
+            <span class="detail-score high">8个 → 3个</span>
+            <span class="detail-reason">长度精确匹配，材质模糊匹配（304/316）</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label" style="background: var(--accent2-dim); color: var(--accent2);">第三层 权重</span>
+            <span class="detail-value">结合历史采购记录排序</span>
+            <span class="detail-score high">3个 → <strong>1个</strong></span>
+            <span class="detail-reason">该客户上月采购过同款，权重最高</span>
+          </div>
+        </div>
+        <div class="example-conclusion">
+          <span class="conclusion-icon">✓</span>
+          <span>通过分层匹配，26个候选缩减为1个精确结果。产品匹配的核心不是名称，而是<strong>小参数的精确拆分与逐层过滤</strong>。</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="feature-detail animate-in">
+      <div class="feature-header">
+        <span class="feature-num">02</span>
+        <h3>分层匹配策略</h3>
+      </div>
+      <p style="color: var(--text-secondary); margin-bottom: 24px;">通过分层匹配缩小候选范围，提升匹配效率。</p>
+      
+      <div class="table-wrapper">
+        <table class="spec-table">
+          <thead>
+            <tr>
+              <th>层级</th>
+              <th>匹配方式</th>
+              <th>说明</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>第一层</td>
+              <td>核心关键词粗筛</td>
+              <td>根据产品名称快速筛选候选集</td>
+            </tr>
+            <tr>
+              <td>第二层</td>
+              <td>参数精匹配</td>
+              <td>根据规格、型号等参数精确匹配</td>
+            </tr>
+            <tr>
+              <td>第三层</td>
+              <td>历史权重排序</td>
+              <td>结合客户历史采购记录调整排序</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="callout info animate-in" style="margin-top: 24px;">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        <h4>智能补全策略</h4>
+        <p>智能补全仅在匹配结果唯一时使用；当匹配结果不唯一时，保留用户原始关键词意图，不强行自动补全，避免出现识别偏差。</p>
+      </div>
+    </div>
+
+    <!-- 智能补全对比示例 -->
+    <div class="example-box animate-in" style="margin-top: 24px;">
+      <div class="example-header">
+        <span class="example-tag">示例</span>
+        <span class="example-title">智能补全 — 何时自动确认 vs 何时保留候选</span>
+      </div>
+      <div class="example-compare">
+        <div class="compare-col compare-ok">
+          <div class="compare-label"><span class="compare-icon">✓</span> 唯一匹配 — 自动补全</div>
+          <div class="compare-scenario">
+            <div class="scenario-label">语音输入</div>
+            <div class="scenario-content">"来10个M8×20不锈钢304内六角螺栓"</div>
+          </div>
+          <div class="compare-steps">
+            <div class="compare-step">
+              <span class="step-tag ok">粗筛</span>
+              <span>关键词匹配 → 26个候选</span>
+            </div>
+            <div class="compare-step">
+              <span class="step-tag ok">精匹配</span>
+              <span>M8 + 长度20 + 304不锈钢 → <strong>1个</strong>结果</span>
+            </div>
+            <div class="compare-step">
+              <span class="step-tag ok">结果</span>
+              <span>匹配唯一，<strong>自动补全确认</strong>，无需用户操作</span>
+            </div>
+          </div>
+        </div>
+        <div class="compare-divider">
+          <span>VS</span>
+        </div>
+        <div class="compare-col compare-warn">
+          <div class="compare-label"><span class="compare-icon">⚠</span> 多候选 — 保留原始意图</div>
+          <div class="compare-scenario">
+            <div class="scenario-label">语音输入</div>
+            <div class="scenario-content">"来10个M8×20不锈钢内六角螺栓"</div>
+          </div>
+          <div class="compare-steps">
+            <div class="compare-step">
+              <span class="step-tag warn">粗筛</span>
+              <span>关键词匹配 → 26个候选</span>
+            </div>
+            <div class="compare-step">
+              <span class="step-tag warn">精匹配</span>
+              <span>M8 + 长度20 + 不锈钢（未指定304/316）→ <strong>3个</strong>结果</span>
+            </div>
+            <div class="compare-step">
+              <span class="step-tag warn">结果</span>
+              <span>匹配不唯一，<strong>弹出候选列表</strong>供用户选择，不强行补全</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="example-conclusion">
+        <span class="conclusion-icon">✓</span>
+        <span>关键区别在于用户是否提供了足够的参数来锁定唯一SKU。未指定材质细分（304 vs 316）时，系统不会猜测，而是让用户确认。</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="tech">
+  <div class="container">
+    <div class="section-header animate-in">
+      <span class="section-number">04</span>
+      <h2 class="section-title">技术实现方案</h2>
+      <p class="section-desc">独立索引表设计、冷热数据分离、拼音+英文混排索引</p>
+    </div>
+
+    <div class="card-grid card-grid-3 animate-in">
+      <div class="card">
+        <div class="card-icon accent">🗄️</div>
+        <h3>独立索引表设计</h3>
+        <p>新建独立的拼音索引关联表，仅存储客户/产品ID与对应拼音、首字母缩写，避免增加主表的锁表和负载压力。</p>
+        <div style="margin-top: 16px;">
+          <span class="tag tag-accent">不修改主表</span>
+          <span class="tag tag-info">低耦合</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-icon accent2">🔥</div>
+        <h3>冷热数据分离</h3>
+        <p>热数据：近一年有业务往来的客户，放入高频缓存。冷数据：历史客户，存入归档库，按需检索。</p>
+        <div style="margin-top: 16px;">
+          <span class="tag tag-accent2">Redis缓存</span>
+          <span class="tag tag-success">毫秒级响应</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-icon info">🔤</div>
+        <h3>拼音+英文混排索引</h3>
+        <p>中文部分转换为拼音进行匹配，英文部分保留原字符支持大小写不敏感匹配，混合部分分词后分别处理。</p>
+        <div style="margin-top: 16px;">
+          <span class="tag tag-info">中英混排</span>
+          <span class="tag tag-accent">智能分词</span>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="font-family: var(--serif); font-size: 20px; font-weight: 700; margin: 48px 0 20px;" class="animate-in">语音匹配数据流</h3>
+    <div class="flow-steps animate-in">
+      <div class="flow-step">
+        <div class="step-num">STEP 1</div>
+        <h4>语音输入</h4>
+        <p>用户语音描述客户/产品信息</p>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">STEP 2</div>
+        <h4>ASR识别</h4>
+        <p>语音转文字，输出识别文本</p>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">STEP 3</div>
+        <h4>拼音转换</h4>
+        <p>文本转拼音，进行索引匹配</p>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">STEP 4</div>
+        <h4>分层匹配</h4>
+        <p>粗筛→精匹配→权重排序</p>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">STEP 5</div>
+        <h4>结果返回</h4>
+        <p>返回匹配结果或候选列表</p>
+      </div>
+    </div>
+
+    <h3 style="font-family: var(--serif); font-size: 20px; font-weight: 700; margin: 56px 0 20px;" class="animate-in">拼音匹配算法详解</h3>
+    
+    <div class="feature-detail animate-in">
+      <div class="feature-header">
+        <span class="feature-num">01</span>
+        <h3>匹配度计算逻辑</h3>
+      </div>
+      <p style="color: var(--text-secondary); margin-bottom: 20px;">拼音匹配采用<strong>相似度评分</strong>而非相等查询，核心原因是ASR识别结果存在误差（同音字、口音、噪音），完全相等的查询会导致漏匹配。相似度评分通过多维度加权计算，容忍一定程度的偏差。</p>
+      <div class="feature-body">
+        <div class="feature-col">
+          <h4>评分维度</h4>
+          <ul>
+            <li><strong>拼音相似度（40%）</strong>：编辑距离 / 最长公共子序列</li>
+            <li><strong>首字母匹配（25%）</strong>：拼音首字母缩写匹配度</li>
+            <li><strong>长度匹配（15%）</strong>：拼音字符串长度差异</li>
+            <li><strong>业务权重（20%）</strong>：历史订单、最近沟通时间</li>
+          </ul>
+        </div>
+        <div class="feature-col">
+          <h4>与中文处理的差异</h4>
+          <ul>
+            <li>中文：需分词、语义理解、上下文消歧</li>
+            <li>拼音：无需分词，直接字符串匹配</li>
+            <li>拼音：同音字天然归一，消除字形干扰</li>
+            <li>拼音：支持模糊匹配，容错性更强</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 算法示例 -->
+      <div class="example-box" style="margin-top: 24px;">
+        <div class="example-header">
+          <span class="example-tag">算法</span>
+          <span class="example-title">拼音相似度计算 — 编辑距离 + 最长公共子序列</span>
+        </div>
+        <div class="code-block">
+          <pre><code># 输入
+asr_pinyin = "shen_zhen_hua_chuang_ke_ji"    # ASR识别结果
+index_pinyin = "shen_zhen_hua_chuang_ke_ji_you_xian_gong_si"  # 索引库
+
+# 1. 编辑距离（Levenshtein Distance）
+# 计算将一个字符串转换为另一个字符串所需的最少编辑次数
+# 编辑操作：插入、删除、替换
+lev_distance = 17  # "_you_xian_gong_si" 需插入17个字符
+max_len = max(len(asr_pinyin), len(index_pinyin))  # 43
+lev_score = (1 - lev_distance / max_len) * 100  # 60.5%
+
+# 2. 最长公共子序列（LCS）
+# 找出两个字符串的最长公共子序列
+lcs = "shen_zhen_hua_chuang_ke_ji"  # 长度 26
+lcs_score = (2 * len(lcs)) / (len(asr_pinyin) + len(index_pinyin)) * 100  # 75.4%
+
+# 3. 综合相似度
+similarity = (lev_score + lcs_score) / 2  # 68.0%</code></pre>
+        </div>
+        <div class="example-conclusion">
+          <span class="conclusion-icon">✓</span>
+          <span>ASR识别"深圳华创科技"与索引"深圳华创科技有限公司"的拼音相似度为 <strong>68.0%</strong>，结合业务权重（历史订单+20%加权）后综合得分超过阈值（默认70%），判定为匹配成功。</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="feature-detail animate-in" style="margin-top: 24px;">
+      <div class="feature-header">
+        <span class="feature-num">02</span>
+        <h3>完整匹配算法流程</h3>
+      </div>
+      <div class="code-block">
+        <pre><code>def pinyin_match(asr_text, index_db, threshold=0.7):
+    """
+    拼音匹配主函数
+    
+    Args:
+        asr_text: ASR识别文本
+        index_db: 拼音索引数据库 [{id, name, pinyin, pinyin_abbr, ...}, ...]
+        threshold: 匹配阈值，默认0.7（70%）
+    
+    Returns:
+        matches: 匹配结果列表，按综合得分降序排列
+    """
+    # Step 1: 文本转拼音
+    asr_pinyin = text_to_pinyin(asr_text)  # "深圳华创科技" -> "shen_zhen_hua_chuang_ke_ji"
+    asr_abbr = get_initials(asr_pinyin)     # "sz_hc_kj"
+    
+    candidates = []
+    
+    for record in index_db:
+        scores = {}
+        
+        # Step 2: 拼音相似度（编辑距离 + LCS）
+        scores['pinyin'] = calc_similarity(asr_pinyin, record['pinyin'])
+        
+        # Step 3: 首字母匹配
+        scores['abbr'] = calc_similarity(asr_abbr, record['pinyin_abbr'])
+        
+        # Step 4: 长度匹配（惩罚长度差异过大的）
+        len_diff = abs(len(asr_pinyin) - len(record['pinyin']))
+        scores['length'] = max(0, 1 - len_diff / max(len(asr_pinyin), len(record['pinyin'])))
+        
+        # Step 5: 业务权重（历史订单、最近沟通）
+        scores['business'] = calc_business_weight(record)
+        
+        # Step 6: 综合得分（加权平均）
+        final_score = (
+            scores['pinyin'] * 0.40 +
+            scores['abbr'] * 0.25 +
+            scores['length'] * 0.15 +
+            scores['business'] * 0.20
+        )
+        
+        if final_score >= threshold:
+            candidates.append({
+                'id': record['id'],
+                'name': record['name'],
+                'score': final_score,
+                'details': scores
+            })
+    
+    # Step 7: 按得分降序排列
+    candidates.sort(key=lambda x: x['score'], reverse=True)
+    
+    return candidates</code></pre>
+      </div>
+    </div>
+
+    <div class="feature-detail animate-in" style="margin-top: 24px;">
+      <div class="feature-header">
+        <span class="feature-num">03</span>
+        <h3>阈值与匹配策略</h3>
+      </div>
+      <div class="table-wrapper" style="margin-top: 16px;">
+        <table class="spec-table">
+          <thead>
+            <tr>
+              <th>得分区间</th>
+              <th>匹配策略</th>
+              <th>说明</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span style="color: var(--accent); font-weight: 600;">≥ 90%</span></td>
+              <td>自动确认</td>
+              <td>高置信度匹配，直接返回结果，无需人工确认</td>
+            </tr>
+            <tr>
+              <td><span style="color: var(--warning); font-weight: 600;">70% ~ 90%</span></td>
+              <td>候选推荐</td>
+              <td>返回Top 3候选，用户点击确认</td>
+            </tr>
+            <tr>
+              <td><span style="color: var(--text-muted); font-weight: 600;">< 70%</span></td>
+              <td>模糊提示</td>
+              <td>提示"未找到匹配，请重新描述"，引导用户补充信息</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="feature-detail animate-in" style="margin-top: 24px;">
+      <div class="feature-header">
+        <span class="feature-num">04</span>
+        <h3>性能分析与优化策略</h3>
+      </div>
+      <p style="color: var(--text-secondary); margin-bottom: 20px;">当前算法采用<strong>全量遍历 + 相似度计算</strong>，时间复杂度为 O(n × m²)，其中 n 为数据量，m 为平均拼音长度。在 5 万条数据场景下，需要针对性优化。</p>
+
+      <!-- 方案选择说明 -->
+      <div class="callout info animate-in" style="margin-bottom: 24px;">
+        <div class="callout-icon">📋</div>
+        <div class="callout-body">
+          <h4>两种实现方案可选</h4>
+          <p><strong>完整版</strong>：含Redis冷热分离，~80ms响应，适合高并发场景。<strong>简化版</strong>：纯数据库实现，~150ms响应，架构更简单。下文提供两种方案的对比和实现代码。</p>
+        </div>
+      </div>
+      
+      <div class="table-wrapper" style="margin: 16px 0;">
+        <table class="spec-table">
+          <thead>
+            <tr>
+              <th>数据规模</th>
+              <th>原始算法耗时</th>
+              <th>优化后耗时</th>
+              <th>优化策略</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1,000 条</td>
+              <td>~50ms</td>
+              <td>~10ms</td>
+              <td>内存缓存 + 前缀索引</td>
+            </tr>
+            <tr>
+              <td>10,000 条</td>
+              <td>~500ms</td>
+              <td>~30ms</td>
+              <td>+ 分层过滤 + 并行计算</td>
+            </tr>
+            <tr>
+              <td><strong>50,000 条</strong></td>
+              <td><span style="color: var(--warning);">~2.5s ❌</span></td>
+              <td><span style="color: var(--accent);">~80ms ✓</span></td>
+              <td>+ 向量检索 + 冷热分离</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 性能优化示例 -->
+      <div class="example-box" style="margin-top: 24px;">
+        <div class="example-header">
+          <span class="example-tag">优化</span>
+          <span class="example-title">5万条数据查询优化方案 — 从2.5秒到80毫秒</span>
+        </div>
+        
+        <div class="optimization-flow">
+          <div class="opt-step">
+            <div class="opt-step-num">1</div>
+            <div class="opt-step-content">
+              <div class="opt-step-title">前缀索引预过滤</div>
+              <div class="opt-step-desc">将拼音按首字母建立B+树索引，先匹配前2-3个音节，筛选候选集从5万缩减到500以内</div>
+              <div class="opt-step-code">索引: "shen_zhen" → [id_001, id_023, id_045, ...] <span class="opt-highlight">筛选后: 500条</span></div>
+            </div>
+          </div>
+          
+          <div class="opt-step">
+            <div class="opt-step-num">2</div>
+            <div class="opt-step-content">
+              <div class="opt-step-title">长度差异快速淘汰</div>
+              <div class="opt-step-desc">拼音长度差异超过30%的直接淘汰，无需计算相似度</div>
+              <div class="opt-step-code">ASR: "shen_zhen_hua_chuang_ke_ji" (26字符) <br>索引: "bei_jing_zhong_guan_cun_ke_ji" (29字符) <span class="opt-highlight">差异 10% ✓</span></div>
+            </div>
+          </div>
+          
+          <div class="opt-step">
+            <div class="opt-step-num">3</div>
+            <div class="opt-step-content">
+              <div class="opt-step-title">Redis高频缓存</div>
+              <div class="opt-step-desc">热数据（近1年活跃客户）常驻内存，冷数据走磁盘查询</div>
+              <div class="opt-step-code">热数据: 8,000条 (Redis, &lt;5ms) <br>冷数据: 42,000条 (DB, 按需查询)</div>
+            </div>
+          </div>
+          
+          <div class="opt-step">
+            <div class="opt-step-num">4</div>
+            <div class="opt-step-content">
+              <div class="opt-step-title">向量近似检索（可选）</div>
+              <div class="opt-step-desc">使用FAISS/Milvus将拼音转为向量，ANN近似最近邻检索，百万级数据&lt;10ms</div>
+              <div class="opt-step-code">向量维度: 128 | 索引: IVF_FLAT | <span class="opt-highlight">召回率: 99.5%</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="example-conclusion">
+          <span class="conclusion-icon">⚡</span>
+          <span>通过<strong>前缀索引 + 长度过滤 + 冷热分离</strong>三层优化，5万条数据查询从2.5秒降至80毫秒，满足实时交互需求（&lt;100ms）。</span>
+        </div>
+      </div>
+
+      <div class="code-block" style="margin-top: 24px;">
+        <pre><code># 完整版：含Redis冷热分离（5万条数据场景）
+def pinyin_match_optimized(asr_text, hot_cache, cold_db):
+    # Step 1: 转拼音
+    asr_pinyin = text_to_pinyin(asr_text)  # "shen_zhen_hua_chuang_ke_ji"
+    
+    # Step 2: 前缀索引快速筛选（O(log n)）
+    prefix = asr_pinyin[:10]  # 取前10个字符作为前缀
+    candidates = prefix_index.search(prefix)  # 从5万 → 500条
+    
+    # Step 3: 长度过滤（O(1)）
+    candidates = [c for c in candidates 
+                  if abs(len(c.pinyin) - len(asr_pinyin)) / max_len < 0.3]
+    
+    # Step 4: 热数据优先查询（Redis，&lt;5ms）
+    hot_candidates = hot_cache.mget([c.id for c in candidates])
+    
+    # Step 5: 冷数据按需查询（DB，仅查未命中缓存的）
+    cold_ids = [c.id for c in candidates if c.id not in hot_candidates]
+    cold_candidates = cold_db.query(cold_ids) if cold_ids else []
+    
+    # Step 6: 合并后计算相似度（仅500条，而非5万条）
+    all_candidates = hot_candidates + cold_candidates
+    results = calc_similarity_batch(asr_pinyin, all_candidates)
+    
+    # Step 7: 返回Top N
+    return sorted(results, key=lambda x: x.score, reverse=True)[:10]</code></pre>
+      </div>
+    </div>
+
+    <!-- 简化版方案 -->
+    <div class="feature-detail animate-in" style="margin-top: 24px;">
+      <div class="feature-header">
+        <span class="feature-num">05</span>
+        <h3>简化版方案（无Redis）</h3>
+      </div>
+      <p style="color: var(--text-secondary); margin-bottom: 20px;">去掉Redis，完全依赖数据库索引，通过前缀索引将查询范围大幅缩小。架构更简单，运维成本更低。</p>
+      
+      <div class="table-wrapper" style="margin: 16px 0;">
+        <table class="spec-table">
+          <thead>
+            <tr>
+              <th>对比项</th>
+              <th>完整版（含Redis）</th>
+              <th>简化版（无Redis）</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>架构复杂度</td>
+              <td>高（DB + Redis + 同步）</td>
+              <td><span style="color: var(--accent);">低（仅DB）</span></td>
+            </tr>
+            <tr>
+              <td>5万条查询耗时</td>
+              <td>~80ms</td>
+              <td>~150-200ms</td>
+            </tr>
+            <tr>
+              <td>运维成本</td>
+              <td>高（Redis集群维护）</td>
+              <td><span style="color: var(--accent);">低</span></td>
+            </tr>
+            <tr>
+              <td>适用场景</td>
+              <td>高频查询、高并发</td>
+              <td>中等频率、一般并发</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout success animate-in" style="margin: 20px 0;">
+        <div class="callout-icon">✓</div>
+        <div class="callout-body">
+          <h4>简化版适用条件</h4>
+          <p>日均查询量 &lt; 1万次 • 并发量 &lt; 100 QPS • 可接受150-200ms响应 • 希望降低运维成本</p>
+        </div>
+      </div>
+
+      <!-- 简化版实现 -->
+      <div class="example-box" style="margin-top: 20px;">
+        <div class="example-header">
+          <span class="example-tag">简化版</span>
+          <span class="example-title">纯数据库实现 — 三层过滤策略</span>
+        </div>
+        
+        <div class="optimization-flow">
+          <div class="opt-step">
+            <div class="opt-step-num">1</div>
+            <div class="opt-step-content">
+              <div class="opt-step-title">前缀索引查询（数据库B+树索引）</div>
+              <div class="opt-step-desc">利用数据库的拼音前缀索引，快速筛选候选集</div>
+              <div class="opt-step-code">SQL: SELECT id, name, pinyin FROM customer_index <br>WHERE pinyin LIKE 'shen_zhen_hua%' <br><span class="opt-highlight">结果: 5万条 → 500条 (~10ms)</span></div>
+            </div>
+          </div>
+          
+          <div class="opt-step">
+            <div class="opt-step-num">2</div>
+            <div class="opt-step-content">
+              <div class="opt-step-title">长度差异过滤（应用层）</div>
+              <div class="opt-step-desc">拼音长度差异超过30%的直接淘汰，无需计算相似度</div>
+              <div class="opt-step-code">过滤条件: abs(len(pinyin) - 23) / 23 &lt; 0.3 <br><span class="opt-highlight">结果: 500条 → 300条 (~1ms)</span></div>
+            </div>
+          </div>
+          
+          <div class="opt-step">
+            <div class="opt-step-num">3</div>
+            <div class="opt-step-content">
+              <div class="opt-step-title">相似度计算（仅300条）</div>
+              <div class="opt-step-desc">对剩余候选计算编辑距离 + LCS相似度</div>
+              <div class="opt-step-code">calc_similarity_batch(asr_pinyin, 300_candidates) <br><span class="opt-highlight">耗时: ~100-150ms</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="example-conclusion">
+          <span class="conclusion-icon">⚡</span>
+          <span>总计耗时: <strong>10ms + 1ms + 150ms = ~160ms</strong>，满足语音制单场景的实时性要求。</span>
+        </div>
+      </div>
+
+      <div class="code-block" style="margin-top: 24px;">
+        <pre><code># 简化版：纯数据库实现（无Redis）
+def pinyin_match_simple(asr_text, db_connection):
+    """
+    简化版拼音匹配 — 纯数据库实现，无外部缓存依赖
+    适用于：5万条数据，日均查询&lt;1万次，并发&lt;100 QPS
+    预期耗时：~150-200ms
+    """
+    # Step 1: 转拼音
+    asr_pinyin = text_to_pinyin(asr_text)  # "深圳华创科技" -> "shen_zhen_hua_chuang_ke_ji"
+    asr_abbr = get_initials(asr_pinyin)     # "sz_hc_kj"
+    
+    # Step 2: 数据库前缀索引查询（核心优化）
+    # 利用数据库B+树索引，快速缩小范围
+    prefix = asr_pinyin[:12]  # 取前12个字符
+    sql = """
+        SELECT id, name, pinyin, pinyin_abbr, 
+               last_order_date, order_count
+        FROM customer_pinyin_index 
+        WHERE pinyin LIKE %s 
+        LIMIT 1000
+    """
+    candidates = db_connection.query(sql, (prefix + '%',))  # 5万→500条
+    
+    # Step 3: 应用层长度过滤（O(1)）
+    asr_len = len(asr_pinyin)
+    filtered = []
+    for c in candidates:
+        len_diff = abs(len(c['pinyin']) - asr_len) / max(asr_len, len(c['pinyin']))
+        if len_diff < 0.3:  # 长度差异&lt;30%
+            filtered.append(c)
+    # 500条 → 300条
+    
+    # Step 4: 计算相似度（仅300条）
+    results = []
+    for c in filtered:
+        scores = {}
+        
+        # 拼音相似度（编辑距离 + LCS）
+        scores['pinyin'] = calc_similarity(asr_pinyin, c['pinyin'])
+        
+        # 首字母匹配
+        scores['abbr'] = calc_similarity(asr_abbr, c['pinyin_abbr'])
+        
+        # 长度匹配
+        scores['length'] = 1 - abs(len(c['pinyin']) - asr_len) / max(asr_len, len(c['pinyin']))
+        
+        # 业务权重（从数据库字段直接读取）
+        scores['business'] = calc_business_weight(c)
+        
+        # 综合得分
+        final_score = (
+            scores['pinyin'] * 0.40 +
+            scores['abbr'] * 0.25 +
+            scores['length'] * 0.15 +
+            scores['business'] * 0.20
+        )
+        
+        if final_score >= 0.7:  # 阈值70%
+            results.append({
+                'id': c['id'],
+                'name': c['name'],
+                'score': final_score,
+                'details': scores
+            })
+    
+    # Step 5: 排序返回Top 10
+    results.sort(key=lambda x: x['score'], reverse=True)
+    return results[:10]
+
+
+# 数据库表结构（简化版）
+"""
+CREATE TABLE customer_pinyin_index (
+    id BIGINT PRIMARY KEY,
+    name VARCHAR(200) NOT NULL,           -- 客户名称
+    pinyin VARCHAR(500) NOT NULL,         -- 全拼音
+    pinyin_abbr VARCHAR(100) NOT NULL,    -- 拼音首字母缩写
+    last_order_date DATE,                 -- 最近订单日期（用于权重）
+    order_count INT DEFAULT 0,            -- 历史订单数（用于权重）
+    INDEX idx_pinyin_prefix (pinyin(12))  -- 前缀索引，关键优化！
+);
+"""</code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="tasks">
+  <div class="container">
+    <div class="section-header animate-in">
+      <span class="section-number">05</span>
+      <h2 class="section-title">开发任务清单</h2>
+      <p class="section-desc">按优先级排序的开发任务</p>
+    </div>
+
+    <h3 style="font-family: var(--serif); font-size: 18px; font-weight: 700; margin: 32px 0 16px;">简化版任务清单（推荐）</h3>
+    <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 16px;">无Redis，纯数据库实现，架构简单，运维成本低</p>
+    <ol class="task-list animate-in">
+      <li>新建独立的拼音索引关联表，添加前缀索引（pinyin(12)）</li>
+      <li>实现拼音+英文混排的语音匹配索引逻辑</li>
+      <li>实现前缀查询 + 长度过滤 + 相似度计算三层优化</li>
+      <li>集成大模型语义理解模块，实现智能客户映射</li>
+      <li>实现产品分层匹配策略</li>
+    </ol>
+
+    <h3 style="font-family: var(--serif); font-size: 18px; font-weight: 700; margin: 32px 0 16px;">完整版任务清单（高并发场景）</h3>
+    <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 16px;">含Redis冷热分离，~80ms响应，适合高频查询场景</p>
+    <ol class="task-list animate-in">
+      <li>新建独立的拼音索引关联表，存储对应标识和拼音信息</li>
+      <li>对现有客户表做冷热数据分离，配置高频客户缓存</li>
+      <li>部署Redis集群，实现热数据缓存同步机制</li>
+      <li>实现拼音+英文混排的语音匹配索引逻辑</li>
+      <li>集成大模型语义理解模块，实现智能客户映射</li>
+      <li>实现产品分层匹配策略</li>
+    </ol>
+
+    <div class="callout warning animate-in" style="margin-top: 32px;">
+      <div class="callout-icon">📌</div>
+      <div class="callout-body">
+        <h4>后续待解决问题</h4>
+        <p><strong>大候选集产品匹配场景优化</strong>：针对用户口述关键字产生20-30个候选产品的场景，尚未讨论出令用户满意的快速定位优化方案。后续需要进一步研究：如何通过多轮对话缩小候选范围、如何利用产品图片辅助识别、如何结合客户历史采购习惯智能推荐。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<footer class="footer">
+  <div class="container">
+    <p><span class="footer-brand">智能制单项目</span> — 基于拼音索引的客户与产品语音匹配优化方案</p>
+    <p>技术方案文档 · 2026-05-11</p>
+  </div>
+</footer>
+
+<script>
+const navLinks = document.querySelectorAll('nav .nav-links a');
+const sections = document.querySelectorAll('section[id]');
+
+function updateActiveNav() {
+  let current = '';
+  sections.forEach(section => {
+    const sectionTop = section.offsetTop - 100;
+    if (window.scrollY >= sectionTop) {
+      current = section.getAttribute('id');
+    }
+  });
+  navLinks.forEach(link => {
+    link.classList.remove('active');
+    if (link.getAttribute('href') === '#' + current) {
+      link.classList.add('active');
+    }
+  });
+}
+
+window.addEventListener('scroll', updateActiveNav);
+updateActiveNav();
+
+const animateElements = document.querySelectorAll('.animate-in');
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      observer.unobserve(entry.target);
+    }
+  });
+}, {
+  threshold: 0.1,
+  rootMargin: '0px 0px -40px 0px'
+});
+
+animateElements.forEach(el => observer.observe(el));
+
+let lastScroll = 0;
+const nav = document.querySelector('nav');
+
+window.addEventListener('scroll', () => {
+  const currentScroll = window.scrollY;
+  if (currentScroll > lastScroll && currentScroll > 200) {
+    nav.style.transform = 'translateY(-100%)';
+  } else {
+    nav.style.transform = 'translateY(0)';
+  }
+  lastScroll = currentScroll;
+});
+</script>
+
+</body>
+</html>

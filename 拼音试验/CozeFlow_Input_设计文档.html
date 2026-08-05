@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CozeFlow Input — 独立项目设计</title>
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+<style>
+:root {
+  --bg: #f8f9fb;
+  --card: #ffffff;
+  --border: #e8ecf0;
+  --text: #1f2937;
+  --text2: #6b7280;
+  --text3: #9ca3af;
+  --primary: #3b82f6;
+  --primary-light: #eff6ff;
+  --primary-border: #bfdbfe;
+  --green: #10b981;
+  --green-light: #ecfdf5;
+  --green-border: #a7f3d0;
+  --amber: #f59e0b;
+  --amber-light: #fffbeb;
+  --amber-border: #fde68a;
+  --red: #ef4444;
+  --red-light: #fef2f2;
+  --red-border: #fecaca;
+  --purple: #8b5cf6;
+  --purple-light: #f5f3ff;
+  --purple-border: #ddd6fe;
+  --cyan: #06b6d4;
+  --cyan-light: #ecfeff;
+  --cyan-border: #a5f3fc;
+  --teal: #14b8a6;
+  --teal-light: #f0fdfa;
+  --teal-border: #99f6e4;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  padding: 32px 20px;
+}
+.container { max-width: 960px; margin: 0 auto; }
+
+.doc-header {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px 48px;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+}
+.doc-header::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #3b82f6, #06b6d4, #8b5cf6, #10b981);
+}
+.doc-header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.doc-header h1 i { color: var(--primary); font-size: 28px; }
+.doc-header .subtitle {
+  font-size: 15px;
+  color: var(--text2);
+  margin-bottom: 20px;
+}
+.doc-header .project-id {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  background: var(--primary-light);
+  border: 1px solid var(--primary-border);
+  color: #1e40af;
+  margin-bottom: 16px;
+}
+.doc-meta {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.doc-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text2);
+}
+.doc-meta-item i { font-size: 14px; color: var(--primary); }
+.doc-meta-item strong { color: var(--text); font-weight: 600; }
+
+.section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 32px 36px;
+  margin-bottom: 20px;
+}
+.section-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.section-title i {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: white;
+  flex-shrink: 0;
+}
+.icon-blue { background: var(--primary); }
+.icon-green { background: var(--green); }
+.icon-amber { background: var(--amber); }
+.icon-red { background: var(--red); }
+.icon-purple { background: var(--purple); }
+.icon-cyan { background: var(--cyan); }
+.icon-teal { background: var(--teal); }
+
+p { font-size: 14px; color: var(--text); margin-bottom: 12px; line-height: 1.8; }
+p:last-child { margin-bottom: 0; }
+
+.highlight-box {
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  line-height: 1.8;
+}
+.highlight-box.blue { background: var(--primary-light); border: 1px solid var(--primary-border); color: #1e40af; }
+.highlight-box.green { background: var(--green-light); border: 1px solid var(--green-border); color: #065f46; }
+.highlight-box.amber { background: var(--amber-light); border: 1px solid var(--amber-border); color: #92400e; }
+.highlight-box.red { background: var(--red-light); border: 1px solid var(--red-border); color: #991b1b; }
+.highlight-box.purple { background: var(--purple-light); border: 1px solid var(--purple-border); color: #5b21b6; }
+.highlight-box.cyan { background: var(--cyan-light); border: 1px solid var(--cyan-border); color: #155e75; }
+.highlight-box.teal { background: var(--teal-light); border: 1px solid var(--teal-border); color: #115e59; }
+.highlight-box i { margin-right: 6px; }
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-bottom: 16px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.data-table th, .data-table td {
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.data-table th {
+  background: #f1f5f9;
+  font-weight: 600;
+  color: var(--text);
+  font-size: 12px;
+}
+.data-table td { color: var(--text2); }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table code {
+  background: #f1f5f9;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  color: #e5484d;
+}
+
+.code-block {
+  background: #1e293b;
+  color: #e2e8f0;
+  padding: 18px 20px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.7;
+  overflow-x: auto;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  margin-bottom: 16px;
+}
+.code-block .comment { color: #64748b; }
+.code-block .keyword { color: #c084fc; }
+.code-block .string { color: #34d399; }
+.code-block .type { color: #60a5fa; }
+
+.module-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+@media (max-width: 700px) {
+  .module-grid { grid-template-columns: 1fr; }
+}
+.module-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.2s;
+}
+.module-card:hover {
+  border-color: var(--primary-border);
+  box-shadow: 0 4px 16px rgba(59,130,246,0.08);
+}
+.module-card .module-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.module-card .module-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: white;
+  flex-shrink: 0;
+}
+.module-card .module-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+.module-card .module-file {
+  font-size: 11px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  color: var(--text3);
+}
+.module-card .module-desc {
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.7;
+  margin-bottom: 8px;
+}
+.module-card .module-api {
+  font-size: 12px;
+  color: var(--text3);
+  line-height: 1.7;
+}
+.module-card .module-api code {
+  background: #f1f5f9;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 11px;
+  color: #e5484d;
+}
+
+.wireframe {
+  background: #f8fafc;
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  font-size: 12px;
+  line-height: 1.8;
+}
+.wireframe .wf-title {
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--text);
+  margin-bottom: 12px;
+  text-align: center;
+}
+.wireframe .wf-box {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  background: white;
+}
+.wireframe .wf-box.dark {
+  background: #1e293b;
+  color: #94a3b8;
+  border-color: #334155;
+}
+.wireframe .wf-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.wireframe .wf-btn {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.wireframe .wf-input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 11px;
+  color: var(--text3);
+  background: #f8fafc;
+}
+
+.task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.task-item {
+  display: flex;
+  gap: 14px;
+  padding: 16px 20px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  transition: all 0.2s;
+  align-items: flex-start;
+}
+.task-item:hover {
+  border-color: var(--primary-border);
+  background: var(--primary-light);
+}
+.task-item .task-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: var(--primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.task-item .task-body { flex: 1; }
+.task-item .task-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.task-item .task-desc {
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.6;
+}
+.task-item .task-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-top: 6px;
+  margin-right: 4px;
+}
+.task-item .task-tag.core { background: var(--primary-light); color: #1e40af; }
+.task-item .task-tag.input { background: var(--purple-light); color: #5b21b6; }
+.task-item .task-tag.ui { background: var(--cyan-light); color: #155e75; }
+.task-item .task-tag.test { background: var(--green-light); color: #065f46; }
+
+.footer {
+  text-align: center;
+  padding: 24px;
+  font-size: 12px;
+  color: #9ca3af;
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="doc-header">
+    <h1><i class="ri-input-method-line"></i> CozeFlow Input</h1>
+    <div class="subtitle">扣子工作流通用输入面板 — 独立项目设计文档</div>
+    <div class="project-id">cozeflow-input</div>
+    <div class="doc-meta">
+      <div class="doc-meta-item"><i class="ri-calendar-line"></i> <strong>日期</strong> 2026-05-17</div>
+      <div class="doc-meta-item"><i class="ri-user-line"></i> <strong>作者</strong> 智能制单项目组</div>
+      <div class="doc-meta-item"><i class="ri-git-branch-line"></i> <strong>版本</strong> v1.0</div>
+      <div class="doc-meta-item"><i class="ri-shield-check-line"></i> <strong>状态</strong> 待评审</div>
+    </div>
+  </div>
+
+  <!-- 一、项目定位 -->
+  <div class="section">
+    <div class="section-title">
+      <i class="icon-blue"><i class="ri-focus-3-line"></i></i>
+      一、项目定位
+    </div>
+    <p>CozeFlow Input 是一个<strong>独立的前端组件项目</strong>，为所有基于扣子工作流的应用提供统一的输入交互面板。它封装了文字对话、语音输入、截图粘贴、文件上传四种输入方式，以及工作流 API 调用、消息管理、配置管理等通用逻辑，业务方只需关注工作流的输入参数和输出处理。</p>
+
+    <div class="highlight-box teal">
+      <i class="ri-puzzle-line"></i> <strong>核心价值：</strong>
+      一次开发，所有扣子工作流项目复用。业务方无需重复开发输入交互，只需配置 workflow_id 和输出回调即可接入。
+    </div>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>维度</th>
+          <th>说明</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>项目性质</strong></td>
+          <td>独立前端组件，不绑定任何业务逻辑</td>
+        </tr>
+        <tr>
+          <td><strong>交付物</strong></td>
+          <td>单 HTML 文件（零构建依赖）+ 可选 JS 模块文件</td>
+        </tr>
+        <tr>
+          <td><strong>复用方式</strong></td>
+          <td>iframe 嵌入 / script 标签引入 / 源码拷贝</td>
+        </tr>
+        <tr>
+          <td><strong>适用场景</strong></td>
+          <td>任何需要通过扣子工作流 API 接收用户输入并获取结构化输出的前端应用</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 二、技术栈 -->
+  <div class="section">
+    <div class="section-title">
+      <i class="icon-cyan"><i class="ri-stack-line"></i></i>
+      二、技术栈
+    </div>
+
+    <div class="highlight-box cyan">
+      <i class="ri-information-line"></i> <strong>设计原则：</strong>
+      零构建依赖，所有库通过 CDN 引入，单 HTML 文件即可运行。不使用框架（React/Vue），纯 Vanilla JS，确保最大兼容性和最小接入成本。
+    </div>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>技术</th>
+          <th>用途</th>
+          <th>引入方式</th>
+          <th>大小</th>
+          <th>必要性</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Vanilla JS (ES5+)</strong></td>
+          <td>核心逻辑</td>
+          <td>内联</td>
+          <td>0</td>
+          <td>必须</td>
+        </tr>
+        <tr>
+          <td><strong>CSS Custom Properties</strong></td>
+          <td>主题/样式</td>
+          <td>内联</td>
+          <td>0</td>
+          <td>必须</td>
+        </tr>
+        <tr>
+          <td><code>remixicon</code></td>
+          <td>图标</td>
+          <td>CDN CSS</td>
+          <td>~80KB</td>
+          <td>必须</td>
+        </tr>
+        <tr>
+          <td><code>SheetJS (xlsx)</code></td>
+          <td>Excel 解析</td>
+          <td>CDN script</td>
+          <td>~500KB</td>
+          <td>可选（按需加载）</td>
+        </tr>
+        <tr>
+          <td><code>mammoth.js</code></td>
+          <td>Word 解析</td>
+          <td>CDN script</td>
+          <td>~100KB</td>
+          <td>可选（按需加载）</td>
+        </tr>
+        <tr>
+          <td><code>MediaRecorder API</code></td>
+          <td>录音</td>
+          <td>浏览器原生</td>
+          <td>0</td>
+          <td>语音输入必须</td>
+        </tr>
+        <tr>
+          <td><code>Clipboard API</code></td>
+          <td>粘贴截图</td>
+          <td>浏览器原生</td>
+          <td>0</td>
+          <td>截图粘贴必须</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="highlight-box amber">
+      <i class="ri-lightbulb-line"></i> <strong>按需加载策略：</strong>
+      SheetJS 和 mammoth.js 仅在用户首次上传对应文件类型时动态加载，不纳入首屏资源，减少初始加载时间。
+    </div>
+  </div>
+
+  <!-- 三、文件结构 -->
+  <div class="section">
+    <div class="section-title">
+      <i class="icon-green"><i class="ri-folder-line"></i></i>
+      三、文件结构
+    </div>
+
+    <div class="code-block"><span class="comment">cozeflow-input/</span>
+├── <span class="type">index.html</span>              <span class="comment">← 完整独立版（单文件，可直接运行）</span>
+├── <span class="type">cozeflow-input.js</span>       <span class="comment">← 核心模块（可被外部页面引入）</span>
+├── <span class="type">cozeflow-input.css</span>      <span class="comment">← 样式文件（可被外部页面引入）</span>
+├── <span class="type">demo.html</span>               <span class="comment">← 演示页面（接入智能制单业务）</span>
+└── <span class="type">README.md</span>               <span class="comment">← 使用文档</span></div>
+
+    <p><strong>两种使用方式：</strong></p>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>方式</th>
+          <th>适用场景</th>
+          <th>接入代码</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>单文件</strong></td>
+          <td>快速原型、独立工具</td>
+          <td>直接打开 <code>index.html</code></td>
+        </tr>
+        <tr>
+          <td><strong>模块引入</strong></td>
+          <td>嵌入现有业务页面</td>
+          <td><code>&lt;script src="cozeflow-input.js"&gt;</code> + <code>&lt;link href="cozeflow-input.css"&gt;</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 四、模块架构 -->
+  <div class="section">
+    <div class="section-title">
+      <i class="icon-purple"><i class="ri-box-3-line"></i></i>
+      四、模块架构
+    </div>
+    <p>核心逻辑拆分为 6 个独立模块，每个模块职责单一、可独立测试、可按需加载。</p>
+
+    <div class="module-grid">
+      <div class="module-card">
+        <div class="module-header">
+          <div class="module-icon" style="background:var(--primary);"><i class="ri-plug-line"></i></div>
+          <div>
+            <div class="module-name">WorkflowClient</div>
+            <div class="module-file">核心模块</div>
+          </div>
+        </div>
+        <div class="module-desc">工作流 API 调用封装，处理鉴权、请求、响应解析、超时重试、流式输出</div>
+        <div class="module-api">
+          <code>run(params)</code> 同步执行<br>
+          <code>runStream(params)</code> 流式执行<br>
+          <code>uploadFile(blob)</code> 上传文件<br>
+          <code>transcribeAudio(blob)</code> 语音转文字<br>
+          <code>setConfig({workflow_id, token})</code> 配置
+        </div>
+      </div>
+
+      <div class="module-card">
+        <div class="module-header">
+          <div class="module-icon" style="background:var(--purple);"><i class="ri-chat-3-line"></i></div>
+          <div>
+            <div class="module-name">MessageManager</div>
+            <div class="module-file">核心模块</div>
+          </div>
+        </div>
+        <div class="module-desc">消息列表管理，维护对话历史，支持用户/AI/系统三种消息类型，自动滚动</div>
+        <div class="module-api">
+          <code>addUser(text)</code> 添加用户消息<br>
+          <code>addAI(text, data)</code> 添加AI消息<br>
+          <code>addSystem(text, type)</code> 添加系统消息<br>
+          <code>clear()</code> 清空历史<br>
+          <code>getHistory()</code> 获取对话历史
+        </div>
+      </div>
+
+      <div class="module-card">
+        <div class="module-header">
+          <div class="module-icon" style="background:var(--cyan);"><i class="ri-mic-line"></i></div>
+          <div>
+            <div class="module-name">VoiceInput</div>
+            <div class="module-file">输入模块</div>
+          </div>
+        </div>
+        <div class="module-desc">语音录制与识别，支持 Coze API 和浏览器原生两种识别引擎</div>
+        <div class="module-api">
+          <code>start()</code> 开始录音<br>
+          <code>stop()</code> 停止录音<br>
+          <code>onResult(callback)</code> 识别结果回调<br>
+          <code>getState()</code> 获取录音状态<br>
+          <code>setEngine('coze'|'native')</code> 切换引擎
+        </div>
+      </div>
+
+      <div class="module-card">
+        <div class="module-header">
+          <div class="module-icon" style="background:var(--teal);"><i class="ri-screenshot-line"></i></div>
+          <div>
+            <div class="module-name">ImageCapture</div>
+            <div class="module-file">输入模块</div>
+          </div>
+        </div>
+        <div class="module-desc">截图粘贴捕获，监听 paste 事件提取图片，支持拖拽上传图片</div>
+        <div class="module-api">
+          <code>startListening()</code> 开始监听粘贴<br>
+          <code>stopListening()</code> 停止监听<br>
+          <code>onCapture(callback)</code> 图片捕获回调<br>
+          <code>enableDragDrop(el)</code> 启用拖拽上传
+        </div>
+      </div>
+
+      <div class="module-card">
+        <div class="module-header">
+          <div class="module-icon" style="background:var(--amber);"><i class="ri-file-excel-2-line"></i></div>
+          <div>
+            <div class="module-name">FileParser</div>
+            <div class="module-file">输入模块</div>
+          </div>
+        </div>
+        <div class="module-desc">文件解析，按需加载 SheetJS/mammoth.js，本地解析 Excel/Word 提取文本</div>
+        <div class="module-api">
+          <code>parseExcel(file)</code> 解析Excel<br>
+          <code>parseWord(file)</code> 解析Word<br>
+          <code>parse(file)</code> 自动识别类型<br>
+          <code>isSupported(type)</code> 检查支持类型
+        </div>
+      </div>
+
+      <div class="module-card">
+        <div class="module-header">
+          <div class="module-icon" style="background:var(--green);"><i class="ri-settings-3-line"></i></div>
+          <div>
+            <div class="module-name">ConfigManager</div>
+            <div class="module-file">核心模块</div>
+          </div>
+        </div>
+        <div class="module-desc">配置管理，持久化存储 workflow_id / token / 引擎偏好等，支持导入导出</div>
+        <div class="module-api">
+          <code>get(key)</code> 获取配置<br>
+          <code>set(key, value)</code> 设置配置<br>
+          <code>save()</code> 持久化到 localStorage<br>
+          <code>load()</code> 从 localStorage 加载<br>
+          <code>export()</code> / <code>import(data)</code> 导入导出
+        </div>
+      </div>
+    </div>
+
+    <p><strong>模块依赖关系：</strong></p>
+    <div class="code-block"><span class="comment">依赖方向：上层 → 下层</span>
+
+<span class="type">UI 层</span>（HTML/CSS）
+  ↓ 调用
+<span class="type">输入模块</span>  VoiceInput / ImageCapture / FileParser
+  ↓ 输出文本/文件
+<span class="type">核心模块</span>  WorkflowClient ← MessageManager
+  ↓ 调用                    ↑ 记录
+<span class="type">API 层</span>    Coze Workflow API / File API / Audio API
+
+<span class="type">ConfigManager</span> 被所有模块共享读写</div>
+  </div>
+
+  <!-- 五、UI 设计 -->
+  <div class="section">
+    <div class="section-title">
+      <i class="icon-cyan"><i class="ri-layout-line"></i></i>
+      五、UI 设计
+    </div>
+
+    <p>面板采用上下三段式布局：顶部配置栏（可折叠）→ 中部消息列表 → 底部输入区。</p>
+
+    <div class="wireframe">
+      <div class="wf-title">CozeFlow Input 面板线框图</div>
+
+      <div class="wf-box" style="background:#f0f9ff;border-color:var(--primary-border);">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-weight:600;color:#1e40af;">⚙️ 配置栏（可折叠）</span>
+          <span style="font-size:10px;color:#64748b;">▼ 收起</span>
+        </div>
+        <div class="wf-row" style="margin-top:8px;">
+          <span style="font-size:11px;color:#64748b;width:80px;">Workflow ID</span>
+          <div class="wf-input">73664689170551****</div>
+        </div>
+        <div class="wf-row">
+          <span style="font-size:11px;color:#64748b;width:80px;">PAT Token</span>
+          <div class="wf-input">pat_zwWR14W4YEjL...</div>
+        </div>
+        <div class="wf-row">
+          <span style="font-size:11px;color:#64748b;width:80px;">语音引擎</span>
+          <span class="wf-btn" style="background:var(--primary-light);color:#1e40af;">Coze API</span>
+          <span class="wf-btn" style="background:#f1f5f9;color:#64748b;">浏览器原生</span>
+        </div>
+      </div>
+
+      <div class="wf-box" style="min-height:180px;">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
+          <div style="background:#3b82f6;color:white;padding:6px 12px;border-radius:10px;font-size:11px;max-width:70%;">帮华创科技下个单，A3打印纸100箱</div>
+        </div>
+        <div style="display:flex;justify-content:flex-start;margin-bottom:8px;">
+          <div style="background:#f0f1f4;color:#1f2937;padding:6px 12px;border-radius:10px;font-size:11px;max-width:70%;">
+            已识别制单信息：<br>
+            客户：深圳华创科技有限公司<br>
+            产品：A3打印纸 × 100箱<br>
+            <span style="color:#3b82f6;font-size:10px;">📋 JSON 已输出</span>
+          </div>
+        </div>
+        <div style="text-align:center;font-size:10px;color:#9ca3af;">
+          <i class="ri-time-line"></i> 2026-05-17 14:30 · Token: 150
+        </div>
+      </div>
+
+      <div class="wf-box dark">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+          <span class="wf-btn" style="background:#7c3aed;color:white;">🎤</span>
+          <span class="wf-btn" style="background:#0891b2;color:white;">📷</span>
+          <span class="wf-btn" style="background:#d97706;color:white;">📎</span>
+          <div class="wf-input" style="background:#334155;border-color:#475569;color:#94a3b8;flex:1;">输入制单需求...</div>
+          <span class="wf-btn" style="background:#3b82f6;color:white;">发送 ➤</span>
+        </div>
+        <div style="font-size:10px;color:#475569;">
+          支持文字输入 · 语音录制 · 截图粘贴(Ctrl+V) · 拖拽图片 · 上传Excel/Word
+        </div>
+      </div>
+    </div>
+
+    <p><strong>UI 状态设计：</strong></p>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>状态</th>
+          <th>触发</th>
+          <th>UI 表现</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>空闲</strong></td>
+          <td>初始 / 完成后</td>
+          <td>输入框可用，发送按钮蓝色</td>
+        </tr>
+        <tr>
+          <td><strong>录音中</strong></td>
+          <td>点击🎤</td>
+          <td>🎤按钮变红脉冲，输入框显示"录音中..."，发送按钮禁用</td>
+        </tr>
+        <tr>
+          <td><strong>识别中</strong></td>
+          <td>录音结束</td>
+          <td>输入框显示"语音识别中..."，加载动画</td>
+        </tr>
+        <tr>
+          <td><strong>上传中</strong></td>
+          <td>粘贴截图/选择文件</td>
+          <td>消息列表显示上传进度条，发送按钮禁用</td>
+        </tr>
+        <tr>
+          <td><strong>处理中</strong></td>
+          <td>工作流执行中</td>
+          <td>消息列表显示"思考中..."动画，发送按钮禁用，显示耗时</td>
+        </tr>
+        <tr>
+          <td><strong>成功</strong></td>
+          <td>工作流返回</td>
+          <td>AI消息气泡展示结果，触发业务回调</td>
+        </tr>
+        <tr>
+          <td><strong>失败</strong></td>
+          <td>API错误/超时</td>
+          <td>系统消息红色提示，发送按钮恢复可用，支持重试</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 六、核心 API 设计 -->
+  <div class="section">
+    <div class="section-title">
+      <i class="icon-green"><i class="ri-code-s-slash-line"></i></i>
+      六、核心 API 设计
+    </div>
+
+    <p><strong>WorkflowClient — 工作流调用封装：</strong></p>
+    <div class="code-block"><span class="keyword">var</span> client = <span class="keyword">new</span> <span class="type">WorkflowClient</span>({
+  baseUrl: <span class="string">'https://api.coze.cn'</span>,
+  token: <span class="string">'pat_xxx'</span>,
+  workflowId: <span class="string">'73664689170551****'</span>,
+  timeout: <span class="type">60000</span>,
+  onBeforeSend: <span class="keyword">function</span>(params) { <span class="comment">/* 发送前钩子 */</span> },
+  onAfterReceive: <span class="keyword">function</span>(result) { <span class="comment">/* 接收后钩子 */</span> }
+});
+
+<span class="comment">// 同步执行工作流</span>
+<span class="keyword">var</span> result = <span class="keyword">await</span> client.run({
+  user_input: <span class="string">'帮华创科技下个单'</span>,
+  image_url: <span class="string">'{"file_id":"xxx"}'</span>    <span class="comment">// 可选</span>
+});
+<span class="comment">// result = { code: 0, data: "{...}", debug_url: "...", usage: {...} }</span>
+
+<span class="comment">// 流式执行工作流</span>
+client.runStream({
+  user_input: <span class="string">'帮华创科技下个单'</span>
+}, {
+  onMessage: <span class="keyword">function</span>(chunk) { <span class="comment">/* 流式消息 */</span> },
+  onComplete: <span class="keyword">function</span>(result) { <span class="comment">/* 完成 */</span> },
+  onError: <span class="keyword">function</span>(err) { <span class="comment">/* 错误 */</span> }
+});
+
+<span class="comment">// 上传文件</span>
+<span class="keyword">var</span> fileResult = <span class="keyword">await</span> client.uploadFile(imageBlob);
+<span class="comment">// fileResult = { file_id: 'xxx' }</span>
+
+<span class="comment">// 语音转文字</span>
+<span class="keyword">var</span> transcript = <span class="keyword">await</span> client.transcribeAudio(audioBlob);
+<span class="comment">// transcript = '帮华创科技下个单A3打印纸100箱'</span></div>
+
+    <p><strong>业务方接入接口（对外暴露的最小 API）：</strong></p>
+    <div class="code-block"><span class="comment">// 初始化面板</span>
+<span class="keyword">var</span> panel = <span class="keyword">new</span> <span class="type">CozeFlowInput</span>({
+  container: <span class="string">'#right-panel'</span>,       <span class="comment">// 挂载容器</span>
+  workflowId: <span class="string">'73664689170551****'</span>, <span class="comment">// 工作流ID</span>
+  token: <span class="string">'pat_xxx'</span>,              <span class="comment">// PAT Token</span>
+  inputs: {                           <span class="comment">// 启用的输入方式</span>
+    text: <span class="type">true</span>,
+    voice: <span class="type">true</span>,
+    image: <span class="type">true</span>,
+    file: <span class="type">true</span>
+  },
+  voiceEngine: <span class="string">'coze'</span>,               <span class="comment">// 'coze' | 'native'</span>
+  onResult: <span class="keyword">function</span>(data) {       <span class="comment">// 工作流返回回调</span>
+    <span class="comment">// data = 工作流结束节点输出的 JSON 对象</span>
+    <span class="comment">// 业务方在此处理填充表单等逻辑</span>
+    fillOrderForm(data);
+  },
+  onError: <span class="keyword">function</span>(err) {         <span class="comment">// 错误回调</span>
+    console.error(err);
+  }
+});
+
+<span class="comment">// 程序化发送消息</span>
+panel.send(<span class="string">'帮华创科技下个单'</span>);
+
+<span class="comment">// 获取对话历史</span>
+<span class="keyword">var</span> history = panel.getHistory();
+
+<span class="comment">// 更新配置</span>
+panel.setConfig({ workflowId: <span class="string">'new-id'</span> });</div>
+  </div>
+
+  <!-- 七、输入方式详细设计 -->
+  <div class="section">
+    <div class="section-title">
+      <i class="icon-amber"><i class="ri-input-method-line"></i></i>
+      七、输入方式详细设计
+    </div>
+
+    <!-- 7.1 文字输入 -->
+    <div style="border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <div style="width:36px;height:36px;border-radius:8px;background:var(--primary);color:white;display:flex;align-items:center;justify-content:center;font-size:16px;"><i class="ri-chat-3-line"></i></div>
+        <div>
+          <div style="font-size:15px;font-weight:700;">7.1 文字输入</div>
+          <div style="font-size:11px;color:var(--text3);">模块：MessageManager + WorkflowClient</div>
+        </div>
+      </div>
+      <p><strong>流程：</strong>用户在输入框输入文字 → 点击发送/按回车 → 调用 <code>WorkflowClient.run()</code> → 返回结果触发 <code>onResult</code> 回调 → AI 消息气泡展示结果摘要</p>
+      <p><strong>关键逻辑：</strong></p>
+      <table class="data-table">
+        <thead>
+          <tr><th>逻辑点</th><th>实现</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>发送防抖</td><td>发送中禁用按钮，防止重复提交</td></tr>
+          <tr><td>超时处理</td><td>60 秒未返回则提示超时，支持重试</td></tr>
+          <tr><td>结果解析</td><td>尝试 <code>JSON.parse(result.data)</code>，失败则作为纯文本展示</td></tr>
+          <tr><td>JSON 预览</td><td>AI 消息气泡中可展开查看完整 JSON</td></tr>
+          <tr><td>Token 统计</td><td>系统消息显示本次消耗 Token 数</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 7.2 语音输入 -->
+    <div style="border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <div style="width:36px;height:36px;border-radius:8px;background:var(--purple);color:white;display:flex;align-items:center;justify-content:center;font-size:16px;"><i class="ri-mic-line"></i></div>
+        <div>
+          <div style="font-size:15px;font-weight:700;">7.2 语音输入</div>
+          <div style="font-size:11px;color:var(--text3);">模块：VoiceInput + WorkflowClient</div>
+        </div>
+      </div>
+      <p><strong>流程：</strong>点击🎤 → MediaRecorder 录制 WebM → 点击停止 → 调用 <code>WorkflowClient.transcribeAudio()</code> → 识别文本回填输入框 → 自动触发工作流</p>
+      <p><strong>双引擎设计：</strong></p>
+      <table class="data-table">
+        <thead>
+          <tr><th>维度</th><th>Coze API 引擎</th><th>浏览器原生引擎</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>识别准确率</td><td>高（专业语音模型）</td><td>一般（Chrome 中文尚可）</td></tr>
+          <tr><td>成本</td><td>消耗 Token</td><td>免费</td></tr>
+          <tr><td>浏览器兼容</td><td>所有现代浏览器</td><td>仅 Chrome/Edge</td></tr>
+          <tr><td>实时性</td><td>录音结束后识别</td><td>支持实时中间结果</td></tr>
+          <tr><td>网络要求</td><td>需要</td><td>需要（Chrome 在线模式）</td></tr>
+          <tr><td>适用场景</td><td>生产环境</td><td>快速调试/离线备选</td></tr>
+        </tbody>
+      </table>
+      <p><strong>关键逻辑：</strong></p>
+      <table class="data-table">
+        <thead>
+          <tr><th>逻辑点</th><th>实现</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>权限检查</td><td>首次录音前检查 <code>navigator.mediaDevices.getUserMedia</code>，无权限则提示</td></tr>
+          <tr><td>录音格式</td><td><code>MediaRecorder</code> + <code>audio/webm</code>，兼容 Chrome/Edge/Firefox</td></tr>
+          <tr><td>最大时长</td><td>60 秒自动停止，防止录音过长</td></tr>
+          <tr><td>中间结果</td><td>浏览器原生引擎支持 <code>oninterimresult</code>，实时显示在输入框</td></tr>
+          <tr><td>自动提交</td><td>识别完成后自动触发 <code>panel.send(transcript)</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 7.3 截图粘贴 -->
+    <div style="border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <div style="width:36px;height:36px;border-radius:8px;background:var(--cyan);color:white;display:flex;align-items:center;justify-content:center;font-size:16px;"><i class="ri-screenshot-line"></i></div>
+        <div>
+          <div style="font-size:15px;font-weight:700;">7.3 截图粘贴</div>
+          <div style="font-size:11px;color:var(--text3);">模块：ImageCapture + WorkflowClient</div>
+        </div>
+      </div>
+      <p><strong>流程：</strong>用户 Ctrl+V 粘贴截图 → <code>paste</code> 事件捕获图片 Blob → 上传到 Coze 文件 API 获取 file_id → 调用 <code>WorkflowClient.run({ image_url })</code> → 工作流内部 LLM 视觉节点识别图片内容</p>
+      <p><strong>关键逻辑：</strong></p>
+      <table class="data-table">
+        <thead>
+          <tr><th>逻辑点</th><th>实现</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>粘贴监听</td><td><code>document.addEventListener('paste', handler)</code>，提取 <code>clipboardData.items</code> 中 type 为 image/* 的项</td></tr>
+          <tr><td>拖拽上传</td><td>面板区域监听 <code>dragover</code> + <code>drop</code>，提取 <code>dataTransfer.files</code> 中的图片</td></tr>
+          <tr><td>图片预览</td><td>消息列表中展示缩略图，点击可放大查看</td></tr>
+          <tr><td>文件上传</td><td><code>POST /v1/files/upload</code>，FormData 格式，获取 file_id</td></tr>
+          <tr><td>参数传递</td><td><code>image_url: '{"file_id":"xxx"}'</code>，工作流开始节点需定义 image_url 参数</td></tr>
+          <tr><td>工作流分支</td><td>工作流内通过条件分支判断 image_url 是否存在，有则走 LLM 视觉识别路径</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 7.4 文件上传 -->
+    <div style="border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:0;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <div style="width:36px;height:36px;border-radius:8px;background:var(--amber);color:white;display:flex;align-items:center;justify-content:center;font-size:16px;"><i class="ri-file-excel-2-line"></i></div>
+        <div>
+          <div style="font-size:15px;font-weight:700;">7.4 文件上传</div>
+          <div style="font-size:11px;color:var(--text3);">模块：FileParser + WorkflowClient</div>
+        </div>
+      </div>
+      <p><strong>流程 A（本地解析）：</strong>用户选择文件 → FileParser 本地解析提取文本 → 文本作为 <code>user_input</code> 传入工作流</p>
+      <p><strong>流程 B（上传解析）：</strong>用户选择文件 → 上传到 Coze 文件 API → file_id 传入工作流 → 工作流内部用插件解析</p>
+      <p><strong>关键逻辑：</strong></p>
+      <table class="data-table">
+        <thead>
+          <tr><th>逻辑点</th><th>实现</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>文件选择</td><td><code>&lt;input type="file" accept=".xlsx,.xls,.docx,.doc"&gt;</code>，支持点击和拖拽</td></tr>
+          <tr><td>Excel 解析</td><td>按需加载 SheetJS CDN，<code>XLSX.read(arrayBuffer)</code> → 遍历 sheet → 拼接单元格文本</td></tr>
+          <tr><td>Word 解析</td><td>按需加载 mammoth.js CDN，<code>mammoth.extractRawText(arrayBuffer)</code> → 获取纯文本</td></tr>
+          <tr><td>文本截断</td><td>解析文本超过 10000 字符时截断并提示，避免超出工作流请求限制</td></tr>
+          <tr><td>预览确认</td><td>解析后展示前 500 字预览，用户确认后提交</td></tr>
+          <tr><td>按需加载</td><td>SheetJS/mammoth.js 仅在首次使用时动态 <code>document.createElement('script')</code> 加载</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 八、工作流侧配合 -->
+  <div class="section">
+    <div class="section-title">
+      <i class="icon-purple"><i class="ri-flow-chart"></i></i>
+      八、工作流侧配合
+    </div>
+    <p>CozeFlow Input 的前端输入需要工作流侧的配合设计，确保各种输入方式的数据能被正确接收和处理。</p>
+
+    <div class="code-block"><span class="comment">工作流开始节点参数定义：</span>
+
+{
+  <span class="string">"user_input"</span>: {
+    <span class="string">"type"</span>: <span class="string">"string"</span>,
+    <span class="string">"required"</span>: <span class="type">true</span>,
+    <span class="string">"description"</span>: <span class="string">"用户输入的文本内容（文字/语音识别/文件解析结果）"</span>
+  },
+  <span class="string">"image_url"</span>: {
+    <span class="string">"type"</span>: <span class="string">"string"</span>,
+    <span class="string">"required"</span>: <span class="type">false</span>,
+    <span class="string">"description"</span>: <span class="string">"截图的 file_id，格式：{\"file_id\":\"xxx\"}"</span>
+  },
+  <span class="string">"file_id"</span>: {
+    <span class="string">"type"</span>: <span class="string">"string"</span>,
+    <span class="string">"required"</span>: <span class="type">false</span>,
+    <span class="string">"description"</span>: <span class="string">"上传文件的 file_id，格式：{\"file_id\":\"xxx\"}"</span>
+  }
+}</div>
+
+    <p><strong>工作流分支设计：</strong></p>
+    <div class="code-block"><span class="comment">工作流节点编排（含分支）：</span>
+
+<span class="type">开始节点</span> → <span class="type">条件分支</span>
+  ├─ image_url 有值 → <span class="type">LLM 视觉节点</span>（识别图片内容）→ <span class="type">合并节点</span>
+  ├─ file_id 有值 → <span class="type">文件解析插件</span> → <span class="type">合并节点</span>
+  └─ 仅 user_input → <span class="type">合并节点</span>
+→ <span class="type">LLM 主节点</span>（解析制单意图，输出 JSON v1.1）→ <span class="type">结束节点</span></div>
+
+    <div class="highlight-box purple">
+      <i class="ri-information-line"></i> <strong>工作流侧的优势：</strong>
+      分支逻辑在工作流中可视化编排，比在智能体 Prompt 中用条件判断更可控、更稳定。
+      图片识别走 LLM 视觉节点，文件解析走插件节点，各司其职。
+    </div>
+  </div>
+
+  <!-- 九、开发任务 -->
+  <div class="section">
+    <div class="section-title">
+      <i class="icon-blue"><i class="ri-list-check-2"></i></i>
+      九、开发任务
+    </div>
+
+    <div class="task-list">
+      <div class="task-item">
+        <div class="task-num">1</div>
+        <div class="task-body">
+          <div class="task-title">WorkflowClient 核心模块</div>
+          <div class="task-desc">封装工作流 API 调用（run/runStream/uploadFile/transcribeAudio），处理鉴权、超时、重试、响应解析</div>
+          <div class="task-tag core">核心</div>
+        </div>
+      </div>
+      <div class="task-item">
+        <div class="task-num">2</div>
+        <div class="task-body">
+          <div class="task-title">MessageManager + UI 面板</div>
+          <div class="task-desc">消息列表管理 + 面板三段式布局（配置栏/消息列表/输入区）+ 消息气泡渲染 + 状态管理</div>
+          <div class="task-tag ui">UI</div>
+          <div class="task-tag core">核心</div>
+        </div>
+      </div>
+      <div class="task-item">
+        <div class="task-num">3</div>
+        <div class="task-body">
+          <div class="task-title">文字输入 + 发送流程</div>
+          <div class="task-desc">输入框 + 发送按钮 + 回车发送 + 防抖 + 超时处理 + 结果展示 + JSON 预览</div>
+          <div class="task-tag input">输入</div>
+        </div>
+      </div>
+      <div class="task-item">
+        <div class="task-num">4</div>
+        <div class="task-body">
+          <div class="task-title">VoiceInput 语音输入模块</div>
+          <div class="task-desc">MediaRecorder 录制 + Coze 语音 API 识别 + 浏览器原生引擎备选 + 录音状态动画 + 自动提交</div>
+          <div class="task-tag input">输入</div>
+        </div>
+      </div>
+      <div class="task-item">
+        <div class="task-num">5</div>
+        <div class="task-body">
+          <div class="task-title">ImageCapture 截图粘贴模块</div>
+          <div class="task-desc">paste 事件监听 + 图片提取 + 拖拽上传 + 缩略图预览 + Coze 文件上传 API</div>
+          <div class="task-tag input">输入</div>
+        </div>
+      </div>
+      <div class="task-item">
+        <div class="task-num">6</div>
+        <div class="task-body">
+          <div class="task-title">FileParser 文件解析模块</div>
+          <div class="task-desc">文件选择 + SheetJS 按需加载解析 Excel + mammoth.js 按需加载解析 Word + 文本预览确认</div>
+          <div class="task-tag input">输入</div>
+        </div>
+      </div>
+      <div class="task-item">
+        <div class="task-num">7</div>
+        <div class="task-body">
+          <div class="task-title">ConfigManager 配置管理</div>
+          <div class="task-desc">配置持久化（workflow_id/token/引擎偏好）+ 导入导出 + 配置栏 UI</div>
+          <div class="task-tag core">核心</div>
+        </div>
+      </div>
+      <div class="task-item">
+        <div class="task-num">8</div>
+        <div class="task-body">
+          <div class="task-title">CozeFlowInput 统一入口 + Demo</div>
+          <div class="task-desc">对外 API 封装（new CozeFlowInput + onResult 回调）+ 演示页面（接入智能制单业务）</div>
+          <div class="task-tag core">核心</div>
+          <div class="task-tag test">测试</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 十、实施路线 -->
+  <div class="section">
+    <div class="section-title">
+      <i class="icon-green"><i class="ri-road-map-line"></i></i>
+      十、实施路线
+    </div>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>阶段</th>
+          <th>内容</th>
+          <th>交付物</th>
+          <th>依赖</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Sprint 1</strong></td>
+          <td>WorkflowClient + MessageManager + 文字输入 + UI面板</td>
+          <td>可文字对话的完整面板</td>
+          <td>扣子工作流已创建并发布</td>
+        </tr>
+        <tr>
+          <td><strong>Sprint 2</strong></td>
+          <td>VoiceInput 语音输入</td>
+          <td>🎤 录音 + 识别 + 自动提交</td>
+          <td>Sprint 1 完成</td>
+        </tr>
+        <tr>
+          <td><strong>Sprint 3</strong></td>
+          <td>ImageCapture 截图粘贴</td>
+          <td>📷 粘贴截图 + 上传 + OCR</td>
+          <td>Sprint 1 完成</td>
+        </tr>
+        <tr>
+          <td><strong>Sprint 4</strong></td>
+          <td>FileParser 文件上传</td>
+          <td>📎 Excel/Word 解析 + 预览</td>
+          <td>Sprint 1 完成</td>
+        </tr>
+        <tr>
+          <td><strong>Sprint 5</strong></td>
+          <td>CozeFlowInput 统一入口 + Demo + 文档</td>
+          <td>可复用组件 + 接入文档</td>
+          <td>Sprint 1-4 完成</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="highlight-box green">
+      <i class="ri-rocket-line"></i> <strong>Sprint 1 为最小可用版本</strong>，完成后即可替代当前剪贴板方案。Sprint 2-4 并行开发，互不依赖。Sprint 5 收口整合。
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  CozeFlow Input · 扣子工作流通用输入面板 · v1.0
+</div>
+
+</body>
+</html>

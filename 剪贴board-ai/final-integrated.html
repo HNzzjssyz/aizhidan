@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>智能制单 - Coze完整集成</title>
+  <script src="https://lf-cdn.coze.cn/obj/unpkg/flow-platform/chat-app-sdk/1.2.0-beta.8/libs/cn/index.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header h1 {
+      font-size: 22px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+    }
+
+    .status-badge {
+      padding: 6px 14px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+    }
+
+    .main {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      min-height: 650px;
+    }
+
+    .panel {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .panel-left {
+      border-right: 1px solid #e5e7eb;
+    }
+
+    .panel-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .panel-title .icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 16px;
+    }
+
+    .config-panel {
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .config-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 12px;
+    }
+
+    .config-inputs {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .config-input {
+      padding: 10px 14px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: monospace;
+    }
+
+    .config-btn {
+      padding: 10px 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .config-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .form-section {
+      background: #f9fafb;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .form-section h4 {
+      color: #374151;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .customer-card {
+      background: white;
+      border-radius: 10px;
+      padding: 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .customer-avatar {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .customer-info {
+      flex: 1;
+    }
+
+    .customer-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 3px;
+    }
+
+    .customer-meta {
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .product-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+    }
+
+    .product-table th {
+      background: #f3f4f6;
+      padding: 10px;
+      text-align: left;
+      font-size: 11px;
+      color: #6b7280;
+      font-weight: 600;
+    }
+
+    .product-table td {
+      padding: 10px;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 13px;
+    }
+
+    .product-table tbody tr:hover {
+      background: #f9fafb;
+    }
+
+    .qty-input, .price-input {
+      width: 80px;
+      padding: 6px 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 13px;
+      text-align: right;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 12px;
+      margin-top: auto;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-secondary {
+      background: #f3f4f6;
+      color: #4b5563;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    .chat-panel {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .chat-container {
+      flex: 1;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #f9fafb;
+      border: 2px solid #e5e7eb;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chat-placeholder {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #9ca3af;
+      text-align: center;
+      padding: 40px;
+    }
+
+    .chat-placeholder-icon {
+      font-size: 56px;
+      margin-bottom: 16px;
+    }
+
+    .json-preview {
+      margin-top: 16px;
+      background: #1f2937;
+      border-radius: 10px;
+      padding: 14px;
+      display: none;
+    }
+
+    .json-preview.active {
+      display: block;
+    }
+
+    .json-preview h4 {
+      color: #9ca3af;
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
+
+    .json-preview pre {
+      color: #4ade80;
+      font-size: 11px;
+      font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+      overflow-x: auto;
+      line-height: 1.5;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #9ca3af;
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+      opacity: 0.5;
+    }
+
+    .empty-state-text {
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .tips {
+      background: #fef3c7;
+      border: 1px solid #fbbf24;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 16px;
+      font-size: 12px;
+      color: #92400e;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>
+        <span>📋</span>
+        智能制单助手
+      </h1>
+      <div class="status">
+        <span class="status-badge" id="statusText">准备就绪</span>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="panel panel-left">
+        <div class="panel-title">
+          <div class="icon">📝</div>
+          单据草稿
+        </div>
+
+        <div class="tips">
+          <strong>💡 使用说明：</strong>点击右侧「初始化 Coze」，右侧会出现聊天框。与智能体对话后，JSON会自动填充左侧。
+        </div>
+
+        <div class="config-panel">
+          <div class="config-title">⚙️ Coze配置</div>
+          <div class="config-inputs">
+            <input type="text" id="botId" class="config-input" placeholder="Bot ID" value="7638933573109792777">
+            <input type="password" id="token" class="config-input" placeholder="Personal Access Token" value="pat_zwWR14W4YEjLnqpD2BhItuhzKhC4VYH52oWfwYoeiB2Y9JuKBR1g1TfRzFDTbWQe">
+            <button class="config-btn" id="initBtn" onclick="initCoze()">初始化 Coze</button>
+          </div>
+        </div>
+
+        <div class="empty-state" id="emptyState">
+          <div class="empty-state-icon">💬</div>
+          <div class="empty-state-text">
+            初始化 Coze 后<br>
+            在右下角聊天框对话，左侧会自动填充
+          </div>
+        </div>
+
+        <div id="contentArea" style="display: none;">
+          <div class="form-section">
+            <h4>🏢 客户信息</h4>
+            <div class="customer-card">
+              <div class="customer-avatar">🏢</div>
+              <div class="customer-info">
+                <div class="customer-name" id="customerName">-</div>
+                <div class="customer-meta" id="customerMeta">-</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h4>📦 产品明细</h4>
+            <table class="product-table">
+              <thead>
+                <tr>
+                  <th>产品</th>
+                  <th style="width: 90px;">数量</th>
+                  <th style="width: 70px;">单位</th>
+                  <th style="width: 90px;">单价</th>
+                </tr>
+              </thead>
+              <tbody id="productTableBody">
+              </tbody>
+            </table>
+          </div>
+
+          <div class="json-preview" id="jsonPreview">
+            <h4>📄 原始JSON</h4>
+            <pre id="jsonContent"></pre>
+          </div>
+
+          <div class="action-buttons">
+            <button class="btn btn-secondary" onclick="resetForm()">🔄 重新录入</button>
+            <button class="btn btn-primary">✅ 生成销售订单</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">
+          <div class="icon">🤖</div>
+          聊天区域说明
+        </div>
+
+        <div class="chat-container">
+          <div class="chat-placeholder">
+            <div>
+              <div class="chat-placeholder-icon">👆</div>
+              <div>点击「初始化 Coze」后<br>聊天框会出现在右下角</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tips" style="margin-top: 16px;">
+          <strong>⚠️ 重要提示：</strong><br>
+          1. 确保智能体已发布为 Chat SDK<br>
+          2. 确保 PAT 有 chat 和 getMetadata 权限<br>
+          3. 右下角的悬浮球是 Coze SDK 官方组件
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentJSON = null;
+    let cozeClient = null;
+    let checkInterval = null;
+
+    function initCoze() {
+      const botId = document.getElementById('botId').value.trim();
+      const token = document.getElementById('token').value.trim();
+
+      if (!botId || !token) {
+        alert('请填写 Bot ID 和 Token！');
+        return;
+      }
+
+      const btn = document.getElementById('initBtn');
+      btn.disabled = true;
+      btn.textContent = '初始化中...';
+      document.getElementById('statusText').textContent = '初始化中...';
+
+      console.log('开始初始化 Coze SDK...');
+
+      try {
+        if (typeof CozeWebSDK === 'undefined') {
+          throw new Error('Coze SDK 未加载，请刷新页面');
+        }
+
+        if (cozeClient) {
+          try {
+            cozeClient.destroy();
+          } catch (e) {}
+        }
+
+        console.log('创建 WebChatClient 实例...');
+
+        cozeClient = new CozeWebSDK.WebChatClient({
+          config: {
+            type: 'bot',
+            botId: botId,
+            isIframe: false
+          },
+          auth: {
+            type: 'token',
+            token: token,
+            onRefreshToken: () => token
+          }
+        });
+
+        console.log('Coze 客户端初始化成功！');
+        document.getElementById('statusText').textContent = '已连接 ✅';
+        btn.textContent = '✅ 已初始化';
+        btn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+
+        setTimeout(() => {
+          startCheckingMessages();
+        }, 1000);
+
+      } catch (error) {
+        console.error('初始化失败:', error);
+        alert('初始化失败: ' + error.message);
+        btn.disabled = false;
+        btn.textContent = '初始化 Coze';
+      }
+    }
+
+    function startCheckingMessages() {
+      console.log('开始监听消息...');
+      
+      if (checkInterval) {
+        clearInterval(checkInterval);
+      }
+
+      checkInterval = setInterval(() => {
+        checkForJSON();
+      }, 1500);
+    }
+
+    function checkForJSON() {
+      const allElements = document.body;
+      const allText = allElements.innerText;
+
+      if (allText.length > 200) {
+        const json = extractJSON(allText);
+        if (json) {
+          console.log('🎉 检测到 JSON:', json);
+          handleJSON(json);
+        }
+      }
+    }
+
+    function extractJSON(text) {
+      const patterns = [
+        /```json\s*([\s\S]*?)```/,
+        /```\s*([\s\S]*?)```/,
+        /(\{[\s\S]*?"doc_type"[\s\S]*?\})/,
+        /(\{[\s\S]*?"customer_name"[\s\S]*?\})/,
+        /(\{[\s\S]*?"products"[\s\S]*?\})/
+      ];
+
+      for (let i = 0; i < patterns.length; i++) {
+        const match = text.match(patterns[i]);
+        if (match && match[1]) {
+          try {
+            const obj = JSON.parse(match[1].trim());
+            if (obj.doc_type || obj.customer_name || obj.products) {
+              return obj;
+            }
+          } catch (e) {
+            continue;
+          }
+        }
+      }
+
+      try {
+        const obj = JSON.parse(text.trim());
+        if (obj.doc_type || obj.customer_name || obj.products) {
+          return obj;
+        }
+      } catch (e) {}
+
+      return null;
+    }
+
+    function handleJSON(data) {
+      currentJSON = data;
+
+      document.getElementById('emptyState').style.display = 'none';
+      document.getElementById('contentArea').style.display = 'block';
+
+      fillForm(data);
+    }
+
+    function fillForm(data) {
+      document.getElementById('customerName').textContent = data.customer_name || '-';
+      document.getElementById('customerMeta').textContent = (data.customer_pinyin ? '拼音: ' + data.customer_pinyin : '') + (data.payment_term ? ' | ' + data.payment_term : '');
+
+      const tbody = document.getElementById('productTableBody');
+      tbody.innerHTML = '';
+
+      const products = data.products || [];
+      products.forEach(function(p) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>
+            <div style="font-weight: 600;">${p.name || '-'}</div>
+            <div style="font-size: 11px; color: #9ca3af; margin-top: 3px;">${p.spec || ''}</div>
+          </td>
+          <td><input type="number" class="qty-input" value="${p.qty || 0}"></td>
+          <td><input type="text" class="config-input" value="${p.unit || ''}" style="width: 60px; padding: 6px 10px;"></td>
+          <td><input type="number" class="price-input" value="${p.price || 0}"></td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      const jsonPreview = document.getElementById('jsonPreview');
+      const jsonContent = document.getElementById('jsonContent');
+      jsonPreview.classList.add('active');
+      jsonContent.textContent = JSON.stringify(data, null, 2);
+    }
+
+    function resetForm() {
+      document.getElementById('emptyState').style.display = 'block';
+      document.getElementById('contentArea').style.display = 'none';
+      document.getElementById('jsonPreview').classList.remove('active');
+      currentJSON = null;
+    }
+
+    console.log('智能制单助手已加载');
+    console.log('点击「初始化 Coze」开始使用');
+  </script>
+</body>
+</html>

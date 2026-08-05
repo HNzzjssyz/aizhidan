@@ -1,0 +1,1900 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>语音输入技术栈选型分析 — 数据值守 MVP Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Noto+Sans+SC:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-primary: #0c0e12;
+  --bg-secondary: #13161c;
+  --bg-card: #181c24;
+  --bg-card-hover: #1e2330;
+  --border: #2a2f3a;
+  --border-light: #353b4a;
+  --text-primary: #e8e6e1;
+  --text-secondary: #9a9b9e;
+  --text-muted: #5f6168;
+  --accent: #d4a04a;
+  --accent-light: #e8c47a;
+  --accent-dim: #8b6a2f;
+  --accent-glow: rgba(212, 160, 74, 0.15);
+  --success: #4ade80;
+  --success-dim: rgba(74, 222, 128, 0.12);
+  --warning: #fb923c;
+  --warning-dim: rgba(251, 146, 60, 0.12);
+  --info: #60a5fa;
+  --info-dim: rgba(96, 165, 250, 0.12);
+  --danger: #f87171;
+  --danger-dim: rgba(248, 113, 113, 0.12);
+  --purple: #a78bfa;
+  --purple-dim: rgba(167, 139, 250, 0.12);
+  --cyan: #22d3ee;
+  --cyan-dim: rgba(34, 211, 238, 0.12);
+  --serif: 'Noto Serif SC', serif;
+  --sans: 'Noto Sans SC', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-xs: 4px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html {
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) var(--bg-primary);
+}
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection { background: var(--accent); color: var(--bg-primary); }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: rgba(12, 14, 18, 0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  transition: transform 0.3s ease;
+}
+
+nav .nav-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+}
+
+nav .nav-brand {
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--accent);
+  letter-spacing: 0.5px;
+}
+
+nav .nav-links { display: flex; gap: 6px; flex-wrap: wrap; }
+
+nav .nav-links a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 12.5px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  letter-spacing: 0.3px;
+}
+
+nav .nav-links a:hover,
+nav .nav-links a.active {
+  color: var(--accent);
+  background: var(--accent-glow);
+}
+
+.hero {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  padding: 80px 40px;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(ellipse at 30% 20%, rgba(212, 160, 74, 0.06) 0%, transparent 50%),
+              radial-gradient(ellipse at 70% 80%, rgba(96, 165, 250, 0.04) 0%, transparent 50%);
+  animation: heroGlow 20s ease-in-out infinite alternate;
+}
+
+@keyframes heroGlow {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  100% { transform: translate(-5%, 3%) rotate(3deg); }
+}
+
+.hero-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(42, 47, 58, 0.3) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(42, 47, 58, 0.3) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse at center, black 20%, transparent 70%);
+  -webkit-mask-image: radial-gradient(ellipse at center, black 20%, transparent 70%);
+}
+
+.hero-content {
+  position: relative;
+  text-align: center;
+  max-width: 800px;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--accent-glow);
+  border: 1px solid var(--accent-dim);
+  color: var(--accent);
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 6px 16px;
+  border-radius: 20px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 32px;
+  animation: fadeInUp 0.8s ease both;
+}
+
+.hero-badge .dot {
+  width: 6px;
+  height: 6px;
+  background: var(--accent);
+  border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.hero h1 {
+  font-family: var(--serif);
+  font-size: clamp(36px, 5.5vw, 64px);
+  font-weight: 900;
+  line-height: 1.15;
+  margin-bottom: 24px;
+  animation: fadeInUp 0.8s ease 0.15s both;
+}
+
+.hero h1 .accent { color: var(--accent); position: relative; }
+
+.hero h1 .accent::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--accent);
+  border-radius: 2px;
+  opacity: 0.4;
+}
+
+.hero .subtitle {
+  font-size: 17px;
+  color: var(--text-secondary);
+  line-height: 1.8;
+  max-width: 600px;
+  margin: 0 auto 40px;
+  animation: fadeInUp 0.8s ease 0.3s both;
+}
+
+.hero-meta {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  animation: fadeInUp 0.8s ease 0.45s both;
+}
+
+.hero-meta .meta-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.hero-meta .meta-label {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-weight: 600;
+}
+
+.hero-meta .meta-value {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 40px;
+}
+
+section { padding: 100px 0; position: relative; }
+
+.section-header { margin-bottom: 56px; }
+
+.section-number {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--accent);
+  font-weight: 500;
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+  display: block;
+}
+
+.section-title {
+  font-family: var(--serif);
+  font-size: clamp(28px, 3.5vw, 40px);
+  font-weight: 700;
+  line-height: 1.25;
+  margin-bottom: 16px;
+}
+
+.section-desc {
+  font-size: 15.5px;
+  color: var(--text-secondary);
+  max-width: 640px;
+  line-height: 1.8;
+}
+
+.divider {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border), transparent);
+  margin: 0;
+}
+
+.card-grid { display: grid; gap: 20px; }
+.card-grid-2 { grid-template-columns: repeat(2, 1fr); }
+.card-grid-3 { grid-template-columns: repeat(3, 1fr); }
+.card-grid-4 { grid-template-columns: repeat(4, 1fr); }
+.card-grid-5 { grid-template-columns: repeat(5, 1fr); }
+
+@media (max-width: 900px) {
+  .card-grid-2, .card-grid-3, .card-grid-4, .card-grid-5 {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1100px) {
+  .card-grid-3 { grid-template-columns: repeat(2, 1fr); }
+  .card-grid-4, .card-grid-5 { grid-template-columns: repeat(2, 1fr); }
+}
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.card:hover {
+  border-color: var(--border-light);
+  background: var(--bg-card-hover);
+  transform: translateY(-2px);
+}
+
+.card:hover::before { opacity: 1; }
+
+.card-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  margin-bottom: 18px;
+}
+
+.card-icon.accent { background: var(--accent-glow); color: var(--accent); }
+.card-icon.success { background: var(--success-dim); color: var(--success); }
+.card-icon.info { background: var(--info-dim); color: var(--info); }
+.card-icon.warning { background: var(--warning-dim); color: var(--warning); }
+.card-icon.danger { background: var(--danger-dim); color: var(--danger); }
+.card-icon.purple { background: var(--purple-dim); color: var(--purple); }
+.card-icon.cyan { background: var(--cyan-dim); color: var(--cyan); }
+
+.card h3 {
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+
+.card p {
+  color: var(--text-secondary);
+  font-size: 13.5px;
+  line-height: 1.75;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.tag-accent { background: var(--accent-glow); color: var(--accent); }
+.tag-success { background: var(--success-dim); color: var(--success); }
+.tag-info { background: var(--info-dim); color: var(--info); }
+.tag-warning { background: var(--warning-dim); color: var(--warning); }
+.tag-danger { background: var(--danger-dim); color: var(--danger); }
+.tag-purple { background: var(--purple-dim); color: var(--purple); }
+.tag-cyan { background: var(--cyan-dim); color: var(--cyan); }
+
+.table-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.spec-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+.spec-table thead th {
+  text-align: left;
+  padding: 12px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-secondary);
+}
+
+.spec-table thead th:first-child { border-radius: var(--radius-sm) 0 0 0; }
+.spec-table thead th:last-child { border-radius: 0 var(--radius-sm) 0 0; }
+
+.spec-table tbody td {
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(42, 47, 58, 0.5);
+  color: var(--text-secondary);
+  vertical-align: top;
+}
+
+.spec-table tbody tr:hover td { background: var(--bg-card); }
+
+.spec-table tbody td:first-child {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.callout {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px 28px;
+  display: flex;
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.callout-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.callout-body h4 {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.callout-body p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.callout.warning { border-left: 3px solid var(--warning); }
+.callout.info { border-left: 3px solid var(--info); }
+.callout.success { border-left: 3px solid var(--success); }
+.callout.danger { border-left: 3px solid var(--danger); }
+
+.star-row {
+  display: flex;
+  gap: 2px;
+  margin-top: 4px;
+}
+
+.star {
+  width: 14px;
+  height: 14px;
+  border-radius: 2px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  transition: all 0.2s ease;
+}
+
+.star.filled {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.star.filled.info-star { background: var(--info); border-color: var(--info); }
+.star.filled.success-star { background: var(--success); border-color: var(--success); }
+.star.filled.warning-star { background: var(--warning); border-color: var(--warning); }
+.star.filled.purple-star { background: var(--purple); border-color: var(--purple); }
+.star.filled.cyan-star { background: var(--cyan); border-color: var(--cyan); }
+
+.radar-chart {
+  position: relative;
+  width: 280px;
+  height: 280px;
+  margin: 0 auto;
+}
+
+.radar-bg {
+  position: absolute;
+  inset: 0;
+}
+
+.radar-bg polygon {
+  fill: none;
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.radar-bg line {
+  stroke: var(--border);
+  stroke-width: 0.5;
+}
+
+.radar-data {
+  position: absolute;
+  inset: 0;
+}
+
+.radar-data polygon {
+  fill: rgba(212, 160, 74, 0.15);
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.radar-label {
+  position: absolute;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.compare-row {
+  display: grid;
+  grid-template-columns: 200px repeat(5, 1fr);
+  gap: 0;
+  border-bottom: 1px solid rgba(42, 47, 58, 0.5);
+}
+
+.compare-row:first-child {
+  border-bottom: 1px solid var(--border);
+}
+
+.compare-cell {
+  padding: 14px 16px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.compare-cell.header {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--bg-secondary);
+}
+
+.compare-cell.label {
+  color: var(--text-primary);
+  font-weight: 500;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border);
+}
+
+.compare-cell.highlight {
+  background: var(--accent-glow);
+  color: var(--accent-light);
+  font-weight: 600;
+}
+
+.flow-steps {
+  display: flex;
+  gap: 0;
+  align-items: stretch;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.flow-step {
+  flex: 1;
+  min-width: 180px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 24px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.flow-step:first-child { border-radius: var(--radius) 0 0 var(--radius); }
+.flow-step:last-child { border-radius: 0 var(--radius) var(--radius) 0; }
+
+.flow-step:not(:last-child)::after {
+  content: '→';
+  position: absolute;
+  right: -14px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  color: var(--accent);
+  font-size: 18px;
+  font-weight: 700;
+  background: var(--bg-primary);
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+}
+
+.flow-step .step-num {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.flow-step h4 {
+  font-size: 14.5px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.flow-step p {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.code-block {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 20px 24px;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.7;
+  overflow-x: auto;
+  color: var(--text-secondary);
+  margin: 16px 0;
+}
+
+.code-block .keyword { color: var(--accent); }
+.code-block .string { color: var(--success); }
+.code-block .comment { color: var(--text-muted); }
+.code-block .type { color: var(--info); }
+
+.rec-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px;
+  position: relative;
+  overflow: hidden;
+}
+
+.rec-card.primary {
+  border-color: var(--accent-dim);
+}
+
+.rec-card.primary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+}
+
+.rec-card .rec-phase {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.rec-card .rec-phase-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  padding: 4px 12px;
+  border-radius: 4px;
+}
+
+.rec-card .rec-phase-label.mvp {
+  background: var(--accent-glow);
+  color: var(--accent);
+}
+
+.rec-card .rec-phase-label.prod {
+  background: var(--info-dim);
+  color: var(--info);
+}
+
+.rec-card h3 {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.rec-card p {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  line-height: 1.75;
+  margin-bottom: 16px;
+}
+
+.rec-card .rec-flow {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px 20px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.8;
+}
+
+.rec-card .rec-flow .arrow { color: var(--accent); }
+.rec-card .rec-flow .highlight { color: var(--accent-light); font-weight: 600; }
+
+.cost-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .cost-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.cost-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 20px;
+  text-align: center;
+}
+
+.cost-card .cost-name {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.cost-card .cost-value {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--accent);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.cost-card .cost-unit {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.cost-card .cost-note {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.toc-section { padding: 60px 0 40px; }
+
+.toc-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 900px) {
+  .toc-grid { grid-template-columns: 1fr; }
+}
+
+.toc-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.toc-item:hover {
+  border-color: var(--accent-dim);
+  background: var(--bg-card-hover);
+  transform: translateX(4px);
+}
+
+.toc-item .toc-num {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--accent);
+  font-weight: 600;
+  min-width: 28px;
+}
+
+.toc-item .toc-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.need-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.need-table th {
+  text-align: left;
+  padding: 14px 20px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-secondary);
+}
+
+.need-table td {
+  padding: 14px 20px;
+  border-bottom: 1px solid rgba(42, 47, 58, 0.5);
+  color: var(--text-secondary);
+}
+
+.need-table td:first-child {
+  color: var(--text-primary);
+  font-weight: 500;
+  width: 120px;
+}
+
+.need-table tr:last-child td { border-bottom: none; }
+
+.tech-route {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 36px;
+  margin-bottom: 24px;
+  position: relative;
+}
+
+.tech-route .route-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.tech-route .route-num {
+  font-family: var(--mono);
+  font-size: 32px;
+  font-weight: 700;
+  opacity: 0.3;
+  line-height: 1;
+}
+
+.tech-route .route-title-group { flex: 1; }
+
+.tech-route .route-title {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.tech-route .route-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.tech-route .route-badge {
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.tech-route .route-badge.recommended {
+  background: var(--accent-glow);
+  color: var(--accent);
+  border: 1px solid var(--accent-dim);
+}
+
+.tech-route .route-badge.alternative {
+  background: var(--info-dim);
+  color: var(--info);
+  border: 1px solid rgba(96, 165, 250, 0.2);
+}
+
+.tech-route .route-badge.watch {
+  background: var(--purple-dim);
+  color: var(--purple);
+  border: 1px solid rgba(167, 139, 250, 0.2);
+}
+
+.tech-route .route-badge.not-recommended {
+  background: var(--danger-dim);
+  color: var(--danger);
+  border: 1px solid rgba(248, 113, 113, 0.2);
+}
+
+.tech-route .route-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+}
+
+@media (max-width: 900px) {
+  .tech-route .route-body { grid-template-columns: 1fr; }
+}
+
+.tech-route .route-col h4 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+}
+
+.tech-route .route-col ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tech-route .route-col li {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  padding-left: 18px;
+  position: relative;
+  line-height: 1.6;
+}
+
+.tech-route .route-col li::before {
+  content: '▸';
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+  font-size: 11px;
+}
+
+.tech-route .route-col li.pro::before { color: var(--success); content: '✓'; }
+.tech-route .route-col li.con::before { color: var(--danger); content: '✗'; }
+
+.tech-route .rating-grid {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 8px 12px;
+  align-items: center;
+}
+
+.tech-route .rating-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.animate-in {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.animate-in.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.footer {
+  border-top: 1px solid var(--border);
+  padding: 48px 0;
+  text-align: center;
+}
+
+.footer p {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  line-height: 1.8;
+}
+
+.footer .footer-brand {
+  font-family: var(--serif);
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.matrix-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 800px;
+}
+
+.matrix-table thead th {
+  text-align: center;
+  padding: 14px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-secondary);
+}
+
+.matrix-table thead th:first-child {
+  text-align: left;
+  border-radius: var(--radius-sm) 0 0 0;
+}
+
+.matrix-table tbody td {
+  padding: 14px 12px;
+  border-bottom: 1px solid rgba(42, 47, 58, 0.5);
+  text-align: center;
+  color: var(--text-secondary);
+  vertical-align: middle;
+}
+
+.matrix-table tbody td:first-child {
+  text-align: left;
+  color: var(--text-primary);
+  font-weight: 500;
+  min-width: 160px;
+}
+
+.matrix-table tbody tr:hover td { background: var(--bg-card); }
+
+.matrix-table .score {
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.matrix-table .score.high { color: var(--success); }
+.matrix-table .score.mid { color: var(--accent); }
+.matrix-table .score.low { color: var(--danger); }
+
+.matrix-table .overall {
+  font-family: var(--serif);
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.matrix-table .overall.best { color: var(--accent); }
+.matrix-table .overall.good { color: var(--success); }
+.matrix-table .overall.ok { color: var(--info); }
+.matrix-table .overall.poor { color: var(--text-muted); }
+
+.vs-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--accent-glow);
+  border: 2px solid var(--accent-dim);
+  color: var(--accent);
+  font-family: var(--serif);
+  font-weight: 900;
+  font-size: 14px;
+  margin: 0 16px;
+  flex-shrink: 0;
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <div class="nav-brand">数据值守 · 语音技术栈</div>
+    <div class="nav-links">
+      <a href="#needs">需求</a>
+      <a href="#routes">技术路线</a>
+      <a href="#matrix">对比矩阵</a>
+      <a href="#recommend">推荐方案</a>
+      <a href="#cost">成本</a>
+    </div>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <div class="hero-badge"><span class="dot"></span> TECH ANALYSIS</div>
+    <h1>浏览器前端<br><span class="accent">语音输入</span>技术栈</h1>
+    <p class="subtitle">针对数据值守 MVP Demo 语音制单场景，全面分析浏览器端可用语音识别技术路线，兼顾速度与成本</p>
+    <div class="hero-meta">
+      <div class="meta-item">
+        <span class="meta-label">场景</span>
+        <span class="meta-value">语音智能制单</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">语言</span>
+        <span class="meta-value">中文普通话</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">延迟目标</span>
+        <span class="meta-value">≤ 30s 端到端</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">日期</span>
+        <span class="meta-value">2026-05-11</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="toc-section">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-number">NAVIGATION</span>
+      <h2 class="section-title">文档目录</h2>
+    </div>
+    <div class="toc-grid">
+      <a href="#needs" class="toc-item"><span class="toc-num">01</span><span class="toc-text">语音输入需求画像</span></a>
+      <a href="#routes" class="toc-item"><span class="toc-num">02</span><span class="toc-text">五大技术路线详解</span></a>
+      <a href="#matrix" class="toc-item"><span class="toc-num">03</span><span class="toc-text">综合决策对比矩阵</span></a>
+      <a href="#recommend" class="toc-item"><span class="toc-num">04</span><span class="toc-text">分阶段推荐方案</span></a>
+      <a href="#cost" class="toc-item"><span class="toc-num">05</span><span class="toc-text">成本估算与关键细节</span></a>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="needs">
+  <div class="container">
+    <div class="section-header animate-in">
+      <span class="section-number">01</span>
+      <h2 class="section-title">语音输入需求画像</h2>
+      <p class="section-desc">从项目方案中提取的语音制单场景关键约束，是技术选型的根本依据。</p>
+    </div>
+
+    <div class="table-wrapper animate-in">
+      <table class="need-table">
+        <thead>
+          <tr>
+            <th>维度</th>
+            <th>需求描述</th>
+            <th>选型影响</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>语言</td>
+            <td>中文普通话为主，含行业术语、客户名、产品名</td>
+            <td>中文识别质量是硬性门槛，需支持自定义热词</td>
+          </tr>
+          <tr>
+            <td>场景</td>
+            <td>语音描述业务信息 → 生成销售订单/报价单/出库单</td>
+            <td>短句为主（10~30秒），需实时流式输出</td>
+          </tr>
+          <tr>
+            <td>延迟</td>
+            <td>端到端 ≤ 30秒（含ASR + LLM + 校验）</td>
+            <td>ASR环节需控制在 3秒以内，留足LLM处理时间</td>
+          </tr>
+          <tr>
+            <td>准确率</td>
+            <td>核心字段≥90%，整体≥80%</td>
+            <td>ASR准确率需≥95%，否则下游LLM无法补救</td>
+          </tr>
+          <tr>
+            <td>运行环境</td>
+            <td>浏览器前端（Coze对话界面 / 自定义H5）</td>
+            <td>需浏览器端录音+WebSocket或浏览器原生API</td>
+          </tr>
+          <tr>
+            <td>成本</td>
+            <td>MVP阶段低成本优先</td>
+            <td>优先考虑免费/低用量低成本方案</td>
+          </tr>
+          <tr>
+            <td>可控性</td>
+            <td>需添加客户名/产品名等专业术语</td>
+            <td>需支持自定义热词/词库的ASR方案</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout warning animate-in" style="margin-top: 24px;">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body">
+        <h4>关键洞察：ASR准确率是整个制单链路的瓶颈</h4>
+        <p>语音制单的数据流为 ASR → LLM提取 → 字段校验 → 单据生成。ASR是第一环，如果"深圳华创科技"被识别为"深圳华创科捷"，下游LLM和字段校验都无法自动修复。因此，<strong>支持自定义热词</strong>是选型的决定性因素。</p>
+        <p style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border);"><strong>SaaS多租户适配性说明（2026-05-12补充）</strong>：阿里云ASR热词功能存在配额限制（单表500个热词、最多10张表共5000个），在通用SaaS场景下无法承载数千上万家企业的差异化热词需求。因此，<strong>热词方案暂不适用于通用SaaS系统</strong>，通用场景采用拼音索引方案在后端匹配环节兜底。热词方案保留为大客户个性化优化的可选项。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="routes">
+  <div class="container">
+    <div class="section-header animate-in">
+      <span class="section-number">02</span>
+      <h2 class="section-title">五大技术路线详解</h2>
+      <p class="section-desc">从浏览器原生API到云端ASR、从本地WASM推理到开源模型自建，逐一分析各路线的优劣与适用性。</p>
+    </div>
+
+    <div class="tech-route animate-in">
+      <div class="route-header">
+        <span class="route-num">01</span>
+        <div class="route-title-group">
+          <div class="route-title">Web Speech API</div>
+          <div class="route-subtitle">浏览器原生语音识别接口</div>
+        </div>
+        <span class="route-badge alternative">MVP可用</span>
+      </div>
+      <div class="route-body">
+        <div class="route-col">
+          <h4>技术特征</h4>
+          <ul>
+            <li>浏览器内置 API，零依赖，几行代码即可接入</li>
+            <li>Chrome/Edge 底层调用 Google 云 ASR，中文质量好</li>
+            <li>支持实时流式输出，延迟 < 500ms</li>
+            <li>完全免费，无调用量限制</li>
+            <li>支持 continuous 和 interimResults 模式</li>
+          </ul>
+          <div class="code-block" style="margin-top: 16px;">
+<span class="keyword">const</span> recognition = <span class="keyword">new</span> (
+  window.SpeechRecognition || window.webkitSpeechRecognition
+)();
+recognition.lang = <span class="string">'zh-CN'</span>;
+recognition.continuous = <span class="type">true</span>;
+recognition.interimResults = <span class="type">true</span>;
+recognition.start();
+          </div>
+        </div>
+        <div class="route-col">
+          <h4>优劣分析</h4>
+          <ul>
+            <li class="pro">零成本、零集成难度</li>
+            <li class="pro">实时流式输出，用户体验好</li>
+            <li class="con">国内访问 Google 服务不稳定，可能被墙</li>
+            <li class="con">仅 Chrome/Edge 有效，Safari/Firefox 支持差</li>
+            <li class="con">无法自定义行业术语热词</li>
+            <li class="con">无法控制 ASR 引擎，依赖浏览器实现</li>
+            <li class="con">Safari 使用本地模型，中文质量极差</li>
+          </ul>
+          <div class="rating-grid" style="margin-top: 16px;">
+            <span class="rating-label">速度</span>
+            <div class="star-row"><span class="star filled"></span><span class="star filled"></span><span class="star filled"></span><span class="star filled"></span><span class="star filled"></span></div>
+            <span class="rating-label">成本</span>
+            <div class="star-row"><span class="star filled"></span><span class="star filled"></span><span class="star filled"></span><span class="star filled"></span><span class="star filled"></span></div>
+            <span class="rating-label">中文质量</span>
+            <div class="star-row"><span class="star filled"></span><span class="star filled"></span><span class="star filled"></span><span class="star filled"></span><span class="star"></span></div>
+            <span class="rating-label">可控性</span>
+            <div class="star-row"><span class="star filled"></span><span class="star"></span><span class="star"></span><span class="star"></span><span class="star"></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tech-route animate-in">
+      <div class="route-header">
+        <span class="route-num">02</span>
+        <div class="route-title-group">
+          <div class="route-title">国内云 ASR 服务</div>
+          <div class="route-subtitle">阿里云 / 讯飞 / 腾讯云 / 百度 — WebSocket 实时识别</div>
+        </div>
+        <span class="route-badge recommended">⭐ 首选推荐</span>
+      </div>
+      <div class="route-body">
+        <div class="route-col">
+          <h4>接入架构</h4>
+          <ul>
+            <li>前端通过 MediaRecorder 采集麦克风音频</li>
+            <li>WebSocket 实时推流至云 ASR 服务</li>
+            <li>流式返回识别文本，前端实时展示</li>
+            <li>识别完成后文本传入 LLM 进行结构化提取</li>
+          </ul>
+          <div class="code-block" style="margin-top: 16px;">
+<span class="comment">// 浏览器录音 → WebSocket → 云ASR</span>
+navigator.mediaDevices.getUserMedia({ audio: <span class="type">true</span> })
+  .then(stream => {
+    <span class="keyword">const</span> ws = <span class="keyword">new</span> WebSocket(
+      <span class="string">'wss://nls-gateway-cn-shanghai.aliyuncs.com/...'</span>
+    );
+    <span class="comment">// 实时推送音频帧，流式接收识别结果</span>
+  });
+          </div>
+        </div>
+        <div class="route-col">
+          <h4>四大厂商对比</h4>
+          <ul>
+            <li class="pro"><strong>阿里云</strong>：1.80~3.50元/h，支持热词，Paraformer仅0.288元/h，有浏览器端JS SDK</li>
+            <li class="pro"><strong>讯飞</strong>：~2元/h，中文老牌强项，方言支持好，有前端SDK</li>
+            <li class="pro"><strong>腾讯云</strong>：~2元/h，每月5h免费，与微信生态协同</li>
+            <li class="pro"><strong>百度</strong>：~1.5元/h，价格最低，有免费额度</li>
+            <li class="pro">共同优势：国内节点延迟 < 300ms，中文质量顶级</li>
+            <li class="con">需后端中转或前端直连 WebSocket</li>
+            <li class="con">有调用量成本（但MVP阶段极低）</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="tech-route animate-in">
+      <div class="route-header">
+        <span class="route-num">03</span>
+        <div class="route-title-group">
+          <div class="route-title">Coze 内置语音插件</div>
+          <div class="route-subtitle">字节跳动 Coze 平台内置 ASR 能力</div>
+        </div>
+        <span class="route-badge recommended">MVP首选</span>
+      </div>
+      <div class="route-body">
+        <div class="route-col">
+          <h4>技术特征</h4>
+          <ul>
+            <li>Coze 平台内置语音输入能力，零代码接入</li>
+            <li>底层使用字节豆包 ASR，中文质量好</li>
+            <li>包含在 Coze 平台费用内，无额外成本</li>
+            <li>直接在 Coze 对话界面中使用</li>
+            <li>与制单 Bot、Workflow 无缝衔接</li>
+          </ul>
+        </div>
+        <div class="route-col">
+          <h4>优劣分析</h4>
+          <ul>
+            <li class="pro">零开发成本，开箱即用</li>
+            <li class="pro">与 Coze Bot/Workflow 深度集成</li>
+            <li class="pro">中文识别质量可靠</li>
+            <li class="con">黑盒，无法自定义行业术语热词</li>
+            <li class="con">无法优化 ASR 环节的质量</li>
+            <li class="con">延迟受 Coze 整体链路影响</li>
+            <li class="con">自建前端 H5 时需替换方案</li>
+          </ul>
+          <div class="rating-grid" style="margin-top: 16px;">
+            <span class="rating-label">速度</span>
+            <div class="star-row"><span class="star filled"></span><span class="star filled"></span><span class="star filled"></span><span class="star"></span><span class="star"></span></div>
+            <span class="rating-label">成本</span>
+            <div class="star-row"><span class="star filled"></span><span class="star filled"></span><span class="star filled"></span><span class="star filled"></span><span class="star filled"></span></div>
+            <span class="rating-label">中文质量</span>
+            <div class="star-row"><span class="star filled"></span><span class="star filled"></span><span class="star filled"></span><span class="star filled"></span><span class="star"></span></div>
+            <span class="rating-label">可控性</span>
+            <div class="star-row"><span class="star filled"></span><span class="star"></span><span class="star"></span><span class="star"></span><span class="star"></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tech-route animate-in">
+      <div class="route-header">
+        <span class="route-num">04</span>
+        <div class="route-title-group">
+          <div class="route-title">浏览器端 WASM 本地推理</div>
+          <div class="route-subtitle">Sherpa-ONNX Web / Whisper-Web (transformers.js)</div>
+        </div>
+        <span class="route-badge watch">关注</span>
+      </div>
+      <div class="route-body">
+        <div class="route-col">
+          <h4>Sherpa-ONNX Web</h4>
+          <ul>
+            <li>支持编译为 WebAssembly，浏览器本地运行</li>
+            <li>模型在浏览器中加载，麦克风音频本地推理</li>
+            <li>完全离线，零 API 成本，无隐私问题</li>
+            <li>支持中文模型（Paraformer 等）</li>
+            <li class="con">首次加载慢（模型下载 50~150MB）</li>
+            <li class="con">推理延迟 1~3 秒，非实时流式</li>
+            <li class="con">中文质量不如云端专业 ASR</li>
+          </ul>
+        </div>
+        <div class="route-col">
+          <h4>Whisper-Web (transformers.js)</h4>
+          <ul>
+            <li>基于 Xenova/transformers.js，浏览器端运行 Whisper</li>
+            <li>Whisper-tiny 推理约 3~5 秒，非实时</li>
+            <li>零 API 成本，完全客户端运行</li>
+            <li class="con">中文识别质量中等，不如国产 ASR</li>
+            <li class="con">模型文件较大（tiny: 75MB, base: 150MB）</li>
+            <li class="con">对设备性能要求高</li>
+            <li class="con">非流式输出，用户体验差</li>
+          </ul>
+          <div class="callout info" style="margin-top: 16px; padding: 16px;">
+            <div class="callout-icon">💡</div>
+            <div class="callout-body">
+              <h4>适用场景</h4>
+              <p>WASM方案适合对隐私要求极高或完全离线的场景。对于本项目需要实时交互的制单场景，体验不如云端方案。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tech-route animate-in">
+      <div class="route-header">
+        <span class="route-num">05</span>
+        <div class="route-title-group">
+          <div class="route-title">开源模型自建后端 API</div>
+          <div class="route-subtitle">Qwen3-ASR / FunASR — 自部署推理服务</div>
+        </div>
+        <span class="route-badge watch">长期方案</span>
+      </div>
+      <div class="route-body">
+        <div class="route-col">
+          <h4>Qwen3-ASR（2026 新秀）</h4>
+          <ul>
+            <li>阿里通义千问 2026年1月开源，Apache 2.0 可商用</li>
+            <li>1.7B / 0.6B 两个规格，52 种语言+方言</li>
+            <li>开源 SOTA，性能直逼顶级闭源模型</li>
+            <li>10 秒处理 5 小时音频，支持流式识别</li>
+            <li>单 GPU 推理延迟 < 500ms</li>
+            <li class="con">需部署 GPU 服务器（~3~5元/h）</li>
+            <li class="con">MVP 阶段部署成本高于云 API</li>
+          </ul>
+        </div>
+        <div class="route-col">
+          <h4>FunASR（阿里达摩院开源）</h4>
+          <ul>
+            <li>Paraformer 模型，中文识别质量优秀</li>
+            <li>支持流式识别、标点恢复、语音端点检测</li>
+            <li>支持自定义热词</li>
+            <li>CPU 也可运行，部署门槛相对低</li>
+            <li>社区活跃，文档完善</li>
+            <li class="con">需部署服务，前端通过 WebSocket 对接</li>
+            <li class="con">量大时自建成本才优于云 API</li>
+          </ul>
+          <div class="callout success" style="margin-top: 16px; padding: 16px;">
+            <div class="callout-icon">🚀</div>
+            <div class="callout-body">
+              <h4>长期价值</h4>
+              <p>当调用量增长到一定规模，自建方案的单次识别成本将远低于云 API。Qwen3-ASR + FunASR 是产品化阶段的最佳长期方案。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="matrix">
+  <div class="container">
+    <div class="section-header animate-in">
+      <span class="section-number">03</span>
+      <h2 class="section-title">综合决策对比矩阵</h2>
+      <p class="section-desc">从速度、成本、中文质量、集成难度、可控性五个维度量化评分，结合项目需求加权得出综合推荐。</p>
+    </div>
+
+    <div class="matrix-wrapper animate-in">
+      <table class="matrix-table">
+        <thead>
+          <tr>
+            <th>技术路线</th>
+            <th>速度</th>
+            <th>成本</th>
+            <th>中文质量</th>
+            <th>集成难度</th>
+            <th>可控性</th>
+            <th>综合推荐</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Web Speech API</td>
+            <td><span class="score high">5</span></td>
+            <td><span class="score high">5</span></td>
+            <td><span class="score mid">4</span></td>
+            <td><span class="score high">5</span></td>
+            <td><span class="score low">1</span></td>
+            <td><span class="overall ok">★★★</span></td>
+          </tr>
+          <tr style="background: var(--accent-glow);">
+            <td>🔥 阿里云 ASR</td>
+            <td><span class="score high">5</span></td>
+            <td><span class="score mid">4</span></td>
+            <td><span class="score high">5</span></td>
+            <td><span class="score mid">3</span></td>
+            <td><span class="score mid">4</span></td>
+            <td><span class="overall best">★★★★★</span></td>
+          </tr>
+          <tr>
+            <td>讯飞 WebAPI</td>
+            <td><span class="score mid">4</span></td>
+            <td><span class="score mid">3</span></td>
+            <td><span class="score high">5</span></td>
+            <td><span class="score mid">3</span></td>
+            <td><span class="score mid">4</span></td>
+            <td><span class="overall good">★★★★</span></td>
+          </tr>
+          <tr>
+            <td>Coze 语音插件</td>
+            <td><span class="score mid">3</span></td>
+            <td><span class="score high">5</span></td>
+            <td><span class="score mid">4</span></td>
+            <td><span class="score high">5</span></td>
+            <td><span class="score low">1</span></td>
+            <td><span class="overall good">★★★★</span></td>
+          </tr>
+          <tr>
+            <td>Sherpa-ONNX Web</td>
+            <td><span class="score low">2</span></td>
+            <td><span class="score high">5</span></td>
+            <td><span class="score low">3</span></td>
+            <td><span class="score low">2</span></td>
+            <td><span class="score high">5</span></td>
+            <td><span class="overall ok">★★★</span></td>
+          </tr>
+          <tr>
+            <td>Whisper-Web</td>
+            <td><span class="score low">1</span></td>
+            <td><span class="score high">5</span></td>
+            <td><span class="score low">2</span></td>
+            <td><span class="score mid">3</span></td>
+            <td><span class="score mid">4</span></td>
+            <td><span class="overall poor">★★</span></td>
+          </tr>
+          <tr>
+            <td>Qwen3-ASR 自建</td>
+            <td><span class="score mid">4</span></td>
+            <td><span class="score mid">4</span></td>
+            <td><span class="score high">5</span></td>
+            <td><span class="score low">1</span></td>
+            <td><span class="score high">5</span></td>
+            <td><span class="overall good">★★★★</span></td>
+          </tr>
+          <tr>
+            <td>FunASR 自建</td>
+            <td><span class="score mid">4</span></td>
+            <td><span class="score mid">4</span></td>
+            <td><span class="score high">5</span></td>
+            <td><span class="score low">1</span></td>
+            <td><span class="score high">5</span></td>
+            <td><span class="overall good">★★★★</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout info animate-in" style="margin-top: 24px;">
+      <div class="callout-icon">📊</div>
+      <div class="callout-body">
+        <h4>评分说明</h4>
+        <p><strong>速度</strong>：从语音输入到文字输出的延迟，5=实时流式(<500ms)，1=非实时(>5s)。<strong>成本</strong>：5=完全免费，1=高成本。<strong>中文质量</strong>：5=业界顶级，1=不可用。<strong>集成难度</strong>：5=几行代码，1=需完整部署。<strong>可控性</strong>：5=完全可控(热词/模型)，1=黑盒。综合推荐考虑项目需求的加权：中文质量(×3) + 可控性(×2) + 速度(×2) + 成本(×1) + 集成难度(×1)。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="recommend">
+  <div class="container">
+    <div class="section-header animate-in">
+      <span class="section-number">04</span>
+      <h2 class="section-title">分阶段推荐方案</h2>
+      <p class="section-desc">不同阶段有不同优先级：MVP追求零成本快速验证，产品化追求质量与可控性，规模化追求成本最优。</p>
+    </div>
+
+    <div class="card-grid card-grid-2 animate-in" style="margin-bottom: 32px;">
+      <div class="rec-card primary">
+        <div class="rec-phase">
+          <span class="rec-phase-label mvp">MVP 阶段</span>
+          <span style="font-size: 12px; color: var(--text-muted);">Week 1-6</span>
+        </div>
+        <h3>Coze 语音插件 + 阿里云 ASR 双轨验证</h3>
+        <p>MVP阶段采用双轨并行策略：Coze语音插件零成本跑通全流程，同时用阿里云ASR做对比测试，验证ASR质量对制单准确率的影响。</p>
+        <div class="rec-flow">
+          <strong>方案A（零成本快速验证）：</strong><br>
+          Coze对话界面 <span class="arrow">→</span> Coze内置语音插件 <span class="arrow">→</span> ASR转写 <span class="arrow">→</span> LLM提取 <span class="arrow">→</span> 单据生成<br><br>
+          <strong>方案B（质量优先验证）：</strong><br>
+          自定义H5页面 <span class="arrow">→</span> <span class="highlight">阿里云ASR(WebSocket)</span> <span class="arrow">→</span> 流式文本 <span class="arrow">→</span> Coze Bot API <span class="arrow">→</span> 单据生成
+        </div>
+        <div style="margin-top: 16px; display: flex; gap: 8px;">
+          <span class="tag tag-accent">零成本启动</span>
+          <span class="tag tag-info">双轨对比</span>
+          <span class="tag tag-success">热词验证</span>
+        </div>
+      </div>
+
+      <div class="rec-card">
+        <div class="rec-phase">
+          <span class="rec-phase-label prod">产品化阶段</span>
+          <span style="font-size: 12px; color: var(--text-muted);">v0.2+</span>
+        </div>
+        <h3>阿里云 ASR 为主 + Qwen3-ASR 备选</h3>
+        <p>产品化阶段以阿里云ASR为主力。通用SaaS场景下，因热词配额限制，专业术语识别率提升依赖<strong>拼音索引匹配</strong>在后端兜底；大客户专属场景可启用热词功能做个性化优化。当调用量增长后，Qwen3-ASR自建方案作为成本优化备选。</p>
+        <div class="rec-flow">
+          浏览器前端 <span class="arrow">→</span> <span class="highlight">阿里云ASR(主)</span> / Qwen3-ASR自建(备) <span class="arrow">→</span> 流式文本 <span class="arrow">→</span> 后端LLM <span class="arrow">→</span> 单据生成
+        </div>
+        <div style="margin-top: 16px; display: flex; gap: 8px;">
+          <span class="tag tag-info">生产级质量</span>
+          <span class="tag tag-accent">热词优化</span>
+          <span class="tag tag-warning">成本可控</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout success animate-in">
+      <div class="callout-icon">🎯</div>
+      <div class="callout-body">
+        <h4>核心决策逻辑</h4>
+        <p><strong>为什么选阿里云ASR而不是讯飞？</strong> 三个关键理由：<br>
+        1. <strong>热词功能</strong>：阿里云支持运行时动态添加热词（客户名/产品名），讯飞需预上传词库且生效慢<br>
+        2. <strong>Paraformer性价比</strong>：阿里云百炼Paraformer仅0.288元/小时，是所有云ASR中最便宜的<br>
+        3. <strong>浏览器端SDK</strong>：阿里云提供官方JavaScript SDK，支持浏览器端WebSocket直连，减少后端中转</p>
+        <p style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border);"><strong>SaaS场景补充说明（2026-05-12）</strong>：上述热词优势在单租户/私有化部署场景下成立。在通用SaaS多租户场景下，热词配额限制使其无法作为通用方案，需依赖拼音索引匹配在后端兜底。热词方案保留为大客户专属优化能力。</p>
+      </div>
+    </div>
+
+    <h3 style="font-family: var(--serif); font-size: 20px; font-weight: 700; margin: 48px 0 20px;" class="animate-in">语音制单数据流（推荐方案）</h3>
+    <div class="flow-steps animate-in">
+      <div class="flow-step">
+        <div class="step-num">STEP 1</div>
+        <h4>浏览器录音</h4>
+        <p>MediaRecorder API 采集麦克风音频，PCM 16kHz 格式</p>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">STEP 2</div>
+        <h4>WebSocket 推流</h4>
+        <p>实时推送音频帧至阿里云ASR，携带热词参数</p>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">STEP 3</div>
+        <h4>流式识别返回</h4>
+        <p>ASR实时返回中间结果和最终文本，前端实时展示</p>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">STEP 4</div>
+        <h4>LLM 结构化提取</h4>
+        <p>识别文本传入LLM，提取单据类型、客户、产品、金额等</p>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">STEP 5</div>
+        <h4>字段校验 + 生成</h4>
+        <p>客户库/产品库匹配校验，生成格式化单据草稿</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="cost">
+  <div class="container">
+    <div class="section-header animate-in">
+      <span class="section-number">05</span>
+      <h2 class="section-title">成本估算与关键细节</h2>
+      <p class="section-desc">MVP阶段语音识别成本几乎可忽略，真正决定选型的是中文识别质量和热词支持。</p>
+    </div>
+
+    <h3 style="font-family: var(--serif); font-size: 20px; font-weight: 700; margin-bottom: 20px;" class="animate-in">MVP 阶段成本估算</h3>
+    <p style="font-size: 13.5px; color: var(--text-secondary); margin-bottom: 20px;" class="animate-in">假设 MVP 验证期 6 周，日均语音制单 20 次，每次平均 30 秒</p>
+
+    <div class="cost-grid animate-in">
+      <div class="cost-card">
+        <div class="cost-name">Coze 语音插件</div>
+        <div class="cost-value">0</div>
+        <div class="cost-unit">元/月</div>
+        <div class="cost-note">包含在Coze平台费用内</div>
+      </div>
+      <div class="cost-card">
+        <div class="cost-name">阿里云实时ASR</div>
+        <div class="cost-value">&lt;10</div>
+        <div class="cost-unit">元/月（按量）</div>
+        <div class="cost-note">或100元/年资源包(30h)</div>
+      </div>
+      <div class="cost-card">
+        <div class="cost-name">讯飞 WebAPI</div>
+        <div class="cost-value">&lt;15</div>
+        <div class="cost-unit">元/月</div>
+        <div class="cost-note">有免费额度</div>
+      </div>
+      <div class="cost-card">
+        <div class="cost-name">Qwen3-ASR 自建</div>
+        <div class="cost-value">200~500</div>
+        <div class="cost-unit">元/月</div>
+        <div class="cost-note">GPU服务器费用</div>
+      </div>
+    </div>
+
+    <h3 style="font-family: var(--serif); font-size: 20px; font-weight: 700; margin: 48px 0 20px;" class="animate-in">阿里云 ASR 价格明细</h3>
+    <div class="table-wrapper animate-in">
+      <table class="spec-table">
+        <thead>
+          <tr>
+            <th>服务类型</th>
+            <th>按量单价</th>
+            <th>资源包示例</th>
+            <th>适用场景</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>实时语音识别</td>
+            <td>1.20~3.50 元/小时</td>
+            <td>30小时/100元，1000小时/1800元</td>
+            <td>⭐ 语音制单首选</td>
+          </tr>
+          <tr>
+            <td>一句话识别</td>
+            <td>1.20~3.50 元/千次</td>
+            <td>30千次/100元</td>
+            <td>短指令场景</td>
+          </tr>
+          <tr>
+            <td>Paraformer（百炼）</td>
+            <td>0.288 元/小时</td>
+            <td>无梯度，统一价</td>
+            <td>⭐ 极致性价比</td>
+          </tr>
+          <tr>
+            <td>录音文件识别</td>
+            <td>0.80~2.50 元/小时</td>
+            <td>40小时/100元</td>
+            <td>离线转写</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout warning animate-in" style="margin-top: 24px;">
+      <div class="callout-icon">🔑</div>
+      <div class="callout-body">
+        <h4>关键细节：阿里云 ASR 热词功能</h4>
+        <p>这是本项目最需要关注的 ASR 能力。业务场景中大量出现客户名、产品名等专业术语，通用ASR难以准确识别。阿里云支持<strong>运行时动态添加热词</strong>，可将客户名/产品名注入ASR引擎，识别准确率从约70%提升至<strong>95%以上</strong>。</p>
+        <p style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border);"><strong>SaaS适配性限制（2026-05-12补充）</strong>：热词配额限制（单表500个/10表共5000个）无法覆盖SaaS多租户场景。通用场景以拼音索引匹配作为兜底方案，热词仅用于大客户专属优化。</p>
+      </div>
+    </div>
+
+    <div class="code-block animate-in" style="margin-top: 24px;">
+<span class="comment">// 阿里云ASR WebSocket连接 — 携带热词参数</span>
+<span class="keyword">const</span> params = {
+  appkey: <span class="string">'your-appkey'</span>,
+  format: <span class="string">'pcm'</span>,
+  sample_rate: <span class="string">16000</span>,
+  enable_intermediate_result: <span class="type">true</span>,
+  <span class="comment">// 关键：动态热词，提升专业术语识别率</span>
+  vocabulary: [
+    <span class="string">'深圳华创科技'</span>,
+    <span class="string">'A3打印纸'</span>,
+    <span class="string">'B5笔记本'</span>,
+    <span class="string">'月结30天'</span>
+  ]
+};
+    </div>
+
+    <h3 style="font-family: var(--serif); font-size: 20px; font-weight: 700; margin: 48px 0 20px;" class="animate-in">规模化成本对比</h3>
+    <div class="table-wrapper animate-in">
+      <table class="spec-table">
+        <thead>
+          <tr>
+            <th>调用量级</th>
+            <th>阿里云 ASR</th>
+            <th>讯飞 ASR</th>
+            <th>Qwen3-ASR 自建</th>
+            <th>最优选择</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>MVP（~2.5h/月）</td>
+            <td>&lt;10元/月</td>
+            <td>&lt;15元/月</td>
+            <td>200~500元/月</td>
+            <td><span class="tag tag-accent">阿里云</span></td>
+          </tr>
+          <tr>
+            <td>小规模（~50h/月）</td>
+            <td>~90元/月</td>
+            <td>~100元/月</td>
+            <td>200~500元/月</td>
+            <td><span class="tag tag-accent">阿里云</span></td>
+          </tr>
+          <tr>
+            <td>中规模（~500h/月）</td>
+            <td>~750元/月</td>
+            <td>~1000元/月</td>
+            <td>200~500元/月</td>
+            <td><span class="tag tag-success">自建</span></td>
+          </tr>
+          <tr>
+            <td>大规模（~5000h/月）</td>
+            <td>~6000元/月</td>
+            <td>~8000元/月</td>
+            <td>500~1500元/月</td>
+            <td><span class="tag tag-success">自建</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout success animate-in" style="margin-top: 24px;">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        <h4>结论</h4>
+        <p>MVP阶段无论选哪个云ASR，成本都可忽略不计（<15元/月）。真正决定选型的因素是<strong>中文识别质量</strong>和<strong>热词/自定义词库支持</strong>。阿里云ASR在这两个维度均表现最优，且Paraformer模型0.288元/小时的极致性价比为后续增长留足了空间。当月调用量超过约200小时后，切换到Qwen3-ASR自建方案可进一步降低成本。</p>
+        <p style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border);"><strong>SaaS场景补充（2026-05-12）</strong>：在通用SaaS多租户场景下，热词方案因配额限制暂不适用，拼音索引匹配是通用场景的核心兜底机制。热词方案保留为大客户个性化优化的可选项。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<footer class="footer">
+  <div class="container">
+    <p><span class="footer-brand">数据值守</span> — 语音输入技术栈选型分析</p>
+    <p>MVP Demo 技术分析 · 2026-05-11</p>
+    <p style="margin-top: 8px; font-size: 11px; color: var(--text-muted);">本文档基于项目 MVP-Demo-技术与开发方案 需求分析，具体选型可能根据平台能力与业务反馈调整</p>
+  </div>
+</footer>
+
+<script>
+const navLinks = document.querySelectorAll('nav .nav-links a');
+const sections = document.querySelectorAll('section[id]');
+
+function updateActiveNav() {
+  let current = '';
+  sections.forEach(section => {
+    const sectionTop = section.offsetTop - 100;
+    if (window.scrollY >= sectionTop) {
+      current = section.getAttribute('id');
+    }
+  });
+  navLinks.forEach(link => {
+    link.classList.remove('active');
+    if (link.getAttribute('href') === '#' + current) {
+      link.classList.add('active');
+    }
+  });
+}
+
+window.addEventListener('scroll', updateActiveNav);
+updateActiveNav();
+
+const animateElements = document.querySelectorAll('.animate-in');
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      observer.unobserve(entry.target);
+    }
+  });
+}, {
+  threshold: 0.1,
+  rootMargin: '0px 0px -40px 0px'
+});
+
+animateElements.forEach(el => observer.observe(el));
+
+let lastScroll = 0;
+const nav = document.querySelector('nav');
+
+window.addEventListener('scroll', () => {
+  const currentScroll = window.scrollY;
+  if (currentScroll > lastScroll && currentScroll > 200) {
+    nav.style.transform = 'translateY(-100%)';
+  } else {
+    nav.style.transform = 'translateY(0)';
+  }
+  lastScroll = currentScroll;
+});
+</script>
+
+</body>
+</html>

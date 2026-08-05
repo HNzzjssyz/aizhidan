@@ -1,0 +1,580 @@
+{
+  "description": "模拟口语文字订单数据 - 用于拼音匹配实验测试（多产品订单）",
+  "generatedAt": "2026-05-16T08:50:37.753400",
+  "totalOrders": 15,
+  "data": [
+    {
+      "id": "VO-001",
+      "type": "短信/钉钉",
+      "date": "2026-05-18",
+      "content": "下个单：南海装饰材料有限公司，烟雾报警器 25件，三星画面分割器 SOMC-420T 28台，岡祈家用智能燃气报警器 HM-710 13件",
+      "expected_customer": "南海装饰材料有限公司",
+      "expected_customer_id": "5722",
+      "expected_products": [
+        {
+          "product_id": "100",
+          "name": "烟雾报警器",
+          "model": "",
+          "spec": "-",
+          "qty": 25,
+          "unit": "件"
+        },
+        {
+          "product_id": "33",
+          "name": "三星画面分割器",
+          "model": "SOMC-420T",
+          "spec": "-",
+          "qty": 28,
+          "unit": "台"
+        },
+        {
+          "product_id": "78",
+          "name": "岡祈家用智能燃气报警器",
+          "model": "HM-710",
+          "spec": "-",
+          "qty": 13,
+          "unit": "件"
+        }
+      ],
+      "note": "多产品订单：3个产品"
+    },
+    {
+      "id": "VO-002",
+      "type": "微信聊天",
+      "date": "2026-05-19",
+      "content": "下个单：北京安助置业地产公司，防护服 3M白 18台，脚手架 120x 13件",
+      "expected_customer": "北京安助置业地产公司",
+      "expected_customer_id": "76",
+      "expected_products": [
+        {
+          "product_id": "50",
+          "name": "防护服",
+          "model": "3M白",
+          "spec": "-",
+          "qty": 18,
+          "unit": "台"
+        },
+        {
+          "product_id": "115",
+          "name": "脚手架",
+          "model": "120x",
+          "spec": "-",
+          "qty": 13,
+          "unit": "件"
+        }
+      ],
+      "note": "多产品订单：2个产品"
+    },
+    {
+      "id": "VO-003",
+      "type": "短信/钉钉",
+      "date": "2026-05-20",
+      "content": "给天津天地伟业数码科技有限公司出个单，ZSP4 针式打印机 30箱，i7-3632QM/GT650M 惠普笔记本 11台，烟雾报警器 13套，DN-837A 台式电脑 5台",
+      "expected_customer": "天津天地伟业数码科技有限公司",
+      "expected_customer_id": "23",
+      "expected_products": [
+        {
+          "product_id": "14",
+          "name": "针式打印机",
+          "model": "ZSP4",
+          "spec": "-",
+          "qty": 30,
+          "unit": "箱"
+        },
+        {
+          "product_id": "1",
+          "name": "惠普笔记本",
+          "model": "i7-3632QM/GT650M",
+          "spec": "-",
+          "qty": 11,
+          "unit": "台"
+        },
+        {
+          "product_id": "100",
+          "name": "烟雾报警器",
+          "model": "",
+          "spec": "-",
+          "qty": 13,
+          "unit": "套"
+        },
+        {
+          "product_id": "32",
+          "name": "台式电脑",
+          "model": "DN-837A",
+          "spec": "-",
+          "qty": 5,
+          "unit": "台"
+        }
+      ],
+      "note": "多产品订单：4个产品"
+    },
+    {
+      "id": "VO-004",
+      "type": "微信聊天",
+      "date": "2026-05-21",
+      "content": "赐金商贸有限公司\n硬件设备\nwr\n3个\n金士顿CF(8G)\nCF8G\n5台\n视频会议\nDSNNY DSN-D40\n14箱",
+      "expected_customer": "赐金商贸有限公司",
+      "expected_customer_id": "172",
+      "expected_products": [
+        {
+          "product_id": "117",
+          "name": "硬件设备",
+          "model": "wr",
+          "spec": "-",
+          "qty": 3,
+          "unit": "个"
+        },
+        {
+          "product_id": "6",
+          "name": "金士顿CF(8G)",
+          "model": "CF8G",
+          "spec": "-",
+          "qty": 5,
+          "unit": "台"
+        },
+        {
+          "product_id": "37",
+          "name": "视频会议",
+          "model": "DSNNY DSN-D40",
+          "spec": "-",
+          "qty": 14,
+          "unit": "箱"
+        }
+      ],
+      "note": "多产品订单：3个产品"
+    },
+    {
+      "id": "VO-005",
+      "type": "短信/钉钉",
+      "date": "2026-05-22",
+      "content": "扫描仪 SMY3 25件、惠普笔记本 i7-3632QM/GT650M 14台，给陕西艾诺威",
+      "expected_customer": "陕西艾诺威",
+      "expected_customer_id": "157",
+      "expected_products": [
+        {
+          "product_id": "16",
+          "name": "扫描仪",
+          "model": "SMY3",
+          "spec": "-",
+          "qty": 25,
+          "unit": "件"
+        },
+        {
+          "product_id": "1",
+          "name": "惠普笔记本",
+          "model": "i7-3632QM/GT650M",
+          "spec": "-",
+          "qty": 14,
+          "unit": "台"
+        }
+      ],
+      "note": "多产品订单：2个产品"
+    },
+    {
+      "id": "VO-006",
+      "type": "微信聊天",
+      "date": "2026-05-23",
+      "content": "15mm木塑197-29-3 18箱、琳娜贝尔 20件、脚手架 120x 4件，给山东佰特商贸有限公司",
+      "expected_customer": "山东佰特商贸有限公司",
+      "expected_customer_id": "146",
+      "expected_products": [
+        {
+          "product_id": "108",
+          "name": "15mm木塑197-29-3",
+          "model": "",
+          "spec": "基准",
+          "qty": 18,
+          "unit": "箱"
+        },
+        {
+          "product_id": "126",
+          "name": "琳娜贝尔",
+          "model": "",
+          "spec": "-",
+          "qty": 20,
+          "unit": "件"
+        },
+        {
+          "product_id": "115",
+          "name": "脚手架",
+          "model": "120x",
+          "spec": "-",
+          "qty": 4,
+          "unit": "件"
+        }
+      ],
+      "note": "多产品订单：3个产品"
+    },
+    {
+      "id": "VO-007",
+      "type": "短信/钉钉",
+      "date": "2026-05-24",
+      "content": "烟雾报警器 6件、扫描仪 SMY3 20套、硬件设备 wr 30箱、CPU风扇 双12CM风扇 23台、kindle 黑色 13件，给180club",
+      "expected_customer": "180club",
+      "expected_customer_id": "92",
+      "expected_products": [
+        {
+          "product_id": "100",
+          "name": "烟雾报警器",
+          "model": "",
+          "spec": "-",
+          "qty": 6,
+          "unit": "件"
+        },
+        {
+          "product_id": "16",
+          "name": "扫描仪",
+          "model": "SMY3",
+          "spec": "-",
+          "qty": 20,
+          "unit": "套"
+        },
+        {
+          "product_id": "117",
+          "name": "硬件设备",
+          "model": "wr",
+          "spec": "-",
+          "qty": 30,
+          "unit": "箱"
+        },
+        {
+          "product_id": "48",
+          "name": "CPU风扇",
+          "model": "双12CM风扇",
+          "spec": "基准",
+          "qty": 23,
+          "unit": "台"
+        },
+        {
+          "product_id": "96",
+          "name": "kindle",
+          "model": "黑色",
+          "spec": "-",
+          "qty": 13,
+          "unit": "件"
+        }
+      ],
+      "note": "多产品订单：5个产品"
+    },
+    {
+      "id": "VO-008",
+      "type": "短信/钉钉",
+      "date": "2026-05-25",
+      "content": "下个单：河北绿健康生物有限公司，模拟半球安防监控 2.8mm 8箱，kindle 黑色 3个",
+      "expected_customer": "河北绿健康生物有限公司",
+      "expected_customer_id": "71",
+      "expected_products": [
+        {
+          "product_id": "41",
+          "name": "模拟半球安防监控",
+          "model": "2.8mm",
+          "spec": "-",
+          "qty": 8,
+          "unit": "箱"
+        },
+        {
+          "product_id": "96",
+          "name": "kindle",
+          "model": "黑色",
+          "spec": "-",
+          "qty": 3,
+          "unit": "个"
+        }
+      ],
+      "note": "多产品订单：2个产品"
+    },
+    {
+      "id": "VO-009",
+      "type": "语音转文字(含错字)",
+      "date": "2026-05-26",
+      "content": "下个单：费尔工贸有限公司，台式电脑 DN-837A 8套，扫描仪 SMY3 7个，硬件设备 wr 14件，防水罩 FHZ2014 15个，CPU风扇 双12CM风扇 21个",
+      "expected_customer": "费尔工贸有限公司",
+      "expected_customer_id": "5741",
+      "expected_products": [
+        {
+          "product_id": "32",
+          "name": "台式电脑",
+          "model": "DN-837A",
+          "spec": "-",
+          "qty": 8,
+          "unit": "套"
+        },
+        {
+          "product_id": "16",
+          "name": "扫描仪",
+          "model": "SMY3",
+          "spec": "-",
+          "qty": 7,
+          "unit": "个"
+        },
+        {
+          "product_id": "117",
+          "name": "硬件设备",
+          "model": "wr",
+          "spec": "-",
+          "qty": 14,
+          "unit": "件"
+        },
+        {
+          "product_id": "11",
+          "name": "防水罩",
+          "model": "FHZ2014",
+          "spec": "基准",
+          "qty": 15,
+          "unit": "个"
+        },
+        {
+          "product_id": "48",
+          "name": "CPU风扇",
+          "model": "双12CM风扇",
+          "spec": "基准",
+          "qty": 21,
+          "unit": "个"
+        }
+      ],
+      "note": "多产品订单：5个产品"
+    },
+    {
+      "id": "VO-010",
+      "type": "语音转文字(含错字)",
+      "date": "2026-05-27",
+      "content": "给富豪酒店出个单，PM1200 排线 15台，四核工控研能 主板 3套，i7-3632QM/GT650M 惠普笔记本 28箱",
+      "expected_customer": "富豪酒店",
+      "expected_customer_id": "5672",
+      "expected_products": [
+        {
+          "product_id": "66",
+          "name": "排线",
+          "model": "PM1200",
+          "spec": "20米",
+          "qty": 15,
+          "unit": "台"
+        },
+        {
+          "product_id": "91",
+          "name": "主板",
+          "model": "四核工控研能",
+          "spec": "-",
+          "qty": 3,
+          "unit": "套"
+        },
+        {
+          "product_id": "1",
+          "name": "惠普笔记本",
+          "model": "i7-3632QM/GT650M",
+          "spec": "-",
+          "qty": 28,
+          "unit": "箱"
+        }
+      ],
+      "note": "多产品订单：3个产品"
+    },
+    {
+      "id": "VO-011",
+      "type": "语音转文字(含错字)",
+      "date": "2026-05-28",
+      "content": "帮我给电信景小斌发1套台式电脑 DN-837A、26套针式打印机 ZSP4、23箱红外探头KL900 白色、16台脚手架 120x、7个手机 r11s",
+      "expected_customer": "电信景小斌",
+      "expected_customer_id": "60",
+      "expected_products": [
+        {
+          "product_id": "32",
+          "name": "台式电脑",
+          "model": "DN-837A",
+          "spec": "-",
+          "qty": 1,
+          "unit": "套"
+        },
+        {
+          "product_id": "14",
+          "name": "针式打印机",
+          "model": "ZSP4",
+          "spec": "-",
+          "qty": 26,
+          "unit": "套"
+        },
+        {
+          "product_id": "85",
+          "name": "红外探头KL900",
+          "model": "白色",
+          "spec": "-",
+          "qty": 23,
+          "unit": "箱"
+        },
+        {
+          "product_id": "115",
+          "name": "脚手架",
+          "model": "120x",
+          "spec": "-",
+          "qty": 16,
+          "unit": "台"
+        },
+        {
+          "product_id": "106",
+          "name": "手机",
+          "model": "r11s",
+          "spec": "-",
+          "qty": 7,
+          "unit": "个"
+        }
+      ],
+      "note": "多产品订单：5个产品"
+    },
+    {
+      "id": "VO-012",
+      "type": "短信/钉钉",
+      "date": "2026-05-29",
+      "content": "对，红外探头KL900 白色，28台，金士顿CF(8G) CF8G，3台，金士顿Micro SD卡(16G) Micro5，29箱，客户个人零售商",
+      "expected_customer": "个人零售商",
+      "expected_customer_id": "5695",
+      "expected_products": [
+        {
+          "product_id": "85",
+          "name": "红外探头KL900",
+          "model": "白色",
+          "spec": "-",
+          "qty": 28,
+          "unit": "台"
+        },
+        {
+          "product_id": "6",
+          "name": "金士顿CF(8G)",
+          "model": "CF8G",
+          "spec": "-",
+          "qty": 3,
+          "unit": "台"
+        },
+        {
+          "product_id": "4",
+          "name": "金士顿Micro SD卡(16G)",
+          "model": "Micro5",
+          "spec": "-",
+          "qty": 29,
+          "unit": "箱"
+        }
+      ],
+      "note": "多产品订单：3个产品"
+    },
+    {
+      "id": "VO-013",
+      "type": "电话口述",
+      "date": "2026-05-30",
+      "content": "华魏门业有限公司\n散热器Frostflow\n240L-R\n13台\n摄像头-400万半球网络\nDS-2CD2F45F(D)-I(W)(S)\n10套\n视频会议\nPOLYCOM HDX 6000-720\n25个",
+      "expected_customer": "华魏门业有限公司",
+      "expected_customer_id": "5609",
+      "expected_products": [
+        {
+          "product_id": "47",
+          "name": "散热器Frostflow",
+          "model": "240L-R",
+          "spec": "基准",
+          "qty": 13,
+          "unit": "台"
+        },
+        {
+          "product_id": "97",
+          "name": "摄像头-400万半球网络",
+          "model": "DS-2CD2F45F(D)-I(W)(S)",
+          "spec": "-",
+          "qty": 10,
+          "unit": "套"
+        },
+        {
+          "product_id": "39",
+          "name": "视频会议",
+          "model": "POLYCOM HDX 6000-720",
+          "spec": "-",
+          "qty": 25,
+          "unit": "个"
+        }
+      ],
+      "note": "多产品订单：3个产品"
+    },
+    {
+      "id": "VO-014",
+      "type": "电话口述",
+      "date": "2026-05-31",
+      "content": "烟雾报警器 6套、摄像头-400万半球网络 DS-2CD2F45F(D)-I(W)(S) 23件、琳娜贝尔 26箱、iPhone6 27箱，给珠海市太川电子企业有限公司",
+      "expected_customer": "珠海市太川电子企业有限公司",
+      "expected_customer_id": "27",
+      "expected_products": [
+        {
+          "product_id": "100",
+          "name": "烟雾报警器",
+          "model": "",
+          "spec": "-",
+          "qty": 6,
+          "unit": "套"
+        },
+        {
+          "product_id": "97",
+          "name": "摄像头-400万半球网络",
+          "model": "DS-2CD2F45F(D)-I(W)(S)",
+          "spec": "-",
+          "qty": 23,
+          "unit": "件"
+        },
+        {
+          "product_id": "126",
+          "name": "琳娜贝尔",
+          "model": "",
+          "spec": "-",
+          "qty": 26,
+          "unit": "箱"
+        },
+        {
+          "product_id": "22",
+          "name": "iPhone6",
+          "model": "",
+          "spec": "-",
+          "qty": 27,
+          "unit": "箱"
+        }
+      ],
+      "note": "多产品订单：4个产品"
+    },
+    {
+      "id": "VO-015",
+      "type": "微信聊天",
+      "date": "2026-06-01",
+      "content": "给深圳市世通工业软管有限公司出个单，iPhone6 7件，3M白 防护服 9个，DN-837A 台式电脑 14件，15mm木塑197-29-3 11台",
+      "expected_customer": "深圳市世通工业软管有限公司",
+      "expected_customer_id": "26",
+      "expected_products": [
+        {
+          "product_id": "22",
+          "name": "iPhone6",
+          "model": "",
+          "spec": "-",
+          "qty": 7,
+          "unit": "件"
+        },
+        {
+          "product_id": "50",
+          "name": "防护服",
+          "model": "3M白",
+          "spec": "-",
+          "qty": 9,
+          "unit": "个"
+        },
+        {
+          "product_id": "32",
+          "name": "台式电脑",
+          "model": "DN-837A",
+          "spec": "-",
+          "qty": 14,
+          "unit": "件"
+        },
+        {
+          "product_id": "110",
+          "name": "15mm木塑197-29-3",
+          "model": "",
+          "spec": "张",
+          "qty": 11,
+          "unit": "台"
+        }
+      ],
+      "note": "多产品订单：4个产品"
+    }
+  ]
+}

@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>响应甲方询价/采购单：AI 制单的"贴右边"超能力</title>
+<style>
+  :root {
+    --primary: #3b82f6;
+    --primary-dark: #1d4ed8;
+    --accent: #f59e0b;
+    --success: #16a34a;
+    --warning: #d97706;
+    --danger: #dc2626;
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-300: #d1d5db;
+    --gray-500: #6b7280;
+    --gray-700: #374151;
+    --gray-900: #111827;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    line-height: 1.75;
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 32px 24px 80px;
+    color: var(--gray-700);
+    background: #fff;
+  }
+  h1 {
+    font-size: 30px; color: var(--gray-900);
+    border-bottom: 3px solid var(--primary);
+    padding-bottom: 12px; margin-bottom: 8px;
+  }
+  h2 {
+    font-size: 22px; color: var(--gray-900);
+    margin-top: 56px; padding-left: 12px;
+    border-left: 5px solid var(--primary);
+  }
+  h3 { font-size: 17px; color: var(--primary-dark); margin-top: 28px; }
+  h4 { font-size: 15px; color: var(--gray-900); margin-top: 20px; }
+  p { margin: 12px 0; }
+  .meta { color: var(--gray-500); font-size: 13px; margin-bottom: 24px; }
+  .toc {
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border: 1px solid #bfdbfe;
+    border-radius: 10px;
+    padding: 20px 24px; margin: 24px 0 40px;
+  }
+  .toc h3 { margin-top: 0; color: var(--primary-dark); }
+  .toc ol { margin: 8px 0; padding-left: 22px; }
+  .toc li { margin: 4px 0; }
+  .toc a { color: var(--gray-700); text-decoration: none; }
+  .toc a:hover { color: var(--primary); text-decoration: underline; }
+  code {
+    font-family: "SF Mono", "Monaco", "Consolas", monospace;
+    font-size: 13px; background: var(--gray-100); color: #b91c1c;
+    padding: 2px 6px; border-radius: 4px;
+  }
+  pre {
+    background: #1e293b; color: #e2e8f0;
+    padding: 16px 18px; border-radius: 8px;
+    overflow-x: auto; font-size: 13px; line-height: 1.6; margin: 14px 0;
+  }
+  pre code { background: none; color: inherit; padding: 0; font-size: 13px; }
+  table {
+    width: 100%; border-collapse: collapse;
+    margin: 16px 0; font-size: 14px;
+  }
+  th, td {
+    border: 1px solid var(--gray-200);
+    padding: 10px 12px; text-align: left; vertical-align: top;
+  }
+  th { background: var(--gray-50); color: var(--gray-900); font-weight: 600; }
+  tr:nth-child(even) td { background: var(--gray-50); }
+  .callout {
+    border-left: 4px solid; padding: 14px 18px; margin: 18px 0;
+    border-radius: 6px; background: var(--gray-50);
+  }
+  .callout.info    { border-color: var(--primary);  background: #eff6ff; }
+  .callout.success { border-color: var(--success);  background: #f0fdf4; }
+  .callout.warning { border-color: var(--warning);  background: #fffbeb; }
+  .callout.danger  { border-color: var(--danger);   background: #fef2f2; }
+  .callout.story   { border-color: var(--accent);   background: #fffbeb; }
+  .callout-title { font-weight: 700; margin-bottom: 6px; }
+  .callout.info .callout-title    { color: var(--primary-dark); }
+  .callout.success .callout-title { color: var(--success); }
+  .callout.warning .callout-title { color: var(--warning); }
+  .callout.danger .callout-title  { color: var(--danger); }
+  .callout.story .callout-title   { color: #b45309; }
+  .pill { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+  .pill-blue { background: #dbeafe; color: var(--primary-dark); }
+  .pill-green { background: #dcfce7; color: var(--success); }
+  .pill-yellow { background: #fef3c7; color: var(--warning); }
+  .pill-red { background: #fee2e2; color: var(--danger); }
+  .pill-amber { background: #fde68a; color: #92400e; }
+  ul, ol { padding-left: 22px; }
+  li { margin: 4px 0; }
+  .quote {
+    background: var(--gray-50); border-left: 3px solid var(--gray-300);
+    padding: 12px 16px; margin: 16px 0;
+    color: var(--gray-700); font-style: italic;
+  }
+  .scenario {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: 1px solid #f59e0b; border-radius: 10px;
+    padding: 18px 22px; margin: 20px 0;
+  }
+  .scenario h4 { margin-top: 0; color: #92400e; }
+  .scenario ul { margin-bottom: 0; }
+  .comparison {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0;
+  }
+  .comparison > div { padding: 16px 20px; border-radius: 8px; }
+  .comp-bad { background: #fef2f2; border: 1px solid #fecaca; }
+  .comp-bad h4 { color: var(--danger); margin-top: 0; }
+  .comp-good { background: #f0fdf4; border: 1px solid #bbf7d0; }
+  .comp-good h4 { color: var(--success); margin-top: 0; }
+  .comp-bad h4::before { content: "❌ "; }
+  .comp-good h4::before { content: "✅ "; }
+  @media (max-width: 720px) {
+    .comparison { grid-template-columns: 1fr; }
+  }
+  .metric {
+    text-align: center; padding: 24px 16px; border-radius: 10px;
+    background: linear-gradient(135deg, #eff6ff, #dbeafe); margin: 12px 0;
+  }
+  .metric .num { font-size: 36px; font-weight: 700; color: var(--primary-dark); line-height: 1; }
+  .metric .label { color: var(--gray-700); margin-top: 8px; font-size: 14px; }
+  .metric .sub { color: var(--gray-500); margin-top: 4px; font-size: 12px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin: 20px 0; }
+  .grid-3 > div { padding: 16px; background: var(--gray-50); border-radius: 8px; }
+  .grid-3 h4 { margin-top: 0; color: var(--primary-dark); }
+  @media (max-width: 720px) {
+    .grid-3 { grid-template-columns: 1fr; }
+  }
+  hr { border: 0; border-top: 1px solid var(--gray-200); margin: 32px 0; }
+  .badge-version { background: var(--primary); color: white; padding: 2px 10px; border-radius: 12px; font-size: 12px; margin-left: 8px; vertical-align: middle; }
+  .file-path { color: var(--gray-500); font-size: 12px; }
+</style>
+</head>
+<body>
+
+<h1>响应甲方询价/采购单：AI 制单的"贴右边"超能力</h1>
+<p class="meta">
+  文档版本：<span class="badge-version">v1.0</span> ·
+  最后更新：2026-06-08 ·
+  目标读者：销售（首要）→ 终端用户（销售推荐）·
+  文档类型：场景能力营销文档
+</p>
+
+<div class="toc">
+<h3>目录</h3>
+<ol>
+  <li><a href="#sec-story">开场故事：销售小李的"15 单噩梦日"</a></li>
+  <li><a href="#sec-why">为什么这是一个被忽视的"刚需"</a></li>
+  <li><a href="#sec-principle">核心原则：甲方格式不可侵犯</a></li>
+  <li><a href="#sec-flow">四步操作流程</a></li>
+  <li><a href="#sec-ai">AI 匹配的"超能力"（重头戏）</a></li>
+  <li><a href="#sec-diff">与常规 AI 制单的差异</a></li>
+  <li><a href="#sec-time">节省多少时间：量化对比</a></li>
+  <li><a href="#sec-boundary">适用边界（轻量）</a></li>
+  <li><a href="#sec-faq">常见问题</a></li>
+</ol>
+</div>
+
+<h2 id="sec-story">1. 开场故事：销售小李的"15 单噩梦日"</h2>
+
+<div class="callout story">
+<div class="callout-title">📅 周三，销售小李的一天</div>
+
+<p><strong>上午 9:00</strong>，小李打开邮箱，看到 <strong>15 封</strong> 询价邮件。每封都附带一份 <strong>甲方 Excel 询价单</strong>，每份平均 <strong>30~50 行</strong>产品明细。</p>
+
+<p><strong>上午 9:00 ~ 12:30</strong>，他重复着同样的动作：</p>
+<ul>
+  <li>打开甲方 Excel</li>
+  <li>逐行看"物料编码/品名/型号"，去我方产品库搜索</li>
+  <li>找到后，<strong>一个个复制</strong>我方的"产品参数、规格、图片"到报价单</li>
+  <li>按甲方原始列名整理好，生成报价单发回</li>
+</ul>
+
+<p><strong>12:30</strong>，他才处理完 <strong>4 份</strong>，平均每份 50 分钟。</p>
+
+<p><strong>下午</strong>，他不敢想剩下的 11 份，<strong>开始想换个行业</strong>。</p>
+</div>
+
+<p>这是工业品销售最常见的工作日常。<strong>不是产品太难卖，是响应太慢</strong>。问题不在销售意愿，而在<strong>"机械复制"占据了创造价值的时间</strong>。</p>
+
+<div class="callout success">
+<div class="callout-title">🎯 这份文档要回答的核心问题</div>
+  客户发来一份<strong>50 行产品的询价 Excel</strong>，你能不能在 <strong>5 分钟内</strong>生成一份<strong>严格保持甲方格式</strong>的报价 Excel，里面包含你方的产品参数、规格、图片？
+</div>
+
+<p>如果可以，销售的日常就会被彻底改写。这就是 AI 制单"贴右边"超能力要解决的问题。</p>
+
+<h2 id="sec-why">2. 为什么这是一个被忽视的"刚需"</h2>
+
+<p>大多数人不会主动说出"我需要这个功能"，<strong>不是因为不需要，而是因为从来没见过</strong>。这在工业品销售领域尤其明显：</p>
+
+<div class="comparison">
+<div class="comp-bad">
+<h4>通用产品经理的视角</h4>
+  "我们已经做了 AI 制单，能识别客户名称、产品明细，自动生成报价单。还需要什么？"
+</div>
+<div class="comp-good">
+<h4>一线销售的真实痛点</h4>
+  "我客户发来的 Excel 是他自己设计的模板，他要的是<strong>在他模板上</strong>补全我方信息，不是一份<strong>新生成的</strong>报价单。客户拿着我发的报价，还要<strong>二次录入</strong>，他会疯的。"
+</div>
+</div>
+
+<p>这两类认知的差距，<strong>正是 AI 制单"贴右边"能力的存在意义</strong>。它的本质是：</p>
+
+<div class="quote">
+"不是替代甲方的文档格式，而是<strong>在甲方的格式上叠加我方价值</strong>。"
+</div>
+
+<h3>2.1 买方市场下的"格式即尊重"</h3>
+
+<p>工业品市场绝大多数是<strong>买方市场</strong>——客户可选的供应商很多。客户在发询价单时，使用的 Excel 模板往往是：</p>
+<ul>
+  <li>采购部门沉淀多年的<strong>标准化模板</strong></li>
+  <li>公司 ERP 导出的<strong>固定格式</strong></li>
+  <li>采购、财务人员<strong>熟悉的工作习惯</strong></li>
+</ul>
+
+<p>供应商要做的不是"教育客户使用我们的模板"，而是<strong>完全融入客户的工作流</strong>。一份"按我方模板生成的漂亮报价单"，对客户来说反而是负担。</p>
+
+<div class="callout warning">
+<div class="callout-title">真实场景</div>
+  客户把 5 家供应商的报价贴在同一份 Excel 上对比。如果你的报价格式是 PDF / Word / 自己的 Excel，<strong>客户要重新整理</strong>；如果你的报价直接是<strong>他的 Excel 右半边补全</strong>，他只需要选最低价。<strong>谁是第一候选，一目了然</strong>。
+</div>
+
+<h2 id="sec-principle">3. 核心原则：甲方格式不可侵犯</h2>
+
+<p>AI 制单在这个场景下有<strong>四条铁律</strong>，每条都对应明确的业务背景：</p>
+
+<table>
+  <tr>
+    <th>原则</th>
+    <th>业务含义</th>
+    <th>AI 制单的具体行为</th>
+  </tr>
+  <tr>
+    <td><strong>① 产品顺序不可改</strong></td>
+    <td>甲方表格的 1、2、3、4 是有业务逻辑的（采购优先顺序、批量合并、批次分组）</td>
+    <td>AI 识别后仍按甲方原始顺序 1→2→3→4 输出，不重排</td>
+  </tr>
+  <tr>
+    <td><strong>② 列名不可改</strong></td>
+    <td>甲方的"物料编码、品名、厂商、型号、技术参数"是采购/财务的<strong>行话</strong></td>
+    <td>甲方用什么列名就保留什么列名，绝不替换成我方的"产品名称/规格/单位"</td>
+  </tr>
+  <tr>
+    <td><strong>③ 不替换甲方内容</strong></td>
+    <td>甲方已经填写的产品名称、型号、数量是<strong>采购需求</strong>，不是要我们改的</td>
+    <td>AI 只在甲方<strong>右侧追加</strong>我方信息，不动甲方原有单元格</td>
+  </tr>
+  <tr>
+    <td><strong>④ 不让甲方做二次录入</strong></td>
+    <td>客户拿到我方报价后，应该可以<strong>直接转给内部使用</strong></td>
+    <td>导出格式与甲方原始格式兼容（同样的 Excel、同样的列结构）</td>
+  </tr>
+</table>
+
+<div class="callout info">
+<div class="callout-title">设计哲学</div>
+  <strong>"把客户的文档当成我们工作的起点，而不是要被替代的目标。"</strong> 这是整个能力的核心出发点，也是它和"通用 AI 制单"最大的区别。
+</div>
+
+<h2 id="sec-flow">4. 四步操作流程</h2>
+
+<p>以下是完整的操作流程，<strong>从打开甲方 Excel 到发回响应单据</strong>，整个过程 ≤ 5 分钟（以 50 行产品为例）。</p>
+
+<div class="scenario">
+<h4>📋 假设场景</h4>
+  客户"华盛机械"通过邮件发来一份询价 Excel：<strong>6 种产品，50 行</strong>，使用他自己的模板：<br>
+  <code>序号 | 物料编码 | 品名 | 厂商 | 型号 | 技术参数 | 数量 | 其他要求</code><br>
+  你方为"远大工业"，需要响应一份报价单。
+</div>
+
+<h3>第 1 步：上传甲方单据，AI 自动识别</h3>
+
+<p>在 AI 制单页面，<strong>把甲方 Excel 拖入上传区</strong>。系统自动识别：</p>
+<ul>
+  <li>表格行列结构</li>
+  <li>列名映射（甲方的"物料编码"对应我方的"产品编号"）</li>
+  <li>产品顺序（保留甲方原始行号）</li>
+</ul>
+
+<p>AI 不会立即改任何列，只是把表格"读懂"。</p>
+
+<h3>第 2 步：AI 智能匹配我方产品库</h3>
+
+<p>对每一行甲方产品，AI 在我方产品库中<strong>模糊匹配</strong>，找到最相似的我方产品。匹配逻辑是双轨的：</p>
+<ul>
+  <li>用甲方<strong>物料编码</strong>精确匹配（如果双方编码体系一致）</li>
+  <li>用甲方<strong>品名 + 型号</strong>模糊匹配（应对命名习惯差异）</li>
+</ul>
+
+<p>匹配结果显示在原表格<strong>右侧</strong>，每行多出几列：</p>
+<table>
+  <tr><th>甲方列（保留）</th><th colspan="3">我方列（AI 追加）</th></tr>
+  <tr>
+    <td>物料编码 / 品名 / 型号 ...</td>
+    <td><strong>我方产品编号</strong></td>
+    <td><strong>我方产品名称</strong></td>
+    <td><strong>我方单价 / 交期 / 备注</strong></td>
+  </tr>
+</table>
+
+<p>对于匹配不上的行（< 5% 的情况），AI 会标红，<strong>让你手动选择</strong>对应产品或标记"无货"。</p>
+
+<h3>第 3 步：导出我方参数 + 图片</h3>
+
+<p>点「导出 Excel」，得到一份<strong>完整的我方响应单据</strong>：</p>
+<ul>
+  <li>每行产品的详细参数（我方产品库的全部字段）</li>
+  <li>每行产品的<strong>实物图片</strong>（直接从产品库抓取）</li>
+  <li>整体价格、批量折扣、交货期</li>
+</ul>
+
+<h3>第 4 步：复制粘贴到甲方单据右侧</h3>
+
+<p>这是整个流程<strong>最关键的一步</strong>，也是这个能力区别于"自动生成报价单"的核心：</p>
+
+<div class="comparison">
+<div class="comp-bad">
+<h4>传统方式（不能这么做）</h4>
+  把甲方 Excel 丢掉，<strong>自己生成一份新 Excel</strong> 发给客户。<br>
+  <strong>问题</strong>：客户要把你的报价<strong>逐行复制</strong>回他的模板，浪费他时间 → 影响成交。
+</div>
+<div class="comp-good">
+<h4>正确方式（这个能力做的事）</h4>
+  <strong>保留甲方 Excel</strong>，在我方 Excel 里<strong>只复制我方那几列</strong>，<strong>粘贴到甲方 Excel 的右侧</strong>，<strong>逐行对齐</strong>。<br>
+  <strong>效果</strong>：客户拿到的是<strong>他自己的模板 + 你方的报价</strong>，无需任何二次整理。
+</div>
+</div>
+
+<div class="callout success">
+<div class="callout-title">核心动作</div>
+  <strong>"把甲方当甲方，把我方贴右边"</strong>——左边是客户的需求（不可动），右边是我方的响应（自动生成）。
+</div>
+
+<h2 id="sec-ai">5. AI 匹配的"超能力"（重头戏）</h2>
+
+<p>这个能力能不能落地，<strong>90% 取决于 AI 匹配的质量</strong>。这里展开讲讲它的技术内核，让你向客户解释时能说到点子上。</p>
+
+<h3>5.1 模糊匹配：容忍"命名习惯"差异</h3>
+
+<p>甲方写"高精度伺服电机"，我方写"精密伺服马达"——<strong>说的是同一个东西</strong>。传统精确匹配会失败，AI 匹配靠的是<strong>分词 + 拼音 + 行业词向量</strong>，多维度判断相似度。</p>
+
+<p>AI 匹配的"打分公式"（简化版）：</p>
+<pre><code>总分 = 拼音相似度 × 0.35
+     + 行业缩写相似度 × 0.25
+     + 词袋相似度 × 0.30
+     + 字段长度合理性 × 0.10
+阈值 ≥ 0.45 → 视为匹配成功</code></pre>
+
+<p>这意味着：</p>
+<ul>
+  <li>"电机"和"马达"互认（行业词同义）</li>
+  <li>"JS-100"和"js100"互认（大小写 / 横线）</li>
+  <li>"0.5 毫米"和"0.5mm"互认（单位写法）</li>
+</ul>
+
+<h3>5.2 同音字容忍：解决"手输错字"</h3>
+
+<p>甲方手输的品名常有错字："气缸"写成"起刚"、"法兰"写成"法栏"。AI 引擎会<strong>同步回退到拼音层</strong>，看拼音是否一致：</p>
+<pre><code>qì gāng    → 拼音前缀匹配 → "气缸"  ✓
+fǎ lán     → 拼音前缀匹配 → "法兰"  ✓</code></pre>
+
+<p>这层兜底让 90%+ 的"输入错误"被静默纠正，<strong>无需人工介入</strong>。</p>
+
+<h3>5.3 多表关联：跨产品库匹配</h3>
+
+<p>工业品的"产品名"+"型号"+"规格"是<strong>三段式描述</strong>。AI 匹配时<strong>不只比品名</strong>，而是把三段信息拆开<strong>分别打分再综合</strong>：</p>
+
+<table>
+  <tr><th>甲方字段</th><th>我方字段</th><th>匹配策略</th></tr>
+  <tr><td>品名：气缸</td><td>产品名：标准气缸</td><td>分词 + 行业词向量（高权重）</td></tr>
+  <tr><td>型号：SMC CDQ2B40-50DZ</td><td>型号：CDQ2B40-50DZ</td><td>精确匹配（厂家前缀过滤）</td></tr>
+  <tr><td>技术参数：行程 50mm</td><td>规格：50mm</td><td>数值抽取 + 单位标准化</td></tr>
+</table>
+
+<h3>5.4 顺序保持：1、2、3、4 不变</h3>
+
+<p>这是<strong>最容易被忽视但最关键</strong>的一点。AI 匹配完成后，<strong>输出行的顺序必须和甲方完全一致</strong>，不允许重排：</p>
+
+<pre><code>甲方原始顺序:        AI 匹配后输出顺序（必须相同）:
+1  物料 A             1  物料 A  → 我方 P-001
+2  物料 B             2  物料 B  → 我方 P-045
+3  物料 C             3  物料 C  → 我方 P-122
+4  物料 D             4  物料 D  → 我方 P-078
+5  物料 E             5  物料 E  → 我方 P-200
+6  物料 F             6  物料 F  → 我方 P-156</code></pre>
+
+<p>实现机制：AI 不会"按相似度排序"，而是<strong>按行号锁定输出</strong>，每行只填入"我方列"的内容，<strong>行结构不动</strong>。</p>
+
+<div class="callout info">
+<div class="callout-title">为什么顺序很重要？</div>
+  客户在甲方表格里通常做了<strong>优先级标记、批量分组、合并单元格</strong>。一旦顺序错位，<strong>整张表的可读性就毁了</strong>。保持顺序 = 保住客户的<strong>组织逻辑</strong>。
+</div>
+
+<h3>5.5 复制粘贴：单元格数量严格匹配（图片不变形的硬约束）</h3>
+
+<p>导出的 Excel 中嵌入了产品图（图片 cell 用 <code>editAs: 'twoCell'</code> 锚定，跟随行高/列宽自适应）。<strong>把这个 Excel 粘贴到甲方模板时，必须按"横向单元格数 × 纵向行数"严格匹配</strong>，否则图片会越界、覆盖甲方的列、破坏原始表格样式。</p>
+
+<div class="callout warning">
+<div class="callout-title">硬约束</div>
+  <ul>
+    <li><strong>复制时</strong>：横向选中的列数 = 纵向选中的行数（含表头），与甲方模板的目标区域必须 1:1 对齐</li>
+    <li><strong>粘贴时</strong>：目标起始单元格的横向 / 纵向可用区域，必须能装下选中的整块</li>
+    <li><strong>多出来的列 / 行</strong>：粘贴前先把甲方对应区域预留好（哪怕占位空行），避免 Excel 自动插入新行打乱甲方的合并单元格 / 优先级标记</li>
+  </ul>
+</div>
+
+<h4>5.5.1 反例：单元格数不匹配会怎样？</h4>
+<table>
+  <tr><th>场景</th><th>结果</th></tr>
+  <tr>
+    <td>我方导出 8 行产品（带 8 张图）→ 复制到甲方只有 5 行的明细区</td>
+    <td>多出的 3 行图片<strong>覆盖到甲方其他列</strong>，把单价/数量等盖掉</td>
+  </tr>
+  <tr>
+    <td>我方导出含 11 列（图片 + 10 个字段）→ 甲方模板只有 9 列空位</td>
+    <td>多出的 2 列图片<strong>挤进甲方汇总/合计区</strong>，破坏整张表</td>
+  </tr>
+  <tr>
+    <td>粘贴时起始位置选错（左移 1 列 / 上移 1 行）</td>
+    <td>整块错位，<strong>每行图片对应的产品名都错开</strong>，相当于"行对不上图"</td>
+  </tr>
+</table>
+
+<h4>5.5.2 正例：操作流程（图片不破坏表格的 4 步）</h4>
+<ol>
+  <li><strong>先对齐行数</strong>：在甲方 Excel 里数清"产品明细区"有几行（含表头），从我方 Excel 选<strong>同样行数</strong>的整块（按住 Shift 点末尾行）</li>
+  <li><strong>再对齐列数</strong>：横向选中"我方要从第几列贴到第几列"，列数 = 甲方明细区<strong>可用的右侧空列数</strong>（不能多不能少）</li>
+  <li><strong>Ctrl+C 复制</strong>整块（图片+文字一起带过去）</li>
+  <li><strong>回到甲方 Excel</strong>，点中"明细区右侧第 1 列、第 1 行"的交叉单元格，<strong>Ctrl+V 粘贴</strong>（Excel 会按选中区域的尺寸自动铺开）</li>
+</ol>
+
+<h4>5.5.3 快速自查清单</h4>
+<ul>
+  <li>✅ 我方横向列数 = 甲方可用右侧列数</li>
+  <li>✅ 我方纵向行数 = 甲方明细区行数</li>
+  <li>✅ 起始单元格对齐甲方明细区<strong>右上角</strong></li>
+  <li>✅ 粘贴后图片 cell 落在甲方"空白列"（不与甲方原内容重叠）</li>
+</ul>
+
+<div class="callout success">
+<div class="callout-title">结论</div>
+  <strong>单元格数量 = 图片不破坏表格样式的唯一保证</strong>。多一列 / 少一行 / 起始偏 1 格，都会让 twoCell 锚定的图片越界到甲方原内容上。养成"先数行数再选块"的习惯，甲方收到 Excel 后 0 投诉。
+</div>
+
+<h2 id="sec-diff">6. 与常规 AI 制单的差异</h2>
+
+<table>
+  <tr>
+    <th>维度</th>
+    <th>常规 AI 制单（AI 帮我写报价）</th>
+    <th>响应甲方询价单（贴右边）</th>
+  </tr>
+  <tr>
+    <td><strong>出发点</strong></td>
+    <td>"我要做一份报价单"</td>
+    <td>"客户给了我一份询价单，我要响应"</td>
+  </tr>
+  <tr>
+    <td><strong>输入</strong></td>
+    <td>客户名 + 产品名（用户手输）</td>
+    <td>甲方完整 Excel（直接上传）</td>
+  </tr>
+  <tr>
+    <td><strong>输出</strong></td>
+    <td>我方模板生成的报价单</td>
+    <td>我方 Excel（右侧列），等用户复制粘贴到甲方单据</td>
+  </tr>
+  <tr>
+    <td><strong>格式</strong></td>
+    <td>我方主导</td>
+    <td>甲方主导，我方叠加</td>
+  </tr>
+  <tr>
+    <td><strong>列名</strong></td>
+    <td>我方标准列</td>
+    <td>甲方原始列 + 我方补充列</td>
+  </tr>
+  <tr>
+    <td><strong>顺序</strong></td>
+    <td>我方排序</td>
+    <td><strong>严格保留甲方顺序</strong></td>
+  </tr>
+  <tr>
+    <td><strong>匹配容错</strong></td>
+    <td>中（产品名差异不致命）</td>
+    <td>高（必须容忍命名习惯 + 错字）</td>
+  </tr>
+  <tr>
+    <td><strong>客户操作</strong></td>
+    <td>客户要二次录入</td>
+    <td>客户零录入</td>
+  </tr>
+  <tr>
+    <td><strong>成交影响</strong></td>
+    <td>中性</td>
+    <td>正向（体现专业度）</td>
+  </tr>
+</table>
+
+<h2 id="sec-time">7. 节省多少时间：量化对比</h2>
+
+<p>这是销售向用户推荐时<strong>最有说服力的数字</strong>。我们按"产品行数 × 单日订单数"两个维度量化。</p>
+
+<h3>7.1 手工处理 vs AI 处理（50 行产品）</h3>
+<table>
+  <tr>
+    <th>环节</th>
+    <th>手工处理</th>
+    <th>AI 处理（贴右边）</th>
+    <th>节省</th>
+  </tr>
+  <tr>
+    <td>读懂甲方表格</td>
+    <td>2 分钟</td>
+    <td>0 分钟（自动）</td>
+    <td>2 分钟</td>
+  </tr>
+  <tr>
+    <td>逐行匹配产品库</td>
+    <td>25 分钟（30 秒/行）</td>
+    <td>1 分钟（自动）</td>
+    <td>24 分钟</td>
+  </tr>
+  <tr>
+    <td>复制产品参数</td>
+    <td>20 分钟</td>
+    <td>0.5 分钟（导出含参数）</td>
+    <td>19.5 分钟</td>
+  </tr>
+  <tr>
+    <td>处理产品图片</td>
+    <td>15 分钟（下载 + 整理）</td>
+    <td>0.5 分钟（图片自动嵌入）</td>
+    <td>14.5 分钟</td>
+  </tr>
+  <tr>
+    <td>整理报价单格式</td>
+    <td>10 分钟</td>
+    <td>2 分钟（粘贴合并）</td>
+    <td>8 分钟</td>
+  </tr>
+  <tr>
+    <td><strong>合计</strong></td>
+    <td><strong>~ 72 分钟</strong></td>
+    <td><strong>~ 4 分钟</strong></td>
+    <td><strong><span class="pill pill-green">节省 94%</span></strong></td>
+  </tr>
+</table>
+
+<h3>7.2 不同业务量下的体感差异</h3>
+
+<div class="grid-3">
+<div>
+<h4>🟢 轻量：2 条产品 / 单</h4>
+<p><strong>手工</strong>：~ 5 分钟<br><strong>AI</strong>：~ 1 分钟<br><strong>体感</strong>：差别不大，但 AI <strong>更难出错</strong></p>
+</div>
+<div>
+<h4>🟡 中量：50 条产品 / 单</h4>
+<p><strong>手工</strong>：~ 70 分钟<br><strong>AI</strong>：~ 5 分钟<br><strong>体感</strong>：<strong>质的飞跃</strong>，一杯咖啡的功夫</p>
+</div>
+<div>
+<h4>🔴 重量：50 条 × 15 单 / 天</h4>
+<p><strong>手工</strong>：~ 17 小时（<strong>1 天不够</strong>）<br><strong>AI</strong>：~ 75 分钟<br><strong>体感</strong>：<strong>从绝望到轻松</strong></p>
+</div>
+</div>
+
+<div class="metric">
+  <div class="num">94%</div>
+  <div class="label">单份询价单的处理时间节省</div>
+  <div class="sub">以 50 行产品询价单为典型样本</div>
+</div>
+
+<h3>7.3 隐性收益（容易忽略）</h3>
+
+<table>
+  <tr><th>隐性收益</th><th>说明</th></tr>
+  <tr>
+    <td><strong>错误率降低</strong></td>
+    <td>手动复制难免有错（参数抄错、对应错行），AI 匹配后<strong>几乎零错</strong></td>
+  </tr>
+  <tr>
+    <td><strong>响应速度提升</strong></td>
+    <td>15 单手工需 2-3 天，AI 1 小时内搞定 → <strong>客户拿到的报价更新鲜</strong></td>
+  </tr>
+  <tr>
+    <td><strong>专业度印象</strong></td>
+    <td>"按我方模板整理的 Excel" → 体现<strong>对客户工作流的尊重</strong>，提升品牌专业度</td>
+  </tr>
+  <tr>
+    <td><strong>销售心理减压</strong></td>
+    <td>不再害怕"15 单/天的机械劳动"，把时间花在<strong>客户沟通和关系建设</strong>上</td>
+  </tr>
+</table>
+
+<h2 id="sec-boundary">8. 适用边界（轻量）</h2>
+
+<p>本能力在大多数询价/采购单场景都适用，但以下情形需注意：</p>
+
+<table>
+  <tr><th>场景</th><th>表现</th><th>建议</th></tr>
+  <tr>
+    <td>甲方 Excel 包含<strong>复杂合并单元格</strong></td>
+    <td>AI 识别行号会出错</td>
+    <td>建议甲方先<strong>取消合并</strong>或拆分到明细行</td>
+  </tr>
+  <tr>
+    <td>甲方使用<strong>PDF / 图片</strong>格式</td>
+    <td>无法直接读取结构</td>
+    <td>建议先<strong>OCR 转 Excel</strong>，再走本流程</td>
+  </tr>
+  <tr>
+    <td>甲方表格是<strong>我方产品库的子集</strong>（部分产品我方不卖）</td>
+    <td>5-10% 行匹配不上</td>
+    <td>AI 标红，<strong>人工补</strong>或标"无货"即可</td>
+  </tr>
+  <tr>
+    <td>甲方产品命名<strong>完全是行业黑话</strong></td>
+    <td>匹配率可能下降</td>
+    <td>建议<strong>先建临时产品词表</strong>，再匹配</td>
+  </tr>
+</table>
+
+<div class="callout info">
+<div class="callout-title">总原则</div>
+  如果客户的询价单是<strong>结构化 Excel</strong>、<strong>产品在我方库里有对应</strong>，本能力都能高效处理。剩余 ~5% 的边缘情况，AI 标红 + 人工兜底即可。
+</div>
+
+<h2 id="sec-faq">9. 常见问题</h2>
+
+<h3>Q1：客户要 Word 报价单怎么办？</h3>
+<p>本能力是 Excel 优先。如果客户要 Word，<strong>先按 Excel 流程生成，复制 Excel 内容到 Word 模板</strong>。注意 Word 里同样要<strong>保留客户的列名和顺序</strong>。</p>
+
+<h3>Q2：AI 匹配错了怎么办？</h3>
+<p>任何匹配都会有误判。本能力提供<strong>匹配审查界面</strong>，AI 把每行匹配结果和<strong>相似度评分</strong>列出来，相似度低（< 0.6）的行<strong>标红让你人工确认</strong>。</p>
+
+<h3>Q3：产品图片会被一起导出吗？</h3>
+<p>会。<strong>导出的 Excel 嵌入了产品图</strong>（base64 编码），客户复制到自己的 Excel 后图片会跟随显示。如果客户需要高清原图，再单独发一个图片压缩包。</p>
+
+<h3>Q4：客户表格列名我都没见过怎么办？</h3>
+<p>这是工业品行业的常见现象，<strong>每个客户的"行话"都不同</strong>。本能力不需要"事先认识"客户列名——AI 会<strong>把客户列名原样保留</strong>，只在右侧追加我方信息列，<strong>完全绕开列名歧义问题</strong>。</p>
+
+<h3>Q5：和"AI 智能体"功能有什么区别？</h3>
+<p>AI 智能体是<strong>对话式</strong>生成内容（客户名 + 产品名 → 报价单），本能力是<strong>文档式</strong>响应（客户 Excel → 我方 Excel）。前者适合"快速启动"，后者适合"客户给了我文档"。</p>
+
+<hr>
+
+<div class="callout success">
+<div class="callout-title">📌 销售向用户推荐时的"三句话"模板</div>
+  <ol>
+    <li><strong>场景痛点</strong>："客户发来询价 Excel，您是不是要逐行查产品库、手动复制参数图片？"</li>
+    <li><strong>能力承诺</strong>："AI 制单可以 5 分钟内完成您原本 1 小时的工作，而且完全按客户的表格格式输出。"</li>
+    <li><strong>成交钩子</strong>："客户拿到的是他自己的模板 + 您方的报价，他不需要做任何二次整理——这才是真正的'专业'。"</li>
+  </ol>
+</div>
+
+<p class="meta" style="text-align: center; margin-top: 48px;">
+  <strong>文档结束</strong> · v1.0 · 2026-06-08 · 智能制单项目组
+</p>
+
+</body>
+</html>

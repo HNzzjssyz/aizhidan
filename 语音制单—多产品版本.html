@@ -1,0 +1,2453 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI制单 - 多产品版本</title>
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: #f0f2f5;
+  min-height: 100vh;
+  padding: 20px;
+}
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+.header {
+  text-align: center;
+  color: #1f2937;
+  margin-bottom: 24px;
+}
+.header h1 { font-size: 26px; margin-bottom: 6px; }
+.header p { color: #6b7280; font-size: 13px; }
+
+/* 多模态输入区域 */
+.input-section {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+}
+.input-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.input-tab {
+  flex: 1;
+  padding: 12px 20px;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  background: #fafbfc;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+}
+.input-tab:hover {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+.input-tab.active {
+  border-color: #3b82f6;
+  background: #3b82f6;
+  color: white;
+}
+.tab-icon {
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+}
+.tab-icon i {
+  font-size: 18px;
+}
+
+/* 语音输入面板 */
+.voice-panel {
+  display: none;
+}
+.voice-panel.active {
+  display: block;
+}
+.voice-btn {
+  width: 100%;
+  padding: 20px;
+  border: 3px dashed #e0e0e0;
+  border-radius: 14px;
+  background: #fafbfc;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.voice-btn:hover {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+.voice-btn.recording {
+  border-color: #f5576c;
+  background: #fff0f3;
+  animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.01); }
+}
+.voice-icon {
+  width: 56px;
+  height: 56px;
+  background: #3b82f6;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: white;
+}
+.voice-btn.recording .voice-icon {
+  background: #e5484d;
+}
+.voice-text {
+  font-size: 15px;
+  color: #333;
+  font-weight: 500;
+}
+.voice-hint {
+  font-size: 12px;
+  color: #999;
+}
+
+/* 示例语音 */
+.voice-samples {
+  margin-top: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.sample-tag {
+  padding: 6px 14px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 20px;
+  font-size: 12px;
+  color: #3b82f6;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.sample-tag:hover {
+  background: #3b82f6;
+  color: white;
+}
+
+/* 文件上传面板 */
+.file-panel {
+  display: none;
+}
+.file-panel.active {
+  display: block;
+}
+.file-upload-area {
+  width: 100%;
+  padding: 40px 24px;
+  border: 3px dashed #ddd;
+  border-radius: 14px;
+  background: #fafbfc;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.file-upload-area:hover {
+  border-color: #f97316;
+  background: #fffbeb;
+}
+.file-upload-area.dragover {
+  border-color: #f97316;
+  background: #ffedd5;
+}
+.file-icon {
+  width: 56px;
+  height: 56px;
+  background: #c2410c;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: white;
+}
+.file-text {
+  font-size: 15px;
+  color: #333;
+  font-weight: 500;
+}
+.file-hint {
+  font-size: 12px;
+  color: #999;
+}
+.file-types {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.file-type-tag {
+  padding: 4px 10px;
+  background: #f0f0f0;
+  border-radius: 12px;
+  font-size: 11px;
+  color: #666;
+}
+
+/* 已上传文件 */
+.uploaded-file {
+  display: none;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: #f0fdf4;
+  border: 2px solid #4ade80;
+  border-radius: 12px;
+  margin-top: 16px;
+}
+.uploaded-file.active {
+  display: flex;
+}
+.uploaded-icon {
+  width: 48px;
+  height: 48px;
+  background: #16a34a;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  color: white;
+}
+.uploaded-info {
+  flex: 1;
+}
+.uploaded-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 2px;
+}
+.uploaded-meta {
+  font-size: 12px;
+  color: #666;
+}
+.uploaded-remove {
+  padding: 6px 12px;
+  background: #fee2e2;
+  color: #991b1b;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.uploaded-remove:hover {
+  background: #fecaca;
+}
+
+/* 示例文件标签 */
+.sample-tag.file {
+  background: #fffbeb;
+  border-color: #fed7aa;
+  color: #ea580c;
+}
+.sample-tag.file:hover {
+  background: #f97316;
+  color: white;
+}
+
+/* 识别结果区域 */
+.result-section {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+  display: none;
+}
+.result-section.active { display: block; }
+
+/* 结果头部 */
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.result-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.input-source-tag {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  margin-left: auto;
+}
+.input-source-tag.voice {
+  background: #dbeafe;
+  color: #4338ca;
+}
+.input-source-tag.file {
+  background: #ffedd5;
+  color: #9a3412;
+}
+.result-stats {
+  display: flex;
+  gap: 16px;
+  font-size: 13px;
+}
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.stat-value {
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+.stat-value.confirmed {
+  background: #dcfce7;
+  color: #166534;
+}
+.stat-value.pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+/* 原始语音文本 */
+.original-text {
+  background: #f8f9fa;
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  border-left: 3px solid #3b82f6;
+}
+.original-text.file-source {
+  border-left-color: #f97316;
+}
+.original-text label {
+  font-size: 11px;
+  color: #999;
+  margin-bottom: 6px;
+  display: block;
+}
+.original-text p {
+  font-size: 14px;
+  color: #333;
+  line-height: 1.6;
+}
+
+/* 客户识别区域 */
+.customer-section {
+  margin-bottom: 20px;
+}
+.field-label {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 8px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.customer-card {
+  background: #f8f9fa;
+  border: 2px solid #e8e8e8;
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.customer-card:hover {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+.customer-card.confirmed {
+  border-color: #4ade80;
+  background: #f0fdf4;
+}
+.customer-card.pending {
+  border-color: #fbbf24;
+  background: #fffbeb;
+}
+.customer-avatar {
+  width: 44px;
+  height: 44px;
+  background: #3b82f6;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: white;
+}
+.customer-info { flex: 1; }
+.customer-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 2px;
+}
+.customer-meta {
+  font-size: 11px;
+  color: #888;
+}
+.customer-status {
+  padding: 5px 10px;
+  border-radius: 16px;
+  font-size: 11px;
+  font-weight: 500;
+}
+.customer-status.confirmed {
+  background: #dcfce7;
+  color: #166534;
+}
+.customer-status.pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+/* 产品区域 */
+.product-section {
+  margin-bottom: 20px;
+}
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.product-actions {
+  display: flex;
+  gap: 8px;
+}
+.action-btn {
+  padding: 6px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  background: white;
+  font-size: 12px;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.action-btn:hover {
+  border-color: #3b82f6;
+  color: #3b82f6;
+  background: #eff6ff;
+}
+.action-btn.primary {
+  background: #3b82f6;
+  color: white;
+  border-color: transparent;
+}
+.action-btn.primary:hover {
+  opacity: 0.9;
+}
+
+/* 产品列表 */
+.product-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 480px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.product-list::-webkit-scrollbar {
+  width: 4px;
+}
+.product-list::-webkit-scrollbar-track {
+  background: #f0f0f0;
+  border-radius: 2px;
+}
+.product-list::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 2px;
+}
+
+/* 产品项 */
+.product-item {
+  background: #fafbfc;
+  border: 2px solid #e8e8e8;
+  border-radius: 10px;
+  padding: 14px;
+  transition: all 0.2s;
+  position: relative;
+}
+.product-item:hover {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+}
+.product-item.confirmed {
+  border-color: #4ade80;
+  background: #f0fdf4;
+}
+.product-item.pending {
+  border-color: #fbbf24;
+  background: #fffbeb;
+}
+.product-item.error {
+  border-color: #f87171;
+  background: #fef2f2;
+}
+.product-item.new {
+  border-color: #60a5fa;
+  background: #eff6ff;
+}
+
+.product-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.product-index {
+  width: 28px;
+  height: 28px;
+  background: #e8e8e8;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+  flex-shrink: 0;
+}
+.product-item.confirmed .product-index {
+  background: #4ade80;
+  color: white;
+}
+.product-item.pending .product-index {
+  background: #fbbf24;
+  color: white;
+}
+.product-item.new .product-index {
+  background: #60a5fa;
+  color: white;
+}
+.product-main { flex: 1; min-width: 0; }
+.product-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.product-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.product-match-type {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+.product-match-type.sku { background: #dbeafe; color: #1e40af; }
+.product-match-type.code { background: #dcfce7; color: #166534; }
+.product-match-type.name { background: #fef3c7; color: #92400e; }
+.product-match-type.none { background: #fee2e2; color: #991b1b; }
+.product-match-type.new { background: #dbeafe; color: #1e40af; }
+
+.product-code {
+  font-size: 11px;
+  color: #888;
+}
+.product-status {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.product-status.confirmed {
+  background: #dcfce7;
+  color: #166534;
+}
+.product-status.pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+.product-status.error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+.product-status.new {
+  background: #dbeafe;
+  color: #1e40af;
+}
+.product-status:hover {
+  opacity: 0.8;
+}
+
+.product-details {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e8e8e8;
+}
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.detail-label {
+  font-size: 10px;
+  color: #999;
+}
+.detail-value {
+  font-size: 13px;
+  color: #333;
+  font-weight: 500;
+}
+.detail-value.empty {
+  color: #bbb;
+  font-style: italic;
+}
+
+.product-actions-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed #e0e0e0;
+}
+.product-action-btn {
+  padding: 4px 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  background: white;
+  font-size: 11px;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.product-action-btn:hover {
+  border-color: #3b82f6;
+  color: #3b82f6;
+}
+.product-action-btn.new {
+  background: #dbeafe;
+  border-color: #60a5fa;
+  color: #1e40af;
+}
+.product-action-btn.new:hover {
+  background: #60a5fa;
+  color: white;
+}
+.product-action-btn.delete:hover {
+  border-color: #f87171;
+  color: #f87171;
+}
+
+/* 批量操作栏 */
+.batch-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+.batch-info {
+  font-size: 12px;
+  color: #666;
+}
+.batch-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* 添加产品按钮 */
+.add-product-btn {
+  width: 100%;
+  padding: 12px;
+  border: 2px dashed #bfdbfe;
+  border-radius: 10px;
+  background: #fafbfc;
+  font-size: 13px;
+  color: #3b82f6;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 10px;
+}
+.add-product-btn:hover {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+/* 操作按钮 */
+.action-bar {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #f0f0f0;
+}
+.btn {
+  flex: 1;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+.btn-secondary {
+  background: #f0f0f0;
+  color: #666;
+}
+.btn-secondary:hover { background: #e0e0e0; }
+.btn-primary {
+  background: #3b82f6;
+  color: white;
+}
+.btn-primary:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+.btn-success {
+  background: #16a34a;
+  color: white;
+}
+.btn-success:hover {
+  opacity: 0.9;
+}
+
+/* 候选弹窗 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: white;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 80vh;
+  overflow: hidden;
+  animation: modalIn 0.3s ease;
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.95) translateY(20px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.modal-header {
+  padding: 18px 22px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.modal-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 4px;
+}
+.modal-subtitle {
+  font-size: 12px;
+  color: #999;
+}
+.modal-body {
+  padding: 14px 22px;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+.candidate-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.candidate-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 2px solid #f0f0f0;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.candidate-item:hover {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+.candidate-item.selected {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+.candidate-rank {
+  width: 26px;
+  height: 26px;
+  background: #f0f0f0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #666;
+}
+.candidate-item:hover .candidate-rank,
+.candidate-item.selected .candidate-rank {
+  background: #3b82f6;
+  color: white;
+}
+.candidate-info { flex: 1; }
+.candidate-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 2px;
+}
+.candidate-meta {
+  font-size: 11px;
+  color: #999;
+}
+.candidate-similarity {
+  padding: 3px 10px;
+  background: #dcfce7;
+  color: #166534;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+}
+.modal-footer {
+  padding: 14px 22px;
+  border-top: 1px solid #f0f0f0;
+  display: flex;
+  gap: 10px;
+}
+
+/* 新建产品弹窗样式 */
+.create-product-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.form-label {
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+}
+.form-label .required {
+  color: #f87171;
+  margin-left: 2px;
+}
+.form-input, .form-select {
+  padding: 10px 14px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+.form-input:focus, .form-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: #fafbff;
+}
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.form-hint {
+  font-size: 11px;
+  color: #999;
+  margin-top: 2px;
+}
+.original-info-box {
+  background: #eff6ff;
+  border-left: 3px solid #3b82f6;
+  padding: 12px 14px;
+  border-radius: 0 8px 8px 0;
+  margin-bottom: 16px;
+}
+.original-info-box .label {
+  font-size: 11px;
+  color: #3b82f6;
+  margin-bottom: 4px;
+}
+.original-info-box .value {
+  font-size: 13px;
+  color: #333;
+  font-weight: 500;
+}
+
+/* 处理中动画 */
+.processing-indicator {
+  display: none;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: #eff6ff;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+.processing-indicator.active { display: flex; }
+.processing-indicator.file {
+  background: #fffbeb;
+}
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid #dbeafe;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+.processing-indicator.file .spinner {
+  border-color: #fed7aa;
+  border-top-color: #f97316;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.processing-text {
+  font-size: 14px;
+  color: #3b82f6;
+}
+.processing-indicator.file .processing-text {
+  color: #ea580c;
+}
+
+/* 底部提示 */
+.tips-section {
+  background: #3b82f6;
+  border-radius: 14px;
+  padding: 18px;
+  color: white;
+  font-size: 12px;
+}
+.tips-title {
+  font-weight: 600;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tips-list {
+  list-style: none;
+  opacity: 0.9;
+}
+.tips-list li {
+  padding: 3px 0;
+  padding-left: 14px;
+  position: relative;
+}
+.tips-list li::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+}
+
+/* 空状态 */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #999;
+}
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+.empty-icon i {
+  font-size: 48px;
+}
+.empty-text {
+  font-size: 14px;
+}
+
+/* 单据识别面板 */
+.document-panel {
+  display: none;
+}
+.document-panel.active {
+  display: block;
+}
+.document-upload-area {
+  width: 100%;
+  padding: 32px 24px;
+  border: 3px dashed #ddd;
+  border-radius: 14px;
+  background: #fafbfc;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.document-upload-area:hover {
+  border-color: #10b981;
+  background: #ecfdf5;
+}
+.document-upload-area.dragover {
+  border-color: #10b981;
+  background: #d1fae5;
+}
+.document-icon {
+  width: 56px;
+  height: 56px;
+  background: #059669;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: white;
+}
+.document-text {
+  font-size: 15px;
+  color: #333;
+  font-weight: 500;
+}
+.document-hint {
+  font-size: 12px;
+  color: #999;
+}
+.document-types {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.document-type-tag {
+  padding: 4px 10px;
+  background: #f0f0f0;
+  border-radius: 12px;
+  font-size: 11px;
+  color: #666;
+}
+
+/* 单据识别结果 */
+.document-recognition-result {
+  display: none;
+  background: #ecfdf5;
+  border: 2px solid #10b981;
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 16px;
+}
+.document-recognition-result.active {
+  display: block;
+}
+.recognition-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.recognition-icon {
+  width: 40px;
+  height: 40px;
+  background: #10b981;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+.recognition-info {
+  flex: 1;
+}
+.recognition-type {
+  font-size: 15px;
+  font-weight: 600;
+  color: #065f46;
+  margin-bottom: 2px;
+}
+.recognition-desc {
+  font-size: 12px;
+  color: #047857;
+}
+.recognition-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: #10b981;
+  color: white;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.recognition-trigger:hover {
+  background: #059669;
+}
+
+/* 已上传单据 */
+.uploaded-document {
+  display: none;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: #ecfdf5;
+  border: 2px solid #10b981;
+  border-radius: 10px;
+  margin-top: 14px;
+}
+.uploaded-document.active {
+  display: flex;
+}
+.uploaded-doc-icon {
+  width: 44px;
+  height: 44px;
+  background: #059669;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: white;
+}
+.uploaded-doc-info {
+  flex: 1;
+}
+.uploaded-doc-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #065f46;
+  margin-bottom: 2px;
+}
+.uploaded-doc-meta {
+  font-size: 11px;
+  color: #047857;
+}
+.uploaded-doc-remove {
+  padding: 6px 12px;
+  background: #fee2e2;
+  color: #991b1b;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* 文本粘贴面板 */
+.text-panel {
+  display: none;
+}
+.text-panel.active {
+  display: block;
+}
+.text-input-area {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.text-textarea {
+  width: 100%;
+  min-height: 140px;
+  padding: 14px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.6;
+  resize: vertical;
+  font-family: inherit;
+  transition: all 0.3s ease;
+}
+.text-textarea:focus {
+  outline: none;
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+}
+.text-textarea::placeholder {
+  color: #9ca3af;
+}
+.text-submit-btn {
+  padding: 12px 24px;
+  background: #d97706;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.text-submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.voice-icon i,
+.file-icon i,
+.document-icon i,
+.customer-avatar i,
+.uploaded-icon i,
+.uploaded-doc-icon i,
+.recognition-icon i {
+  font-size: inherit;
+  line-height: 1;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1><i class="ri-mic-line"></i> AI制单 <span style="font-size: 16px; opacity: 0.8;">(多产品版)</span></h1>
+    <p>支持批量产品识别，适用于工业工贸类多品种订单</p>
+  </div>
+
+  <!-- 多模态输入 -->
+  <div class="input-section">
+    <div class="input-tabs">
+      <div class="input-tab active" onclick="switchTab('voice')">
+        <span class="tab-icon"><i class="ri-mic-line"></i></span>
+        <span>语音输入</span>
+      </div>
+      <div class="input-tab" onclick="switchTab('file')">
+        <span class="tab-icon"><i class="ri-folder-line"></i></span>
+        <span>文件上传</span>
+      </div>
+      <div class="input-tab" onclick="switchTab('text')">
+        <span class="tab-icon"><i class="ri-file-text-line"></i></span>
+        <span>文本粘贴</span>
+      </div>
+    </div>
+    
+    <!-- 语音输入面板 -->
+    <div class="voice-panel active" id="voicePanel">
+      <div class="voice-btn" id="voiceBtn" onclick="toggleRecording()">
+        <div class="voice-icon"><i class="ri-mic-line"></i></div>
+        <div class="voice-text">点击开始语音输入</div>
+        <div class="voice-hint">请说出客户名称和所有产品信息</div>
+      </div>
+      
+      <div class="voice-samples">
+        <span style="font-size: 11px; color: #999;">试试这样说：</span>
+        <span class="sample-tag" onclick="useSample(0)">6产品订单</span>
+        <span class="sample-tag" onclick="useSample(1)">7产品订单</span>
+        <span class="sample-tag" onclick="useSample(2)">混合状态演示</span>
+      </div>
+    </div>
+    
+    <!-- 文件上传面板 -->
+    <div class="file-panel" id="filePanel">
+      <div class="file-upload-area" id="fileUploadArea" onclick="triggerFileUpload()">
+        <input type="file" id="fileInput" style="display: none;" accept=".jpg,.jpeg,.png,.pdf,.xlsx,.xls,.docx,.doc" onchange="handleFileUpload(event)">
+        <div class="file-icon"><i class="ri-folder-upload-line"></i></div>
+        <div class="file-text">点击或拖拽文件到此处</div>
+        <div class="file-hint">支持截图、单据图片、Excel、Word、PDF</div>
+        <div class="file-types">
+          <span class="file-type-tag"><i class="ri-camera-line"></i> 截图/图片</span>
+          <span class="file-type-tag"><i class="ri-file-pdf-line"></i> 单据PDF</span>
+          <span class="file-type-tag"><i class="ri-file-excel-line"></i> Excel</span>
+          <span class="file-type-tag"><i class="ri-file-word-line"></i> Word</span>
+        </div>
+      </div>
+      
+      <!-- 已上传文件 -->
+      <div class="uploaded-file" id="uploadedFile">
+        <div class="uploaded-icon"><i class="ri-file-line"></i></div>
+        <div class="uploaded-info">
+          <div class="uploaded-name" id="uploadedFileName">-</div>
+          <div class="uploaded-meta" id="uploadedFileMeta">-</div>
+        </div>
+        <button class="uploaded-remove" onclick="removeUploadedFile()">移除</button>
+      </div>
+      
+      <!-- 单据识别结果（整合到文件上传） -->
+      <div class="document-recognition-result" id="documentRecognitionResult">
+        <div class="recognition-header">
+          <div class="recognition-icon"><i class="ri-robot-line"></i></div>
+          <div class="recognition-info">
+            <div class="recognition-type" id="recognizedDocType">识别中...</div>
+            <div class="recognition-desc" id="recognizedDocDesc">AI正在分析单据类型和内容</div>
+          </div>
+          <div class="recognition-trigger" onclick="triggerDocumentOrder()">
+            <span id="triggerAction">生成制单</span>
+            <span>→</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="voice-samples">
+        <span style="font-size: 11px; color: #999;">示例文件：</span>
+        <span class="sample-tag file" onclick="useFileSample(0)"><i class="ri-file-word-line"></i> 订单确认单.docx</span>
+        <span class="sample-tag file" onclick="useFileSample(1)"><i class="ri-file-excel-line"></i> 产品清单.xlsx</span>
+        <span class="sample-tag file" onclick="useFileSample(2)"><i class="ri-camera-line"></i> 甲方询价单截图</span>
+        <span class="sample-tag file" onclick="useFileSample(3)"><i class="ri-camera-line"></i> 甲方采购单截图</span>
+      </div>
+    </div>
+    
+    <!-- 文本粘贴面板 -->
+    <div class="text-panel" id="textPanel">
+      <div class="text-input-area">
+        <textarea class="text-textarea" id="textInputArea" placeholder="粘贴从微信、邮件等渠道获取的采购需求文本...&#10;&#10;支持自然语言描述，AI会自动识别客户和产品信息"></textarea>
+        <button class="text-submit-btn" onclick="submitTextInput()"><i class="ri-search-line"></i> 识别文本</button>
+      </div>
+      
+      <div class="voice-samples">
+        <span style="font-size: 11px; color: #999;">试试粘贴：</span>
+        <span class="sample-tag" style="background: #fef3c7; border-color: #fcd34d; color: #92400e;" onclick="useTextSample(0)"><i class="ri-chat-3-line"></i> 微信跟单消息(多产品)</span>
+        <span class="sample-tag" style="background: #fef3c7; border-color: #fcd34d; color: #92400e;" onclick="useTextSample(1)"><i class="ri-mail-line"></i> 邮件采购需求(多产品)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 识别结果 -->
+  <div class="result-section" id="resultSection">
+    <!-- 处理中 -->
+    <div class="processing-indicator" id="processingIndicator">
+      <div class="spinner"></div>
+      <div class="processing-text" id="processingText">正在识别客户和多个产品信息...</div>
+    </div>
+    
+    <!-- 结果头部 -->
+    <div class="result-header">
+      <div class="result-title"><i class="ri-list-check"></i> 识别结果</div>
+      <span class="input-source-tag voice" id="inputSourceTag"><i class="ri-mic-line"></i> 语音输入</span>
+      <div class="result-stats">
+        <div class="stat-item">
+          <span>已确认</span>
+          <span class="stat-value confirmed" id="confirmedCount">0/0</span>
+        </div>
+        <div class="stat-item">
+          <span>待确认</span>
+          <span class="stat-value pending" id="pendingCount">0/0</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 原始文本 -->
+    <div class="original-text" id="originalTextBox">
+      <label id="originalLabel"><i class="ri-mic-line"></i> 原始语音</label>
+      <p id="originalText">-</p>
+    </div>
+    
+    <!-- 客户识别 -->
+    <div class="customer-section">
+      <div class="field-label"><i class="ri-user-line"></i> 客户信息</div>
+      <div class="customer-card" id="customerCard" onclick="showCustomerModal()">
+        <div class="customer-avatar"><i class="ri-building-line"></i></div>
+        <div class="customer-info">
+          <div class="customer-name" id="customerName">-</div>
+          <div class="customer-meta" id="customerMeta">-</div>
+        </div>
+        <div class="customer-status" id="customerStatus">待识别</div>
+      </div>
+    </div>
+    
+    <!-- 产品明细 -->
+    <div class="product-section">
+      <div class="section-header">
+        <div class="field-label"><i class="ri-shopping-bag-line"></i> 产品明细 <span id="productCount" style="color: #999; font-weight: normal;">(0个)</span></div>
+        <div class="product-actions">
+          <button class="action-btn" onclick="confirmAllProducts()"><i class="ri-check-line"></i> 全部确认</button>
+          <button class="action-btn primary" onclick="addProduct()"><i class="ri-add-line"></i> 添加产品</button>
+        </div>
+      </div>
+      
+      <!-- 批量操作栏 -->
+      <div class="batch-bar" id="batchBar" style="display: none;">
+        <div class="batch-info">
+          <input type="checkbox" id="selectAll" onchange="toggleSelectAll()"> 
+          <label for="selectAll">全选</label>
+        </div>
+        <div class="batch-actions">
+          <button class="action-btn" onclick="batchConfirm()">批量确认</button>
+          <button class="action-btn delete" onclick="batchDelete()">批量删除</button>
+        </div>
+      </div>
+      
+      <!-- 产品列表 -->
+      <div class="product-list" id="productList">
+        <!-- 产品项由JS动态生成 -->
+      </div>
+      
+      <!-- 添加产品按钮 -->
+      <button class="add-product-btn" onclick="addProduct()">
+        <i class="ri-add-line"></i> 添加产品
+      </button>
+    </div>
+    
+    <!-- 操作按钮 -->
+    <div class="action-bar">
+      <button class="btn btn-secondary" onclick="resetForm()">重新录入</button>
+      <button class="btn btn-primary" id="generateBtn" onclick="generateOrder()">生成销售订单</button>
+    </div>
+  </div>
+
+  <!-- 底部提示 -->
+  <div class="tips-section">
+    <div class="tips-title"><i class="ri-lightbulb-line"></i> 多产品订单提示</div>
+    <ul class="tips-list">
+      <li>支持语音输入和文件上传两种方式，语音输入走ASR识别+同音匹配</li>
+      <li>文件上传自动提取文字，跳过同音匹配环节直接进入LLM解析</li>
+      <li>语音输入时可连续说出多个产品，AI自动拆分识别</li>
+      <li>每个产品独立确认，支持批量操作提高效率</li>
+      <li>未匹配产品可新建入库，自动带入识别的信息</li>
+      <li>所有产品确认完成后方可生成订单</li>
+    </ul>
+  </div>
+</div>
+
+<!-- 客户候选弹窗 -->
+<div class="modal-overlay" id="customerModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title"><i class="ri-user-line"></i> 选择客户</div>
+      <div class="modal-subtitle">识别到多个相似客户，请点击选择</div>
+    </div>
+    <div class="modal-body">
+      <div class="candidate-list" id="customerCandidateList"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('customerModal')">取消</button>
+      <button class="btn btn-primary" onclick="searchCustomer()"><i class="ri-search-line"></i> 搜索其他</button>
+    </div>
+  </div>
+</div>
+
+<!-- 产品候选弹窗 -->
+<div class="modal-overlay" id="productModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title"><i class="ri-shopping-bag-line"></i> 选择产品</div>
+      <div class="modal-subtitle" id="productModalSubtitle">请选择正确的产品</div>
+    </div>
+    <div class="modal-body">
+      <div class="candidate-list" id="productCandidateList"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('productModal')">取消</button>
+      <button class="btn btn-success" onclick="createNewProductFromModal()"><i class="ri-add-line"></i> 新建产品</button>
+      <button class="btn btn-primary" onclick="searchProduct()"><i class="ri-search-line"></i> 搜索其他</button>
+    </div>
+  </div>
+</div>
+
+<!-- 新建产品弹窗 -->
+<div class="modal-overlay" id="createProductModal">
+  <div class="modal" style="max-width: 480px;">
+    <div class="modal-header">
+      <div class="modal-title"><i class="ri-add-line"></i> 新建产品</div>
+      <div class="modal-subtitle">将未匹配的产品添加到产品库</div>
+    </div>
+    <div class="modal-body">
+      <!-- 原始识别信息 -->
+      <div class="original-info-box">
+        <div class="label"><i class="ri-mic-line"></i> 语音识别的原始信息</div>
+        <div class="value" id="originalProductInfo">-</div>
+      </div>
+      
+      <!-- 表单 -->
+      <div class="create-product-form">
+        <div class="form-group">
+          <label class="form-label">产品名称 <span class="required">*</span></label>
+          <input type="text" class="form-input" id="newProductName" placeholder="请输入产品名称">
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">产品编号 <span class="required">*</span></label>
+            <input type="text" class="form-input" id="newProductCode" placeholder="如: PRD-XXX-001">
+            <div class="form-hint">系统自动生成，可修改</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">SKU编码</label>
+            <input type="text" class="form-input" id="newProductSku" placeholder="如: SKU-XXX">
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">规格型号</label>
+          <input type="text" class="form-input" id="newProductSpec" placeholder="如: 70g 500张/包">
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">单位</label>
+            <select class="form-select" id="newProductUnit">
+              <option value="个">个</option>
+              <option value="箱">箱</option>
+              <option value="盒">盒</option>
+              <option value="包">包</option>
+              <option value="本">本</option>
+              <option value="套">套</option>
+              <option value="件">件</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">产品分类</label>
+            <select class="form-select" id="newProductCategory">
+              <option value="办公用纸">办公用纸</option>
+              <option value="文具">文具</option>
+              <option value="数码配件">数码配件</option>
+              <option value="耗材">耗材</option>
+              <option value="其他">其他</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">备注</label>
+          <input type="text" class="form-input" id="newProductNote" placeholder="可选填">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('createProductModal')">取消</button>
+      <button class="btn btn-primary" onclick="saveNewProduct()"><i class="ri-save-line"></i> 保存并确认</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Mock 数据 - 扩展版
+const mockData = {
+  customers: [
+    { id: 1, name: '深圳华创科技有限公司', pinyin: 'shenzhenhuachuang', address: '深圳市南山区科技园', contact: '陈经理 13800138000', similarity: 98 },
+    { id: 2, name: '深圳华创商贸有限公司', pinyin: 'shenzhenhuachuang', address: '深圳市福田区CBD', contact: '李经理 13900139000', similarity: 85 },
+    { id: 3, name: '北京宏达科技有限公司', pinyin: 'beijinghongda', address: '北京市朝阳区望京', contact: '刘经理 13500135000', similarity: 95 },
+    { id: 4, name: '上海鼎盛贸易有限公司', pinyin: 'shanghaidingsheng', address: '上海市静安区', contact: '赵经理 13300133000', similarity: 92 },
+    { id: 5, name: '广州鑫源实业集团', pinyin: 'guangzhouxinyuan', address: '广州市天河区', contact: '黄经理 13600136000', similarity: 88 }
+  ],
+  products: [
+    { id: 1, code: 'PRD-A3-001', name: 'A3打印纸', spec: '70g 500张/包', sku: 'A3-70G-500', category: '办公用纸', similarity: 96 },
+    { id: 2, code: 'PRD-A3-002', name: 'A3打印纸', spec: '80g 500张/包', sku: 'A3-80G-500', category: '办公用纸', similarity: 88 },
+    { id: 3, code: 'PRD-A4-001', name: 'A4打印纸', spec: '70g 500张/包', sku: 'A4-70G-500', category: '办公用纸', similarity: 94 },
+    { id: 4, code: 'PRD-A4-002', name: 'A4打印纸', spec: '80g 500张/包', sku: 'A4-80G-500', category: '办公用纸', similarity: 86 },
+    { id: 5, code: 'PRD-B5-001', name: 'B5笔记本', spec: '100页 胶装', sku: 'B5-100P', category: '文具', similarity: 95 },
+    { id: 6, code: 'PRD-B5-002', name: 'B5笔记本', spec: '200页 线装', sku: 'B5-200P', category: '文具', similarity: 82 },
+    { id: 7, code: 'PRD-MS-001', name: '无线鼠标', spec: '2.4G 静音', sku: 'MS-WIRELESS-01', category: '数码配件', similarity: 98 },
+    { id: 8, code: 'PRD-MS-002', name: '有线鼠标', spec: 'USB 办公款', sku: 'MS-WIRED-01', category: '数码配件', similarity: 75 },
+    { id: 9, code: 'PRD-KB-001', name: '机械键盘', spec: '青轴 104键', sku: 'KB-MECH-01', category: '数码配件', similarity: 92 },
+    { id: 10, code: 'PRD-INK-001', name: '惠普墨盒', spec: '黑色 大容量', sku: 'INK-HP-BK', category: '耗材', similarity: 89 },
+    { id: 11, code: 'PRD-INK-002', name: '惠普墨盒', spec: '彩色 套装', sku: 'INK-HP-CL', category: '耗材', similarity: 85 },
+    { id: 12, code: 'PRD-FL-001', name: '文件夹', spec: 'A4 加厚 50个/盒', sku: 'FL-A4-50', category: '文具', similarity: 91 },
+    { id: 13, code: 'PRD-PEN-001', name: '签字笔', spec: '0.5mm 黑色 12支/盒', sku: 'PEN-05-BK', category: '文具', similarity: 87 },
+    { id: 14, code: 'PRD-ST-001', name: '订书机', spec: '大号 可订50页', sku: 'ST-LARGE', category: '文具', similarity: 83 }
+  ],
+  samples: [
+    {
+      text: '深圳华创科技要A3打印纸100箱，A4打印纸200箱，B5笔记本500本，无线鼠标50个，机械键盘30个，惠普墨盒黑色20套',
+      customer: '深圳华创科技有限公司',
+      products: [
+        { name: 'A3打印纸', qty: '100箱', price: '280元', note: '', matchId: 1, status: 'confirmed', matchType: 'sku' },
+        { name: 'A4打印纸', qty: '200箱', price: '180元', note: '', matchId: 3, status: 'confirmed', matchType: 'sku' },
+        { name: 'B5笔记本', qty: '500本', price: '12元', note: '', matchId: 5, status: 'pending', matchType: 'name' },
+        { name: '无线鼠标', qty: '50个', price: '35元', note: '', matchId: 7, status: 'confirmed', matchType: 'sku' },
+        { name: '机械键盘', qty: '30个', price: '299元', note: '', matchId: 9, status: 'confirmed', matchType: 'sku' },
+        { name: '惠普墨盒', qty: '20套', price: '158元', note: '黑色大容量', matchId: 10, status: 'pending', matchType: 'name' }
+      ]
+    },
+    {
+      text: '北京宏达科技订购A4打印纸150箱，B5笔记本1000本，无线鼠标100个，有线鼠标80个，机械键盘50个，惠普墨盒彩色30套，文件夹200盒',
+      customer: '北京宏达科技有限公司',
+      products: [
+        { name: 'A4打印纸', qty: '150箱', price: '180元', note: '', matchId: 3, status: 'confirmed', matchType: 'sku' },
+        { name: 'B5笔记本', qty: '1000本', price: '12元', note: '', matchId: 5, status: 'confirmed', matchType: 'sku' },
+        { name: '无线鼠标', qty: '100个', price: '35元', note: '', matchId: 7, status: 'confirmed', matchType: 'sku' },
+        { name: '有线鼠标', qty: '80个', price: '25元', note: '', matchId: 8, status: 'pending', matchType: 'name' },
+        { name: '机械键盘', qty: '50个', price: '299元', note: '', matchId: 9, status: 'confirmed', matchType: 'sku' },
+        { name: '惠普墨盒', qty: '30套', price: '268元', note: '彩色套装', matchId: 11, status: 'pending', matchType: 'name' },
+        { name: '文件夹', qty: '200盒', price: '45元', note: '', matchId: 12, status: 'confirmed', matchType: 'sku' }
+      ]
+    },
+    {
+      text: '上海鼎盛贸易订购多种办公用品，包含打印纸、笔记本、鼠标、键盘、墨盒、文件夹、签字笔',
+      customer: '上海鼎盛贸易有限公司',
+      products: [
+        { name: 'A4打印纸', qty: '300箱', price: '175元', note: '急单', matchId: 3, status: 'confirmed', matchType: 'sku' },
+        { name: 'B5笔记本', qty: '800本', price: '11元', note: '', matchId: 5, status: 'pending', matchType: 'name' },
+        { name: '无线鼠标', qty: '120个', price: '32元', note: '', matchId: 7, status: 'confirmed', matchType: 'sku' },
+        { name: '机械键盘', qty: '60个', price: '289元', note: '', matchId: 9, status: 'pending', matchType: 'name' },
+        { name: '惠普墨盒', qty: '50套', price: '155元', note: '黑色', matchId: 10, status: 'error', matchType: 'none' },
+        { name: '文件夹', qty: '300盒', price: '42元', note: '', matchId: 12, status: 'confirmed', matchType: 'sku' },
+        { name: '签字笔', qty: '500盒', price: '28元', note: '0.5mm黑色', matchId: 13, status: 'pending', matchType: 'name' }
+      ]
+    }
+  ]
+};
+
+let currentTab = 'voice';
+let currentRecording = false;
+let currentCustomer = null;
+let currentProducts = [];
+let selectedCustomerId = null;
+let editingProductIndex = null;
+let creatingProductIndex = null;
+let nextProductId = 100; // 新建产品的ID起始值
+let currentInputSource = 'voice'; // 当前输入来源
+
+// 文件示例数据
+const fileSamples = [
+  { 
+    fileName: '订单确认单.docx', 
+    fileType: 'word',
+    text: '客户：深圳华创科技有限公司\n产品明细：\n1. A3打印纸 100箱 单价280元\n2. A4打印纸 200箱 单价180元\n3. 无线鼠标 50个 单价35元\n备注：请于本周五前发货',
+    customer: '深圳华创科技有限公司', 
+    products: [
+      { name: 'A3打印纸', qty: '100箱', price: '280元', note: '', matchId: 1, status: 'confirmed', matchType: 'sku' },
+      { name: 'A4打印纸', qty: '200箱', price: '180元', note: '', matchId: 3, status: 'confirmed', matchType: 'sku' },
+      { name: '无线鼠标', qty: '50个', price: '35元', note: '请于本周五前发货', matchId: 7, status: 'confirmed', matchType: 'sku' }
+    ]
+  },
+  { 
+    fileName: '产品清单.xlsx', 
+    fileType: 'excel',
+    text: '[表格数据]\n产品编号 | 产品名称 | 数量 | 单价 | 备注\nPRD-A3-001 | A3打印纸 | 150箱 | 280元 | 急单\nPRD-B5-001 | B5笔记本 | 800本 | 12元 | \nPRD-MS-001 | 无线鼠标 | 100个 | 35元 | \nPRD-KB-001 | 机械键盘 | 40个 | 299元 | \nPRD-INK-001 | 惠普墨盒 | 25套 | 158元 | 黑色大容量',
+    customer: '北京宏达科技有限公司', 
+    products: [
+      { name: 'A3打印纸', qty: '150箱', price: '280元', note: '急单', matchId: 1, status: 'pending', matchType: 'sku' },
+      { name: 'B5笔记本', qty: '800本', price: '12元', note: '', matchId: 5, status: 'confirmed', matchType: 'sku' },
+      { name: '无线鼠标', qty: '100个', price: '35元', note: '', matchId: 7, status: 'confirmed', matchType: 'sku' },
+      { name: '机械键盘', qty: '40个', price: '299元', note: '', matchId: 9, status: 'pending', matchType: 'name' },
+      { name: '惠普墨盒', qty: '25套', price: '158元', note: '黑色大容量', matchId: 10, status: 'confirmed', matchType: 'sku' }
+    ]
+  },
+  {
+    fileName: '甲方询价单截图.jpg',
+    fileType: 'image',
+    docType: '询价单',
+    docTypeCode: 'inquiry',
+    text: '[图片] 甲方询价单 - 深圳华创科技有限公司\n询价产品：A3打印纸100箱、A4打印纸200箱、B5笔记本500本、无线鼠标50个、机械键盘30个、惠普墨盒黑色20套',
+    customer: '深圳华创科技有限公司',
+    triggerAction: '生成报价单',
+    products: [
+      { name: 'A3打印纸', qty: '100箱', price: '280元', note: '', matchId: 1, status: 'confirmed', matchType: 'sku' },
+      { name: 'A4打印纸', qty: '200箱', price: '180元', note: '', matchId: 3, status: 'confirmed', matchType: 'sku' },
+      { name: 'B5笔记本', qty: '500本', price: '12元', note: '', matchId: 5, status: 'pending', matchType: 'name' },
+      { name: '无线鼠标', qty: '50个', price: '35元', note: '', matchId: 7, status: 'confirmed', matchType: 'sku' },
+      { name: '机械键盘', qty: '30个', price: '299元', note: '', matchId: 9, status: 'confirmed', matchType: 'sku' },
+      { name: '惠普墨盒', qty: '20套', price: '158元', note: '黑色大容量', matchId: 10, status: 'pending', matchType: 'name' }
+    ]
+  },
+  {
+    fileName: '甲方采购单截图.png',
+    fileType: 'image',
+    docType: '采购单',
+    docTypeCode: 'purchase',
+    text: '[图片] 甲方采购单 - 北京宏达科技有限公司\n采购产品：A4打印纸150箱、B5笔记本1000本、无线鼠标100个、有线鼠标80个、机械键盘50个、惠普墨盒彩色30套、文件夹200盒',
+    customer: '北京宏达科技有限公司',
+    triggerAction: '生成订单',
+    products: [
+      { name: 'A4打印纸', qty: '150箱', price: '180元', note: '', matchId: 3, status: 'confirmed', matchType: 'sku' },
+      { name: 'B5笔记本', qty: '1000本', price: '12元', note: '', matchId: 5, status: 'confirmed', matchType: 'sku' },
+      { name: '无线鼠标', qty: '100个', price: '35元', note: '', matchId: 7, status: 'confirmed', matchType: 'sku' },
+      { name: '有线鼠标', qty: '80个', price: '25元', note: '', matchId: 8, status: 'pending', matchType: 'name' },
+      { name: '机械键盘', qty: '50个', price: '299元', note: '', matchId: 9, status: 'confirmed', matchType: 'sku' },
+      { name: '惠普墨盒', qty: '30套', price: '268元', note: '彩色套装', matchId: 11, status: 'pending', matchType: 'name' },
+      { name: '文件夹', qty: '200盒', price: '45元', note: '', matchId: 12, status: 'confirmed', matchType: 'sku' }
+    ]
+  }
+];
+
+// 文本粘贴示例数据
+const textSamples = [
+  {
+    text: '王经理，深圳华创科技那边要A3打印纸100箱每箱280元，A4打印纸200箱每箱180元，B5笔记本500本每本12元，无线鼠标50个每个35元，机械键盘30个每个299元，惠普墨盒黑色20套每套158元，这周五前要发货，你安排一下',
+    customer: '深圳华创科技有限公司',
+    products: [
+      { name: 'A3打印纸', qty: '100箱', price: '280元', note: '', matchId: 1, status: 'confirmed', matchType: 'sku' },
+      { name: 'A4打印纸', qty: '200箱', price: '180元', note: '', matchId: 3, status: 'confirmed', matchType: 'sku' },
+      { name: 'B5笔记本', qty: '500本', price: '12元', note: '', matchId: 5, status: 'pending', matchType: 'name' },
+      { name: '无线鼠标', qty: '50个', price: '35元', note: '', matchId: 7, status: 'confirmed', matchType: 'sku' },
+      { name: '机械键盘', qty: '30个', price: '299元', note: '', matchId: 9, status: 'confirmed', matchType: 'sku' },
+      { name: '惠普墨盒', qty: '20套', price: '158元', note: '黑色大容量，这周五前发货', matchId: 10, status: 'pending', matchType: 'name' }
+    ]
+  },
+  {
+    text: '收到北京宏达科技的采购需求：A4打印纸150箱单价180元，B5笔记本1000本单价12元，无线鼠标100个单价35元，有线鼠标80个单价25元，机械键盘50个单价299元，惠普墨盒彩色30套单价268元，文件夹200盒单价45元，收货地址是朝阳区望京SOHO，下周二前送达',
+    customer: '北京宏达科技有限公司',
+    products: [
+      { name: 'A4打印纸', qty: '150箱', price: '180元', note: '', matchId: 3, status: 'confirmed', matchType: 'sku' },
+      { name: 'B5笔记本', qty: '1000本', price: '12元', note: '', matchId: 5, status: 'confirmed', matchType: 'sku' },
+      { name: '无线鼠标', qty: '100个', price: '35元', note: '', matchId: 7, status: 'confirmed', matchType: 'sku' },
+      { name: '有线鼠标', qty: '80个', price: '25元', note: '', matchId: 8, status: 'pending', matchType: 'name' },
+      { name: '机械键盘', qty: '50个', price: '299元', note: '', matchId: 9, status: 'confirmed', matchType: 'sku' },
+      { name: '惠普墨盒', qty: '30套', price: '268元', note: '彩色套装，朝阳区望京SOHO，下周二前送达', matchId: 11, status: 'pending', matchType: 'name' },
+      { name: '文件夹', qty: '200盒', price: '45元', note: '', matchId: 12, status: 'confirmed', matchType: 'sku' }
+    ]
+  }
+];
+
+let currentDocumentData = null;
+
+// 切换Tab
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.input-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.voice-panel, .file-panel, .text-panel').forEach(p => p.classList.remove('active'));
+  resetForm();
+  
+  if (tab === 'voice') {
+    document.querySelectorAll('.input-tab')[0].classList.add('active');
+    document.getElementById('voicePanel').classList.add('active');
+  } else if (tab === 'file') {
+    document.querySelectorAll('.input-tab')[1].classList.add('active');
+    document.getElementById('filePanel').classList.add('active');
+  } else if (tab === 'text') {
+    document.querySelectorAll('.input-tab')[2].classList.add('active');
+    document.getElementById('textPanel').classList.add('active');
+  }
+}
+
+// 切换录音
+function toggleRecording() {
+  const btn = document.getElementById('voiceBtn');
+  currentRecording = !currentRecording;
+  
+  if (currentRecording) {
+    btn.classList.add('recording');
+    btn.querySelector('.voice-icon').innerHTML = '<i class="ri-stop-circle-line"></i>';
+    btn.querySelector('.voice-text').textContent = '点击结束录音';
+    btn.querySelector('.voice-hint').textContent = '正在录音，请说出客户和所有产品信息...';
+    
+    setTimeout(() => {
+      if (currentRecording) {
+        toggleRecording();
+        processVoiceInput();
+      }
+    }, 3000);
+  } else {
+    btn.classList.remove('recording');
+    btn.querySelector('.voice-icon').innerHTML = '<i class="ri-mic-line"></i>';
+    btn.querySelector('.voice-text').textContent = '点击开始语音输入';
+    btn.querySelector('.voice-hint').textContent = '请说出客户名称和所有产品信息';
+  }
+}
+
+// 使用示例
+function useSample(index) {
+  const sample = mockData.samples[index];
+  currentInputSource = 'voice';
+  processInput(sample, 'voice');
+}
+
+// 触发文件上传
+function triggerFileUpload() {
+  document.getElementById('fileInput').click();
+}
+
+// 处理文件上传
+function handleFileUpload(event) {
+  const file = event.target.files[0];
+  if (file) {
+    showUploadedFile(file.name, file.size);
+    currentInputSource = 'file';
+    // 模拟文件处理
+    setTimeout(() => {
+      const sample = fileSamples[0];
+      processInput(sample, 'file');
+    }, 500);
+  }
+}
+
+// 显示已上传文件
+function showUploadedFile(name, size) {
+  document.getElementById('uploadedFileName').textContent = name;
+  document.getElementById('uploadedFileMeta').textContent = `${(size / 1024).toFixed(1)} KB`;
+  document.getElementById('uploadedFile').classList.add('active');
+  document.getElementById('fileUploadArea').style.display = 'none';
+}
+
+// 移除已上传文件
+function removeUploadedFile() {
+  document.getElementById('uploadedFile').classList.remove('active');
+  document.getElementById('fileUploadArea').style.display = 'flex';
+  document.getElementById('fileInput').value = '';
+}
+
+// 使用文件示例
+function useFileSample(index) {
+  const sample = fileSamples[index];
+  showUploadedFile(sample.fileName, 1024 * 1024 * 1.5);
+  currentInputSource = 'file';
+  
+  // 检查是否是图片类型（需要单据识别）
+  if (sample.fileType === 'image') {
+    // 显示单据识别结果
+    setTimeout(() => {
+      const resultDiv = document.getElementById('documentRecognitionResult');
+      resultDiv.classList.add('active');
+      document.getElementById('recognizedDocType').textContent = `AI识别中...`;
+      document.getElementById('recognizedDocDesc').textContent = '正在分析单据版式和内容...';
+      document.getElementById('triggerAction').textContent = '识别中';
+      
+      setTimeout(() => {
+        document.getElementById('recognizedDocType').textContent = `${sample.docType}`;
+        document.getElementById('recognizedDocDesc').textContent = `客户：${sample.customer} | ${sample.products.length}个产品`;
+        document.getElementById('triggerAction').textContent = sample.triggerAction;
+        currentDocumentData = sample;
+      }, 1000);
+    }, 500);
+  } else {
+    // Word/Excel文件直接处理
+    setTimeout(() => {
+      processInput(sample, 'file');
+    }, 500);
+  }
+}
+
+// 文本粘贴相关函数
+function useTextSample(index) {
+  const sample = textSamples[index];
+  document.getElementById('textInputArea').value = sample.text;
+}
+
+function submitTextInput() {
+  const text = document.getElementById('textInputArea').value.trim();
+  if (!text) return;
+  
+  currentInputSource = 'text';
+  
+  // 模拟AI识别
+  const resultSection = document.getElementById('resultSection');
+  const processingIndicator = document.getElementById('processingIndicator');
+  const processingText = document.getElementById('processingText');
+  const inputSourceTag = document.getElementById('inputSourceTag');
+  const originalTextBox = document.getElementById('originalTextBox');
+  const originalLabel = document.getElementById('originalLabel');
+  
+  resultSection.classList.add('active');
+  processingIndicator.classList.add('active');
+  processingIndicator.classList.remove('file');
+  processingText.textContent = 'AI正在识别文本中的采购信息...';
+  inputSourceTag.innerHTML = '<i class="ri-file-text-line"></i> 文本粘贴';
+  inputSourceTag.className = 'input-source-tag';
+  originalTextBox.classList.remove('file-source');
+  originalLabel.innerHTML = '<i class="ri-file-text-line"></i> 原始文本';
+  
+  setTimeout(() => {
+    processingIndicator.classList.remove('active');
+    
+    // 尝试匹配文本样本
+    let matchedSample = textSamples.find(s => 
+      text.includes(s.customer) || 
+      text.includes(s.customer.substring(0, 4)) ||
+      (s.products && s.products.some(p => text.includes(p.name)))
+    );
+    
+    if (matchedSample) {
+      document.getElementById('originalText').textContent = matchedSample.text;
+      identifyCustomer(matchedSample.customer);
+      currentProducts = matchedSample.products.map((p, i) => ({
+        ...p,
+        index: i + 1,
+        id: p.matchId,
+        selected: false
+      }));
+      renderProductList();
+    } else {
+      document.getElementById('originalText').textContent = text;
+      identifyCustomer('待确认客户');
+    }
+    
+    updateStats();
+  }, 1500);
+}
+
+// 统一处理输入
+function processInput(data, source) {
+  const resultSection = document.getElementById('resultSection');
+  const processingIndicator = document.getElementById('processingIndicator');
+  const processingText = document.getElementById('processingText');
+  const inputSourceTag = document.getElementById('inputSourceTag');
+  const originalTextBox = document.getElementById('originalTextBox');
+  const originalLabel = document.getElementById('originalLabel');
+  
+  resultSection.classList.add('active');
+  processingIndicator.classList.add('active');
+  
+  // 根据来源设置不同样式
+  if (source === 'file') {
+    processingIndicator.classList.add('file');
+    processingText.textContent = '正在提取文件内容并识别...';
+    inputSourceTag.innerHTML = '<i class="ri-folder-line"></i> 文件输入';
+    inputSourceTag.className = 'input-source-tag file';
+    originalTextBox.classList.add('file-source');
+    originalLabel.innerHTML = '<i class="ri-file-line"></i> 提取内容';
+  } else {
+    processingIndicator.classList.remove('file');
+    processingText.textContent = '正在识别客户和多个产品信息...';
+    inputSourceTag.innerHTML = '<i class="ri-mic-line"></i> 语音输入';
+    inputSourceTag.className = 'input-source-tag voice';
+    originalTextBox.classList.remove('file-source');
+    originalLabel.innerHTML = '<i class="ri-mic-line"></i> 原始语音';
+  }
+  
+  setTimeout(() => {
+    processingIndicator.classList.remove('active');
+    document.getElementById('originalText').textContent = data.text;
+    
+    // 客户识别
+    identifyCustomer(data.customer);
+    
+    // 产品识别 - 多产品
+    currentProducts = data.products.map((p, i) => ({
+      ...p,
+      index: i + 1,
+      id: p.matchId,
+      selected: false
+    }));
+    
+    renderProductList();
+    updateStats();
+    
+  }, 1500);
+}
+
+// 处理语音输入
+function processVoiceInput(sample = null) {
+  const data = sample || mockData.samples[0];
+  currentInputSource = 'voice';
+  processInput(data, 'voice');
+}
+
+// 客户识别
+function identifyCustomer(customerName) {
+  const candidates = mockData.customers.filter(c => 
+    c.name.includes(customerName.substring(0, 4)) || 
+    c.similarity > 80
+  ).sort((a, b) => b.similarity - a.similarity);
+  
+  if (candidates.length === 1) {
+    selectCustomer(candidates[0]);
+  } else if (candidates.length > 1) {
+    showCustomerCard(candidates[0], 'pending');
+    currentCustomer = candidates;
+  } else {
+    document.getElementById('customerName').textContent = '未识别到客户';
+    document.getElementById('customerMeta').textContent = '点击手动搜索或新建';
+    document.getElementById('customerStatus').textContent = '待确认';
+    document.getElementById('customerStatus').className = 'customer-status pending';
+    document.getElementById('customerCard').className = 'customer-card pending';
+  }
+}
+
+function showCustomerCard(customer, status) {
+  document.getElementById('customerName').textContent = customer.name;
+  document.getElementById('customerMeta').textContent = `${customer.address} | ${customer.contact}`;
+  
+  const statusEl = document.getElementById('customerStatus');
+  const cardEl = document.getElementById('customerCard');
+  
+  if (status === 'confirmed') {
+    statusEl.textContent = '已确认';
+    statusEl.className = 'customer-status confirmed';
+    cardEl.className = 'customer-card confirmed';
+  } else {
+    statusEl.textContent = '多候选';
+    statusEl.className = 'customer-status pending';
+    cardEl.className = 'customer-card pending';
+  }
+}
+
+function selectCustomer(customer) {
+  selectedCustomerId = customer.id;
+  showCustomerCard(customer, 'confirmed');
+}
+
+function showCustomerModal() {
+  if (!currentCustomer || currentCustomer.length <= 1) return;
+  
+  const container = document.getElementById('customerCandidateList');
+  container.innerHTML = currentCustomer.map((c, i) => `
+    <div class="candidate-item ${selectedCustomerId === c.id ? 'selected' : ''}" onclick="selectCustomerFromModal(${c.id})">
+      <div class="candidate-rank">${i + 1}</div>
+      <div class="candidate-info">
+        <div class="candidate-name">${c.name}</div>
+        <div class="candidate-meta">${c.address} | ${c.contact}</div>
+      </div>
+      <div class="candidate-similarity">${c.similarity}%</div>
+    </div>
+  `).join('');
+  
+  document.getElementById('customerModal').classList.add('active');
+}
+
+function selectCustomerFromModal(id) {
+  const customer = mockData.customers.find(c => c.id === id);
+  if (customer) {
+    selectCustomer(customer);
+    closeModal('customerModal');
+  }
+}
+
+// 渲染产品列表
+function renderProductList() {
+  const container = document.getElementById('productList');
+  document.getElementById('productCount').textContent = `(${currentProducts.length}个)`;
+  
+  if (currentProducts.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon"><i class="ri-inbox-line" style="font-size:48px;"></i></div>
+        <div class="empty-text">暂无产品，请语音输入或手动添加</div>
+      </div>
+    `;
+    return;
+  }
+  
+  container.innerHTML = currentProducts.map((product, idx) => {
+    const productInfo = mockData.products.find(p => p.id === product.id) || {};
+    const isNewProduct = product.status === 'new';
+    const statusClass = product.status;
+    const statusText = product.status === 'confirmed' ? '已确认' : 
+                      product.status === 'error' ? '未匹配' : 
+                      product.status === 'new' ? '新建' : '待确认';
+    const matchTypeClass = product.matchType || 'none';
+    const matchTypeText = {
+      'sku': 'SKU匹配',
+      'code': '编号匹配', 
+      'name': '品名匹配',
+      'none': '未匹配',
+      'new': '新建产品'
+    }[product.matchType] || '待匹配';
+    
+    // 未匹配产品的特殊操作按钮
+    const actionButtons = product.status === 'error' 
+      ? `<button class="product-action-btn new" onclick="showCreateProductModal(${idx})"><i class="ri-add-line"></i> 新建产品</button>
+         <button class="product-action-btn" onclick="showProductModalForEdit(${idx})"><i class="ri-refresh-line"></i> 重新匹配</button>
+         <button class="product-action-btn delete" onclick="deleteProduct(${idx})"><i class="ri-delete-bin-line"></i> 删除</button>`
+      : `<button class="product-action-btn" onclick="editProduct(${idx})"><i class="ri-edit-line"></i> 编辑</button>
+         <button class="product-action-btn" onclick="showProductModalForEdit(${idx})"><i class="ri-refresh-line"></i> 重新匹配</button>
+         <button class="product-action-btn delete" onclick="deleteProduct(${idx})"><i class="ri-delete-bin-line"></i> 删除</button>`;
+    
+    return `
+      <div class="product-item ${statusClass}" data-index="${idx}">
+        <div class="product-header">
+          <div class="product-index">${product.index}</div>
+          <div class="product-main">
+            <div class="product-name-row">
+              <div class="product-name">${productInfo.name || product.name} ${productInfo.spec || product.spec || ''}</div>
+              <span class="product-match-type ${matchTypeClass}">${matchTypeText}</span>
+            </div>
+            <div class="product-code">${productInfo.code || product.code || product.newCode || '未识别编号'} | SKU: ${productInfo.sku || product.sku || product.newSku || '-'}</div>
+          </div>
+          <div class="product-status ${statusClass}" onclick="${product.status === 'error' ? `showCreateProductModal(${idx})` : `showProductModalForEdit(${idx})`}">${statusText}</div>
+        </div>
+        <div class="product-details">
+          <div class="detail-item">
+            <div class="detail-label">数量</div>
+            <div class="detail-value">${product.qty || '-'}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">单价</div>
+            <div class="detail-value ${!product.price ? 'empty' : ''}">${product.price || '待询价'}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">小计</div>
+            <div class="detail-value">${calculateSubtotal(product.qty, product.price)}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">备注</div>
+            <div class="detail-value ${!product.note ? 'empty' : ''}">${product.note || '-'}</div>
+          </div>
+        </div>
+        <div class="product-actions-row">
+          ${actionButtons}
+        </div>
+      </div>
+    `;
+  }).join('');
+  
+  updateStats();
+}
+
+// 计算小计
+function calculateSubtotal(qty, price) {
+  if (!qty || !price) return '-';
+  const qtyNum = parseInt(qty.replace(/[^0-9]/g, ''));
+  const priceNum = parseInt(price.replace(/[^0-9]/g, ''));
+  if (isNaN(qtyNum) || isNaN(priceNum)) return '-';
+  return '¥' + (qtyNum * priceNum).toLocaleString();
+}
+
+// 更新统计
+function updateStats() {
+  const confirmed = currentProducts.filter(p => p.status === 'confirmed' || p.status === 'new').length;
+  const pending = currentProducts.filter(p => p.status === 'pending' || p.status === 'error').length;
+  const total = currentProducts.length;
+  
+  document.getElementById('confirmedCount').textContent = `${confirmed}/${total}`;
+  document.getElementById('pendingCount').textContent = `${pending}/${total}`;
+  
+  // 控制生成按钮状态
+  const generateBtn = document.getElementById('generateBtn');
+  if (pending > 0 || total === 0) {
+    generateBtn.disabled = true;
+    generateBtn.textContent = `还有${pending}个产品待确认`;
+  } else {
+    generateBtn.disabled = false;
+    generateBtn.textContent = '生成销售订单';
+  }
+}
+
+// 显示产品候选弹窗（用于编辑）
+function showProductModalForEdit(index) {
+  editingProductIndex = index;
+  creatingProductIndex = index;
+  const product = currentProducts[index];
+  
+  // 模拟获取候选产品
+  const candidates = mockData.products
+    .filter(p => p.category === '办公用纸' || p.category === '文具' || p.similarity > 80)
+    .slice(0, 5);
+  
+  const container = document.getElementById('productCandidateList');
+  document.getElementById('productModalSubtitle').textContent = `重新匹配: ${product.name}`;
+  
+  container.innerHTML = candidates.map((p, i) => `
+    <div class="candidate-item ${product.id === p.id ? 'selected' : ''}" onclick="selectProductForEdit(${p.id})">
+      <div class="candidate-rank">${i + 1}</div>
+      <div class="candidate-info">
+        <div class="candidate-name">${p.name} ${p.spec}</div>
+        <div class="candidate-meta">${p.code} | SKU: ${p.sku} | ${p.category}</div>
+      </div>
+      <div class="candidate-similarity">${p.similarity}%</div>
+    </div>
+  `).join('');
+  
+  document.getElementById('productModal').classList.add('active');
+}
+
+// 从产品候选弹窗新建产品
+function createNewProductFromModal() {
+  closeModal('productModal');
+  if (creatingProductIndex !== null) {
+    showCreateProductModal(creatingProductIndex);
+  }
+}
+
+// 显示新建产品弹窗
+function showCreateProductModal(index) {
+  creatingProductIndex = index;
+  const product = currentProducts[index];
+  
+  // 显示原始识别信息
+  const originalInfo = `${product.name} ${product.qty} ${product.price} ${product.note || ''}`.trim();
+  document.getElementById('originalProductInfo').textContent = originalInfo || '无原始识别信息';
+  
+  // 自动填充表单
+  document.getElementById('newProductName').value = product.name || '';
+  document.getElementById('newProductCode').value = generateProductCode();
+  document.getElementById('newProductSku').value = '';
+  document.getElementById('newProductSpec').value = '';
+  document.getElementById('newProductUnit').value = extractUnit(product.qty) || '个';
+  document.getElementById('newProductCategory').value = '其他';
+  document.getElementById('newProductNote').value = product.note || '';
+  
+  document.getElementById('createProductModal').classList.add('active');
+}
+
+// 生成产品编号
+function generateProductCode() {
+  const date = new Date();
+  const prefix = 'PRD-NEW';
+  const suffix = String(nextProductId).padStart(3, '0');
+  nextProductId++;
+  return `${prefix}-${suffix}`;
+}
+
+// 提取单位
+function extractUnit(qty) {
+  if (!qty) return '个';
+  const units = ['箱', '盒', '包', '本', '个', '套', '件'];
+  for (const unit of units) {
+    if (qty.includes(unit)) return unit;
+  }
+  return '个';
+}
+
+// 保存新建产品
+function saveNewProduct() {
+  const name = document.getElementById('newProductName').value.trim();
+  const code = document.getElementById('newProductCode').value.trim();
+  
+  if (!name || !code) {
+    alert('请填写必填项：产品名称和产品编号');
+    return;
+  }
+  
+  if (creatingProductIndex !== null) {
+    const product = currentProducts[creatingProductIndex];
+    
+    // 更新产品信息
+    product.name = name;
+    product.newCode = code;
+    product.newSku = document.getElementById('newProductSku').value.trim();
+    product.spec = document.getElementById('newProductSpec').value.trim();
+    product.unit = document.getElementById('newProductUnit').value;
+    product.category = document.getElementById('newProductCategory').value;
+    product.note = document.getElementById('newProductNote').value.trim();
+    product.status = 'new';
+    product.matchType = 'new';
+    product.id = nextProductId - 1; // 使用生成的ID
+    
+    renderProductList();
+    closeModal('createProductModal');
+    creatingProductIndex = null;
+    
+    // 显示成功提示
+    showToast('产品新建成功并已确认');
+  }
+}
+
+// 显示提示
+function showToast(message) {
+  const toast = document.createElement('div');
+  toast.style.cssText = `
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #16a34a;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 9999;
+    animation: slideDown 0.3s ease;
+  `;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.style.animation = 'slideUp 0.3s ease';
+    setTimeout(() => toast.remove(), 300);
+  }, 2000);
+}
+
+// 添加动画样式
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+  }
+  @keyframes slideUp {
+    from { opacity: 1; transform: translateX(-50%) translateY(0); }
+    to { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+  }
+`;
+document.head.appendChild(style);
+
+function selectProductForEdit(productId) {
+  if (editingProductIndex !== null) {
+    const productInfo = mockData.products.find(p => p.id === productId);
+    currentProducts[editingProductIndex].id = productId;
+    currentProducts[editingProductIndex].status = 'confirmed';
+    currentProducts[editingProductIndex].matchType = 'sku';
+    renderProductList();
+    closeModal('productModal');
+    editingProductIndex = null;
+    creatingProductIndex = null;
+  }
+}
+
+// 全部确认
+function confirmAllProducts() {
+  currentProducts.forEach(p => {
+    if (p.status !== 'error') {
+      p.status = 'confirmed';
+    }
+  });
+  renderProductList();
+}
+
+// 添加产品
+function addProduct() {
+  const newIndex = currentProducts.length + 1;
+  currentProducts.push({
+    index: newIndex,
+    name: '新产品',
+    qty: '',
+    price: '',
+    note: '',
+    status: 'error',
+    matchType: 'none',
+    id: null
+  });
+  renderProductList();
+  
+  // 滚动到底部
+  setTimeout(() => {
+    const list = document.getElementById('productList');
+    list.scrollTop = list.scrollHeight;
+  }, 100);
+}
+
+// 编辑产品
+function editProduct(index) {
+  const product = currentProducts[index];
+  if (product.status === 'confirmed' || product.status === 'new') {
+    product.status = 'pending';
+  } else {
+    product.status = 'confirmed';
+  }
+  renderProductList();
+}
+
+// 删除产品
+function deleteProduct(index) {
+  if (confirm('确定删除此产品吗？')) {
+    currentProducts.splice(index, 1);
+    currentProducts.forEach((p, i) => p.index = i + 1);
+    renderProductList();
+  }
+}
+
+// 关闭弹窗
+function closeModal(modalId) {
+  document.getElementById(modalId).classList.remove('active');
+}
+
+// 搜索功能
+function searchCustomer() {
+  alert('打开客户搜索页面');
+  closeModal('customerModal');
+}
+
+function searchProduct() {
+  alert('打开产品搜索页面');
+  closeModal('productModal');
+}
+
+// 重置
+function resetForm() {
+  document.getElementById('resultSection').classList.remove('active');
+  currentProducts = [];
+  currentCustomer = null;
+  selectedCustomerId = null;
+  editingProductIndex = null;
+  creatingProductIndex = null;
+  currentInputSource = 'voice';
+  removeUploadedFile();
+}
+
+// 生成订单
+function generateOrder() {
+  const confirmed = currentProducts.filter(p => p.status === 'confirmed' || p.status === 'new').length;
+  const total = currentProducts.length;
+  const totalAmount = currentProducts.reduce((sum, p) => {
+    const subtotal = calculateSubtotal(p.qty, p.price);
+    if (subtotal !== '-') {
+      return sum + parseInt(subtotal.replace(/[^0-9]/g, ''));
+    }
+    return sum;
+  }, 0);
+  
+  const newProducts = currentProducts.filter(p => p.status === 'new').length;
+  const newProductMsg = newProducts > 0 ? `\n（包含${newProducts}个新建产品）` : '';
+  
+  alert(`订单生成成功！${newProductMsg}\n\n客户：${document.getElementById('customerName').textContent}\n产品数量：${confirmed}个\n订单总额：¥${totalAmount.toLocaleString()}\n\n即将跳转至订单详情页...`);
+}
+
+// 点击弹窗外部关闭
+window.onclick = function(event) {
+  if (event.target.classList.contains('modal-overlay')) {
+    event.target.classList.remove('active');
+  }
+}
+
+// 拖拽上传
+const fileUploadArea = document.getElementById('fileUploadArea');
+fileUploadArea.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  fileUploadArea.classList.add('dragover');
+});
+fileUploadArea.addEventListener('dragleave', () => {
+  fileUploadArea.classList.remove('dragover');
+});
+fileUploadArea.addEventListener('drop', (e) => {
+  e.preventDefault();
+  fileUploadArea.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file) {
+    showUploadedFile(file.name, file.size);
+    currentInputSource = 'file';
+    setTimeout(() => {
+      const sample = fileSamples[0];
+      processInput(sample, 'file');
+    }, 500);
+  }
+});
+
+// 单据识别触发制单
+function triggerDocumentOrder() {
+  if (!currentDocumentData) return;
+  processInput(currentDocumentData, 'file');
+}
+</script>
+</body>
+</html>

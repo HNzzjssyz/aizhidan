@@ -1,0 +1,42 @@
+{
+    "ok": 1,
+    "msg": "读取成功",
+    "data": [
+        {
+            "id": "2556",
+            "name": "BW音响\/BW音响603落地箱S2Anniversary Edition-Black[台]",
+            "cu_id": "〖希丙酷〗",
+            "un_price": "3500",
+            "micro_zk": " ",
+            "sum": "7910"
+        },
+        {
+            "id": "2555",
+            "name": "BW音响\/BW音响603落地箱S2Anniversary Edition-Black[台]",
+            "cu_id": "〖希丙酷〗",
+            "un_price": "3884.9558",
+            "micro_zk": "-RMB878.00(80%)",
+            "sum": "3512"
+        },
+        {
+            "id": "2414",
+            "name": "BW音响\/BW音响603落地箱S2Anniversary Edition-Black[台]",
+            "cu_id": "〖希丙酷〗",
+            "un_price": "3500",
+            "micro_zk": " ",
+            "sum": "3955"
+        }
+    ],
+    "info": {
+        "table": "goods",
+        "tablename": "交付计划\/订单明细",
+        "fields": {
+            "id": "ID",
+            "name": "产品名称",
+            "cu_id": "客户",
+            "un_price": "单价",
+            "micro_zk": "折扣",
+            "sum": "金额"
+        }
+    }
+}

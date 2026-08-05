@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 智能制单 · 运维导读</title>
+<style>
+  /* ===== 基础变量 ===== */
+  :root {
+    --c-bg: #f8fafc;
+    --c-surface: #ffffff;
+    --c-border: #e2e8f0;
+    --c-border-strong: #cbd5e1;
+    --c-text: #1e293b;
+    --c-text-muted: #64748b;
+    --c-text-soft: #94a3b8;
+    --c-accent: #1f2937;
+    --c-src: #6b7280;       /* 源文件 */
+    --c-dev: #0891b2;       /* 开发版 */
+    --c-prod: #ea580c;      /* 发布版 */
+    --c-warn: #dc2626;      /* 警告 */
+    --c-ok: #16a34a;        /* 成功 */
+    --c-hl: #fef3c7;        /* 高亮 */
+    --shadow-sm: 0 1px 2px rgba(0,0,0,.04);
+    --shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+    --radius: 8px;
+    --radius-sm: 4px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+    background: var(--c-bg);
+    color: var(--c-text);
+    line-height: 1.7;
+    font-size: 15px;
+  }
+  code, pre, kbd {
+    font-family: "SF Mono", Menlo, Consolas, "Courier New", monospace;
+    font-size: 13px;
+  }
+  pre {
+    background: #1e293b;
+    color: #e2e8f0;
+    padding: 14px 18px;
+    border-radius: var(--radius);
+    overflow-x: auto;
+    line-height: 1.6;
+    margin: 12px 0;
+  }
+  pre code { color: inherit; }
+  :not(pre) > code {
+    background: #f1f5f9;
+    color: #be185d;
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    border: 1px solid #e2e8f0;
+    font-size: 12.5px;
+  }
+  kbd {
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-bottom-width: 2px;
+    border-radius: var(--radius-sm);
+    padding: 1px 6px;
+    color: var(--c-text);
+  }
+
+  /* ===== 顶部 Hero ===== */
+  .hero {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #475569 100%);
+    color: #fff;
+    padding: 40px 0 32px;
+    border-bottom: 4px solid var(--c-accent);
+  }
+  .hero-inner { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+  .hero h1 {
+    margin: 0 0 8px;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .hero .sub {
+    color: #cbd5e1;
+    font-size: 14px;
+    margin: 0;
+  }
+  .hero .tags { margin-top: 14px; }
+  .hero .tag {
+    display: inline-block;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #e2e8f0;
+    font-size: 12px;
+    padding: 2px 10px;
+    border-radius: 12px;
+    margin-right: 6px;
+  }
+
+  /* ===== 布局 ===== */
+  .layout {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 32px;
+    gap: 32px;
+  }
+  nav.toc {
+    position: sticky;
+    top: 20px;
+    align-self: start;
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius);
+    padding: 16px;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+  }
+  nav.toc h4 {
+    margin: 0 0 10px;
+    font-size: 12px;
+    color: var(--c-text-soft);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  nav.toc ol {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  nav.toc li {
+    margin: 0;
+  }
+  nav.toc a {
+    display: block;
+    padding: 5px 10px;
+    color: var(--c-text-muted);
+    text-decoration: none;
+    font-size: 13px;
+    border-radius: var(--radius-sm);
+    border-left: 2px solid transparent;
+  }
+  nav.toc a:hover {
+    color: var(--c-accent);
+    background: #f1f5f9;
+    border-left-color: var(--c-accent);
+  }
+  nav.toc .l1 { font-weight: 600; }
+  nav.toc .l2 { padding-left: 24px; font-size: 12.5px; }
+  main { padding: 32px 0 80px; min-width: 0; }
+
+  h2 {
+    font-size: 22px;
+    margin: 48px 0 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--c-border-strong);
+    color: var(--c-accent);
+  }
+  h2:first-of-type { margin-top: 0; }
+  h3 {
+    font-size: 17px;
+    margin: 28px 0 12px;
+    color: var(--c-accent);
+  }
+  h4 {
+    font-size: 14.5px;
+    margin: 20px 0 8px;
+    color: var(--c-text);
+  }
+  p { margin: 8px 0; }
+  ul, ol { padding-left: 22px; }
+  li { margin: 4px 0; }
+  hr {
+    border: none;
+    border-top: 1px dashed var(--c-border-strong);
+    margin: 32px 0;
+  }
+
+  /* ===== 关键告警框 ===== */
+  .alert {
+    background: #fef3c7;
+    border-left: 4px solid #f59e0b;
+    padding: 12px 16px;
+    border-radius: var(--radius-sm);
+    margin: 16px 0;
+  }
+  .alert.danger {
+    background: #fee2e2;
+    border-left-color: #dc2626;
+  }
+  .alert.ok {
+    background: #dcfce7;
+    border-left-color: #16a34a;
+  }
+  .alert.info {
+    background: #dbeafe;
+    border-left-color: #2563eb;
+  }
+  .alert strong { color: var(--c-accent); }
+
+  /* ===== 卡片网格 ===== */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin: 16px 0;
+  }
+  .card {
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: var(--shadow-sm);
+  }
+  .card .label {
+    font-size: 11px;
+    color: var(--c-text-soft);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+  }
+  .card .value {
+    font-size: 18px;
+    color: var(--c-accent);
+    font-weight: 700;
+    margin-top: 4px;
+  }
+  .card .desc {
+    font-size: 12.5px;
+    color: var(--c-text-muted);
+    margin-top: 6px;
+  }
+
+  /* ===== 目录树 ===== */
+  .tree {
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin: 12px 0;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 13px;
+    line-height: 1.9;
+    overflow-x: auto;
+  }
+  .tree .c-src { color: var(--c-src); }
+  .tree .c-dev { color: var(--c-dev); font-weight: 600; }
+  .tree .c-prod { color: var(--c-prod); font-weight: 600; }
+  .tree .c-py { color: #7c3aed; font-weight: 600; }
+  .tree .c-bak { color: var(--c-text-soft); }
+  .tree .c-other { color: var(--c-text-muted); }
+  .tree .c-key { background: var(--c-hl); padding: 0 4px; border-radius: 2px; }
+  .tree-comment { color: var(--c-text-soft); font-style: italic; font-family: -apple-system, "PingFang SC", sans-serif; font-size: 12px; }
+
+  /* ===== 流程步骤 ===== */
+  .steps { counter-reset: step; margin: 16px 0; }
+  .step {
+    position: relative;
+    padding: 14px 14px 14px 56px;
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-left: 4px solid var(--c-dev);
+    border-radius: var(--radius);
+    margin-bottom: 10px;
+  }
+  .step::before {
+    counter-increment: step;
+    content: counter(step);
+    position: absolute;
+    left: 14px;
+    top: 14px;
+    width: 28px;
+    height: 28px;
+    background: var(--c-dev);
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+  }
+  .step strong { color: var(--c-accent); }
+  .step.warn { border-left-color: var(--c-warn); }
+  .step.warn::before { background: var(--c-warn); }
+  .step.ok { border-left-color: var(--c-ok); }
+  .step.ok::before { background: var(--c-ok); }
+
+  /* ===== 表格 ===== */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    background: var(--c-surface);
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--c-border);
+    font-size: 13.5px;
+  }
+  th, td {
+    text-align: left;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--c-border);
+  }
+  th {
+    background: #f1f5f9;
+    color: var(--c-text);
+    font-weight: 600;
+    font-size: 12.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f8fafc; }
+  .col-src { color: var(--c-src); font-weight: 600; }
+  .col-dev { color: var(--c-dev); font-weight: 600; }
+  .col-prod { color: var(--c-prod); font-weight: 600; }
+
+  /* ===== 角色徽章 ===== */
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 1px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+  .badge.src { background: #f1f5f9; color: var(--c-src); border: 1px solid #cbd5e1; }
+  .badge.dev { background: #cffafe; color: var(--c-dev); border: 1px solid #67e8f9; }
+  .badge.prod { background: #ffedd5; color: var(--c-prod); border: 1px solid #fdba74; }
+  .badge.bak { background: #f1f5f9; color: var(--c-text-soft); border: 1px solid #cbd5e1; }
+  .badge.tool { background: #ede9fe; color: #7c3aed; border: 1px solid #c4b5fd; }
+
+  /* ===== 底部 ===== */
+  footer {
+    text-align: center;
+    color: var(--c-text-soft);
+    font-size: 12px;
+    padding: 32px 16px;
+    border-top: 1px solid var(--c-border);
+    margin-top: 40px;
+  }
+
+  /* ===== 响应式 ===== */
+  @media (max-width: 800px) {
+    .layout { grid-template-columns: 1fr; padding: 0 16px; }
+    nav.toc { position: static; max-height: none; }
+    .hero-inner { padding: 0 16px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <h1>AI 智能制单 · 运维导读</h1>
+    <p class="sub">本项目为「超兔 AI 制单」系统的代码库与文档中心。本导读用于帮助后续运维人员快速区分"过程文件 / 最终开发版 / 发布版"、掌握代码修改后的同步流程。</p>
+    <div class="tags">
+      <span class="tag">最终开发目录：拼音试验/dexiedb</span>
+      <span class="tag">同步脚本：_build_split.py</span>
+      <span class="tag">文档版本：v1.5.3</span>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+
+<nav class="toc">
+  <h4>目录</h4>
+  <ol>
+    <li><a class="l1" href="#tldr">1. 30 秒上手（TL;DR）</a></li>
+    <li><a class="l1" href="#root">2. 项目根目录定位</a></li>
+    <li><a class="l1" href="#tree">3. dexiedb 目录地图</a></li>
+    <li><a class="l2" href="#tree-src">3.1 4 个源文件</a></li>
+    <li><a class="l2" href="#tree-devprod">3.2 dev/ 与 prod/</a></li>
+    <li><a class="l2" href="#tree-bak">3.3 历史备份（过程文件）</a></li>
+    <li><a class="l1" href="#sync">4. 代码修改 → 同步到 Pro 流程</a></li>
+    <li><a class="l1" href="#devprod">5. dev/ vs prod/ 对比</a></li>
+    <li><a class="l1" href="#ops">6. 运维速查</a></li>
+    <li><a class="l2" href="#ops-cmds">6.1 常用命令</a></li>
+    <li><a class="l2" href="#ops-faq">6.2 常见问题</a></li>
+    <li><a class="l1" href="#levels">7. 深度运维等级（5 级）</a></li>
+    <li><a class="l1" href="#related">8. 关联文档入口</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<h2 id="tldr">1. 30 秒上手（TL;DR）</h2>
+
+<div class="alert info">
+  <strong>📌 一句话原则：</strong> 修改 <code>dexiedb/</code> 根目录下的 4 个源文件 → 运行 <code>_build_split.py</code> → <code>dev/</code> 和 <code>prod/</code> 自动同步。
+</div>
+
+<div class="grid">
+  <div class="card">
+    <div class="label">最终开发目录</div>
+    <div class="value"><span class="badge src">SRC</span> dexiedb/</div>
+    <div class="desc">拼音试验/dexiedb/ — 4 个源文件，所有修改都在这里进行</div>
+  </div>
+  <div class="card">
+    <div class="label">开发版（深度调试）</div>
+    <div class="value"><span class="badge dev">DEV</span> dexiedb/dev/</div>
+    <div class="desc">与源文件完全一致，保留所有中文注释，行号清晰</div>
+  </div>
+  <div class="card">
+    <div class="label">发布版（实际部署）</div>
+    <div class="value"><span class="badge prod">PROD</span> dexiedb/prod/</div>
+    <div class="desc">去掉所有 JS/HTML 注释，体积更小，作为最终发布件</div>
+  </div>
+  <div class="card">
+    <div class="label">同步脚本</div>
+    <div class="value"><span class="badge tool">PY</span> _build_split.py</div>
+    <div class="desc">一键把 4 个源文件分离为 dev/ 和 prod/</div>
+  </div>
+</div>
+
+<h2 id="root">2. 项目根目录定位</h2>
+
+<p>本系统的全部代码、文档、测试数据都集中在以下根目录：</p>
+
+<div class="tree">
+<span class="c-other">/Users/guorui/同步空间/20021218/临时开发/智能制单/拼音试验/</span>
+├── <span class="c-key">dexiedb/</span>                  <span class="tree-comment">← ★ 最终开发目录（运维必读）</span>
+├── <span class="c-other">本地存储版/</span>             <span class="tree-comment">← 早期 IndexedDB 实验版（保留参考）</span>
+├── <span class="c-other">实验数据/</span>               <span class="tree-comment">← 订单测试数据、Mock 数据</span>
+├── <span class="c-other">结论文档/</span>               <span class="tree-comment">← 27 份设计/说明/结论文档</span>
+├── <span class="c-other">读取数据接口/</span>           <span class="tree-comment">← 12 份接口文档（订单/报价单/历史价）</span>
+├── <span class="c-other">CozeFlow_Input_设计文档.html</span>
+├── <span class="c-other">index1监听剪贴板.html</span>    <span class="tree-comment">← 早期试验</span>
+├── <span class="c-other">index2监听chatsdk.html</span>   <span class="tree-comment">← 早期试验</span>
+├── <span class="c-other">todo.md</span>                  <span class="tree-comment">← 项目待办</span>
+└── <span class="c-other">工作流方案设计.html</span>      <span class="tree-comment">← 早期工作流方案</span>
+</div>
+
+<div class="alert">
+  <strong>⚠️ 运维原则：</strong> 除非是早期试验或特殊研究需要，<strong>所有新功能开发、Bug 修复、代码重构</strong>都在 <code>dexiedb/</code> 根目录的 4 个源文件中进行。其它顶层目录的 HTML/JS 文件是历史快照，<strong>不再同步维护</strong>。
+</div>
+
+<h2 id="tree">3. dexiedb 目录地图</h2>
+
+<p><code>dexiedb/</code> 是项目的最终开发目录，结构如下：</p>
+
+<div class="tree">
+dexiedb/                                  <span class="tree-comment">← 4 源 + 2 同步目录 + 14+ 历史备份 + 1 工具脚本</span>
+│
+├── <span class="c-src">index.html</span>               <span class="tree-comment">← SRC 主入口（~235KB，v1.5.3）</span>
+├── <span class="c-src">get_cus_pro.html</span>         <span class="tree-comment">← SRC 客户产品拉取页（~73KB）</span>
+├── <span class="c-src">pinyin_match.js</span>          <span class="tree-comment">← SRC 拼音匹配引擎（~58KB）</span>
+├── <span class="c-src">pinyin_sync.js</span>           <span class="tree-comment">← SRC 增量同步逻辑（~29KB）</span>
+│
+├── <span class="c-py">_build_split.py</span>           <span class="tree-comment">← TOOL 一键分离脚本（dev/prod 同步）</span>
+├── <span class="c-other">一键启动监听.command</span>    <span class="tree-comment">← Mac 快捷启动 --watch 模式的脚本</span>
+│
+├── <span class="c-dev">dev/</span>                     <span class="tree-comment">← DEV 同步目录（带注释，与源完全一致）</span>
+│   ├── get_cus_pro.html
+│   ├── index.html
+│   ├── pinyin_match.js
+│   └── pinyin_sync.js
+│
+├── <span class="c-prod">prod/</span>                    <span class="tree-comment">← PROD 同步目录（去注释，发布用）</span>
+│   ├── get_cus_pro.html
+│   ├── index.html
+│   ├── pinyin_match.js
+│   └── pinyin_sync.js
+│
+└── <span class="c-bak">[历史备份] 14+ 个日期/阶段目录</span>   <span class="tree-comment">← 过程文件，最终开发不再参考</span>
+    ├── 0609价格前正式版备份/
+    ├── 0610发布版之前备份/
+    ├── 0611价格完整准备启动税率/
+    ├── 0612备份历史成交改算法/
+    ├── oldindex备份/
+    ├── 分片改造前备份/
+    ├── 分词 拼音 双引擎拆分备份0525/
+    ├── 双模式匹配备份0524/
+    ├── 备份/
+    ├── 备份0605/
+    ├── 备份0608增量有，合并同步前/
+    ├── 导出exel备份0526II/
+    ├── 带图备份0526/
+    └── 拼音完整备份/
+</div>
+
+<h3 id="tree-src">3.1 4 个源文件（修改入口）</h3>
+
+<table>
+  <tr>
+    <th>文件</th>
+    <th>类型</th>
+    <th>体积</th>
+    <th>职责</th>
+  </tr>
+  <tr>
+    <td><span class="col-src">index.html</span></td>
+    <td>主页面</td>
+    <td>~235KB</td>
+    <td>AI 制单主界面：制单表单、税率/折扣/含税小计计算、一键获取价格模态框、订单/报价单创建、Excel 导出、Coze 智能体集成</td>
+  </tr>
+  <tr>
+    <td><span class="col-src">get_cus_pro.html</span></td>
+    <td>辅助页</td>
+    <td>~73KB</td>
+    <td>客户产品全量/增量拉取页：IndexedDB 同步逻辑入口</td>
+  </tr>
+  <tr>
+    <td><span class="col-src">pinyin_match.js</span></td>
+    <td>JS 模块</td>
+    <td>~58KB</td>
+    <td>拼音匹配引擎：双引擎分词 + 拼音双模匹配 + 阈值算法</td>
+  </tr>
+  <tr>
+    <td><span class="col-src">pinyin_sync.js</span></td>
+    <td>JS 模块</td>
+    <td>~29KB</td>
+    <td>客户/产品增量同步：自动判断全量/增量、删除检测、远端同步</td>
+  </tr>
+</table>
+
+<div class="alert danger">
+  <strong>❌ 绝对不要修改 <code>dev/</code> 或 <code>prod/</code> 下的文件！</strong>它们由 <code>_build_split.py</code> 自动生成，下次同步会被覆盖。所有修改都改 <code>dexiedb/</code> 根目录的 4 个源文件。
+</div>
+
+<h3 id="tree-devprod">3.2 dev/ 与 prod/ 目录</h3>
+
+<p>这两个目录由 <code>_build_split.py</code> 自动同步，<strong>无需手动维护</strong>。</p>
+
+<table>
+  <tr>
+    <th>目录</th>
+    <th>用途</th>
+    <th>适合谁</th>
+    <th>文件特征</th>
+  </tr>
+  <tr>
+    <td><span class="col-dev">dev/</span></td>
+    <td>深度调试、问题排查</td>
+    <td>开发者、深度运维</td>
+    <td>与源文件<strong>完全一致</strong>，保留所有中文注释，行号清晰</td>
+  </tr>
+  <tr>
+    <td><span class="col-prod">prod/</span></td>
+    <td>线上部署、最终发布</td>
+    <td>运维部署、给客户演示</td>
+    <td>去除 JS/HTML 注释，连续空行合并，体积比 dev/ 小 2-10%</td>
+  </tr>
+</table>
+
+<h3 id="tree-bak">3.3 历史备份（过程文件）</h3>
+
+<div class="alert">
+  <strong>📦 备份定位：</strong> 14 个 <code>备份xxx/</code> / <code>xxx备份/</code> 目录是<strong>过程文件</strong>，记录了项目不同阶段的代码快照，<strong>不属于最终开发版</strong>。
+</div>
+
+<ul>
+  <li><strong>形成原因：</strong>每次重大改动前会复制一份当时的代码到新备份目录</li>
+  <li><strong>命名规则：</strong>一般是 <code>日期+改动主题</code>，如 <code>0612备份历史成交改算法/</code></li>
+  <li><strong>运维原则：</strong>不要在这些备份中修改代码（不会被同步，不会生效）。如需回滚某版本，对比该目录和 <code>dexiedb/</code> 当前源文件即可</li>
+  <li><strong>清理建议：</strong>半年以上、且已被新备份覆盖的目录可考虑删除（但需评估后操作）</li>
+</ul>
+
+<h2 id="sync">4. 代码修改 → 同步到 Pro 流程</h2>
+
+<p>所有代码修改都遵循以下 3 步流程：</p>
+
+<div class="steps">
+  <div class="step">
+    <strong>修改源文件</strong><br>
+    在 <code>dexiedb/</code> 根目录下打开 4 个源文件之一（如 <code>index.html</code>），使用任意编辑器修改。<br>
+    <small style="color:var(--c-text-muted)">⚠️ 不要去修改 <code>dev/</code> 或 <code>prod/</code> 里的同名文件！</small>
+  </div>
+  <div class="step warn">
+    <strong>执行同步脚本</strong><br>
+    打开终端，进入 <code>dexiedb/</code> 目录，运行：<br>
+    <pre><code>cd dexiedb
+python3 _build_split.py</code></pre>
+    脚本会自动：① 复制源文件到 <code>dev/</code>（带注释）；② 去注释后写入 <code>prod/</code>（精简版）。
+  </div>
+  <div class="step ok">
+    <strong>验证同步结果</strong><br>
+    打开 <code>dev/index.html</code> 检查改动是否生效；打开 <code>prod/index.html</code> 确认注释已被去除。<br>
+    <small style="color:var(--c-text-muted)">💡 调试问题用 dev/；给客户/上线部署用 prod/。</small>
+  </div>
+</div>
+
+<h3>同步脚本支持的模式</h3>
+
+<table>
+  <tr>
+    <th>命令</th>
+    <th>说明</th>
+    <th>使用场景</th>
+  </tr>
+  <tr>
+    <td><code>python3 _build_split.py</code></td>
+    <td>直接执行，覆盖 dev/ 和 prod/</td>
+    <td>最常用，每次改完代码跑一次</td>
+  </tr>
+  <tr>
+    <td><code>python3 _build_split.py --dry-run</code></td>
+    <td>只打印将执行的动作，不写文件</td>
+    <td>不确定脚本行为时先跑一遍看看</td>
+  </tr>
+  <tr>
+    <td><code>python3 _build_split.py --watch</code></td>
+    <td>监听模式：源文件变化时自动重建（Ctrl+C 退出）</td>
+    <td>长时段开发，不想每次手动跑脚本</td>
+  </tr>
+  <tr>
+    <td><code>python3 _build_split.py --init</code></td>
+    <td>监听 + 立即构建一次</td>
+    <td>启动开发时使用</td>
+  </tr>
+</table>
+
+<h3>Mac 一键启动（可选）</h3>
+
+<p>项目根目录下的 <code>一键启动监听.command</code> 是 Mac 下的双击启动脚本，等价于 <code>python3 _build_split.py --watch --init</code>。运维人员可以双击该文件直接进入监听模式。</p>
+
+<div class="alert info">
+  <strong>📊 典型同步输出：</strong>
+  <pre><code>========================================
+ 一键分离脚本
+ 源目录: .../dexiedb
+ 开发版: .../dexiedb/dev
+ 发布版: .../dexiedb/prod
+ 模式: EXECUTE
+========================================
+
+[index.html] OK
+  源大小:      236318 bytes
+  发布版:      230365 bytes  (压缩 2.5%)
+
+[get_cus_pro.html] OK
+  源大小:       73242 bytes
+  发布版:       69116 bytes  (压缩 5.6%)
+
+[pinyin_match.js] OK
+  源大小:       58056 bytes
+  发布版:       58025 bytes  (压缩 0.1%)
+
+[pinyin_sync.js] OK
+  源大小:       28788 bytes
+  发布版:       25681 bytes  (压缩 10.8%)</code></pre>
+  文件名前缀 <code>[xxx] OK</code> 表示同步成功，<code>[SKIP]</code> 表示源文件不存在已跳过。
+</div>
+
+<h2 id="devprod">5. dev/ vs prod/ 对比</h2>
+
+<p>同样的 4 个源文件，经过 <code>_build_split.py</code> 处理后，在 dev/ 和 prod/ 中呈现不同形态：</p>
+
+<table>
+  <tr>
+    <th>维度</th>
+    <th><span class="badge dev">dev/</span> 开发版</th>
+    <th><span class="badge prod">prod/</span> 发布版</th>
+  </tr>
+  <tr>
+    <td>JS 注释</td>
+    <td>✅ 完整保留（含中文说明、版本号、修改原因）</td>
+    <td>❌ 全部去除（// 单行 + /* */ 多行）</td>
+  </tr>
+  <tr>
+    <td>HTML 注释</td>
+    <td>✅ 完整保留</td>
+    <td>❌ 全部去除（&lt;!-- ... --&gt;）</td>
+  </tr>
+  <tr>
+    <td>行号</td>
+    <td>✅ 与源文件一一对应</td>
+    <td>⚠️ 行号可能偏移（注释去除后行会前移）</td>
+  </tr>
+  <tr>
+    <td>连续空行</td>
+    <td>✅ 保留</td>
+    <td>❌ 合并为单个空行</td>
+  </tr>
+  <tr>
+    <td>字符串/正则</td>
+    <td>✅ 保留</td>
+    <td>✅ 保留（状态机保护，不影响字面量）</td>
+  </tr>
+  <tr>
+    <td>体积</td>
+    <td>= 源文件</td>
+    <td>略小（通常 2-10% 压缩）</td>
+  </tr>
+  <tr>
+    <td>用途</td>
+    <td>开发调试、问题定位、阅读代码</td>
+    <td>实际部署、给客户演示、文件分发</td>
+  </tr>
+  <tr>
+    <td>运维角色</td>
+    <td>排错查阅</td>
+    <td>最终交付件</td>
+  </tr>
+</table>
+
+<div class="alert">
+  <strong>🔍 关键差异示例：</strong>
+  <pre><code>// === dev/index.html L4179 ===
+function _getFullProductName(p) {
+  // v1.5.2 修复：之前只拼了品名+SKU，丢失了规格（spec）字段，
+  // 导致同一基准的多个 SKU 产品无法区分。
+  var name = (p.matchedName || p.originalName || ...).toString().trim();
+  var sku = (p.matchedSku || p.newSku || '').toString().trim();
+  var spec = (p.matchedSpec || p.newSpec || ...).toString().trim();
+  ...
+}</code></pre>
+  <p>同一段代码在 <code>prod/index.html</code> 中，注释全部去除，只剩执行代码。</p>
+</div>
+
+<h2 id="ops">6. 运维速查</h2>
+
+<h3 id="ops-cmds">6.1 常用命令</h3>
+
+<table>
+  <tr>
+    <th>操作</th>
+    <th>命令 / 步骤</th>
+  </tr>
+  <tr>
+    <td>查看项目根目录</td>
+    <td><code>ls /Users/guorui/同步空间/20021218/临时开发/智能制单/拼音试验/</code></td>
+  </tr>
+  <tr>
+    <td>进入最终开发目录</td>
+    <td><code>cd .../拼音试验/dexiedb/</code></td>
+  </tr>
+  <tr>
+    <td>同步到 dev/ 和 prod/</td>
+    <td><code>python3 _build_split.py</code></td>
+  </tr>
+  <tr>
+    <td>仅模拟同步（不写文件）</td>
+    <td><code>python3 _build_split.py --dry-run</code></td>
+  </tr>
+  <tr>
+    <td>进入开发监听模式</td>
+    <td><code>python3 _build_split.py --watch</code> 或 <code>python3 _build_split.py --init</code></td>
+  </tr>
+  <tr>
+    <td>查看 dev/ 目录文件大小</td>
+    <td><code>du -sh dexiedb/dev/*</code></td>
+  </tr>
+  <tr>
+    <td>查看 prod/ 目录文件大小</td>
+    <td><code>du -sh dexiedb/prod/*</code></td>
+  </tr>
+  <tr>
+    <td>对比源文件与 dev/ 是否一致</td>
+    <td><code>diff dexiedb/index.html dexiedb/dev/index.html</code>（应无输出）</td>
+  </tr>
+  <tr>
+    <td>手动启动本地预览</td>
+    <td>用浏览器打开 <code>dexiedb/dev/index.html</code></td>
+  </tr>
+  <tr>
+    <td>Mac 一键启动监听</td>
+    <td>双击 <code>dexiedb/一键启动监听.command</code></td>
+  </tr>
+</table>
+
+<h3 id="ops-faq">6.2 常见问题</h3>
+
+<div class="alert">
+  <strong>Q1：我改了 dev/ 里的文件，为什么改动没生效？</strong><br>
+  A：<code>dev/</code> 是脚本自动生成的，<strong>不要修改</strong>。下次运行 <code>_build_split.py</code> 会被源文件覆盖。所有改动改 <code>dexiedb/</code> 根目录的源文件。
+</div>
+
+<div class="alert">
+  <strong>Q2：prod/ 里有一段中文注释怎么没去掉？</strong><br>
+  A：脚本只去除 <code>//</code> 单行、<code>/* */</code> 多行 JS 注释和 <code>&lt;!-- --&gt;</code> HTML 注释。如果注释写在了字符串字面量里（<code>"// 我是字符串"</code>），状态机会保护它不被误删。检查一下是不是被包在引号内了。
+</div>
+
+<div class="alert">
+  <strong>Q3：源文件改完了，但 dev/ 还是旧的？</strong><br>
+  A：忘记跑 <code>_build_split.py</code> 了。修改完源文件后<strong>必须</strong>运行一次同步脚本（或使用 <code>--watch</code> 监听模式）。
+</div>
+
+<div class="alert">
+  <strong>Q4：prod/ 里的代码行号对不上源文件，调试时怎么定位？</strong><br>
+  A：<strong>调试永远用 dev/</strong>，因为 prod/ 去掉了注释，行号会偏移。prod/ 只用于最终发布。
+</div>
+
+<div class="alert">
+  <strong>Q5：可以删除 dev/ 和 prod/ 重新生成吗？</strong><br>
+  A：可以。删除两个目录后跑 <code>_build_split.py</code> 会自动重建。但一般没必要——脚本每次运行是<strong>覆盖</strong>而不是追加。
+</div>
+
+<div class="alert">
+  <strong>Q6：怎么回滚到某个旧版本？</strong><br>
+  A：项目里有 14+ 个历史备份目录（如 <code>0612备份历史成交改算法/</code>）。找到对应日期的备份，把里面的 4 个文件复制回 <code>dexiedb/</code> 根目录，再跑一次 <code>_build_split.py</code> 即可。
+</div>
+
+<h2 id="levels">7. 深度运维等级（5 级）</h2>
+
+<p>不同运维场景对应不同的能力等级，按需深入：</p>
+
+<table>
+  <tr>
+    <th>等级</th>
+    <th>角色</th>
+    <th>需要的能力</th>
+    <th>涉及目录</th>
+  </tr>
+  <tr>
+    <td>⭐</td>
+    <td>普通用户 / 客户</td>
+    <td>打开 <code>prod/index.html</code> 使用</td>
+    <td><span class="badge prod">prod/</span> （只读）</td>
+  </tr>
+  <tr>
+    <td>⭐⭐</td>
+    <td>业务运维</td>
+    <td>能看懂错误提示、收集日志、上传备份</td>
+    <td><span class="badge prod">prod/</span>、<span class="badge bak">备份目录</span></td>
+  </tr>
+  <tr>
+    <td>⭐⭐⭐</td>
+    <td>技术运维</td>
+    <td>能跑同步脚本、对比 dev/prod、定位简单问题</td>
+    <td>上述 + <span class="badge dev">dev/</span>、<span class="badge tool">_build_split.py</span></td>
+  </tr>
+  <tr>
+    <td>⭐⭐⭐⭐</td>
+    <td>开发维护</td>
+    <td>能修改源文件、跑监听模式、阅读注释</td>
+    <td>上述 + <span class="badge src">dexiedb/ 4 源文件</span></td>
+  </tr>
+  <tr>
+    <td>⭐⭐⭐⭐⭐</td>
+    <td>架构师</td>
+    <td>能修改同步脚本、调整产品目录、扩展新源文件</td>
+    <td>全部 + <code>_build_split.py</code> 源码</td>
+  </tr>
+</table>
+
+<h3>各级别的最小操作集</h3>
+
+<h4>⭐ 普通用户</h4>
+<ul>
+  <li>双击 <code>dexiedb/prod/index.html</code> 或部署到 Web 服务器</li>
+  <li>使用 AI 制单主界面，无需关心任何开发细节</li>
+</ul>
+
+<h4>⭐⭐ 业务运维</h4>
+<ul>
+  <li>用户报障时：打开 <code>prod/index.html</code> 复现</li>
+  <li>需要看用户数据状态：浏览器 F12 看控制台日志</li>
+  <li>必要时从 <code>dexiedb/</code> 内的 14+ 备份目录找回历史版本</li>
+</ul>
+
+<h4>⭐⭐⭐ 技术运维</h4>
+<ul>
+  <li>遇到代码相关问题：直接打开 <code>dexiedb/dev/index.html</code> 调试（保留完整中文注释，行号与源一致）</li>
+  <li>代码改动后：跑 <code>python3 _build_split.py</code> 同步</li>
+  <li>持续开发：使用 <code>python3 _build_split.py --watch</code> 自动重建</li>
+  <li>验证产物：<code>diff dexiedb/index.html dexiedb/dev/index.html</code> 应无输出</li>
+</ul>
+
+<h4>⭐⭐⭐⭐ 开发维护</h4>
+<ul>
+  <li>使用任意编辑器（VSCode、Sublime 等）打开 <code>dexiedb/</code> 根目录的 4 个源文件</li>
+  <li>修改后必须跑 <code>_build_split.py</code>（除非开了 <code>--watch</code>）</li>
+  <li>阅读 <a href="#related">关联文档</a> 了解设计思路和接口规范</li>
+</ul>
+
+<h4>⭐⭐⭐⭐⭐ 架构师</h4>
+<ul>
+  <li>可修改 <code>_build_split.py</code>：
+    <ul>
+      <li><code>SRC_FILES</code>：要同步的文件清单（默认 4 个）</li>
+      <li><code>strip_js_comments</code> / <code>strip_html_comments</code>：注释剥离逻辑（状态机）</li>
+      <li><code>process_js</code> / <code>process_html</code>：处理流水线</li>
+    </ul>
+  </li>
+  <li>新增源文件：编辑 <code>SRC_FILES</code> 数组即可，下次运行自动同步</li>
+  <li>新增同步目录：编辑 <code>DEV_DIR</code> / <code>PROD_DIR</code> 或扩展 <code>_build_once</code></li>
+</ul>
+
+<h2 id="related">8. 关联文档入口</h2>
+
+<p>本导读只覆盖"目录结构 + 同步流程"，系统设计/接口规范/使用说明等请查阅：</p>
+
+<h3>结论文档（拼音试验/结论文档/）</h3>
+<table>
+  <tr>
+    <th>文档</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>超兔-AI制单 用户说明书.html</td>
+    <td>面向最终用户的操作手册</td>
+  </tr>
+  <tr>
+    <td>Coze智能体如何嵌入到网页项目【结项总结】.html</td>
+    <td>Coze 双轨制鉴权、SDK 加载方式</td>
+  </tr>
+  <tr>
+    <td>价格获取逻辑.html</td>
+    <td>4 种价格来源（A/B/C/D）的实现原理</td>
+  </tr>
+  <tr>
+    <td>客户产品自动同步和增量同步逻辑.html</td>
+    <td>IndexedDB 同步机制</td>
+  </tr>
+  <tr>
+    <td>拼音查询性能优化方案v2.html</td>
+    <td>拼音匹配引擎优化</td>
+  </tr>
+  <tr>
+    <td>开发规划TODO.html</td>
+    <td>未来规划</td>
+  </tr>
+</table>
+
+<h3>接口文档（拼音试验/读取数据接口/）</h3>
+<table>
+  <tr>
+    <th>文档</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>创建订单接口v2.md</td>
+    <td>订单创建接口（子表字段、含税公式）</td>
+  </tr>
+  <tr>
+    <td>创建报价单接口v2.md</td>
+    <td>报价单创建接口（注意 pricedetail 无 zk 字段）</td>
+  </tr>
+  <tr>
+    <td>接口类：load_data接口中flag=1的作用.md</td>
+    <td>flag=1 跳过字段函数（v1.5.3 历史成交两次查询算法的依据）</td>
+  </tr>
+  <tr>
+    <td>接口类：读取数据表接口.md</td>
+    <td>通用 load_data 接口规范</td>
+  </tr>
+  <tr>
+    <td>获取历史最近价格的方法.html</td>
+    <td>v1.5.3 之前的 4 层匹配方案（已被 ID 精确比对替代）</td>
+  </tr>
+  <tr>
+    <td>历史价格返回值.json</td>
+    <td>历史价格接口实际返回样本</td>
+  </tr>
+  <tr>
+    <td>读取产品的价格.md</td>
+    <td>产品价/客户价的读取方法</td>
+  </tr>
+  <tr>
+    <td>dflag的全局条件.md</td>
+    <td>软删除字段 dflag=1 的全局排除机制</td>
+  </tr>
+</table>
+
+<h3>版本变更记录</h3>
+<table>
+  <tr>
+    <th>版本</th>
+    <th>日期</th>
+    <th>主要内容</th>
+  </tr>
+  <tr>
+    <td>v1.5.3</td>
+    <td>2026-06-12</td>
+    <td>历史成交改算法：两次查询 + ID 精确比对（<code>_loadHistoryPrices</code> + <code>_fetchAndCacheHistory</code>）</td>
+  </tr>
+  <tr>
+    <td>v1.5.2</td>
+    <td>2026-06-12</td>
+    <td>报价单接口不传 zk，直接传原价由 db 自动算折扣；<code>_getFullProductName</code> 加 spec 字段</td>
+  </tr>
+  <tr>
+    <td>v1.5.1</td>
+    <td>2026-06-12</td>
+    <td>总金额公式修正：税金基于折后价计算（错误 7）；Excel 导出含税率/折扣/含税小计（错误 8）</td>
+  </tr>
+  <tr>
+    <td>v1.5.0</td>
+    <td>2026-06-11</td>
+    <td>一键获取价格模态框（4 种价格来源）、客户历史成交、税率档位、含税单价/含税小计</td>
+  </tr>
+  <tr>
+    <td>v1.4.x</td>
+    <td>2026-06 上旬</td>
+    <td>拼音分词双引擎、Coze 智能体集成（双轨制鉴权）、订单/报价单创建</td>
+  </tr>
+</table>
+
+<hr>
+
+<div class="alert ok">
+  <strong>✅ 上手指南结束。</strong>如有任何疑问，先查本文档的 <a href="#ops-faq">6.2 常见问题</a>，再查阅 <a href="#related">8. 关联文档入口</a>。
+</div>
+
+</main>
+</div>
+
+<footer>
+<p>本运维导读最后更新：v1.5.3 · 2026-06-12</p>
+<p>本项目代码中心：<code>拼音试验/dexiedb/</code> · 同步脚本：<code>_build_split.py</code></p>
+</footer>
+
+</body>
+</html>

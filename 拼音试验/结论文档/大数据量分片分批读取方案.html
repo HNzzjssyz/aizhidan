@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>大数据量分片分批读取方案</title>
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+<style>
+:root {
+  --bg: #f8f9fb;
+  --card: #ffffff;
+  --border: #e8ecf0;
+  --text: #1f2937;
+  --text-secondary: #6b7280;
+  --text-tertiary: #9ca3af;
+  --primary: #3b82f6;
+  --primary-light: #eff6ff;
+  --primary-border: #bfdbfe;
+  --green: #10b981;
+  --green-light: #ecfdf5;
+  --green-border: #a7f3d0;
+  --amber: #f59e0b;
+  --amber-light: #fffbeb;
+  --amber-border: #fde68a;
+  --red: #ef4444;
+  --red-light: #fef2f2;
+  --red-border: #fecaca;
+  --purple: #8b5cf6;
+  --purple-light: #f5f3ff;
+  --purple-border: #ddd6fe;
+  --teal: #14b8a6;
+  --teal-light: #f0fdfa;
+  --teal-border: #99f6e4;
+  --cyan: #06b6d4;
+  --cyan-light: #ecfeff;
+  --cyan-border: #a5f3fc;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  padding: 32px 20px;
+}
+.container { max-width: 960px; margin: 0 auto; }
+
+.doc-header {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px 48px;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+}
+.doc-header::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #ef4444, #f59e0b, #3b82f6, #10b981);
+}
+.doc-header h1 {
+  font-size: 28px; font-weight: 700; color: var(--text);
+  margin-bottom: 8px; display: flex; align-items: center; gap: 12px;
+}
+.doc-header h1 i { color: var(--red); font-size: 28px; }
+.doc-header .subtitle { font-size: 15px; color: var(--text-secondary); margin-bottom: 20px; }
+.doc-meta { display: flex; gap: 24px; flex-wrap: wrap; }
+.doc-meta-item { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-secondary); }
+.doc-meta-item i { font-size: 14px; color: var(--primary); }
+.doc-meta-item strong { color: var(--text); font-weight: 600; }
+
+.section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 32px 36px;
+  margin-bottom: 20px;
+}
+.section-title {
+  font-size: 18px; font-weight: 700; color: var(--text);
+  margin-bottom: 20px; display: flex; align-items: center; gap: 10px;
+  padding-bottom: 14px; border-bottom: 1px solid var(--border);
+}
+.section-title i {
+  width: 32px; height: 32px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; color: white; flex-shrink: 0;
+}
+.icon-blue { background: var(--primary); }
+.icon-green { background: var(--green); }
+.icon-amber { background: var(--amber); }
+.icon-red { background: var(--red); }
+.icon-purple { background: var(--purple); }
+.icon-teal { background: var(--teal); }
+.icon-cyan { background: var(--cyan); }
+
+p { font-size: 14px; color: var(--text); margin-bottom: 12px; line-height: 1.8; }
+p:last-child { margin-bottom: 0; }
+
+.highlight-box {
+  border-radius: 10px; padding: 16px 20px; margin-bottom: 16px;
+  font-size: 14px; line-height: 1.8;
+}
+.highlight-box.blue { background: var(--primary-light); border: 1px solid var(--primary-border); color: #1e40af; }
+.highlight-box.green { background: var(--green-light); border: 1px solid var(--green-border); color: #065f46; }
+.highlight-box.amber { background: var(--amber-light); border: 1px solid var(--amber-border); color: #92400e; }
+.highlight-box.red { background: var(--red-light); border: 1px solid var(--red-border); color: #991b1b; }
+.highlight-box.purple { background: var(--purple-light); border: 1px solid var(--purple-border); color: #5b21b6; }
+.highlight-box.teal { background: var(--teal-light); border: 1px solid var(--teal-border); color: #134e4a; }
+.highlight-box.cyan { background: var(--cyan-light); border: 1px solid var(--cyan-border); color: #164e63; }
+.highlight-box i { margin-right: 6px; }
+
+pre {
+  background: #1e293b; color: #e2e8f0; border-radius: 10px;
+  padding: 20px 24px; margin-bottom: 16px; overflow-x: auto;
+  font-size: 13px; line-height: 1.7; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+}
+pre .comment { color: #64748b; }
+pre .keyword { color: #c084fc; }
+pre .string { color: #34d399; }
+pre .key { color: #60a5fa; }
+pre .func { color: #fbbf24; }
+pre .num { color: #fb923c; }
+
+table {
+  width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 13px;
+}
+th, td {
+  padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border);
+}
+th { background: #f8f9fb; font-weight: 600; color: var(--text-secondary); font-size: 12px; }
+td { color: var(--text); }
+tr:last-child td { border-bottom: none; }
+
+.flow-steps { display: flex; flex-direction: column; gap: 0; margin-bottom: 16px; }
+.flow-step {
+  display: flex; gap: 16px; padding: 14px 0;
+  border-bottom: 1px dashed var(--border);
+}
+.flow-step:last-child { border-bottom: none; }
+.flow-step-num {
+  width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; color: white;
+}
+.flow-step-content { flex: 1; }
+.flow-step-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.flow-step-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.7; }
+
+.tag {
+  display: inline-block; padding: 2px 10px; border-radius: 6px;
+  font-size: 11px; font-weight: 600; margin-right: 4px;
+}
+.tag-blue { background: var(--primary-light); color: #1e40af; border: 1px solid var(--primary-border); }
+.tag-green { background: var(--green-light); color: #065f46; border: 1px solid var(--green-border); }
+.tag-amber { background: var(--amber-light); color: #92400e; border: 1px solid var(--amber-border); }
+.tag-red { background: var(--red-light); color: #991b1b; border: 1px solid var(--red-border); }
+.tag-purple { background: var(--purple-light); color: #5b21b6; border: 1px solid var(--purple-border); }
+.tag-teal { background: var(--teal-light); color: #134e4a; border: 1px solid var(--teal-border); }
+.tag-cyan { background: var(--cyan-light); color: #164e63; border: 1px solid var(--cyan-border); }
+
+.compare-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;
+}
+.compare-card {
+  border-radius: 12px; padding: 20px 24px;
+  border: 1px solid var(--border);
+}
+.compare-card.before { background: var(--red-light); border-color: var(--red-border); }
+.compare-card.after { background: var(--green-light); border-color: var(--green-border); }
+.compare-card h4 { font-size: 15px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+.compare-card ul { list-style: none; padding: 0; }
+.compare-card li { font-size: 13px; line-height: 1.8; padding-left: 20px; position: relative; }
+.compare-card li::before { content: '•'; position: absolute; left: 6px; color: var(--text-secondary); }
+
+.metric-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px;
+}
+.metric-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+  padding: 20px; text-align: center;
+}
+.metric-card .metric-value {
+  font-size: 32px; font-weight: 800; margin-bottom: 4px;
+}
+.metric-card .metric-label {
+  font-size: 12px; color: var(--text-secondary); font-weight: 500;
+}
+.metric-card .metric-desc {
+  font-size: 11px; color: var(--text-tertiary); margin-top: 6px;
+}
+
+.timeline { display: flex; flex-direction: column; gap: 0; margin-bottom: 16px; }
+.timeline-item {
+  display: flex; gap: 16px; padding: 16px 0;
+  border-bottom: 1px dashed var(--border);
+}
+.timeline-item:last-child { border-bottom: none; }
+.timeline-dot {
+  width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0;
+  margin-top: 6px; position: relative;
+}
+.timeline-dot::after {
+  content: ''; position: absolute; top: 12px; left: 5px;
+  width: 2px; height: calc(100% + 12px); background: var(--border);
+}
+.timeline-item:last-child .timeline-dot::after { display: none; }
+.timeline-content { flex: 1; }
+.timeline-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.timeline-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.7; }
+
+.code-label {
+  display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px;
+  border-radius: 4px; margin-bottom: 8px; font-family: monospace;
+}
+.code-label.request { background: var(--primary-light); color: #1e40af; }
+.code-label.response { background: var(--green-light); color: #065f46; }
+
+.warning-banner {
+  background: linear-gradient(135deg, #fef2f2, #fee2e2);
+  border: 2px solid #fca5a5;
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  display: flex; align-items: flex-start; gap: 14px;
+}
+.warning-banner i { font-size: 24px; color: var(--red); flex-shrink: 0; margin-top: 2px; }
+.warning-banner .warning-content h3 { font-size: 16px; color: #991b1b; margin-bottom: 6px; }
+.warning-banner .warning-content p { font-size: 13px; color: #7f1d1d; margin-bottom: 0; line-height: 1.8; }
+
+@media (max-width: 640px) {
+  .doc-header { padding: 24px 20px; }
+  .section { padding: 20px 18px; }
+  .compare-grid { grid-template-columns: 1fr; }
+  .metric-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="doc-header">
+  <h1><i class="ri-database-2-line"></i> 大数据量分片分批读取方案</h1>
+  <div class="subtitle">SaaS多租户模式下，解决单表数据量无上限导致的读取负载过高问题</div>
+  <div class="doc-meta">
+    <div class="doc-meta-item"><i class="ri-calendar-line"></i> 创建：<strong>2026-05-20</strong></div>
+    <div class="doc-meta-item"><i class="ri-server-line"></i> 架构：<strong>SaaS多租户 / 每租户独立MySQL库</strong></div>
+    <div class="doc-meta-item"><i class="ri-code-line"></i> 接口：<strong>load_data (limit + start)</strong></div>
+    <div class="doc-meta-item"><i class="ri-file-code-line"></i> 模块：<strong>get_cus_pro.html / pinyin_match2.js</strong></div>
+  </div>
+</div>
+
+<!-- 第1章：问题背景 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-red"><i class="ri-error-warning-line"></i></i>
+    1. 问题背景
+  </div>
+
+  <h4 style="font-size:15px;font-weight:700;margin:0 0 12px;display:flex;align-items:center;gap:8px;">
+    <span style="width:24px;height:24px;border-radius:6px;background:var(--red);color:white;display:inline-flex;align-items:center;justify-content:center;font-size:12px;">A</span>
+    SaaS多租户架构（每租户独立数据库）
+  </h4>
+  <p>系统采用SaaS多租户模式，<strong>每个租户拥有独立的MySQL数据库</strong>，租户间数据完全物理隔离。不同租户的数据量差异极大：</p>
+  <table>
+    <thead>
+      <tr><th>租户类型</th><th>客户表数据量</th><th>产品表数据量</th><th>典型场景</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><span class="tag tag-green">小型租户</span></td><td>100 ~ 2,000</td><td>200 ~ 5,000</td><td>初创企业、个体商户</td></tr>
+      <tr><td><span class="tag tag-blue">中型租户</span></td><td>2,000 ~ 10,000</td><td>5,000 ~ 10,000</td><td>区域经销商、中型贸易商</td></tr>
+      <tr><td><span class="tag tag-amber">大型租户</span></td><td>10,000 ~ 50,000</td><td>10,000 ~ 100,000</td><td>全国性企业、连锁集团</td></tr>
+      <tr><td><span class="tag tag-red">超大型租户</span></td><td>50,000+</td><td>100,000 ~ 300,000</td><td>行业龙头、海量SKU场景</td></tr>
+    </tbody>
+  </table>
+  <div class="highlight-box blue">
+    <i class="ri-information-line"></i>
+    <strong>数据量特征：</strong>一般租户的产品数量在 <strong>10,000</strong> 左右；超大型租户（大包）产品数量可达 <strong>10万~30万</strong>。为保障系统可用性，客户表和产品表各设置 <strong>5万</strong> 为硬性上限，超出时自动截断。
+  </div>
+
+  <h4 style="font-size:15px;font-weight:700;margin:20px 0 12px;display:flex;align-items:center;gap:8px;">
+    <span style="width:24px;height:24px;border-radius:6px;background:var(--red);color:white;display:inline-flex;align-items:center;justify-content:center;font-size:12px;">B</span>
+    当前全量读取的灾难性后果
+  </h4>
+  <p>当前 <code>get_cus_pro.html</code> 的全量获取逻辑，一次请求拉取全部数据：</p>
+  <pre><span class="comment">// 当前代码 — 一次请求拉取全部客户</span>
+<span class="keyword">var</span> customerParams = {
+  <span class="key">cmd</span>: <span class="string">'load_data'</span>,
+  <span class="key">dtname</span>: <span class="string">'customer'</span>,
+  <span class="key">field</span>: <span class="string">'id,cu_name,amstamp'</span>,
+  <span class="key">flag</span>: <span class="num">1</span>
+  <span class="comment">// ⚠️ 没有 limit 和 start，一次拉取全部数据</span>
+};
+
+<span class="comment">// 当前代码 — 一次请求拉取全部产品</span>
+<span class="keyword">var</span> productParams = {
+  <span class="key">cmd</span>: <span class="string">'load_data'</span>,
+  <span class="key">dtname</span>: <span class="string">'product'</span>,
+  <span class="key">field</span>: <span class="string">'id,pro_name,model,spec,modstm'</span>,
+  <span class="key">flag</span>: <span class="num">1</span>
+  <span class="comment">// ⚠️ 没有 limit 和 start，一次拉取全部数据</span>
+};</pre>
+
+  <div class="warning-banner">
+    <i class="ri-alarm-warning-line"></i>
+    <div class="warning-content">
+      <h3>灾难性场景</h3>
+      <p>当超大型租户（大包）的产品表达到 10万~30万 条记录时，一次全量读取会产生以下问题：</p>
+      <p><strong>1. 数据库负载飙升</strong> — MySQL 单次查询返回 20万+ 行，占用大量 buffer pool，虽然每租户独立数据库不影响其他租户，但会导致该租户自身的其他查询严重变慢。</p>
+      <p><strong>2. 网络传输超时</strong> — 20万行产品数据（含 field: id, pro_name, model, spec, modstm）约 60~100MB JSON，传输耗时可能超过 60 秒，触发浏览器或网关超时。</p>
+      <p><strong>3. 前端内存溢出</strong> — 浏览器一次性接收并解析 100MB JSON，内存峰值可能超过 1GB，导致页面卡死甚至崩溃。</p>
+      <p><strong>4. 拼音生成阻塞</strong> — 对 20万条记录逐一生成拼音，主线程阻塞 60~120 秒，用户无法操作。</p>
+    </div>
+  </div>
+
+  <h4 style="font-size:15px;font-weight:700;margin:20px 0 12px;display:flex;align-items:center;gap:8px;">
+    <span style="width:24px;height:24px;border-radius:6px;background:var(--red);color:white;display:inline-flex;align-items:center;justify-content:center;font-size:12px;">C</span>
+    问题量化
+  </h4>
+  <div class="metric-grid">
+    <div class="metric-card">
+      <div class="metric-value" style="color:var(--red);">50,000</div>
+      <div class="metric-label">数据量硬性上限（客户/产品各5万）</div>
+      <div class="metric-desc">超出自动截断，保障系统可用性</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value" style="color:var(--amber);">60~100MB</div>
+      <div class="metric-label">20万行全量响应体积</div>
+      <div class="metric-desc">含5个字段的JSON</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value" style="color:var(--purple);">60~120s</div>
+      <div class="metric-label">20万行拼音生成阻塞时长</div>
+      <div class="metric-desc">主线程完全卡死</div>
+    </div>
+  </div>
+</div>
+
+<!-- 第2章：接口能力确认 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-cyan"><i class="ri-plug-line"></i></i>
+    2. 接口能力确认
+  </div>
+
+  <p>经查阅 <code>load_data</code> 接口文档，确认该接口已原生支持分页参数：</p>
+
+  <table>
+    <thead>
+      <tr><th>参数</th><th>类型</th><th>说明</th><th>示例</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>limit</code></td>
+        <td>Number</td>
+        <td>限制返回数量，如指定 100 只返回 100 条</td>
+        <td><code>"limit": 10000</code></td>
+      </tr>
+      <tr>
+        <td><code>start</code></td>
+        <td>Number</td>
+        <td>指定开始位置（偏移量），用于分页</td>
+        <td><code>"start": 10000</code>（从第10001条开始）</td>
+      </tr>
+      <tr>
+        <td><code>flag</code></td>
+        <td>Number</td>
+        <td><code>flag=1</code> 返回数据库原始值，跳过字段函数处理</td>
+        <td><code>"flag": 1</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="highlight-box green">
+    <i class="ri-check-double-line"></i>
+    <strong>结论：</strong><code>load_data</code> 接口已完整支持 <code>limit</code> + <code>start</code> 分页参数，无需后端改造即可实现分批读取。同时支持 <code>"field": "count(1) cnt"</code> 获取总记录数，用于计算分片数量。
+  </div>
+
+  <h4 style="font-size:15px;font-weight:700;margin:20px 0 12px;">分页查询示例</h4>
+  <pre><span class="comment">// 第1批：从第0条开始，取10000条</span>
+{
+  <span class="key">"cmd"</span>: <span class="string">"load_data"</span>,
+  <span class="key">"dtname"</span>: <span class="string">"product"</span>,
+  <span class="key">"field"</span>: <span class="string">"id,pro_name,model,spec,modstm"</span>,
+  <span class="key">"flag"</span>: <span class="num">1</span>,
+  <span class="key">"limit"</span>: <span class="num">10000</span>,
+  <span class="key">"start"</span>: <span class="num">0</span>
+}
+
+<span class="comment">// 第2批：从第10000条开始，取10000条</span>
+{
+  <span class="key">"cmd"</span>: <span class="string">"load_data"</span>,
+  <span class="key">"dtname"</span>: <span class="string">"product"</span>,
+  <span class="key">"field"</span>: <span class="string">"id,pro_name,model,spec,modstm"</span>,
+  <span class="key">"flag"</span>: <span class="num">1</span>,
+  <span class="key">"limit"</span>: <span class="num">10000</span>,
+  <span class="key">"start"</span>: <span class="num">10000</span>
+}
+
+<span class="comment">// 获取总记录数</span>
+{
+  <span class="key">"cmd"</span>: <span class="string">"load_data"</span>,
+  <span class="key">"dtname"</span>: <span class="string">"product"</span>,
+  <span class="key">"field"</span>: <span class="string">"count(1) cnt"</span>,
+  <span class="key">"flag"</span>: <span class="num">1</span>
+}
+<span class="comment">// 返回：{ "ok": 1, "data": [{ "cnt": "128760" }] }</span></pre>
+</div>
+
+<!-- 第3章：方案设计 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-green"><i class="ri-flow-chart"></i></i>
+    3. 方案设计
+  </div>
+
+  <h4 style="font-size:15px;font-weight:700;margin:0 0 12px;display:flex;align-items:center;gap:8px;">
+    <span style="width:24px;height:24px;border-radius:6px;background:var(--primary);color:white;display:inline-flex;align-items:center;justify-content:center;font-size:12px;">3.1</span>
+    核心思路
+  </h4>
+  <div class="highlight-box teal">
+    <i class="ri-route-line"></i>
+    <strong>分片读取 + 分批生成拼音：</strong>将一次全量读取拆分为多个小批次，每批读取固定数量的记录，读完后立即生成该批次的拼音，再读取下一批。通过 <code>limit</code> + <code>start</code> 参数控制每批数据量，确保单次数据库查询和前端处理的负载都在可控范围内。
+  </div>
+
+  <h4 style="font-size:15px;font-weight:700;margin:20px 0 12px;display:flex;align-items:center;gap:8px;">
+    <span style="width:24px;height:24px;border-radius:6px;background:var(--primary);color:white;display:inline-flex;align-items:center;justify-content:center;font-size:12px;">3.2</span>
+    分片规格
+  </h4>
+  <p>根据数据特征和性能考量，设定以下分片规格：</p>
+  <table>
+    <thead>
+      <tr><th>数据表</th><th>dtname</th><th>每批读取量（limit）</th><th>分片依据</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><i class="ri-building-line" style="color:var(--primary);"></i> 客户表</td>
+        <td><code>customer</code></td>
+        <td><strong>10,000 条/批</strong></td>
+        <td>客户数据字段少（id, cu_name, amstamp），单条体积小，1万条约 1~2MB</td>
+      </tr>
+      <tr>
+        <td><i class="ri-shopping-bag-line" style="color:var(--green);"></i> 产品表</td>
+        <td><code>product</code></td>
+        <td><strong>20,000 条/批</strong></td>
+        <td>产品数据字段多（id, pro_name, model, spec, modstm），但2万条约 5~8MB，仍在可控范围</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="highlight-box blue">
+    <i class="ri-information-line"></i>
+    <strong>分片规格选择依据：</strong>
+    <br>① <code>limit + start</code> 本质是 <code>OFFSET ... LIMIT</code> 分页，offset 过大时 MySQL 需要扫描并跳过前面所有行，性能会退化。因此每批数量不宜过小（避免批次过多），也不宜过大（避免单次负载过高）。
+    <br>② 客户表字段少、单条体积小，1万条/批是安全值；产品表字段多但2万条/批的响应体积仍在 10MB 以内。
+    <br>③ 对于绝大多数中小租户（客户 &lt;1万，产品 &lt;2万），只需 1 批即可完成全量读取，与现有体验一致。
+  </div>
+
+  <h4 style="font-size:15px;font-weight:700;margin:20px 0 12px;display:flex;align-items:center;gap:8px;">
+    <span style="width:24px;height:24px;border-radius:6px;background:var(--primary);color:white;display:inline-flex;align-items:center;justify-content:center;font-size:12px;">3.3</span>
+    全量获取流程
+  </h4>
+
+  <div class="flow-steps">
+    <div class="flow-step">
+      <div class="flow-step-num" style="background:var(--primary);">1</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">获取总记录数</div>
+        <div class="flow-step-desc">
+          调用 <code>load_data</code> 接口，<code>field: "count(1) cnt"</code>，获取客户表和产品表的总记录数。<br>
+          根据总记录数和分片规格计算需要多少批次。
+        </div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num" style="background:var(--primary);">2</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">分批读取客户数据</div>
+        <div class="flow-step-desc">
+          按 <code>limit=10000</code> 分批读取客户数据，每批使用 <code>start</code> 偏移量递进。<br>
+          每批读取完成后，立即写入 IndexedDB，并生成该批次的拼音索引。<br>
+          批次间插入 <code>await new Promise(r => setTimeout(r, 100))</code> 让出主线程，避免 UI 冻结。
+        </div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num" style="background:var(--green);">3</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">分批读取产品数据</div>
+        <div class="flow-step-desc">
+          按 <code>limit=20000</code> 分批读取产品数据，逻辑与客户数据相同。<br>
+          每批读取完成后，立即写入 IndexedDB，并生成该批次的拼音索引。
+        </div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num" style="background:var(--green);">4</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">完成同步</div>
+        <div class="flow-step-desc">
+          所有批次读取和拼音生成完成后，更新同步时间戳，刷新 UI 状态。<br>
+          显示总计：客户 N 条（M 批）、产品 K 条（L 批）。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h4 style="font-size:15px;font-weight:700;margin:20px 0 12px;display:flex;align-items:center;gap:8px;">
+    <span style="width:24px;height:24px;border-radius:6px;background:var(--amber);color:white;display:inline-flex;align-items:center;justify-content:center;font-size:12px;">3.4</span>
+    总量上限约束
+  </h4>
+  <p>在全量获取流程的第1步（获取总记录数）之后，立即检查数据量是否超过硬性上限，超出时自动截断：</p>
+  <table>
+    <thead>
+      <tr><th>数据表</th><th>硬性上限</th><th>超界行为</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><i class="ri-building-line" style="color:var(--primary);"></i> 客户表</td>
+        <td><strong>50,000 条</strong></td>
+        <td>超出时自动截断为前 50,000 条，弹出 toast 提示"总量超界，只取5万数据"</td>
+      </tr>
+      <tr>
+        <td><i class="ri-shopping-bag-line" style="color:var(--green);"></i> 产品表</td>
+        <td><strong>50,000 条</strong></td>
+        <td>超出时自动截断为前 50,000 条，弹出 toast 提示"总量超界，只取5万数据"</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="highlight-box red">
+    <i class="ri-alarm-warning-line"></i>
+    <strong>总量上限约束逻辑：</strong>获取总记录数后，如果客户数 > 50,000 或产品数 > 50,000，弹出 toast 提示"总量超界，只取5万数据"，同时写入操作日志。数据收集完成后，使用 <code>slice(0, 50000)</code> 截断再写入 IndexedDB，保障数据库中客户和产品的最大条数不超过各5万条。增量获取合并后同样执行截断检查。
+  </div>
+  <pre><span class="keyword">var</span> CUSTOMER_LIMIT = <span class="num">50000</span>;
+<span class="keyword">var</span> PRODUCT_LIMIT = <span class="num">50000</span>;
+
+<span class="keyword">async function</span> <span class="func">checkDataBounds</span>(customerTotal, productTotal) {
+  <span class="keyword">var</span> warnings = [];
+  <span class="keyword">if</span> (customerTotal > CUSTOMER_LIMIT) {
+    warnings.push(<span class="string">'客户数据 '</span> + customerTotal.toLocaleString() + <span class="string">' 条，超出上限 '</span> + CUSTOMER_LIMIT.toLocaleString() + <span class="string">' 条，只取前 '</span> + CUSTOMER_LIMIT.toLocaleString() + <span class="string">' 条'</span>);
+  }
+  <span class="keyword">if</span> (productTotal > PRODUCT_LIMIT) {
+    warnings.push(<span class="string">'产品数据 '</span> + productTotal.toLocaleString() + <span class="string">' 条，超出上限 '</span> + PRODUCT_LIMIT.toLocaleString() + <span class="string">' 条，只取前 '</span> + PRODUCT_LIMIT.toLocaleString() + <span class="string">' 条'</span>);
+  }
+  <span class="keyword">if</span> (warnings.length > <span class="num">0</span>) {
+    <span class="func">showToast</span>(<span class="string">'总量超界，只取5万数据'</span>, <span class="string">'error'</span>);
+    warnings.forEach(<span class="keyword">function</span>(w) { <span class="func">log</span>(w, <span class="string">'info'</span>); });
+    <span class="func">log</span>(<span class="string">'总量超界，只取5万数据'</span>, <span class="string">'info'</span>);
+  }
+  <span class="keyword">return true</span>;
+}
+
+<span class="comment">// 全量获取后截断</span>
+<span class="keyword">if</span> (allCustomers.length > CUSTOMER_LIMIT) {
+  allCustomers = allCustomers.slice(<span class="num">0</span>, CUSTOMER_LIMIT);
+}
+<span class="keyword">if</span> (allProducts.length > PRODUCT_LIMIT) {
+  allProducts = allProducts.slice(<span class="num">0</span>, PRODUCT_LIMIT);
+}
+
+<span class="comment">// 增量获取合并后截断</span>
+<span class="keyword">if</span> (merged.length > CUSTOMER_LIMIT) {
+  merged = merged.slice(<span class="num">0</span>, CUSTOMER_LIMIT);
+}</pre>
+
+  <h4 style="font-size:15px;font-weight:700;margin:20px 0 12px;display:flex;align-items:center;gap:8px;">
+    <span style="width:24px;height:24px;border-radius:6px;background:var(--primary);color:white;display:inline-flex;align-items:center;justify-content:center;font-size:12px;">3.5</span>
+    增量获取流程
+  </h4>
+  <p>增量获取的数据量通常很小（每日新增/修改几十到几百条），<strong>不需要分片</strong>，保持现有逻辑即可。但需增加一个前置检查：</p>
+  <div class="highlight-box amber">
+    <i class="ri-alert-line"></i>
+    <strong>增量获取安全阈值：</strong>如果增量返回的记录数超过 5,000 条（可能是首次使用或长时间未同步），自动切换为全量分片获取模式，避免一次性处理过多增量数据。
+  </div>
+</div>
+
+<!-- 第4章：改造前后对比 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-amber"><i class="ri-contrast-2-line"></i></i>
+    4. 改造前后对比
+  </div>
+
+  <div class="compare-grid">
+    <div class="compare-card before">
+      <h4><i class="ri-close-circle-line" style="color:var(--red);"></i> 改造前：全量一次读取</h4>
+      <ul>
+        <li>一次请求拉取全部数据，无 limit/start</li>
+        <li>20万条产品 → 单次响应 60~100MB</li>
+        <li>数据库单次查询返回全部行，该租户自身其他查询严重变慢</li>
+        <li>前端一次性解析大 JSON，内存峰值 1GB+</li>
+        <li>拼音生成阻塞主线程 60~120 秒</li>
+        <li>每租户独立数据库，不影响其他租户，但自身体验极差</li>
+        <li>可能触发浏览器/网关超时</li>
+      </ul>
+    </div>
+    <div class="compare-card after">
+      <h4><i class="ri-check-circle-line" style="color:var(--green);"></i> 改造后：分片分批读取</h4>
+      <ul>
+        <li>分批请求，每批 limit 控制数据量</li>
+        <li>20万条产品 → 10批 × 2万条，每批 5~8MB</li>
+        <li>数据库每次查询返回固定行数，该租户自身负载可控</li>
+        <li>前端逐批解析，内存峰值降至 50MB 以内</li>
+        <li>拼音生成分批执行，批次间让出主线程</li>
+        <li>每租户独立数据库，完全不影响其他租户</li>
+        <li>不会超时，进度条实时反馈</li>
+      </ul>
+    </div>
+  </div>
+
+  <h4 style="font-size:15px;font-weight:700;margin:20px 0 12px;">不同数据量下的批次计算</h4>
+  <table>
+    <thead>
+      <tr><th>数据表</th><th>数据量</th><th>每批 limit</th><th>批次数</th><th>单批体积估算</th><th>总耗时估算</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>客户表</td><td>1,000</td><td>10,000</td><td>1</td><td>~0.2MB</td><td>&lt;1s</td></tr>
+      <tr><td>客户表</td><td>10,000</td><td>10,000</td><td>1</td><td>~2MB</td><td>~2s</td></tr>
+      <tr><td>客户表</td><td>50,000</td><td>10,000</td><td>5</td><td>~2MB</td><td>~10s</td></tr>
+      <tr><td>产品表</td><td>10,000</td><td>20,000</td><td>1</td><td>~3MB</td><td>~3s</td></tr>
+      <tr><td>产品表</td><td>20,000</td><td>20,000</td><td>1</td><td>~6MB</td><td>~5s</td></tr>
+      <tr><td>产品表</td><td>50,000</td><td>20,000</td><td>3</td><td>~6MB</td><td>~15s</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- 第5章：详细实现 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-purple"><i class="ri-code-s-slash-line"></i></i>
+    5. 详细实现
+  </div>
+
+  <h4 style="font-size:15px;font-weight:700;margin:0 0 12px;display:flex;align-items:center;gap:8px;">
+    <span style="width:24px;height:24px;border-radius:6px;background:var(--primary);color:white;display:inline-flex;align-items:center;justify-content:center;font-size:12px;">5.1</span>
+    获取总记录数
+  </h4>
+  <pre><span class="keyword">async function</span> <span class="func">getTotalCount</span>(dtname) {
+  <span class="keyword">var</span> params = {
+    <span class="key">cmd</span>: <span class="string">'load_data'</span>,
+    <span class="key">dtname</span>: dtname,
+    <span class="key">field</span>: <span class="string">'count(1) cnt'</span>,
+    <span class="key">flag</span>: <span class="num">1</span>
+  };
+  <span class="keyword">var</span> data = <span class="keyword">await</span> <span class="func">sendLoadData</span>(params);
+  <span class="keyword">if</span> (data.ok === <span class="num">1</span> && data.data && data.data[<span class="num">0</span>]) {
+    <span class="keyword">return</span> parseInt(data.data[<span class="num">0</span>].cnt, <span class="num">10</span>);
+  }
+  <span class="keyword">return</span> <span class="num">0</span>;
+}</pre>
+
+  <h4 style="font-size:15px;font-weight:700;margin:20px 0 12px;display:flex;align-items:center;gap:8px;">
+    <span style="width:24px;height:24px;border-radius:6px;background:var(--primary);color:white;display:inline-flex;align-items:center;justify-content:center;font-size:12px;">5.2</span>
+    分片分批全量获取
+  </h4>
+  <pre><span class="keyword">var</span> CUSTOMER_BATCH_SIZE = <span class="num">10000</span>;
+<span class="keyword">var</span> PRODUCT_BATCH_SIZE = <span class="num">20000</span>;
+
+<span class="keyword">async function</span> <span class="func">fetchFullDataBatched</span>() {
+  <span class="func">showProgressOverlay</span>();
+
+  <span class="comment">// Step 1: 获取总记录数</span>
+  <span class="func">showProgress</span>(<span class="string">'正在统计记录数...'</span>, <span class="num">0</span>, <span class="num">1</span>, <span class="string">'查询客户表...'</span>);
+  <span class="keyword">var</span> customerTotal = <span class="keyword">await</span> <span class="func">getTotalCount</span>(<span class="string">'customer'</span>);
+  <span class="func">showProgress</span>(<span class="string">'正在统计记录数...'</span>, <span class="num">0</span>, <span class="num">1</span>, <span class="string">'查询产品表...'</span>);
+  <span class="keyword">var</span> productTotal = <span class="keyword">await</span> <span class="func">getTotalCount</span>(<span class="string">'product'</span>);
+
+  <span class="keyword">var</span> customerFetchTotal = Math.min(customerTotal, CUSTOMER_LIMIT);
+  <span class="keyword">var</span> productFetchTotal = Math.min(productTotal, PRODUCT_LIMIT);
+  <span class="keyword">var</span> customerBatches = Math.ceil(customerFetchTotal / CUSTOMER_BATCH_SIZE) || <span class="num">1</span>;
+  <span class="keyword">var</span> productBatches = Math.ceil(productFetchTotal / PRODUCT_BATCH_SIZE) || <span class="num">1</span>;
+  <span class="keyword">var</span> totalBatches = customerBatches + productBatches;
+  <span class="keyword">var</span> completedBatches = <span class="num">0</span>;
+
+  <span class="func">log</span>(<span class="string">'记录统计：客户 '</span> + customerTotal + <span class="string">' 条（取 '</span> + customerFetchTotal + <span class="string">' 条，'</span> + customerBatches + <span class="string">' 批），产品 '</span> + productTotal + <span class="string">' 条（取 '</span> + productFetchTotal + <span class="string">' 条，'</span> + productBatches + <span class="string">' 批）'</span>, <span class="string">'info'</span>);
+
+  <span class="comment">// Step 1.5: 超界检查与截断</span>
+  <span class="keyword">var</span> boundsOk = <span class="keyword">await</span> <span class="func">checkDataBounds</span>(customerTotal, productTotal);
+
+  <span class="comment">// Step 2: 分批读取客户数据</span>
+  <span class="keyword">var</span> allCustomers = [];
+  <span class="keyword">for</span> (<span class="keyword">var</span> ci = <span class="num">0</span>; ci < customerBatches; ci++) {
+    <span class="keyword">var</span> start = ci * CUSTOMER_BATCH_SIZE;
+    <span class="func">showProgress</span>(
+      <span class="string">'读取客户数据...'</span>,
+      completedBatches, totalBatches,
+      <span class="string">'第 '</span> + (ci + <span class="num">1</span>) + <span class="string">'/'</span> + customerBatches + <span class="string">' 批（start='</span> + start + <span class="string">', limit='</span> + CUSTOMER_BATCH_SIZE + <span class="string">'）'</span>
+    );
+
+    <span class="keyword">var</span> params = {
+      <span class="key">cmd</span>: <span class="string">'load_data'</span>,
+      <span class="key">dtname</span>: <span class="string">'customer'</span>,
+      <span class="key">field</span>: <span class="string">'id,cu_name,amstamp'</span>,
+      <span class="key">flag</span>: <span class="num">1</span>,
+      <span class="key">limit</span>: CUSTOMER_BATCH_SIZE,
+      <span class="key">start</span>: start
+    };
+    <span class="keyword">var</span> data = <span class="keyword">await</span> <span class="func">sendLoadData</span>(params);
+    <span class="keyword">var</span> list = <span class="func">parseLoadDataResponse</span>(data);
+    <span class="keyword">var</span> normalized = list.map(<span class="keyword">function</span>(item) {
+      <span class="keyword">return</span> { <span class="key">id</span>: item.id, <span class="key">name</span>: item.cu_name || item.name || <span class="string">''</span> };
+    });
+    allCustomers = allCustomers.concat(normalized);
+
+    completedBatches++;
+    <span class="keyword">await</span> <span class="keyword">new</span> Promise(<span class="keyword">function</span>(r) { setTimeout(r, <span class="num">100</span>); });
+  }
+
+  <span class="comment">// 写入客户数据并生成拼音（超限截断）</span>
+  <span class="keyword">if</span> (allCustomers.length > CUSTOMER_LIMIT) {
+    allCustomers = allCustomers.slice(<span class="num">0</span>, CUSTOMER_LIMIT);
+  }
+  <span class="keyword">await</span> PinyinMatch.setCustomersAsync(allCustomers);
+  <span class="keyword">await</span> <span class="func">generatePinyinForType</span>(<span class="string">'customer'</span>, allCustomers);
+  <span class="func">log</span>(<span class="string">'客户数据写入完成：'</span> + allCustomers.length + <span class="string">' 条'</span>, <span class="string">'ok'</span>);
+
+  <span class="comment">// Step 3: 分批读取产品数据</span>
+  <span class="keyword">var</span> allProducts = [];
+  <span class="keyword">for</span> (<span class="keyword">var</span> pi = <span class="num">0</span>; pi < productBatches; pi++) {
+    <span class="keyword">var</span> start = pi * PRODUCT_BATCH_SIZE;
+    <span class="func">showProgress</span>(
+      <span class="string">'读取产品数据...'</span>,
+      completedBatches, totalBatches,
+      <span class="string">'第 '</span> + (pi + <span class="num">1</span>) + <span class="string">'/'</span> + productBatches + <span class="string">' 批（start='</span> + start + <span class="string">', limit='</span> + PRODUCT_BATCH_SIZE + <span class="string">'）'</span>
+    );
+
+    <span class="keyword">var</span> params = {
+      <span class="key">cmd</span>: <span class="string">'load_data'</span>,
+      <span class="key">dtname</span>: <span class="string">'product'</span>,
+      <span class="key">field</span>: <span class="string">'id,pro_name,model,spec,modstm'</span>,
+      <span class="key">flag</span>: <span class="num">1</span>,
+      <span class="key">limit</span>: PRODUCT_BATCH_SIZE,
+      <span class="key">start</span>: start
+    };
+    <span class="keyword">var</span> data = <span class="keyword">await</span> <span class="func">sendLoadData</span>(params);
+    <span class="keyword">var</span> list = <span class="func">parseLoadDataResponse</span>(data);
+    <span class="keyword">var</span> normalized = list.map(<span class="keyword">function</span>(item) {
+      <span class="keyword">return</span> {
+        <span class="key">id</span>: item.id,
+        <span class="key">name</span>: item.pro_name || item.name || <span class="string">''</span>,
+        <span class="key">model</span>: item.model || <span class="string">''</span>,
+        <span class="key">spec</span>: item.spec || <span class="string">''</span>
+      };
+    });
+    allProducts = allProducts.concat(normalized);
+
+    completedBatches++;
+    <span class="keyword">await</span> <span class="keyword">new</span> Promise(<span class="keyword">function</span>(r) { setTimeout(r, <span class="num">100</span>); });
+  }
+
+  <span class="comment">// 写入产品数据并生成拼音（超限截断）</span>
+  <span class="keyword">if</span> (allProducts.length > PRODUCT_LIMIT) {
+    allProducts = allProducts.slice(<span class="num">0</span>, PRODUCT_LIMIT);
+  }
+  <span class="keyword">await</span> PinyinMatch.setProductsAsync(allProducts);
+  <span class="keyword">await</span> <span class="func">generatePinyinForType</span>(<span class="string">'product'</span>, allProducts);
+  <span class="func">log</span>(<span class="string">'产品数据写入完成：'</span> + allProducts.length + <span class="string">' 条'</span>, <span class="string">'ok'</span>);
+
+  <span class="comment">// Step 4: 更新同步时间戳</span>
+  <span class="keyword">var</span> now = <span class="keyword">new</span> Date().toISOString().replace(<span class="string">'T'</span>, <span class="string">' '</span>).substring(<span class="num">0</span>, <span class="num">19</span>);
+  <span class="keyword">await</span> PinyinMatch.setSyncStatusAsync(<span class="string">'sync_time'</span>, now);
+  <span class="keyword">await</span> PinyinMatch.setSyncStatusAsync(<span class="string">'incremental_time'</span>, now);
+
+  <span class="func">hideProgressOverlay</span>();
+  <span class="keyword">await</span> <span class="func">updateStatus</span>();
+  <span class="keyword">await</span> <span class="func">renderCurrentTab</span>();
+  <span class="func">showToast</span>(<span class="string">'数据获取完成：客户 '</span> + allCustomers.length + <span class="string">' 条，产品 '</span> + allProducts.length + <span class="string">' 条'</span>, <span class="string">'success'</span>);
+}</pre>
+
+  <h4 style="font-size:15px;font-weight:700;margin:20px 0 12px;display:flex;align-items:center;gap:8px;">
+    <span style="width:24px;height:24px;border-radius:6px;background:var(--primary);color:white;display:inline-flex;align-items:center;justify-content:center;font-size:12px;">5.3</span>
+    分批拼音生成
+  </h4>
+  <pre><span class="keyword">var</span> PINYIN_BATCH_SIZE = <span class="num">200</span>;
+
+<span class="keyword">async function</span> <span class="func">generatePinyinForType</span>(type, items) {
+  <span class="keyword">var</span> pinyinMap = {};
+  <span class="keyword">var</span> total = items.length;
+
+  <span class="keyword">for</span> (<span class="keyword">var</span> idx = <span class="num">0</span>; idx < total; idx += PINYIN_BATCH_SIZE) {
+    <span class="keyword">var</span> end = Math.min(idx + PINYIN_BATCH_SIZE, total);
+
+    <span class="keyword">for</span> (<span class="keyword">var</span> i = idx; i < end; i++) {
+      <span class="keyword">var</span> item = items[i];
+      <span class="keyword">var</span> text = type === <span class="string">'customer'</span>
+        ? item.name
+        : [item.name, item.model, item.spec]
+            .filter(<span class="keyword">function</span>(s) { <span class="keyword">return</span> !PinyinMatch.isPlaceholder(s); })
+            .join(<span class="string">' '</span>);
+
+      <span class="keyword">var</span> py = PinyinMatch.generatePinyinForText(text);
+      pinyinMap[item.id] = {
+        <span class="key">id</span>: item.id,
+        <span class="key">name</span>: item.name,
+        <span class="key">pinyin</span>: py.full,
+        <span class="key">pinyin_abbr</span>: py.abbr
+      };
+      <span class="keyword">if</span> (type === <span class="string">'product'</span>) {
+        pinyinMap[item.id].model = item.model || <span class="string">''</span>;
+        pinyinMap[item.id].spec = item.spec || <span class="string">''</span>;
+      }
+    }
+
+    <span class="func">showProgress</span>(
+      <span class="string">'生成'</span> + (type === <span class="string">'customer'</span> ? <span class="string">'客户'</span> : <span class="string">'产品'</span>) + <span class="string">'拼音...'</span>,
+      end, total,
+      <span class="string">'已完成 '</span> + Math.round(end / total * <span class="num">100</span>) + <span class="string">'%'</span>
+    );
+
+    <span class="keyword">if</span> (idx + PINYIN_BATCH_SIZE < total) {
+      <span class="keyword">await</span> <span class="keyword">new</span> Promise(<span class="keyword">function</span>(r) { setTimeout(r, <span class="num">50</span>); });
+    }
+  }
+
+  <span class="keyword">if</span> (type === <span class="string">'customer'</span>) {
+    <span class="keyword">await</span> PinyinMatch.setCustomerPinyinAsync(pinyinMap);
+  } <span class="keyword">else</span> {
+    <span class="keyword">await</span> PinyinMatch.setProductPinyinAsync(pinyinMap);
+  }
+  <span class="func">log</span>((type === <span class="string">'customer'</span> ? <span class="string">'客户'</span> : <span class="string">'产品'</span>) + <span class="string">'拼音生成完成：'</span> + Object.keys(pinyinMap).length + <span class="string">' 条'</span>, <span class="string">'ok'</span>);
+}</pre>
+
+  <h4 style="font-size:15px;font-weight:700;margin:20px 0 12px;display:flex;align-items:center;gap:8px;">
+    <span style="width:24px;height:24px;border-radius:6px;background:var(--primary);color:white;display:inline-flex;align-items:center;justify-content:center;font-size:12px;">5.4</span>
+    增量获取安全阈值
+  </h4>
+  <pre><span class="keyword">var</span> INCREMENTAL_THRESHOLD = <span class="num">5000</span>;
+
+<span class="keyword">async function</span> <span class="func">fetchIncrementalDataSafe</span>() {
+  <span class="keyword">var</span> lastTime = <span class="keyword">await</span> PinyinMatch.getSyncStatusAsync(<span class="string">'incremental_time'</span>);
+  <span class="keyword">if</span> (!lastTime) {
+    <span class="func">showToast</span>(<span class="string">'尚未进行过全量获取，请先全量获取'</span>, <span class="string">'warning'</span>);
+    <span class="keyword">return</span>;
+  }
+
+  <span class="comment">// 先用 count 探测增量数据量</span>
+  <span class="keyword">var</span> customerWhere = <span class="string">"amstamp > '"</span> + lastTime + <span class="string">"'"</span>;
+  <span class="keyword">var</span> productWhere = <span class="string">"modstm > '"</span> + lastTime + <span class="string">"'"</span>;
+
+  <span class="keyword">var</span> cCountParams = { <span class="key">cmd</span>: <span class="string">'load_data'</span>, <span class="key">dtname</span>: <span class="string">'customer'</span>, <span class="key">field</span>: <span class="string">'count(1) cnt'</span>, <span class="key">where</span>: customerWhere, <span class="key">flag</span>: <span class="num">1</span> };
+  <span class="keyword">var</span> pCountParams = { <span class="key">cmd</span>: <span class="string">'load_data'</span>, <span class="key">dtname</span>: <span class="string">'product'</span>, <span class="key">field</span>: <span class="string">'count(1) cnt'</span>, <span class="key">where</span>: productWhere, <span class="key">flag</span>: <span class="num">1</span> };
+
+  <span class="keyword">var</span> cData = <span class="keyword">await</span> <span class="func">sendLoadData</span>(cCountParams);
+  <span class="keyword">var</span> pData = <span class="keyword">await</span> <span class="func">sendLoadData</span>(pCountParams);
+  <span class="keyword">var</span> cCount = (cData.ok === <span class="num">1</span> && cData.data[<span class="num">0</span>]) ? parseInt(cData.data[<span class="num">0</span>].cnt, <span class="num">10</span>) : <span class="num">0</span>;
+  <span class="keyword">var</span> pCount = (pData.ok === <span class="num">1</span> && pData.data[<span class="num">0</span>]) ? parseInt(pData.data[<span class="num">0</span>].cnt, <span class="num">10</span>) : <span class="num">0</span>;
+
+  <span class="comment">// 如果增量数据量超过阈值，切换为全量分片获取</span>
+  <span class="keyword">if</span> (cCount + pCount > INCREMENTAL_THRESHOLD) {
+    <span class="func">log</span>(<span class="string">'增量数据量 '</span> + (cCount + pCount) + <span class="string">' 条，超过阈值 '</span> + INCREMENTAL_THRESHOLD + <span class="string">'，切换为全量分片获取'</span>, <span class="string">'info'</span>);
+    <span class="keyword">await</span> <span class="func">fetchFullDataBatched</span>();
+    <span class="keyword">return</span>;
+  }
+
+  <span class="comment">// 增量数据量在安全范围内，执行原有增量逻辑</span>
+  <span class="func">log</span>(<span class="string">'增量数据量 '</span> + (cCount + pCount) + <span class="string">' 条，在安全范围内，执行增量获取'</span>, <span class="string">'info'</span>);
+  <span class="keyword">await</span> <span class="func">fetchIncrementalData</span>(); <span class="comment">// 原有增量逻辑</span>
+}</pre>
+</div>
+
+<!-- 第6章：进度条改造 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-teal"><i class="ri-progress-line"></i></i>
+    6. 进度条改造
+  </div>
+
+  <p>分批读取需要更精细的进度反馈，改造进度条展示逻辑：</p>
+
+  <table>
+    <thead>
+      <tr><th>阶段</th><th>进度条标题</th><th>进度条详情</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><span class="tag tag-blue">统计</span></td><td>正在统计记录数...</td><td>查询客户表... / 查询产品表...</td></tr>
+      <tr><td><span class="tag tag-blue">读取客户</span></td><td>读取客户数据...</td><td>第 2/5 批（start=10000, limit=10000）</td></tr>
+      <tr><td><span class="tag tag-green">生成客户拼音</span></td><td>生成客户拼音...</td><td>已完成 60%</td></tr>
+      <tr><td><span class="tag tag-blue">读取产品</span></td><td>读取产品数据...</td><td>第 3/5 批（start=40000, limit=20000）</td></tr>
+      <tr><td><span class="tag tag-green">生成产品拼音</span></td><td>生成产品拼音...</td><td>已完成 80%</td></tr>
+      <tr><td><span class="tag tag-green">完成</span></td><td>数据获取完成</td><td>客户 50000 条（5批），产品 100000 条（5批）</td></tr>
+    </tbody>
+  </table>
+
+  <div class="highlight-box purple">
+    <i class="ri-lightbulb-line"></i>
+    <strong>进度条总进度计算：</strong>总批次 = 客户批次 + 产品批次，每完成一个批次（读取+写入）进度加 1。拼音生成在读取完成后统一执行，作为额外进度展示。
+  </div>
+</div>
+
+<!-- 第7章：OFFSET性能注意事项 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-amber"><i class="ri-speed-line"></i></i>
+    7. OFFSET 性能注意事项
+  </div>
+
+  <p><code>limit + start</code> 本质是 MySQL 的 <code>OFFSET ... LIMIT</code> 分页。当 offset 值很大时，MySQL 需要扫描并跳过前面所有行，性能会退化：</p>
+
+  <table>
+    <thead>
+      <tr><th>OFFSET 值</th><th>MySQL 行为</th><th>性能影响</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>0 ~ 50,000</td><td>扫描少量行后返回</td><td><span class="tag tag-green">良好</span> 几乎无影响</td></tr>
+      <tr><td>50,000 ~ 200,000</td><td>需扫描并跳过大量行</td><td><span class="tag tag-amber">中等</span> 查询耗时可能翻倍</td></tr>
+      <tr><td>200,000+</td><td>扫描开销巨大</td><td><span class="tag tag-red">较差</span> 可能需要数秒</td></tr>
+    </tbody>
+  </table>
+
+  <div class="highlight-box amber">
+    <i class="ri-alert-line"></i>
+    <strong>当前方案的适用范围：</strong>由于客户和产品各设置5万硬性上限，OFFSET 最大值为 50,000，性能完全可接受。如果未来需要提升上限，可考虑升级为<strong>基于ID范围的游标分页</strong>（<code>WHERE id > lastMaxId LIMIT 20000</code>），彻底避免 OFFSET 扫描问题。
+  </div>
+
+  <h4 style="font-size:15px;font-weight:700;margin:20px 0 12px;">预留升级路径：游标分页</h4>
+  <pre><span class="comment">// 未来升级方案：基于ID范围的游标分页（当前不实现，仅预留）</span>
+<span class="comment">// 优势：无论数据量多大，每批查询性能恒定</span>
+<span class="comment">// 前提：id 字段为自增主键或有序</span>
+
+<span class="keyword">var</span> lastMaxId = <span class="num">0</span>;
+<span class="keyword">while</span> (<span class="keyword">true</span>) {
+  <span class="keyword">var</span> params = {
+    <span class="key">cmd</span>: <span class="string">'load_data'</span>,
+    <span class="key">dtname</span>: <span class="string">'product'</span>,
+    <span class="key">field</span>: <span class="string">'id,pro_name,model,spec,modstm'</span>,
+    <span class="key">where</span>: <span class="string">'id > '</span> + lastMaxId,
+    <span class="key">flag</span>: <span class="num">1</span>,
+    <span class="key">limit</span>: PRODUCT_BATCH_SIZE
+  };
+  <span class="keyword">var</span> data = <span class="keyword">await</span> <span class="func">sendLoadData</span>(params);
+  <span class="keyword">var</span> list = <span class="func">parseLoadDataResponse</span>(data);
+  <span class="keyword">if</span> (list.length === <span class="num">0</span>) <span class="keyword">break</span>;
+  <span class="comment">// ... 处理数据 ...</span>
+  lastMaxId = Math.max.apply(<span class="keyword">null</span>, list.map(<span class="keyword">function</span>(item) { <span class="keyword">return</span> parseInt(item.id, <span class="num">10</span>); }));
+}</pre>
+</div>
+
+<!-- 第8章：改造范围 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-purple"><i class="ri-file-list-3-line"></i></i>
+    8. 改造范围与影响
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>文件</th><th>改造内容</th><th>影响范围</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>get_cus_pro.html</code></td>
+        <td>
+          ① 新增 <code>getTotalCount()</code> 函数<br>
+          ② 改造 <code>fetchFullData()</code> → <code>fetchFullDataBatched()</code><br>
+          ③ 改造 <code>generateAllPinyin()</code> → <code>generatePinyinForType()</code><br>
+          ④ 新增 <code>fetchIncrementalDataSafe()</code> 增量安全阈值检查<br>
+          ⑤ 进度条展示逻辑适配分批
+        </td>
+        <td>仅 <code>get_cus_pro.html</code> 内部逻辑</td>
+      </tr>
+      <tr>
+        <td><code>pinyin_match2.js</code></td>
+        <td>无需改动</td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td><code>index2.html</code></td>
+        <td>无需改动（制单页面只读取 IndexedDB，不直接调用 load_data）</td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td>后端接口</td>
+        <td>无需改动（<code>limit</code> + <code>start</code> 参数已支持）</td>
+        <td>—</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="highlight-box green">
+    <i class="ri-check-double-line"></i>
+    <strong>改造范围极小：</strong>仅需修改 <code>get_cus_pro.html</code> 一个文件的数据获取和拼音生成逻辑，不涉及后端接口改造、不涉及拼音匹配引擎改动、不影响制单主页面。
+  </div>
+</div>
+
+<!-- 第9章：测试验证 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-green"><i class="ri-test-tube-line"></i></i>
+    9. 测试验证
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>测试场景</th><th>数据量</th><th>预期行为</th><th>验证点</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>小型租户</td>
+        <td>客户 500，产品 1,000</td>
+        <td>客户 1 批，产品 1 批，体验与改造前一致</td>
+        <td>进度条快速完成，数据完整</td>
+      </tr>
+      <tr>
+        <td>中型租户</td>
+        <td>客户 5,000，产品 15,000</td>
+        <td>客户 1 批，产品 1 批</td>
+        <td>与改造前体验一致</td>
+      </tr>
+      <tr>
+        <td>大型租户</td>
+        <td>客户 30,000，产品 80,000</td>
+        <td>客户 3 批，产品 4 批</td>
+        <td>进度条分批展示，批次间 UI 不冻结</td>
+      </tr>
+      <tr>
+        <td>超大型租户</td>
+        <td>客户 60,000，产品 80,000</td>
+        <td>客户 6 批（截断为5万），产品 4 批</td>
+        <td>超界提示弹出，截断后数据正确，拼音匹配正常</td>
+      </tr>
+      <tr>
+        <td>总量上限 — 客户超限</td>
+        <td>客户 80,000，产品 30,000</td>
+        <td>toast 提示"总量超界，只取5万数据"，客户截断为5万</td>
+        <td>提示文案正确，IndexedDB 中客户恰好5万条</td>
+      </tr>
+      <tr>
+        <td>总量上限 — 产品超限</td>
+        <td>客户 30,000，产品 80,000</td>
+        <td>toast 提示"总量超界，只取5万数据"，产品截断为5万</td>
+        <td>提示文案正确，IndexedDB 中产品恰好5万条</td>
+      </tr>
+      <tr>
+        <td>总量上限 — 双超限</td>
+        <td>客户 80,000，产品 100,000</td>
+        <td>toast 提示，客户和产品均截断为5万</td>
+        <td>两条截断日志同时输出，数据量正确</td>
+      </tr>
+      <tr>
+        <td>增量安全阈值</td>
+        <td>增量 &gt; 5,000 条</td>
+        <td>自动切换为全量分片获取</td>
+        <td>日志输出切换提示</td>
+      </tr>
+      <tr>
+        <td>增量正常</td>
+        <td>增量 200 条</td>
+        <td>执行原有增量逻辑</td>
+        <td>与改造前行为一致</td>
+      </tr>
+      <tr>
+        <td>中断恢复</td>
+        <td>第3批时刷新页面</td>
+        <td>重新全量获取，前2批数据已写入 IndexedDB 保留</td>
+        <td>数据不丢失，重新获取后完整</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- 第10章：总结 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-blue"><i class="ri-flag-line"></i></i>
+    10. 总结
+  </div>
+
+  <div class="highlight-box teal">
+    <i class="ri-route-line"></i>
+    <strong>方案核心：</strong>利用 <code>load_data</code> 接口已有的 <code>limit</code> + <code>start</code> 分页能力，将一次全量读取拆分为多批次小量读取，每批读取后立即写入 IndexedDB 并生成拼音，批次间让出主线程避免 UI 冻结。
+  </div>
+
+  <div class="metric-grid">
+    <div class="metric-card">
+      <div class="metric-value" style="color:var(--green);">1个</div>
+      <div class="metric-label">需改造的文件</div>
+      <div class="metric-desc">仅 get_cus_pro.html</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value" style="color:var(--primary);">0个</div>
+      <div class="metric-label">需改造的后端接口</div>
+      <div class="metric-desc">limit+start 已支持</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value" style="color:var(--purple);">5万</div>
+      <div class="metric-label">数据量硬性上限（客户/产品各5万）</div>
+      <div class="metric-desc">超出自动截断，保障可用性</div>
+    </div>
+  </div>
+
+  <p>本方案在不改变后端接口、不影响拼音匹配引擎、不改动制单主页面的前提下，仅通过改造数据获取工具页 <code>get_cus_pro.html</code> 的读取逻辑，即可解决SaaS多租户模式下（每租户独立MySQL库）大数据量租户的读取负载问题，同时保留中小租户的现有体验。客户表和产品表各设置5万硬性上限，超出时自动截断并提示，保障系统可用性。</p>
+</div>
+
+<div style="text-align:center;padding:30px 0;color:#94a3b8;font-size:13px;">
+  AI智能制单系统 · 大数据量分片分批读取方案 · 2026-05-20
+</div>
+
+</div>
+</body>
+</html>

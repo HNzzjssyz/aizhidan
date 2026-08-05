@@ -1,0 +1,2522 @@
+[
+  {
+    "doc_type": "sales_order",
+    "order_no": "ORD20260518001",
+    "customer_name": "新疆龙浩医疗器械有限公司",
+    "recv": "张总",
+    "addr": "武汉市洪山区光谷大道77号",
+    "badge": "加急",
+    "date": "2026-05-17",
+    "products": [
+      {
+        "name": "嘉恒 涤纶条纹 深蓝 连帽分体 真空ESD千级 防静电洁净服",
+        "model": "深蓝ESD 185/3XL",
+        "specification": "",
+        "quantity": 8,
+        "unit": "包",
+        "unit_price": "30693.10",
+        "amount": "245544.80",
+        "note": ""
+      },
+      {
+        "name": "安百利 X012 石棉铝箔 45*55 加长护腿 隔热耐高温 脚盖",
+        "model": "65m*45cm",
+        "specification": "",
+        "quantity": 7,
+        "unit": "个",
+        "unit_price": "37750.67",
+        "amount": "264254.69",
+        "note": ""
+      },
+      {
+        "name": "恩惠 304不锈钢 10CM 直尖头 手术剪刀",
+        "model": "10cm  直尖",
+        "specification": "",
+        "quantity": 46,
+        "unit": "包",
+        "unit_price": "34767.77",
+        "amount": "1599317.42",
+        "note": ""
+      },
+      {
+        "name": "豪尔泰1354-8 涤棉厚斜纹 卡其单层 春秋长袖 夹克工作服",
+        "model": "165/M",
+        "specification": "",
+        "quantity": 3,
+        "unit": "包",
+        "unit_price": "25226.52",
+        "amount": "75679.56",
+        "note": ""
+      },
+      {
+        "name": "牛郎星 NL118 棉线胶片 黄纱红胶 手背贴片 压纹指挂 挂胶手套",
+        "model": "黄/红/9/M",
+        "specification": "",
+        "quantity": 37,
+        "unit": "盒",
+        "unit_price": "8550.43",
+        "amount": "316365.91",
+        "note": ""
+      },
+      {
+        "name": "霍尼韦尔 75808/Bold 重型/防滑/防砸/防刺穿/防化 安全胶靴",
+        "model": "42码",
+        "specification": "",
+        "quantity": 46,
+        "unit": "套",
+        "unit_price": "4093.44",
+        "amount": "188298.24",
+        "note": ""
+      },
+      {
+        "name": "河北 涤棉 大花迷彩 工作服",
+        "model": "190/4XL",
+        "specification": "",
+        "quantity": 34,
+        "unit": "盒",
+        "unit_price": "21431.68",
+        "amount": "728677.12",
+        "note": ""
+      },
+      {
+        "name": "山东 尼龙圆木 Φ20绳 Φ24 圆木 间距30CM 长20米 尼龙软梯",
+        "model": "G57绳梯（软梯）",
+        "specification": "",
+        "quantity": 48,
+        "unit": "本",
+        "unit_price": "16722.49",
+        "amount": "802679.52",
+        "note": ""
+      },
+      {
+        "name": "征雪 3202 反绒PU底 黄色中邦 防砸绝缘 长毛棉鞋",
+        "model": "38码",
+        "specification": "",
+        "quantity": 47,
+        "unit": "本",
+        "unit_price": "34068.20",
+        "amount": "1601205.40",
+        "note": ""
+      },
+      {
+        "name": "河北 涤棉07式 数码迷彩 多功能 武警防寒大衣",
+        "model": "160/S",
+        "specification": "",
+        "quantity": 9,
+        "unit": "个",
+        "unit_price": "36488.75",
+        "amount": "328398.75",
+        "note": ""
+      }
+    ],
+    "total_amount": "6150421.41"
+  },
+  {
+    "doc_type": "sales_order",
+    "order_no": "ORD20260519002",
+    "customer_name": "崇左市江州区东方希望畜牧有限公司",
+    "recv": "张经理",
+    "addr": "杭州市西湖区文三路200号",
+    "badge": "加急",
+    "date": "2026-05-18",
+    "products": [
+      {
+        "name": "玉丰 黄色 三防高筒 棉雨靴",
+        "model": "45码",
+        "specification": "",
+        "quantity": 29,
+        "unit": "套",
+        "unit_price": "25504.27",
+        "amount": "739623.83",
+        "note": ""
+      },
+      {
+        "name": "普安特 橡胶底 反绒面 加盖棕色中邦 耐高温防砸鞋",
+        "model": "41码",
+        "specification": "",
+        "quantity": 13,
+        "unit": "盒",
+        "unit_price": "43288.93",
+        "amount": "562756.09",
+        "note": ""
+      },
+      {
+        "name": "新疆 500ML 医用碘伏 瓶装 消毒液",
+        "model": "500ML",
+        "specification": "",
+        "quantity": 46,
+        "unit": "包",
+        "unit_price": "46597.49",
+        "amount": "2143484.54",
+        "note": ""
+      },
+      {
+        "name": "3M蓝/无铅/电工胶带/18mm*20m/车家通用/PVC/电气绝缘胶带",
+        "model": "",
+        "specification": "",
+        "quantity": 18,
+        "unit": "盒",
+        "unit_price": "7072.26",
+        "amount": "127300.68",
+        "note": ""
+      },
+      {
+        "name": "征雪 3101B-2 PU底压花皮 黑色低帮 绝缘防刺穿 安全鞋",
+        "model": "34码 低/黑",
+        "specification": "",
+        "quantity": 7,
+        "unit": "包",
+        "unit_price": "26817.44",
+        "amount": "187722.08",
+        "note": ""
+      },
+      {
+        "name": "银鹰 H718黑 超纤PU底 低帮黑色 防砸防刺穿 15KV绝缘安全鞋",
+        "model": "低帮/41码",
+        "specification": "",
+        "quantity": 4,
+        "unit": "盒",
+        "unit_price": "25707.59",
+        "amount": "102830.36",
+        "note": ""
+      },
+      {
+        "name": "山东 颗粒柱状 纸袋 活性炭",
+        "model": "100g",
+        "specification": "",
+        "quantity": 15,
+        "unit": "件",
+        "unit_price": "34134.92",
+        "amount": "512023.80",
+        "note": ""
+      },
+      {
+        "name": "帝欧 D8301 反绒牛皮橡胶底 中帮 桂圆色 防砸防刺穿 安全鞋",
+        "model": "D8301-38",
+        "specification": "",
+        "quantity": 31,
+        "unit": "套",
+        "unit_price": "11552.97",
+        "amount": "358142.07",
+        "note": ""
+      },
+      {
+        "name": "安百利 T10 芳纶镀铝布 耐高温1000°单层配帽式 隔热披肩帽",
+        "model": "披肩帽/单层/大码",
+        "specification": "",
+        "quantity": 46,
+        "unit": "个",
+        "unit_price": "1628.68",
+        "amount": "74919.28",
+        "note": ""
+      },
+      {
+        "name": "固安特 ABS 旋钮/Y带 三筋/透气/卷边 安全帽",
+        "model": "黄",
+        "specification": "",
+        "quantity": 33,
+        "unit": "盒",
+        "unit_price": "31576.07",
+        "amount": "1042010.31",
+        "note": ""
+      },
+      {
+        "name": "雷克兰 CT1S 428E C级 黄色 连体防化服",
+        "model": "175/XL",
+        "specification": "",
+        "quantity": 5,
+        "unit": "箱",
+        "unit_price": "5776.91",
+        "amount": "28884.55",
+        "note": ""
+      },
+      {
+        "name": "毅腾 涤纶3T4M 黄色4M*7CM*6MM扁带双扣 起重吊带",
+        "model": "3T4M黄色",
+        "specification": "",
+        "quantity": 14,
+        "unit": "件",
+        "unit_price": "15785.32",
+        "amount": "220994.48",
+        "note": ""
+      },
+      {
+        "name": "唐丰 ABS V-B型 一指键D带 安全帽",
+        "model": "白色",
+        "specification": "",
+        "quantity": 18,
+        "unit": "包",
+        "unit_price": "19541.19",
+        "amount": "351741.42",
+        "note": ""
+      },
+      {
+        "name": "嘉恒 涤纶条纹 深灰色 连帽分体 真空ESD千级 防静电洁净服",
+        "model": "深灰ESD 175/XL",
+        "specification": "",
+        "quantity": 27,
+        "unit": "箱",
+        "unit_price": "21348.46",
+        "amount": "576408.42",
+        "note": ""
+      },
+      {
+        "name": "恒拓 K55 防砸/防穿刺/耐磨/耐油/耐酸碱  旋钮/快速穿脱  黑色网面安全鞋",
+        "model": "K55-43",
+        "specification": "",
+        "quantity": 21,
+        "unit": "台",
+        "unit_price": "35708.28",
+        "amount": "749873.88",
+        "note": ""
+      },
+      {
+        "name": "西北行 全棉厚珠帆 双层 大红工作服",
+        "model": "165/M",
+        "specification": "",
+        "quantity": 32,
+        "unit": "套",
+        "unit_price": "25398.12",
+        "amount": "812739.84",
+        "note": ""
+      }
+    ],
+    "total_amount": "8591455.63"
+  },
+  {
+    "doc_type": "sales_order",
+    "order_no": "ORD20260520003",
+    "customer_name": "吴丙贵",
+    "recv": "13909901105",
+    "addr": "武汉市洪山区光谷大道77号",
+    "badge": "月结",
+    "date": "2026-05-19",
+    "products": [
+      {
+        "name": "卓锐 ABS V型 旋钮绒带 Y型D下巴带 透气卷边 安全帽",
+        "model": "黄色",
+        "specification": "",
+        "quantity": 18,
+        "unit": "本",
+        "unit_price": "15810.56",
+        "amount": "284590.08",
+        "note": ""
+      },
+      {
+        "name": "江苏 涤纶PU 白色 20kg-65-25米 不含接头 消防水带",
+        "model": "白色20/65/25",
+        "specification": "",
+        "quantity": 33,
+        "unit": "件",
+        "unit_price": "8723.52",
+        "amount": "287876.16",
+        "note": ""
+      },
+      {
+        "name": "双安 15KV高压 布面胶底 黑色 绝缘鞋",
+        "model": "黑色41码",
+        "specification": "",
+        "quantity": 5,
+        "unit": "盒",
+        "unit_price": "46326.12",
+        "amount": "231630.60",
+        "note": ""
+      },
+      {
+        "name": "ansell微护佳5000-186 橘色 2/3级液密 阿波罗款 化学防护服（暂命名）",
+        "model": "阿波罗款/5型",
+        "specification": "",
+        "quantity": 42,
+        "unit": "本",
+        "unit_price": "2532.04",
+        "amount": "106345.68",
+        "note": ""
+      },
+      {
+        "name": "新疆 有机玻璃 约885*585*3MM 消防栓箱 玻璃配件",
+        "model": "885*585*3mm",
+        "specification": "",
+        "quantity": 2,
+        "unit": "盒",
+        "unit_price": "42315.25",
+        "amount": "84630.50",
+        "note": ""
+      },
+      {
+        "name": "坤泽尔 50G淋膜 E级 桔红/连帽分体 防喷溅 分体防护服",
+        "model": "175/XL/桔红",
+        "specification": "",
+        "quantity": 47,
+        "unit": "个",
+        "unit_price": "24109.43",
+        "amount": "1133143.21",
+        "note": ""
+      },
+      {
+        "name": "多给力 WG500 弹力尼龙丁腈 灰纱黑胶 磨砂指挂 挂胶手套",
+        "model": "9/L/灰纱黑",
+        "specification": "",
+        "quantity": 26,
+        "unit": "套",
+        "unit_price": "35226.96",
+        "amount": "915900.96",
+        "note": ""
+      },
+      {
+        "name": "嘉恒 PVC 软底/透气网面 蓝色低帮 防尘/防静电/工作鞋",
+        "model": "44码",
+        "specification": "",
+        "quantity": 5,
+        "unit": "件",
+        "unit_price": "38732.85",
+        "amount": "193664.25",
+        "note": ""
+      },
+      {
+        "name": "霍尼韦尔 华瑞PGM-2500  4合一 泵吸便携式 气体检测仪",
+        "model": "泵吸O2 CO H2S LEL",
+        "specification": "",
+        "quantity": 31,
+        "unit": "本",
+        "unit_price": "19658.94",
+        "amount": "609427.14",
+        "note": ""
+      },
+      {
+        "name": "ST天征 橡胶帆布 黑色 下水裤",
+        "model": "42码",
+        "specification": "",
+        "quantity": 26,
+        "unit": "个",
+        "unit_price": "41098.48",
+        "amount": "1068560.48",
+        "note": ""
+      },
+      {
+        "name": "铝合金 手持式 防爆字 盾牌",
+        "model": "",
+        "specification": "",
+        "quantity": 4,
+        "unit": "台",
+        "unit_price": "8966.98",
+        "amount": "35867.92",
+        "note": ""
+      },
+      {
+        "name": "银鹰 H718黑 超纤PU底 低帮黑色 防砸防刺穿 15KV绝缘安全鞋",
+        "model": "低帮/43码",
+        "specification": "",
+        "quantity": 30,
+        "unit": "套",
+        "unit_price": "44717.90",
+        "amount": "1341537.00",
+        "note": ""
+      },
+      {
+        "name": "蓝月亮 500ML 芦荟抑菌 洗手液",
+        "model": "500ml",
+        "specification": "",
+        "quantity": 37,
+        "unit": "本",
+        "unit_price": "18666.04",
+        "amount": "690643.48",
+        "note": ""
+      },
+      {
+        "name": "河北 S线 10*7厚斜纹 湛蓝/金属扣 春秋长袖 牛仔工作服",
+        "model": "195/5XL/湛蓝",
+        "specification": "",
+        "quantity": 22,
+        "unit": "套",
+        "unit_price": "26943.90",
+        "amount": "592765.80",
+        "note": ""
+      },
+      {
+        "name": "嘉恒 涤纶条纹 浅蓝/双袖/直拉 翻领分体/无帽 防静电/洁净服",
+        "model": "160/S",
+        "specification": "",
+        "quantity": 8,
+        "unit": "包",
+        "unit_price": "9647.88",
+        "amount": "77183.04",
+        "note": ""
+      },
+      {
+        "name": "嘉恒 涤纶条纹 浅灰色 翻领/分体（不连帽） 防静电 洁净服/套装",
+        "model": "195/5XL灰分体",
+        "specification": "",
+        "quantity": 49,
+        "unit": "台",
+        "unit_price": "26070.00",
+        "amount": "1277430.00",
+        "note": ""
+      },
+      {
+        "name": "龙虎牌 风油精 滚珠型 6ml 清凉/止痛/驱风",
+        "model": "6ml",
+        "specification": "",
+        "quantity": 38,
+        "unit": "件",
+        "unit_price": "41403.69",
+        "amount": "1573340.22",
+        "note": ""
+      },
+      {
+        "name": "安百利 F11 阻燃铝箔 耐高温500°连体隔热服 带背囊套装",
+        "model": "带背囊XL",
+        "specification": "",
+        "quantity": 23,
+        "unit": "台",
+        "unit_price": "4388.72",
+        "amount": "100940.56",
+        "note": ""
+      },
+      {
+        "name": "江苏 02三层标准款 阻燃藏青  消防战斗服（上衣+裤子）",
+        "model": "170/L",
+        "specification": "",
+        "quantity": 43,
+        "unit": "箱",
+        "unit_price": "11262.95",
+        "amount": "484306.85",
+        "note": ""
+      }
+    ],
+    "total_amount": "11089783.93"
+  },
+  {
+    "doc_type": "sales_order",
+    "order_no": "ORD20260521004",
+    "customer_name": "双安科技（天津）有限公司",
+    "recv": "张总",
+    "addr": "北京市海淀区中关村大街1号",
+    "badge": "月结",
+    "date": "2026-05-20",
+    "products": [
+      {
+        "name": "3M 8246 R95 中文版/防酸性气体/淡蓝色/头戴/碗状 防尘口罩",
+        "model": "头戴/蓝色",
+        "specification": "",
+        "quantity": 15,
+        "unit": "包",
+        "unit_price": "7295.91",
+        "amount": "109438.65",
+        "note": ""
+      },
+      {
+        "name": "牛二层全皮 本色 透气款 电焊服上衣",
+        "model": "大号",
+        "specification": "",
+        "quantity": 13,
+        "unit": "本",
+        "unit_price": "33136.91",
+        "amount": "430779.83",
+        "note": ""
+      },
+      {
+        "name": "海固 3NP PVC 黄色/空呼内置/气密 重型防化服",
+        "model": "黄色/180/3XL",
+        "specification": "",
+        "quantity": 43,
+        "unit": "套",
+        "unit_price": "8657.76",
+        "amount": "372283.68",
+        "note": ""
+      },
+      {
+        "name": "南核 2618 硅胶蓝色 防尘半面具套装",
+        "model": "蓝色",
+        "specification": "",
+        "quantity": 20,
+        "unit": "本",
+        "unit_price": "43994.95",
+        "amount": "879899.00",
+        "note": ""
+      },
+      {
+        "name": "河南 涤纶 盒装伸缩 30米红/白 隔离安全警戒带",
+        "model": "30米/红/白",
+        "specification": "",
+        "quantity": 5,
+        "unit": "个",
+        "unit_price": "31646.14",
+        "amount": "158230.70",
+        "note": ""
+      },
+      {
+        "name": "山东 灯罩棉 10针细线 300g/12双 本白线手套",
+        "model": "300g/12双白",
+        "specification": "",
+        "quantity": 22,
+        "unit": "台",
+        "unit_price": "21254.56",
+        "amount": "467600.32",
+        "note": ""
+      },
+      {
+        "name": "代尔塔 301404 PU底压花 黑色高腰 防刺防静电 安全靴",
+        "model": "39码",
+        "specification": "",
+        "quantity": 7,
+        "unit": "包",
+        "unit_price": "22209.84",
+        "amount": "155468.88",
+        "note": ""
+      },
+      {
+        "name": "湖北 2011 涤纶绸 保安制式 活里活面 墨绿/深蓝 加长款 保安棉衣",
+        "model": "195/5XL",
+        "specification": "",
+        "quantity": 16,
+        "unit": "套",
+        "unit_price": "3135.74",
+        "amount": "50171.84",
+        "note": ""
+      },
+      {
+        "name": "飞鹤 1207 PU橡胶压花皮 黑色中帮 防砸 安全鞋",
+        "model": "36码",
+        "specification": "",
+        "quantity": 12,
+        "unit": "套",
+        "unit_price": "15408.49",
+        "amount": "184901.88",
+        "note": ""
+      },
+      {
+        "name": "ST鲲鹏 KP-ZC26 橡胶 轻型高筒 防砸防刺防静电 矿用胶靴",
+        "model": "轻型/41码",
+        "specification": "",
+        "quantity": 50,
+        "unit": "盒",
+        "unit_price": "16038.77",
+        "amount": "801938.50",
+        "note": ""
+      },
+      {
+        "name": "河北 涤纶加绒 长袖立领 厨师服上衣（备注颜色）",
+        "model": "加绒180",
+        "specification": "",
+        "quantity": 30,
+        "unit": "箱",
+        "unit_price": "7014.48",
+        "amount": "210434.40",
+        "note": ""
+      },
+      {
+        "name": "霍尼韦尔 SHTP00502/New Tripper反绒/PU底/兰网布 低帮/透气 防静电/防砸/防刺穿 安全鞋",
+        "model": "38码/低帮/透气",
+        "specification": "",
+        "quantity": 8,
+        "unit": "台",
+        "unit_price": "28858.47",
+        "amount": "230867.76",
+        "note": ""
+      },
+      {
+        "name": "嘉恒 涤纶条纹 黄色双袖 连帽连体 防静电洁净服",
+        "model": "165/M/黄",
+        "specification": "",
+        "quantity": 44,
+        "unit": "箱",
+        "unit_price": "46846.36",
+        "amount": "2061239.84",
+        "note": ""
+      },
+      {
+        "name": "山东  PU底/压花皮 人造毛棉 黑色/中帮 绝缘鞋",
+        "model": "42码",
+        "specification": "",
+        "quantity": 18,
+        "unit": "台",
+        "unit_price": "6434.16",
+        "amount": "115814.88",
+        "note": ""
+      },
+      {
+        "name": "嘉恒 涤纶条纹 浅蓝连帽分体 防静电洁净服",
+        "model": "155/XS 常规",
+        "specification": "",
+        "quantity": 14,
+        "unit": "包",
+        "unit_price": "48259.55",
+        "amount": "675633.70",
+        "note": ""
+      },
+      {
+        "name": "雷马 220617 橡胶底 头层荔纹皮 羊毛黑色中帮 防砸防刺 安全棉鞋",
+        "model": "36码 中帮棉",
+        "specification": "",
+        "quantity": 24,
+        "unit": "件",
+        "unit_price": "17260.21",
+        "amount": "414245.04",
+        "note": ""
+      },
+      {
+        "name": "飞鹤 0103 头层牛巴皮 PU/TPR底 人造长绒 防砸/防刺穿/保暖 黄色/中帮/棉安全鞋",
+        "model": "35码/黄/棉/中帮",
+        "specification": "",
+        "quantity": 45,
+        "unit": "套",
+        "unit_price": "38420.81",
+        "amount": "1728936.45",
+        "note": ""
+      },
+      {
+        "name": "星宇 BDL700 丁腈12寸 7.0克 100只袋抽 乌梅紫 一次性手套",
+        "model": "12寸/乌梅紫/L码",
+        "specification": "",
+        "quantity": 31,
+        "unit": "套",
+        "unit_price": "30726.88",
+        "amount": "952533.28",
+        "note": ""
+      },
+      {
+        "name": "中麦 1878 橡胶底 牛头层 低邦防滑 绝缘行政鞋（男士）",
+        "model": "42码",
+        "specification": "",
+        "quantity": 5,
+        "unit": "盒",
+        "unit_price": "32389.25",
+        "amount": "161946.25",
+        "note": ""
+      }
+    ],
+    "total_amount": "10162364.88"
+  },
+  {
+    "doc_type": "sales_order",
+    "order_no": "ORD20260522005",
+    "customer_name": "石河子市合盛绿色能源管理有限公司",
+    "recv": "张经理",
+    "addr": "杭州市西湖区文三路200号",
+    "badge": "月结",
+    "date": "2026-05-21",
+    "products": [
+      {
+        "name": "星宇 A566 U轻松 弹力尼龙 灰纱兰胶 吸盘压纹 挂胶手套",
+        "model": "灰纱蓝/8码",
+        "specification": "",
+        "quantity": 12,
+        "unit": "个",
+        "unit_price": "18525.06",
+        "amount": "222300.72",
+        "note": ""
+      },
+      {
+        "name": "湖北17款 涤棉高弹 速干 武警绿短袖 黑色短裤 夏季/T恤 体能训练服（套装）",
+        "model": "160/S",
+        "specification": "",
+        "quantity": 34,
+        "unit": "件",
+        "unit_price": "19251.21",
+        "amount": "654541.14",
+        "note": ""
+      },
+      {
+        "name": "广东 206不锈钢 30L 约30*25*70CM 银色无盖 茶水分离桶",
+        "model": "30L银色",
+        "specification": "",
+        "quantity": 20,
+        "unit": "个",
+        "unit_price": "45094.61",
+        "amount": "901892.20",
+        "note": ""
+      },
+      {
+        "name": "江苏 涤纶PU 加棉 90*45CM 红色反光条 消防炮 保护罩",
+        "model": "90*45cm 加棉",
+        "specification": "",
+        "quantity": 32,
+        "unit": "台",
+        "unit_price": "3278.04",
+        "amount": "104897.28",
+        "note": ""
+      },
+      {
+        "name": "ST金伯利 低温 防护鞋",
+        "model": "",
+        "specification": "",
+        "quantity": 41,
+        "unit": "台",
+        "unit_price": "33938.89",
+        "amount": "1391494.49",
+        "note": ""
+      },
+      {
+        "name": "好攀宜 K头对讲机配套 带线耳机",
+        "model": "",
+        "specification": "",
+        "quantity": 3,
+        "unit": "个",
+        "unit_price": "8651.25",
+        "amount": "25953.75",
+        "note": ""
+      },
+      {
+        "name": "雷马 L8305 压花牛皮/EVA加橡胶大底/针织羊毛 中帮/黑色 防砸/防穿刺/防静电 棉鞋",
+        "model": "46/中帮/棉",
+        "specification": "",
+        "quantity": 10,
+        "unit": "个",
+        "unit_price": "42288.74",
+        "amount": "422887.40",
+        "note": ""
+      },
+      {
+        "name": "三脚架配件-成华 铸铁30米钢丝绳 1800磅 手摇绞盘",
+        "model": "30米",
+        "specification": "",
+        "quantity": 4,
+        "unit": "台",
+        "unit_price": "9041.97",
+        "amount": "36167.88",
+        "note": ""
+      },
+      {
+        "name": "焊兽 415A 牛反绒皮 本色 斜白布里 14寸双层 长电焊手套",
+        "model": "415A本色",
+        "specification": "",
+        "quantity": 42,
+        "unit": "本",
+        "unit_price": "37355.34",
+        "amount": "1568924.28",
+        "note": ""
+      },
+      {
+        "name": "丽泰 高白棉 食品靴 活套",
+        "model": "45码",
+        "specification": "",
+        "quantity": 36,
+        "unit": "个",
+        "unit_price": "21173.09",
+        "amount": "762231.24",
+        "note": ""
+      },
+      {
+        "name": "河北 铁制 P-CO-2 原5号 防有机气体 白色标 小型滤毒罐",
+        "model": "白色/5号",
+        "specification": "",
+        "quantity": 14,
+        "unit": "盒",
+        "unit_price": "38789.66",
+        "amount": "543055.24",
+        "note": ""
+      },
+      {
+        "name": "雷马 ZA220604 压花牛皮/橡胶底/针织羊毛 中帮/黑色 防砸/防穿刺/绝缘/6KV 棉安全鞋",
+        "model": "44/绝缘/中帮/棉",
+        "specification": "",
+        "quantity": 17,
+        "unit": "件",
+        "unit_price": "22333.76",
+        "amount": "379673.92",
+        "note": ""
+      },
+      {
+        "name": "ST安健 涤棉 绿灰/防静电 夹克工作服",
+        "model": "180/2xL",
+        "specification": "",
+        "quantity": 30,
+        "unit": "台",
+        "unit_price": "39917.10",
+        "amount": "1197513.00",
+        "note": ""
+      },
+      {
+        "name": "津鑫/踏雪 35KV 橡胶里布 绿色中筒 高压绝缘靴",
+        "model": "43码",
+        "specification": "",
+        "quantity": 14,
+        "unit": "件",
+        "unit_price": "46276.75",
+        "amount": "647874.50",
+        "note": ""
+      },
+      {
+        "name": "波迈特 05型 LED锂电 防水带线 矿灯",
+        "model": "棕色 8W",
+        "specification": "",
+        "quantity": 12,
+        "unit": "台",
+        "unit_price": "3536.10",
+        "amount": "42433.20",
+        "note": ""
+      },
+      {
+        "name": "高压 拉闸杆 电绝缘 令克棒",
+        "model": "10KV",
+        "specification": "",
+        "quantity": 15,
+        "unit": "套",
+        "unit_price": "28118.96",
+        "amount": "421784.40",
+        "note": ""
+      },
+      {
+        "name": "安百利 ABL-F04 碳纤维 分体多层 带背囊 消防隔热避火服",
+        "model": "175/XL",
+        "specification": "",
+        "quantity": 4,
+        "unit": "盒",
+        "unit_price": "31834.62",
+        "amount": "127338.48",
+        "note": ""
+      },
+      {
+        "name": "豪尔泰 1850-31涤棉厚斜纹 藏青/大红 春秋长袖 行业多功能 夹克工作服",
+        "model": "190/4XL",
+        "specification": "",
+        "quantity": 41,
+        "unit": "套",
+        "unit_price": "37234.15",
+        "amount": "1526600.15",
+        "note": ""
+      }
+    ],
+    "total_amount": "10977563.27"
+  },
+  {
+    "doc_type": "sales_order",
+    "order_no": "ORD20260523006",
+    "customer_name": "李朝蓉",
+    "recv": "15729923179",
+    "addr": "武汉市洪山区光谷大道77号",
+    "badge": "需开票",
+    "date": "2026-05-22",
+    "products": [
+      {
+        "name": "河北 涤棉07式 数码迷彩 多功能 武警防寒大衣",
+        "model": "185/3XL",
+        "specification": "",
+        "quantity": 2,
+        "unit": "台",
+        "unit_price": "23927.89",
+        "amount": "47855.78",
+        "note": ""
+      },
+      {
+        "name": "中麦 230 压花牛皮 800克毛里 天然橡胶大底 防砸刺棉靴",
+        "model": "44码",
+        "specification": "",
+        "quantity": 47,
+        "unit": "包",
+        "unit_price": "31468.82",
+        "amount": "1479034.54",
+        "note": ""
+      },
+      {
+        "name": "飞鹤 1207 PU底压花 中邦长绒 防砸绝缘 棉安全鞋",
+        "model": "43码",
+        "specification": "",
+        "quantity": 12,
+        "unit": "套",
+        "unit_price": "27239.20",
+        "amount": "326870.40",
+        "note": ""
+      },
+      {
+        "name": "3515 牛皮黑色 低腰行政 单皮鞋",
+        "model": "43码黑色",
+        "specification": "",
+        "quantity": 4,
+        "unit": "台",
+        "unit_price": "45242.17",
+        "amount": "180968.68",
+        "note": ""
+      },
+      {
+        "name": "湖北 07款 涤棉细斜 荒漠/数码/迷彩 春秋季长袖 冬作训服",
+        "model": "170/L",
+        "specification": "",
+        "quantity": 40,
+        "unit": "个",
+        "unit_price": "39987.52",
+        "amount": "1599500.80",
+        "note": ""
+      },
+      {
+        "name": "江苏 聚酯尼龙 加钢丝 Φ8MM *20米 两头小钩 应急逃生救援 安全绳",
+        "model": "加钢丝/8MM *20米",
+        "specification": "",
+        "quantity": 26,
+        "unit": "件",
+        "unit_price": "11565.69",
+        "amount": "300707.94",
+        "note": ""
+      },
+      {
+        "name": "雷马 320 反绒PU低 网布透气 低邦黑色/灰色 防静电安全鞋",
+        "model": "45码",
+        "specification": "",
+        "quantity": 13,
+        "unit": "台",
+        "unit_price": "6700.36",
+        "amount": "87104.68",
+        "note": ""
+      },
+      {
+        "name": "霍尼韦尔 BD173B ABS/黑色 弹簧式 配安全帽 面屏支架",
+        "model": "ABS/黑色",
+        "specification": "",
+        "quantity": 28,
+        "unit": "个",
+        "unit_price": "14491.86",
+        "amount": "405772.08",
+        "note": ""
+      },
+      {
+        "name": "湖北 21款/涤棉 火焰兰/春秋/消防员 备勤帽",
+        "model": "59/秋备勤",
+        "specification": "",
+        "quantity": 35,
+        "unit": "本",
+        "unit_price": "9789.38",
+        "amount": "342628.30",
+        "note": ""
+      },
+      {
+        "name": "广东双益 丁基尼龙衬里 31CM 绿色 耐酸碱 手套",
+        "model": "绿色衬里 M",
+        "specification": "",
+        "quantity": 32,
+        "unit": "个",
+        "unit_price": "34595.63",
+        "amount": "1107060.16",
+        "note": ""
+      },
+      {
+        "name": "帝欧 D8301 反绒牛皮橡胶底 中帮 桂圆色 防砸防刺穿 安全鞋",
+        "model": "D8301-38",
+        "specification": "",
+        "quantity": 41,
+        "unit": "件",
+        "unit_price": "33684.48",
+        "amount": "1381063.68",
+        "note": ""
+      },
+      {
+        "name": "豪尔泰1364-27A 涤棉厚珠帆 磨毛青色 春秋长袖 夹克工作服",
+        "model": "170/L",
+        "specification": "",
+        "quantity": 40,
+        "unit": "件",
+        "unit_price": "17129.36",
+        "amount": "685174.40",
+        "note": ""
+      },
+      {
+        "name": "新疆 冷轧钢红色1.5MM厚 约750*480*230mmMM 8kg干粉2具装 灭火器箱",
+        "model": "1.5*8",
+        "specification": "",
+        "quantity": 27,
+        "unit": "箱",
+        "unit_price": "26728.10",
+        "amount": "721658.70",
+        "note": ""
+      },
+      {
+        "name": "代尔塔 301322 PU反绒网布 低帮灰色 彩虹安全鞋",
+        "model": "46吗",
+        "specification": "",
+        "quantity": 41,
+        "unit": "个",
+        "unit_price": "8707.85",
+        "amount": "357021.85",
+        "note": ""
+      },
+      {
+        "name": "耐视 涤纶编织 反光字 盒装50米红色警戒带",
+        "model": "反光字/50米",
+        "specification": "",
+        "quantity": 10,
+        "unit": "盒",
+        "unit_price": "1497.23",
+        "amount": "14972.30",
+        "note": ""
+      },
+      {
+        "name": "江苏 17款 3C 橡胶/防砸/防刺穿/黄黑/高筒/消防/战斗棉靴",
+        "model": "高筒40码",
+        "specification": "",
+        "quantity": 21,
+        "unit": "台",
+        "unit_price": "45973.91",
+        "amount": "965452.11",
+        "note": ""
+      },
+      {
+        "name": "凯迪 3532 PVC 黑色/里布 高筒/防滑/防水 胶靴",
+        "model": "39码",
+        "specification": "",
+        "quantity": 13,
+        "unit": "个",
+        "unit_price": "34040.57",
+        "amount": "442527.41",
+        "note": ""
+      },
+      {
+        "name": "海氏海诺 10片/盒  止血/消毒/清洁 创可贴",
+        "model": "10片/盒",
+        "specification": "",
+        "quantity": 48,
+        "unit": "套",
+        "unit_price": "45459.35",
+        "amount": "2182048.80",
+        "note": ""
+      },
+      {
+        "name": "雷克兰 AMN428E 白色限次性 连体防化服",
+        "model": "180/2XL",
+        "specification": "",
+        "quantity": 5,
+        "unit": "包",
+        "unit_price": "3186.62",
+        "amount": "15933.10",
+        "note": ""
+      },
+      {
+        "name": "姜太公 C款 45S针织布 墨绿分身 套装雨衣",
+        "model": "180/2XL/中号",
+        "specification": "",
+        "quantity": 43,
+        "unit": "件",
+        "unit_price": "43626.41",
+        "amount": "1875935.63",
+        "note": ""
+      }
+    ],
+    "total_amount": "14519291.34"
+  },
+  {
+    "doc_type": "sales_order",
+    "order_no": "ORD20260524007",
+    "customer_name": "伊布拉依木",
+    "recv": "13899110344",
+    "addr": "深圳市南山区科技园路66号",
+    "badge": "",
+    "date": "2026-05-23",
+    "products": [
+      {
+        "name": "豪尔泰1851-31 涤棉厚斜纹 藏青拼红反光 网格B级防静电 春秋长袖 夹克工作服",
+        "model": "165/M",
+        "specification": "",
+        "quantity": 13,
+        "unit": "套",
+        "unit_price": "10125.19",
+        "amount": "131627.47",
+        "note": ""
+      },
+      {
+        "name": "远征81-1 07款 布面/胶底 低帮/丛林迷彩 作训鞋",
+        "model": "36码",
+        "specification": "",
+        "quantity": 31,
+        "unit": "套",
+        "unit_price": "34966.92",
+        "amount": "1083974.52",
+        "note": ""
+      },
+      {
+        "name": "海王 复合布 迷彩 血防裤",
+        "model": "42码",
+        "specification": "",
+        "quantity": 7,
+        "unit": "本",
+        "unit_price": "45901.96",
+        "amount": "321313.72",
+        "note": ""
+      },
+      {
+        "name": "飞鹤 ABS V型布衬 Y型带反光 矿工安全帽",
+        "model": "一指键 黑色",
+        "specification": "",
+        "quantity": 15,
+        "unit": "盒",
+        "unit_price": "4260.11",
+        "amount": "63901.65",
+        "note": ""
+      },
+      {
+        "name": "嘉恒 涤纶条纹 黄色 连帽连体 防静电洁净服",
+        "model": "黄175/XL",
+        "specification": "",
+        "quantity": 27,
+        "unit": "件",
+        "unit_price": "28914.96",
+        "amount": "780703.92",
+        "note": ""
+      },
+      {
+        "name": "江苏 PVC不锈钢 7*7CM 强力粘胶挂钩",
+        "model": "7*7CM 中号",
+        "specification": "",
+        "quantity": 39,
+        "unit": "套",
+        "unit_price": "31179.91",
+        "amount": "1216016.49",
+        "note": ""
+      },
+      {
+        "name": "上泓 H006 涤纶双大钩 欧式缓冲 护腰垫 上红下黑 5挂点全身式 安全带套装",
+        "model": "护腰/五点式",
+        "specification": "",
+        "quantity": 27,
+        "unit": "包",
+        "unit_price": "3177.67",
+        "amount": "85797.09",
+        "note": ""
+      },
+      {
+        "name": "呼享 9200 单滤盒 过滤式呼吸 硅胶半面罩",
+        "model": "9200",
+        "specification": "",
+        "quantity": 3,
+        "unit": "包",
+        "unit_price": "34367.00",
+        "amount": "103101.00",
+        "note": ""
+      },
+      {
+        "name": "湖北16款 涤棉/高弹速干 武警绿 夏季短袖 体能服/体恤（上衣）",
+        "model": "185/3XL",
+        "specification": "",
+        "quantity": 38,
+        "unit": "包",
+        "unit_price": "37816.39",
+        "amount": "1437022.82",
+        "note": ""
+      },
+      {
+        "name": "山东 涤棉/平纹/斜纹 墨绿/枣红等色 立领长袖 厨师服（上衣）",
+        "model": "长袖/170/L",
+        "specification": "",
+        "quantity": 32,
+        "unit": "箱",
+        "unit_price": "31577.71",
+        "amount": "1010486.72",
+        "note": ""
+      }
+    ],
+    "total_amount": "6233945.40"
+  },
+  {
+    "doc_type": "sales_order",
+    "order_no": "ORD20260525008",
+    "customer_name": "开门旺生活超市",
+    "recv": "徐敏",
+    "addr": "上海市浦东新区张江路88号",
+    "badge": "加急",
+    "date": "2026-05-24",
+    "products": [
+      {
+        "name": "雷马 220616 头层牛巴橡胶底 黄色低帮 防砸防刺 安全鞋",
+        "model": "42码 黄/低帮",
+        "specification": "",
+        "quantity": 16,
+        "unit": "箱",
+        "unit_price": "41995.74",
+        "amount": "671931.84",
+        "note": ""
+      },
+      {
+        "name": "嘉恒 PVC 软底/透气网面 蓝色低帮 防尘/防静电/工作鞋",
+        "model": "38码",
+        "specification": "",
+        "quantity": 23,
+        "unit": "件",
+        "unit_price": "22845.29",
+        "amount": "525441.67",
+        "note": ""
+      },
+      {
+        "name": "恒拓 银鹰7040 EVA橡胶贴片底 低帮黑色 防滑耐油 厨师鞋",
+        "model": "36",
+        "specification": "",
+        "quantity": 31,
+        "unit": "台",
+        "unit_price": "11296.54",
+        "amount": "350192.74",
+        "note": ""
+      },
+      {
+        "name": "新疆 冷轧钢 800*650*240*0.6MM 红色 室外消防栓箱",
+        "model": "0.6* 800*650*240MM",
+        "specification": "",
+        "quantity": 12,
+        "unit": "箱",
+        "unit_price": "6182.55",
+        "amount": "74190.60",
+        "note": ""
+      },
+      {
+        "name": "恒泰 压缩氧 隔绝式 自救器45分钟 新国标",
+        "model": "压缩氧/45分钟",
+        "specification": "",
+        "quantity": 38,
+        "unit": "套",
+        "unit_price": "465.05",
+        "amount": "17671.90",
+        "note": ""
+      },
+      {
+        "name": "豪尔泰1551-22A 涤棉厚珠帆 磨毛橙色 春秋单层 长袖夹克工作服",
+        "model": "190/4xL",
+        "specification": "",
+        "quantity": 20,
+        "unit": "本",
+        "unit_price": "48004.25",
+        "amount": "960085.00",
+        "note": ""
+      },
+      {
+        "name": "嘉恒 涤纶条纹 紫色 连帽分体 真空ESD千级 防静电洁净服",
+        "model": "紫色ESD 155/XS",
+        "specification": "",
+        "quantity": 33,
+        "unit": "件",
+        "unit_price": "38518.77",
+        "amount": "1271119.41",
+        "note": ""
+      },
+      {
+        "name": "飞鹤 1621101 PU底翻毛皮 灰色低帮 防砸绝缘 安全鞋",
+        "model": "42码/灰色",
+        "specification": "",
+        "quantity": 27,
+        "unit": "件",
+        "unit_price": "1088.70",
+        "amount": "29394.90",
+        "note": ""
+      },
+      {
+        "name": "3515 牛皮黑色 低腰行政 单皮鞋",
+        "model": "38码黑色",
+        "specification": "",
+        "quantity": 9,
+        "unit": "包",
+        "unit_price": "6589.38",
+        "amount": "59304.42",
+        "note": ""
+      },
+      {
+        "name": "湖北 19款火焰蓝 消防作训服 配件-标志-软胸章",
+        "model": "软胸章",
+        "specification": "",
+        "quantity": 14,
+        "unit": "箱",
+        "unit_price": "5183.07",
+        "amount": "72562.98",
+        "note": ""
+      },
+      {
+        "name": "ST思创 ST-M60G-2B 硅胶/蓝色 单/大螺旋 半面罩（主体）",
+        "model": "M/中号",
+        "specification": "",
+        "quantity": 1,
+        "unit": "包",
+        "unit_price": "18613.12",
+        "amount": "18613.12",
+        "note": ""
+      },
+      {
+        "name": "湖南 PVC复合尼龙绸 42L 50*76CM 蓝色 医用氧气袋",
+        "model": "50*76CM/42L",
+        "specification": "",
+        "quantity": 21,
+        "unit": "个",
+        "unit_price": "21062.29",
+        "amount": "442308.09",
+        "note": ""
+      },
+      {
+        "name": "河北 圆管（地梁）加厚军绿/迷彩涂层帆布 5.8*4.6*1.4*2.3 户外多功能帐篷",
+        "model": "5.8*4.6*1.4*2.3",
+        "specification": "",
+        "quantity": 14,
+        "unit": "盒",
+        "unit_price": "6179.70",
+        "amount": "86515.80",
+        "note": ""
+      },
+      {
+        "name": "尊盾 44cal/cm 深蓝分体式 背带裤 头套手套靴套 阻燃防电弧套装（七件套））",
+        "model": "175/XL",
+        "specification": "",
+        "quantity": 32,
+        "unit": "个",
+        "unit_price": "43450.87",
+        "amount": "1390427.84",
+        "note": ""
+      },
+      {
+        "name": "ST代尔塔 301212 反绒PU底 低帮网面 黑色防砸 安全鞋",
+        "model": "43码",
+        "specification": "",
+        "quantity": 8,
+        "unit": "包",
+        "unit_price": "9845.44",
+        "amount": "78763.52",
+        "note": ""
+      },
+      {
+        "name": "乔邦 涤卡斜纹 藏蓝 松紧小翻领 兰大褂",
+        "model": "160/S/兰",
+        "specification": "",
+        "quantity": 2,
+        "unit": "盒",
+        "unit_price": "33368.76",
+        "amount": "66737.52",
+        "note": ""
+      }
+    ],
+    "total_amount": "6115261.35"
+  },
+  {
+    "doc_type": "sales_order",
+    "order_no": "ORD20260526009",
+    "customer_name": "祥盛综合批发部",
+    "recv": "何昌春",
+    "addr": "广州市天河区天河路385号",
+    "badge": "",
+    "date": "2026-05-25",
+    "products": [
+      {
+        "name": "江苏 20款 PU/皮面 黑色高腰 筒型 消防救援/灭火靴",
+        "model": "42码",
+        "specification": "",
+        "quantity": 4,
+        "unit": "本",
+        "unit_price": "32061.29",
+        "amount": "128245.16",
+        "note": ""
+      },
+      {
+        "name": "安百利 V10 石棉铝箔布 80cm*110cm 耐高温1000° 隔热围裙",
+        "model": "80cm*110cm",
+        "specification": "",
+        "quantity": 24,
+        "unit": "箱",
+        "unit_price": "43617.15",
+        "amount": "1046811.60",
+        "note": ""
+      },
+      {
+        "name": "河北 人造棉/摩托车骑行 防水 挡风披",
+        "model": "个",
+        "specification": "",
+        "quantity": 21,
+        "unit": "盒",
+        "unit_price": "10007.18",
+        "amount": "210150.78",
+        "note": ""
+      },
+      {
+        "name": "恒拓 226 飞织PU底 黑色低帮 防砸穿刺静电 安全鞋",
+        "model": "44码",
+        "specification": "",
+        "quantity": 28,
+        "unit": "箱",
+        "unit_price": "38607.15",
+        "amount": "1081000.20",
+        "note": ""
+      },
+      {
+        "name": "河北 涤棉07式 荒漠迷彩 防水活里活面 中长款 防寒棉大衣",
+        "model": "防水/165/M 荒漠",
+        "specification": "",
+        "quantity": 3,
+        "unit": "台",
+        "unit_price": "21161.11",
+        "amount": "63483.33",
+        "note": ""
+      },
+      {
+        "name": "湖北 21款/涤棉 火焰兰/春秋/消防员 备勤帽",
+        "model": "58/秋备勤",
+        "specification": "",
+        "quantity": 22,
+        "unit": "台",
+        "unit_price": "2798.49",
+        "amount": "61566.78",
+        "note": ""
+      },
+      {
+        "name": "飞鹤 0101 PU底压花 黑色低邦 防砸刺防静电 安全鞋",
+        "model": "44码",
+        "specification": "",
+        "quantity": 10,
+        "unit": "本",
+        "unit_price": "49344.17",
+        "amount": "493441.70",
+        "note": ""
+      },
+      {
+        "name": "湖北 无纺布 2g/只 14英寸 单筋/蓝色/条形 一次性护发帽",
+        "model": "条形2.0/ 蓝色",
+        "specification": "",
+        "quantity": 39,
+        "unit": "包",
+        "unit_price": "14599.07",
+        "amount": "569363.73",
+        "note": ""
+      },
+      {
+        "name": "3515 16款 超纤网布 羊毛橡胶底 高腰黑色 作战棉靴",
+        "model": "高/棉/46码",
+        "specification": "",
+        "quantity": 20,
+        "unit": "个",
+        "unit_price": "13474.24",
+        "amount": "269484.80",
+        "note": ""
+      },
+      {
+        "name": "唐丰 ABS V-B型 一指键D带 安全帽",
+        "model": "蓝色",
+        "specification": "",
+        "quantity": 3,
+        "unit": "盒",
+        "unit_price": "24319.95",
+        "amount": "72959.85",
+        "note": ""
+      },
+      {
+        "name": "河南 65gSF透气膜 白色贴蓝条 一次性 连体防护服",
+        "model": "175/XL/贴兰条",
+        "specification": "",
+        "quantity": 18,
+        "unit": "本",
+        "unit_price": "7841.67",
+        "amount": "141150.06",
+        "note": ""
+      }
+    ],
+    "total_amount": "4137657.99"
+  },
+  {
+    "doc_type": "sales_order",
+    "order_no": "ORD20260527010",
+    "customer_name": "马根花(百货大全针织>标签库尔勒火车站旁边",
+    "recv": "张总",
+    "addr": "杭州市西湖区文三路200号",
+    "badge": "常规",
+    "date": "2026-05-26",
+    "products": [
+      {
+        "name": "河北  双人智能调温 电热毯",
+        "model": "双人",
+        "specification": "",
+        "quantity": 22,
+        "unit": "件",
+        "unit_price": "8261.72",
+        "amount": "181757.84",
+        "note": ""
+      },
+      {
+        "name": "河北 灭鼠灭虫 10KG/袋 老鼠药",
+        "model": "10kg",
+        "specification": "",
+        "quantity": 50,
+        "unit": "件",
+        "unit_price": "44200.31",
+        "amount": "2210015.50",
+        "note": ""
+      },
+      {
+        "name": "代尔塔 101144 PC黑色 时尚/超轻 防雾/防炫目/防冲击眼镜",
+        "model": "防雾/黑色",
+        "specification": "",
+        "quantity": 36,
+        "unit": "台",
+        "unit_price": "23191.70",
+        "amount": "834901.20",
+        "note": ""
+      },
+      {
+        "name": "豪尔泰960-31 纯棉厚珠帆 磨毛活里 300g藏青 抗油拒水防静电 棉裤",
+        "model": "195/5XL/藏青",
+        "specification": "",
+        "quantity": 36,
+        "unit": "盒",
+        "unit_price": "46482.84",
+        "amount": "1673382.24",
+        "note": ""
+      },
+      {
+        "name": "福建 钢制烤漆 DN250 10寸外径273mm 消防沟槽 连接管箍(喉箍)",
+        "model": "DN250/273 红",
+        "specification": "",
+        "quantity": 16,
+        "unit": "箱",
+        "unit_price": "38841.07",
+        "amount": "621457.12",
+        "note": ""
+      },
+      {
+        "name": "ST双安 500V等电位 高压屏蔽 导电袜子",
+        "model": "小号",
+        "specification": "",
+        "quantity": 24,
+        "unit": "台",
+        "unit_price": "29045.34",
+        "amount": "697088.16",
+        "note": ""
+      },
+      {
+        "name": "河北 塑料 60CM*10CM 加油充气棒",
+        "model": "60CM*10CM",
+        "specification": "",
+        "quantity": 2,
+        "unit": "包",
+        "unit_price": "15237.53",
+        "amount": "30475.06",
+        "note": ""
+      },
+      {
+        "name": "消防 应急紧急 破碎钥匙箱",
+        "model": "通用",
+        "specification": "",
+        "quantity": 50,
+        "unit": "箱",
+        "unit_price": "48405.61",
+        "amount": "2420280.50",
+        "note": ""
+      },
+      {
+        "name": "嘉恒 涤纶条纹 桔色直拉 连帽连体 防静电洁净 连体服",
+        "model": "195/5XL",
+        "specification": "",
+        "quantity": 48,
+        "unit": "箱",
+        "unit_price": "26060.35",
+        "amount": "1250896.80",
+        "note": ""
+      },
+      {
+        "name": "一次性 无纺布 白色 连体服",
+        "model": "中码",
+        "specification": "",
+        "quantity": 23,
+        "unit": "包",
+        "unit_price": "36560.75",
+        "amount": "840897.25",
+        "note": ""
+      },
+      {
+        "name": "江苏 铝合金 DN80快(雌)转80快（雄）银白 同径转换 快速接头",
+        "model": "80快雌转80快雄",
+        "specification": "",
+        "quantity": 31,
+        "unit": "盒",
+        "unit_price": "982.23",
+        "amount": "30449.13",
+        "note": ""
+      },
+      {
+        "name": "广东钢架 1.5x2x0.5米 四层220kg/层 690kg/组 工业货架（主架）",
+        "model": "1.5x2x0.5米 四层主架",
+        "specification": "",
+        "quantity": 23,
+        "unit": "本",
+        "unit_price": "41878.23",
+        "amount": "963199.29",
+        "note": ""
+      },
+      {
+        "name": "津鑫/踏雪 35KV 橡胶里布 绿色中筒 高压绝缘靴",
+        "model": "40码",
+        "specification": "",
+        "quantity": 8,
+        "unit": "台",
+        "unit_price": "50012.81",
+        "amount": "400102.48",
+        "note": ""
+      },
+      {
+        "name": "华润三九 20g*6袋 三九胃泰颗粒",
+        "model": "20g*6袋",
+        "specification": "",
+        "quantity": 11,
+        "unit": "盒",
+        "unit_price": "16485.43",
+        "amount": "181339.73",
+        "note": ""
+      }
+    ],
+    "total_amount": "12336242.30"
+  },
+  {
+    "doc_type": "sales_order",
+    "order_no": "ORD20260528011",
+    "customer_name": "苏湘劳保",
+    "recv": "龙未凤",
+    "addr": "广州市天河区天河路385号",
+    "badge": "需开票",
+    "date": "2026-05-27",
+    "products": [
+      {
+        "name": "ST特航 橡胶模压底 反绒面 红色中邦 防砸绝缘鞋",
+        "model": "42码",
+        "specification": "",
+        "quantity": 49,
+        "unit": "箱",
+        "unit_price": "46650.76",
+        "amount": "2285887.24",
+        "note": ""
+      },
+      {
+        "name": "山东 PVC 黑框 透明片 太空镜 马脸防护面罩",
+        "model": "黑框/透明",
+        "specification": "",
+        "quantity": 32,
+        "unit": "本",
+        "unit_price": "21661.96",
+        "amount": "693182.72",
+        "note": ""
+      },
+      {
+        "name": "代尔塔 301404 PU底压花 黑色高腰 防刺防静电 安全靴",
+        "model": "39码",
+        "specification": "",
+        "quantity": 26,
+        "unit": "件",
+        "unit_price": "45809.58",
+        "amount": "1191049.08",
+        "note": ""
+      },
+      {
+        "name": "江苏 PVC 反光膜 5*2000CM 箭头流向 不干胶 管道标识贴",
+        "model": "5*2000CM",
+        "specification": "",
+        "quantity": 22,
+        "unit": "箱",
+        "unit_price": "11283.82",
+        "amount": "248244.04",
+        "note": ""
+      },
+      {
+        "name": "呼享 8N95+  椭圆形/白色/ 颗粒物防尘过滤棉",
+        "model": "8N95+",
+        "specification": "",
+        "quantity": 45,
+        "unit": "本",
+        "unit_price": "5330.77",
+        "amount": "239884.65",
+        "note": ""
+      },
+      {
+        "name": "津鑫/踏雪 5KV 黄布面/橡胶底 毛毡中帮 绝缘棉鞋",
+        "model": "46码",
+        "specification": "",
+        "quantity": 14,
+        "unit": "包",
+        "unit_price": "29264.53",
+        "amount": "409703.42",
+        "note": ""
+      },
+      {
+        "name": "湖北 涤棉绒衣 火焰兰 长袖拉链 冬季加绒 体能训练服套装",
+        "model": "冬款190/4XL",
+        "specification": "",
+        "quantity": 49,
+        "unit": "箱",
+        "unit_price": "12522.94",
+        "amount": "613624.06",
+        "note": ""
+      },
+      {
+        "name": "宝手王 乳胶55CM 黑色防化 耐酸碱手套",
+        "model": "黑色55CM",
+        "specification": "",
+        "quantity": 46,
+        "unit": "个",
+        "unit_price": "38153.45",
+        "amount": "1755058.70",
+        "note": ""
+      },
+      {
+        "name": "3M 1270 硅胶 圣诞树形 橘色蓝线 1付/包 带线耳塞",
+        "model": "橘色带线",
+        "specification": "",
+        "quantity": 10,
+        "unit": "台",
+        "unit_price": "37897.23",
+        "amount": "378972.30",
+        "note": ""
+      },
+      {
+        "name": "中麦 212 橡胶压花底 中邦灰毛长绒 绝缘防砸 安全棉鞋",
+        "model": "49码",
+        "specification": "",
+        "quantity": 29,
+        "unit": "本",
+        "unit_price": "21753.89",
+        "amount": "630862.81",
+        "note": ""
+      },
+      {
+        "name": "越秀山 乳胶105g 31CM 白色家用手套",
+        "model": "31cm白",
+        "specification": "",
+        "quantity": 8,
+        "unit": "个",
+        "unit_price": "25725.07",
+        "amount": "205800.56",
+        "note": ""
+      },
+      {
+        "name": "ST君希 3655 PU底/反绒 中帮//白毛/红皮 防穿刺/防静电 棉安全鞋",
+        "model": "35码",
+        "specification": "",
+        "quantity": 22,
+        "unit": "箱",
+        "unit_price": "11664.54",
+        "amount": "256619.88",
+        "note": ""
+      },
+      {
+        "name": "安百利 S521 铝箔毛毡布 黄掌铝袖 耐高温500°五指隔热手套",
+        "model": "铝箔/黄/36CM",
+        "specification": "",
+        "quantity": 10,
+        "unit": "件",
+        "unit_price": "40706.70",
+        "amount": "407067.00",
+        "note": ""
+      },
+      {
+        "name": "英科K78L-V1000 自然色PVC 12寸7.0g 真空100只/袋 一次性洁净 工业检查手套",
+        "model": "12寸/10/L/袋装",
+        "specification": "",
+        "quantity": 7,
+        "unit": "套",
+        "unit_price": "14320.97",
+        "amount": "100246.79",
+        "note": ""
+      },
+      {
+        "name": "河北 尼龙面 羊皮毛里 防寒马甲",
+        "model": "马甲/185/3XL",
+        "specification": "",
+        "quantity": 11,
+        "unit": "盒",
+        "unit_price": "28593.41",
+        "amount": "314527.51",
+        "note": ""
+      },
+      {
+        "name": "豪尔泰1362-18A 涤棉厚珠帆 大红磨毛 春秋长袖 夹克工作服",
+        "model": "180/2xL",
+        "specification": "",
+        "quantity": 29,
+        "unit": "个",
+        "unit_price": "46643.62",
+        "amount": "1352664.98",
+        "note": ""
+      }
+    ],
+    "total_amount": "11083395.74"
+  },
+  {
+    "doc_type": "sales_order",
+    "order_no": "ORD20260529012",
+    "customer_name": "蔡文华",
+    "recv": "18999478502",
+    "addr": "深圳市南山区科技园路66号",
+    "badge": "常规",
+    "date": "2026-05-28",
+    "products": [
+      {
+        "name": "河北 全棉约110g 48*73CM 提花毛巾",
+        "model": "110g/全棉提花",
+        "specification": "",
+        "quantity": 15,
+        "unit": "件",
+        "unit_price": "42177.03",
+        "amount": "632655.45",
+        "note": ""
+      },
+      {
+        "name": "江苏 02三层标准款 阻燃藏青  消防战斗服（上衣+裤子）",
+        "model": "170/L",
+        "specification": "",
+        "quantity": 8,
+        "unit": "箱",
+        "unit_price": "26154.73",
+        "amount": "209237.84",
+        "note": ""
+      },
+      {
+        "name": "津鑫/踏雪 5KV 黄布面/橡胶底 中帮绝缘鞋",
+        "model": "45码",
+        "specification": "",
+        "quantity": 48,
+        "unit": "包",
+        "unit_price": "32388.48",
+        "amount": "1554647.04",
+        "note": ""
+      },
+      {
+        "name": "雷马 ZA220604 压花牛皮/橡胶底/针织羊毛 中帮/黑色 防砸/防穿刺/绝缘/6KV 棉安全鞋",
+        "model": "44/绝缘/中帮/棉",
+        "specification": "",
+        "quantity": 40,
+        "unit": "盒",
+        "unit_price": "43283.28",
+        "amount": "1731331.20",
+        "note": ""
+      },
+      {
+        "name": "宏安达 HD600 泵吸液晶 4合一便携式 气体检测仪",
+        "model": "泵吸O2 CO H2S LEL",
+        "specification": "",
+        "quantity": 1,
+        "unit": "包",
+        "unit_price": "37730.98",
+        "amount": "37730.98",
+        "note": ""
+      },
+      {
+        "name": "嘉恒 涤纶条纹布 天蓝/小沿 防静电/洁净/工作帽",
+        "model": "天蓝",
+        "specification": "",
+        "quantity": 9,
+        "unit": "本",
+        "unit_price": "6915.33",
+        "amount": "62237.97",
+        "note": ""
+      },
+      {
+        "name": "银莱 全棉/莱卡 深灰/圆领/矿用/保暖 秋衣/秋裤 套装",
+        "model": "深灰/190/4XL",
+        "specification": "",
+        "quantity": 48,
+        "unit": "本",
+        "unit_price": "39153.36",
+        "amount": "1879361.28",
+        "note": ""
+      },
+      {
+        "name": "日本重松 DR28SU2K(BT) KP95 硅胶针织头带 灰色 含2个水洗滤盒  防尘面具（套装）",
+        "model": "针织带M/KP95",
+        "specification": "",
+        "quantity": 31,
+        "unit": "台",
+        "unit_price": "33671.73",
+        "amount": "1043823.63",
+        "note": ""
+      },
+      {
+        "name": "泰诺尔 3202V KN95 活性炭/头戴/带阀 折叠式 防尘口罩",
+        "model": "头戴/单片装",
+        "specification": "",
+        "quantity": 16,
+        "unit": "个",
+        "unit_price": "47887.76",
+        "amount": "766204.16",
+        "note": ""
+      },
+      {
+        "name": "征安 400V棉线乳胶 黄纱黑胶 皱纹指挂 挂胶绝缘手套",
+        "model": "400V/黄纱黑",
+        "specification": "",
+        "quantity": 31,
+        "unit": "套",
+        "unit_price": "45444.65",
+        "amount": "1408784.15",
+        "note": ""
+      },
+      {
+        "name": "泰州 牛头层 光面皮 驳掌加托 浅色 全皮皮袖 单层 长电焊手套",
+        "model": "皮袖/浅色",
+        "specification": "",
+        "quantity": 28,
+        "unit": "箱",
+        "unit_price": "265.23",
+        "amount": "7426.44",
+        "note": ""
+      },
+      {
+        "name": "江苏 KM A5螺旋装订 50页/本 防静电 无尘笔记本",
+        "model": "A5无尘/50页",
+        "specification": "",
+        "quantity": 22,
+        "unit": "盒",
+        "unit_price": "45337.01",
+        "amount": "997414.22",
+        "note": ""
+      },
+      {
+        "name": "雷公王CR-62 ABS灰 195*320*60CM 7.4V 1500mA 30w 500米 手持式喊话器 喇叭",
+        "model": "30W灰白",
+        "specification": "",
+        "quantity": 17,
+        "unit": "件",
+        "unit_price": "2238.05",
+        "amount": "38046.85",
+        "note": ""
+      },
+      {
+        "name": "飞鹤FH16-0322 PU底压花皮 中帮黑色 加盖电焊 绝缘防砸安全鞋",
+        "model": "37码",
+        "specification": "",
+        "quantity": 7,
+        "unit": "台",
+        "unit_price": "46126.91",
+        "amount": "322888.37",
+        "note": ""
+      },
+      {
+        "name": "亿诚 1050 硅胶白色KN95 3200款 防尘半面罩(套装)",
+        "model": "白色/KN95",
+        "specification": "",
+        "quantity": 43,
+        "unit": "箱",
+        "unit_price": "5324.99",
+        "amount": "228974.57",
+        "note": ""
+      }
+    ],
+    "total_amount": "10920764.15"
+  },
+  {
+    "doc_type": "sales_order",
+    "order_no": "ORD20260530013",
+    "customer_name": "内蒙古赛盛新材料有限公司",
+    "recv": "张经理",
+    "addr": "杭州市西湖区文三路200号",
+    "badge": "常规",
+    "date": "2026-05-29",
+    "products": [
+      {
+        "name": "征雪 8122-BM 橡胶底 压花皮面 中帮黑色 绝缘安全棉鞋",
+        "model": "39码",
+        "specification": "",
+        "quantity": 10,
+        "unit": "本",
+        "unit_price": "23537.65",
+        "amount": "235376.50",
+        "note": ""
+      },
+      {
+        "name": "津鑫/踏雪 黑色橡胶里布 高筒工矿胶靴",
+        "model": "37码",
+        "specification": "",
+        "quantity": 11,
+        "unit": "盒",
+        "unit_price": "21900.27",
+        "amount": "240902.97",
+        "note": ""
+      },
+      {
+        "name": "快乐娃 新K1 乳胶白 70g/31CM 薄款 家用手套",
+        "model": "31CM L/大码",
+        "specification": "",
+        "quantity": 32,
+        "unit": "本",
+        "unit_price": "33351.56",
+        "amount": "1067249.92",
+        "note": ""
+      },
+      {
+        "name": "恒拓 226 飞织PU底 黑色低帮 防砸穿刺静电 安全鞋",
+        "model": "40码",
+        "specification": "",
+        "quantity": 37,
+        "unit": "个",
+        "unit_price": "1433.31",
+        "amount": "53032.47",
+        "note": ""
+      },
+      {
+        "name": "豪尔泰620-4 全棉牛仔 耐磨靛蓝 夏季薄款 长袖塑料扣工作服",
+        "model": "165/M",
+        "specification": "",
+        "quantity": 7,
+        "unit": "个",
+        "unit_price": "11770.32",
+        "amount": "82392.24",
+        "note": ""
+      },
+      {
+        "name": "河北 涤棉 米白 防静电工作服（夏装）",
+        "model": "185/3xL",
+        "specification": "",
+        "quantity": 14,
+        "unit": "台",
+        "unit_price": "46706.13",
+        "amount": "653885.82",
+        "note": ""
+      },
+      {
+        "name": "山东 9117 橡胶底压花 黑色高腰 白毛防尘袋 防刺安全棉靴",
+        "model": "38码",
+        "specification": "",
+        "quantity": 27,
+        "unit": "箱",
+        "unit_price": "12376.10",
+        "amount": "334154.70",
+        "note": ""
+      },
+      {
+        "name": "江苏 条纹布/塑料底 四孔透气 白色 防静电/洁净工作鞋",
+        "model": "四孔 37码",
+        "specification": "",
+        "quantity": 37,
+        "unit": "个",
+        "unit_price": "28743.32",
+        "amount": "1063502.84",
+        "note": ""
+      },
+      {
+        "name": "代尔塔 301301 PU橡胶底 超轻透气 红网低邦 防砸刺穿 防静电安全鞋",
+        "model": "39码",
+        "specification": "",
+        "quantity": 5,
+        "unit": "个",
+        "unit_price": "45897.60",
+        "amount": "229488.00",
+        "note": ""
+      },
+      {
+        "name": "雷马 1228 反绒/PU底/网布  低邦/黑灰 绝缘/防砸/防刺穿透气 安全鞋",
+        "model": "低邦/42码",
+        "specification": "",
+        "quantity": 43,
+        "unit": "个",
+        "unit_price": "34509.91",
+        "amount": "1483926.13",
+        "note": ""
+      },
+      {
+        "name": "雷马 04126 PU底/低帮 防砸/防刺/防静电 安全鞋",
+        "model": "44",
+        "specification": "",
+        "quantity": 1,
+        "unit": "台",
+        "unit_price": "44898.74",
+        "amount": "44898.74",
+        "note": ""
+      },
+      {
+        "name": "华科仪 2503D-BNC-0.6m 实验室 PH计玻璃电极",
+        "model": "2503D-BNC-0.6m",
+        "specification": "",
+        "quantity": 26,
+        "unit": "台",
+        "unit_price": "12352.67",
+        "amount": "321169.42",
+        "note": ""
+      },
+      {
+        "name": "中麦 239款 橡胶底/牛巴 黄棕色/低帮 防刺穿/绝缘 安全鞋",
+        "model": "35码/低帮/黄棕",
+        "specification": "",
+        "quantity": 49,
+        "unit": "套",
+        "unit_price": "19936.90",
+        "amount": "976908.10",
+        "note": ""
+      },
+      {
+        "name": "开元 玻璃钢 盔式 金属扣 D带布衬 安全帽",
+        "model": "蓝色",
+        "specification": "",
+        "quantity": 6,
+        "unit": "箱",
+        "unit_price": "2458.18",
+        "amount": "14749.08",
+        "note": ""
+      },
+      {
+        "name": "新疆 冷轧钢焊接喷漆 1*1*1M*0.8mm 带盖带腿 消防沙箱",
+        "model": "1M*1M*1M*0.8mm",
+        "specification": "",
+        "quantity": 39,
+        "unit": "台",
+        "unit_price": "28851.54",
+        "amount": "1125210.06",
+        "note": ""
+      },
+      {
+        "name": "ST新疆 地产/废旧/再利用/整理大块 棉花包 包皮布",
+        "model": "整理大块",
+        "specification": "",
+        "quantity": 19,
+        "unit": "包",
+        "unit_price": "37464.99",
+        "amount": "711834.81",
+        "note": ""
+      },
+      {
+        "name": "豪尔泰 T621-4 全棉10*7牛仔 浅蓝单层 春秋长袖 金属纽扣 工作服",
+        "model": "175/XL",
+        "specification": "",
+        "quantity": 49,
+        "unit": "件",
+        "unit_price": "1364.19",
+        "amount": "66845.31",
+        "note": ""
+      },
+      {
+        "name": "3M 9502V KN95 头戴/带阀/皮筋/折叠式 防尘口罩",
+        "model": "单片",
+        "specification": "",
+        "quantity": 40,
+        "unit": "件",
+        "unit_price": "30261.71",
+        "amount": "1210468.40",
+        "note": ""
+      }
+    ],
+    "total_amount": "9915995.51"
+  },
+  {
+    "doc_type": "sales_order",
+    "order_no": "ORD20260531014",
+    "customer_name": "思琪纸巾",
+    "recv": "付思琪",
+    "addr": "武汉市洪山区光谷大道77号",
+    "badge": "月结",
+    "date": "2026-05-30",
+    "products": [
+      {
+        "name": "中麦 082 反绒PU底 低邦灰网 防砸绝缘 透气安全鞋",
+        "model": "40码",
+        "specification": "",
+        "quantity": 29,
+        "unit": "盒",
+        "unit_price": "46920.66",
+        "amount": "1360699.14",
+        "note": ""
+      },
+      {
+        "name": "ST广东 牛二层/B级 黄色绒面皮 全掌背全皮 绒布里棉 防寒 短皮手套",
+        "model": "黄/全皮/棉",
+        "specification": "",
+        "quantity": 21,
+        "unit": "台",
+        "unit_price": "25902.58",
+        "amount": "543954.18",
+        "note": ""
+      },
+      {
+        "name": "好攀宜 IP68 K头 H12对讲机专用带线耳机",
+        "model": "H12专用",
+        "specification": "",
+        "quantity": 7,
+        "unit": "盒",
+        "unit_price": "24063.24",
+        "amount": "168442.68",
+        "note": ""
+      },
+      {
+        "name": "豪尔泰1811-31 涤棉薄帆布 藏青 防牛仔 夏季短袖 夹克工作服",
+        "model": "185/3XL",
+        "specification": "",
+        "quantity": 46,
+        "unit": "个",
+        "unit_price": "28564.37",
+        "amount": "1313961.02",
+        "note": ""
+      },
+      {
+        "name": "3M 1211 含1701滤棉 防尘/组合 套装",
+        "model": "",
+        "specification": "",
+        "quantity": 20,
+        "unit": "台",
+        "unit_price": "310.85",
+        "amount": "6217.00",
+        "note": ""
+      },
+      {
+        "name": "友邦 PVC 彩色女士款 中筒雨靴",
+        "model": "38码",
+        "specification": "",
+        "quantity": 26,
+        "unit": "台",
+        "unit_price": "34363.99",
+        "amount": "893463.74",
+        "note": ""
+      },
+      {
+        "name": "江苏 化学物质清洗粉剂（暂命名）",
+        "model": "",
+        "specification": "",
+        "quantity": 1,
+        "unit": "台",
+        "unit_price": "35618.98",
+        "amount": "35618.98",
+        "note": ""
+      },
+      {
+        "name": "河北 PVC塑料 宽20CM 厚2MM 透明软门帘",
+        "model": "20CM 透明",
+        "specification": "",
+        "quantity": 1,
+        "unit": "本",
+        "unit_price": "46624.33",
+        "amount": "46624.33",
+        "note": ""
+      },
+      {
+        "name": "丽泰 高白棉 食品靴 活套",
+        "model": "45码",
+        "specification": "",
+        "quantity": 6,
+        "unit": "套",
+        "unit_price": "16897.49",
+        "amount": "101384.94",
+        "note": ""
+      },
+      {
+        "name": "江苏 20款 涤棉/防静电 桔红 消防/抢险救援服/配套小沿帽",
+        "model": "桔红帽/59码",
+        "specification": "",
+        "quantity": 27,
+        "unit": "包",
+        "unit_price": "418.34",
+        "amount": "11295.18",
+        "note": ""
+      },
+      {
+        "name": "豪尔泰 1850-31涤棉厚斜纹 藏青/大红 春秋长袖 行业多功能 夹克工作服",
+        "model": "180/2XL",
+        "specification": "",
+        "quantity": 33,
+        "unit": "个",
+        "unit_price": "22049.35",
+        "amount": "727628.55",
+        "note": ""
+      },
+      {
+        "name": "安惠 丙纶/编织 8mm*20米蓝色 两头小钩 安全绳",
+        "model": "蓝色8mm*20米",
+        "specification": "",
+        "quantity": 48,
+        "unit": "套",
+        "unit_price": "19523.14",
+        "amount": "937110.72",
+        "note": ""
+      },
+      {
+        "name": "登泰 反绒橡胶底 咖啡低帮 6KV绝缘 防砸刺穿 安全鞋",
+        "model": "38码",
+        "specification": "",
+        "quantity": 39,
+        "unit": "盒",
+        "unit_price": "19949.06",
+        "amount": "778013.34",
+        "note": ""
+      },
+      {
+        "name": "广东 牛二层AB级 绒面皮 桔红棕色 白斜布里 14寸双层 长电焊手套",
+        "model": "桔/棕/14寸/双层",
+        "specification": "",
+        "quantity": 2,
+        "unit": "套",
+        "unit_price": "43533.98",
+        "amount": "87067.96",
+        "note": ""
+      }
+    ],
+    "total_amount": "7011481.76"
+  },
+  {
+    "doc_type": "sales_order",
+    "order_no": "ORD20260601015",
+    "customer_name": "喀什市巨兴商贸有限公司",
+    "recv": "张经理",
+    "addr": "上海市浦东新区张江路88号",
+    "badge": "需开票",
+    "date": "2026-05-31",
+    "products": [
+      {
+        "name": "控制机 热敏打印纸",
+        "model": "热敏纸",
+        "specification": "",
+        "quantity": 47,
+        "unit": "套",
+        "unit_price": "11701.59",
+        "amount": "549974.73",
+        "note": ""
+      },
+      {
+        "name": "豪尔泰960-18 纯棉厚珠帆 磨毛活里 300g大红 抗油拒水防静电 棉裤",
+        "model": "180/2XL",
+        "specification": "",
+        "quantity": 43,
+        "unit": "包",
+        "unit_price": "32542.88",
+        "amount": "1399343.84",
+        "note": ""
+      },
+      {
+        "name": "豪尔泰1851-31 涤棉厚斜纹 藏青拼红反光 网格B级防静电 春秋长袖 夹克工作服",
+        "model": "175/XL",
+        "specification": "",
+        "quantity": 13,
+        "unit": "件",
+        "unit_price": "33879.98",
+        "amount": "440439.74",
+        "note": ""
+      },
+      {
+        "name": "花护 1097 铝支架/PC 3.0MM透明 耐高温 配安全帽 隔热面罩",
+        "model": "PC/3.0/透明",
+        "specification": "",
+        "quantity": 37,
+        "unit": "盒",
+        "unit_price": "35869.69",
+        "amount": "1327178.53",
+        "note": ""
+      },
+      {
+        "name": "登泰 23-5 超纤皮橡胶底 灰长绒 防砸防刺 中帮棉鞋",
+        "model": "42码",
+        "specification": "",
+        "quantity": 30,
+        "unit": "台",
+        "unit_price": "10907.87",
+        "amount": "327236.10",
+        "note": ""
+      },
+      {
+        "name": "艳丽 250D 春亚纺PU反光 深蓝 分身套装雨衣",
+        "model": "185/3XL",
+        "specification": "",
+        "quantity": 49,
+        "unit": "个",
+        "unit_price": "25706.38",
+        "amount": "1259612.62",
+        "note": ""
+      },
+      {
+        "name": "湖北 21款/涤棉 火焰兰/春秋/消防员 备勤帽",
+        "model": "59/秋备勤",
+        "specification": "",
+        "quantity": 41,
+        "unit": "包",
+        "unit_price": "47163.23",
+        "amount": "1933692.43",
+        "note": ""
+      },
+      {
+        "name": "汰渍 202g 360°三重功效 淡黄 洗衣肥皂",
+        "model": "202g",
+        "specification": "",
+        "quantity": 50,
+        "unit": "个",
+        "unit_price": "439.23",
+        "amount": "21961.50",
+        "note": ""
+      },
+      {
+        "name": "美的 家用微波炉",
+        "model": "",
+        "specification": "",
+        "quantity": 12,
+        "unit": "盒",
+        "unit_price": "34288.11",
+        "amount": "411457.32",
+        "note": ""
+      },
+      {
+        "name": "雕牌 508g 加香加酶 洗衣粉",
+        "model": "508g",
+        "specification": "",
+        "quantity": 35,
+        "unit": "个",
+        "unit_price": "46916.45",
+        "amount": "1642075.75",
+        "note": ""
+      },
+      {
+        "name": "MSA 10146462 PE一指键 绒吸汗带/D下巴带 V型/标准款安全帽",
+        "model": "蓝色/一指键",
+        "specification": "",
+        "quantity": 30,
+        "unit": "台",
+        "unit_price": "43349.36",
+        "amount": "1300480.80",
+        "note": ""
+      },
+      {
+        "name": "3M VOISO亮黄 125g涤纶布 灰高亮条 拉链基本款 反光马甲",
+        "model": "185/3XL",
+        "specification": "",
+        "quantity": 19,
+        "unit": "件",
+        "unit_price": "2045.94",
+        "amount": "38872.86",
+        "note": ""
+      },
+      {
+        "name": "嘉恒 PU底/超纤皮面 白色 低帮 防酸碱 安全鞋",
+        "model": "38码",
+        "specification": "",
+        "quantity": 23,
+        "unit": "盒",
+        "unit_price": "45642.92",
+        "amount": "1049787.16",
+        "note": ""
+      },
+      {
+        "name": "嘉恒 涤纶条纹 深蓝 双袖直拉 连帽连体 防静电 洁净连体服",
+        "model": "深兰/双/195/5XL",
+        "specification": "",
+        "quantity": 43,
+        "unit": "包",
+        "unit_price": "28026.67",
+        "amount": "1205146.81",
+        "note": ""
+      },
+      {
+        "name": "嘉恒 涤纶条纹 浅蓝/翻领分体/不连帽 防静电/洁净服",
+        "model": "190/4xL",
+        "specification": "",
+        "quantity": 28,
+        "unit": "套",
+        "unit_price": "9358.73",
+        "amount": "262044.44",
+        "note": ""
+      },
+      {
+        "name": "唐丰 ABS 双筋一指键 反光布衬Y带 矿工安全帽",
+        "model": "黄色",
+        "specification": "",
+        "quantity": 18,
+        "unit": "箱",
+        "unit_price": "35726.65",
+        "amount": "643079.70",
+        "note": ""
+      },
+      {
+        "name": "嘉恒 涤纶条纹布 天蓝/小沿/开天窗款 防静电/洁净 工作帽",
+        "model": "天窗/天蓝",
+        "specification": "",
+        "quantity": 46,
+        "unit": "盒",
+        "unit_price": "393.65",
+        "amount": "18107.90",
+        "note": ""
+      },
+      {
+        "name": "津鑫/踏雪 35KV 橡胶里布 绿色中筒 高压绝缘靴",
+        "model": "44码",
+        "specification": "",
+        "quantity": 5,
+        "unit": "箱",
+        "unit_price": "23573.69",
+        "amount": "117868.45",
+        "note": ""
+      }
+    ],
+    "total_amount": "13948360.68"
+  }
+]

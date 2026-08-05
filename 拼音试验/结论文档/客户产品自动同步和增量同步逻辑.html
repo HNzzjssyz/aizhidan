@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>客户和产品的自动同步与增量同步逻辑</title>
+<style>
+  :root {
+    --primary: #3b82f6;
+    --primary-dark: #1d4ed8;
+    --success: #16a34a;
+    --warning: #d97706;
+    --danger: #dc2626;
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-300: #d1d5db;
+    --gray-500: #6b7280;
+    --gray-700: #374151;
+    --gray-900: #111827;
+    --bg-soft: #eff6ff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    line-height: 1.7;
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 32px 24px 80px;
+    color: var(--gray-700);
+    background: #fff;
+  }
+  h1 { font-size: 28px; color: var(--gray-900); border-bottom: 3px solid var(--primary); padding-bottom: 12px; margin-bottom: 8px; }
+  h2 { font-size: 22px; color: var(--gray-900); margin-top: 48px; padding-left: 12px; border-left: 5px solid var(--primary); }
+  h3 { font-size: 17px; color: var(--primary-dark); margin-top: 28px; }
+  h4 { font-size: 15px; color: var(--gray-900); margin-top: 20px; }
+  p { margin: 12px 0; }
+  .meta { color: var(--gray-500); font-size: 13px; margin-bottom: 32px; }
+  .toc {
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border: 1px solid #bfdbfe;
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin: 24px 0 40px;
+  }
+  .toc h3 { margin-top: 0; color: var(--primary-dark); }
+  .toc ol { margin: 8px 0; padding-left: 22px; }
+  .toc li { margin: 4px 0; }
+  .toc a { color: var(--gray-700); text-decoration: none; }
+  .toc a:hover { color: var(--primary); text-decoration: underline; }
+  code {
+    font-family: "SF Mono", "Monaco", "Consolas", monospace;
+    font-size: 13px;
+    background: var(--gray-100);
+    color: #b91c1c;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  pre {
+    background: #1e293b;
+    color: #e2e8f0;
+    padding: 16px 18px;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.6;
+    margin: 14px 0;
+  }
+  pre code { background: none; color: inherit; padding: 0; font-size: 13px; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 14px;
+  }
+  th, td {
+    border: 1px solid var(--gray-200);
+    padding: 10px 12px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: var(--gray-50);
+    color: var(--gray-900);
+    font-weight: 600;
+  }
+  tr:nth-child(even) td { background: var(--gray-50); }
+  .callout {
+    border-left: 4px solid;
+    padding: 14px 18px;
+    margin: 18px 0;
+    border-radius: 6px;
+    background: var(--gray-50);
+  }
+  .callout.info    { border-color: var(--primary);   background: #eff6ff; }
+  .callout.success { border-color: var(--success);   background: #f0fdf4; }
+  .callout.warning { border-color: var(--warning);   background: #fffbeb; }
+  .callout.danger  { border-color: var(--danger);    background: #fef2f2; }
+  .callout-title { font-weight: 700; margin-bottom: 6px; }
+  .callout.info .callout-title    { color: var(--primary-dark); }
+  .callout.success .callout-title { color: var(--success); }
+  .callout.warning .callout-title { color: var(--warning); }
+  .callout.danger .callout-title  { color: var(--danger); }
+  .flow {
+    background: #0f172a;
+    color: #e2e8f0;
+    padding: 16px 20px;
+    border-radius: 8px;
+    font-family: "SF Mono", monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    white-space: pre;
+    overflow-x: auto;
+  }
+  .flow .box { background: #1e293b; border: 1px solid #334155; border-radius: 4px; padding: 2px 8px; }
+  .flow .ok { color: #4ade80; }
+  .flow .warn { color: #fbbf24; }
+  .flow .err { color: #f87171; }
+  .pill { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+  .pill-blue { background: #dbeafe; color: var(--primary-dark); }
+  .pill-green { background: #dcfce7; color: var(--success); }
+  .pill-yellow { background: #fef3c7; color: var(--warning); }
+  .pill-red { background: #fee2e2; color: var(--danger); }
+  .pill-gray { background: var(--gray-200); color: var(--gray-700); }
+  ul, ol { padding-left: 22px; }
+  li { margin: 4px 0; }
+  .arrow { color: var(--gray-500); margin: 0 6px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-2 > div { padding: 12px 16px; background: var(--gray-50); border-radius: 6px; }
+  .grid-2 h4 { margin-top: 0; }
+  @media (max-width: 720px) {
+    .grid-2 { grid-template-columns: 1fr; }
+  }
+  hr { border: 0; border-top: 1px solid var(--gray-200); margin: 32px 0; }
+  .anchor { color: var(--gray-300); font-size: 13px; text-decoration: none; margin-left: 8px; }
+  .badge-version { background: var(--primary); color: white; padding: 2px 10px; border-radius: 12px; font-size: 12px; margin-left: 8px; vertical-align: middle; }
+</style>
+</head>
+<body>
+
+<h1>客户和产品的自动同步与增量同步逻辑</h1>
+<p class="meta">
+  文档版本：<span class="badge-version">v1.1</span> ·
+  最后更新：2026-06-08 ·
+  适用代码库：<code>pinyin_sync.js</code>、<code>index.html</code>、<code>get_cus_pro.html</code>
+</p>
+
+<div class="toc">
+<h3>目录</h3>
+<ol>
+  <li><a href="#sec-overview">概述与设计目标</a></li>
+  <li><a href="#sec-arch">整体架构</a></li>
+  <li><a href="#sec-decision">智能决策：判断增量还是全量</a></li>
+  <li><a href="#sec-customer">客户表同步逻辑（物理删除）</a></li>
+  <li><a href="#sec-product">产品表同步逻辑（dflag 软删除）</a></li>
+  <li><a href="#sec-pinyin">拼音生成流程</a></li>
+  <li><a href="#sec-auto">自动同步触发机制</a></li>
+  <li><a href="#sec-broadcast">跨标签页广播机制</a></li>
+  <li><a href="#sec-fallback">异常降级链</a></li>
+  <li><a href="#sec-edges">边缘场景与守卫</a></li>
+  <li><a href="#sec-api">公开 API 参考</a></li>
+  <li><a href="#sec-todo">未来改进</a></li>
+</ol>
+</div>
+
+<h2 id="sec-overview">1. 概述与设计目标</h2>
+
+<p>本方案把"客户/产品拼音库"的同步逻辑整合为单一智能入口，对外暴露两个能力：</p>
+<ul>
+  <li><strong>用户主动同步</strong>：<code>get_cus_pro.html</code> 提供"同步数据"按钮，一次性完成首次全量 / 后续智能判断 / 异常降级。</li>
+  <li><strong>页面自动同步</strong>：<code>index.html</code> 进入页面后自动检查数据新鲜度，按需触发同步，并对跨标签完成事件做出响应。</li>
+</ul>
+
+<div class="callout info">
+  <div class="callout-title">核心设计原则</div>
+  <ul>
+    <li><strong>单按钮</strong>：UI 只有一个"同步数据"入口，零认知负担。</li>
+    <li><strong>双轨删除</strong>：客户表（物理删除）用二分法检测，产品表（<code>dflag</code> 软删除）依赖服务器全局过滤。</li>
+    <li><strong>三档降级</strong>：差异检测失败 → 全量；增量失败 → 全量；同步过程中允许上层静默取消。</li>
+    <li><strong>无状态共享</strong>：同步状态（<code>sync_time</code>、<code>incremental_time</code>）存于 IndexedDB，跨页面、跨标签共享。</li>
+  </ul>
+</div>
+
+<h2 id="sec-arch">2. 整体架构</h2>
+
+<p>系统由三层构成：<strong>UI 层</strong>（<code>index.html</code> / <code>get_cus_pro.html</code>）→ <strong>共享模块</strong>（<code>pinyin_sync.js</code>）→ <strong>数据层</strong>（<code>pinyin_match.js</code> + IndexedDB + HTTP）。</p>
+
+<div class="flow">
+<span class="box">index.html</span>  ── hooks ──→  <span class="box">PinyinSync.autoSyncIfNeeded()</span>  ──→  <span class="box">PinyinSync.sync()</span>
+        ↑                                                                          │
+        │ onSyncComplete                                                            ▼
+        └──────────────────────────────────────────────  <span class="box">fetchFullData() / incrementalSync()</span>
+                                                                            │                │
+                                                                            ▼                ▼
+                                                          <span class="box">defaultGeneratePinyin()</span>   <span class="box">setSyncStatusAsync()</span>
+
+<span class="box">get_cus_pro.html</span>  ── 同样调用 <span class="box">PinyinSync.sync()</span>  ──→  完成 / 取消 / 失败均广播 <span class="box">BroadcastChannel</span>
+</div>
+
+<h3>2.1 文件职责</h3>
+<table>
+  <tr><th>文件</th><th>职责</th></tr>
+  <tr>
+    <td><code>pinyin_sync.js</code></td>
+    <td>共享同步模块：智能决策、客户/产品合并、拼音生成、跨标签广播、自动同步入口</td>
+  </tr>
+  <tr>
+    <td><code>index.html</code></td>
+    <td>AI 制单主页面；启动时调用 <code>autoSyncIfNeeded()</code>，注册 <code>onSyncComplete</code> 刷新 UI</td>
+  </tr>
+  <tr>
+    <td><code>get_cus_pro.html</code></td>
+    <td>拼音库管理页面；提供"同步数据"按钮、状态卡、清空数据</td>
+  </tr>
+  <tr>
+    <td><code>pinyin_match.js</code></td>
+    <td>拼音匹配 + Dexie/IndexedDB 封装；提供 <code>getCustomersAsync</code>、<code>setCustomerPinyinAsync</code> 等 API</td>
+  </tr>
+</table>
+
+<h2 id="sec-decision">3. 智能决策：判断增量还是全量</h2>
+
+<p>同步策略选择遵循 <strong>"首次强制全量 → 差异率阈值 → 异常降级"</strong> 三段式：</p>
+
+<div class="flow">
+启动 PinyinSync.sync()
+  │
+  ├─ 读 incremental_time ── null/未设置 ──→ <span class="ok">【策略：全量】</span> fetchFullData()
+  │                                              │
+  │                                              └─→ 写 sync_time + incremental_time
+  │
+  └─ 已设置 ──→ <span class="box">detectSyncStrategy()</span>
+                    │
+                    ├─ 拉远端 ID 列表（customer + product）
+                    ├─ 读取本地 ID 集合
+                    ├─ 计算 missingOnLocal / extraOnLocal
+                    │
+                    ├─ 远端 < 1000 条 ──→ <span class="warn">【跳过差异检测，强制全量】</span>
+                    │
+                    └─ 差异率 = (missing + extra) / 远端总数
+                          │
+                          ├─ > 20% ──→ <span class="warn">【策略：全量】</span> fetchFullData()
+                          │
+                          └─ ≤ 20% ──→ <span class="ok">【策略：增量】</span> incrementalSync(decision)
+</div>
+
+<h3>3.1 差异检测函数 <code>detectSyncStrategy()</code></h3>
+
+<p>核心实现位于 <code>pinyin_sync.js</code> 的 <code>detectSyncStrategy()</code>。要点：</p>
+
+<pre><code>// 1. 拉远端所有 ID（分页，pageSize = 5000）
+const customerServerIds = await fetchServerIds('customer');
+const productServerIds = await fetchServerIds('product');
+
+// 2. 远端过小（&lt; 1000）→ 跳过检测，强制全量
+if (customerServerIds.length &lt; MIN_IDS_FOR_DIFF_CHECK &amp;&amp;
+    productServerIds.length &lt; MIN_IDS_FOR_DIFF_CHECK) {
+  return { strategy: 'full', diffRate: 1, ... };
+}
+
+// 3. 本地 ID 集合（统一 String 化，与 IndexedDB 一致）
+const customerLocalIds = new Set(localCustomers.map(c =&gt; String(c.id)));
+const productLocalIds  = new Set(localProducts.map(p  =&gt; String(p.id)));
+
+// 4. 计算差异（取数量较大的表为主表）
+const useCustomer = customerServerIds.length &gt;= productServerIds.length;
+const serverIds   = useCustomer ? customerServerIds : productServerIds;
+const localIds    = useCustomer ? customerLocalIds  : productLocalIds;
+
+const serverIdSet   = new Set(serverIds.map(id =&gt; String(id)));
+const missingOnLocal = serverIds.filter(id =&gt; !localIds.has(String(id)));
+const extraOnLocal   = [...localIds].filter(id =&gt; !serverIdSet.has(id));
+
+// 5. 客户/产品各自的 extra / missing（用于本地合并）
+const extraOnLocalCustomers   = [...customerLocalIds].filter(id =&gt; !customerServerSet.has(id));
+const extraOnLocalProducts    = [...productLocalIds].filter(id =&gt; !productServerSet.has(id));
+...
+
+// 6. 计算差异率，超过阈值则切全量
+const diffRate = (missing.length + extra.length) / serverIds.length;
+return diffRate &gt; 0.2 ? { strategy: 'full', ... } : { strategy: 'incremental', ... };
+</code></pre>
+
+<h3>3.2 决策常量</h3>
+<table>
+  <tr><th>常量</th><th>默认值</th><th>说明</th></tr>
+  <tr><td><code>DIFF_RATE_THRESHOLD</code></td><td><code>0.2</code></td><td>差异率超过 20% 切全量</td></tr>
+  <tr><td><code>ID_FETCH_PAGE_SIZE</code></td><td><code>5000</code></td><td>远端 ID 拉取分页</td></tr>
+  <tr><td><code>MIN_IDS_FOR_DIFF_CHECK</code></td><td><code>1000</code></td><td>远端过小时跳过检测</td></tr>
+</table>
+
+<h2 id="sec-customer">4. 客户表同步逻辑（物理删除）</h2>
+
+<div class="callout warning">
+  <div class="callout-title">业务事实</div>
+  客户表（<code>customer</code>）<strong>允许物理删除</strong>，<strong>无删除日志</strong>。一旦远端执行 <code>DELETE</code>，本地 ID 即变成"僵尸数据"，常规增量无法察觉。
+</div>
+
+<p>同步过程由 <code>incrementalSync(decision, hooks)</code> 协调：</p>
+
+<h3>4.1 拉取阶段（时间戳 + 缺失 ID）</h3>
+<pre><code>const lastTime = await PinyinMatch.getSyncStatusAsync('incremental_time');
+
+// 1) 按 amstamp &gt; lastTime 拉取变化数据
+const list = await fetchModifiedByTime('customer', 'id,cu_name,amstamp',
+  `amstamp &gt; '${lastTime}'`);
+const customerModified = list.map(item =&gt; ({
+  id: item.id, name: item.cu_name, amstamp: item.amstamp
+}));
+
+// 2) 远端物理删除的客户
+//    - decision.extraOnLocal = 本地有、远端无的 ID 集合
+//    - 物理删除后远端不再返回，差异检测将其归入 extraOnLocal
+</code></pre>
+
+<h3>4.2 合并阶段：<code>mergeCustomers()</code></h3>
+<p>合并算法：</p>
+<pre><code>// 1) 以本地客户表为基线
+const customerMap = {};
+existingCustomers.forEach(c =&gt; { customerMap[String(c.id)] = c; });
+
+// 2) 用时间戳拉取的新数据覆盖（同 ID 替换）
+customerModified.forEach(c =&gt; { customerMap[String(c.id)] = c; });
+
+// 3) 物理删除：清空 decision.extraOnLocal 中的 ID
+let deletedCount = 0;
+(decision.extraOnLocal || []).forEach(id =&gt; {
+  const key = String(id);
+  if (customerMap[key] !== undefined) { delete customerMap[key]; deletedCount++; }
+});
+
+const merged = Object.values(customerMap);
+
+// 4) 上限保护：超过 50000 条时截断
+if (merged.length &gt; 50000) merged = merged.slice(0, 50000);
+
+await PinyinMatch.setCustomersAsync(merged);
+</code></pre>
+
+<h3>4.3 物理删除检测：<code>findMissingIds()</code>（独立工具）</h3>
+<p>虽然实际生产环境直接消费 <code>decision.extraOnLocal</code>，但 <code>findMissingIds()</code> 函数作为独立工具保留：</p>
+<pre><code>function findMissingIds(serverIds, localIds, lo = 0, hi = serverIds.length - 1) {
+  const missing = [];
+  // 终止条件：区间足够小时逐个对比
+  if (lo &gt; hi || hi - lo &lt; 10) {
+    for (let i = lo; i &lt;= hi; i++) {
+      if (!localIds.has(String(serverIds[i]))) missing.push(serverIds[i]);
+    }
+    return missing;
+  }
+  // 二分中点
+  const mid = (lo + hi) &gt;&gt; 1;
+  if (localIds.has(String(serverIds[mid]))) {
+    // 中点存在 → 重点查右侧
+    return [...findMissingIds(serverIds, localIds, mid + 1, hi),
+            ...findMissingIds(serverIds, localIds, lo, mid - 1)];
+  } else {
+    // 中点缺失 → 整段都可疑
+    return [serverIds[mid],
+            ...findMissingIds(serverIds, localIds, lo, mid - 1),
+            ...findMissingIds(serverIds, localIds, mid + 1, hi)];
+  }
+}
+</code></pre>
+
+<div class="callout info">
+  <div class="callout-title">算法复杂度</div>
+  二分法理论复杂度 O(n)，但实际通过"存在性剪枝"避免对完整区间逐个扫描；最坏情况下退化为 O(n)，与直接扫描相当。
+</div>
+
+<h2 id="sec-product">5. 产品表同步逻辑（dflag 软删除 + status 停售过滤）</h2>
+
+<div class="callout info">
+  <div class="callout-title">业务事实（v1.1 修正）</div>
+  产品表（<code>product</code>）<strong>不允许物理删除</strong>，采用 <code>dflag</code> 软删除。<code>dflag=1</code> 表示已删除（回收站），<code>dflag=0</code> 表示正常。另外 <code>status=0</code> 表示在售，<code>status=1</code> 表示停售。
+  <br><br>
+  <strong>重要：</strong>服务器 <code>load_data</code> 接口<strong>不会自动追加</strong> <code>dflag</code> / <code>status</code> 过滤条件。<strong>客户端必须在 where 中显式写 <code>dflag=0 AND status=0</code></strong>，否则会把回收站数据和停售产品一起同步到本地 pinyin 库，导致做单员看到已删/已停售的产品。
+</div>
+
+<h3>5.1 拉取阶段（与客户对称）</h3>
+<pre><code>const list = await fetchModifiedByTime('product', 'id,pro_name,model,spec,modstm',
+  `modstm &gt; '${lastTime}' AND dflag=0 AND status=0`);
+
+// 客户端拼出的最终 SQL（示意）：
+//   SELECT id,pro_name,model,spec,modstm
+//   FROM product
+//   WHERE modstm &gt; '...' AND dflag=0 AND status=0
+//                                       ↑ 客户端显式追加，服务端不再二次过滤
+</code></pre>
+
+<h3>5.2 合并阶段：<code>mergeProducts()</code></h3>
+<p>与 <code>mergeCustomers()</code> 同构，区别在于：</p>
+<ul>
+  <li>删除依据是 <code>decision.extraOnLocalProducts</code></li>
+  <li>产品字段含 <code>model</code> 和 <code>spec</code>，需在 <code>id</code> 一致时用最新值覆盖</li>
+  <li>删除触发场景：远端 <code>dflag=1</code> → 客户端 <code>dflag=0</code> 过滤 → 远端不再返回 → 差异检测归入 <code>extraOnLocal</code></li>
+  <li>上/下架触发场景：远端 <code>status</code> 从 0 改 1（停售）→ 客户端 <code>status=0</code> 过滤 → 远端不再返回 → 同样归入 <code>extraOnLocal</code></li>
+</ul>
+
+<h3>5.3 客户 vs 产品 同步差异表</h3>
+<table>
+  <tr><th>维度</th><th>客户表（物理删除）</th><th>产品表（dflag 软删除 + status 停售）</th></tr>
+  <tr><td>远端删除方式</td><td><code>DELETE</code> 语句</td><td><code>UPDATE product SET dflag=1</code></td></tr>
+  <tr><td>远端停售方式</td><td>—（无此状态）</td><td><code>UPDATE product SET status=1</code></td></tr>
+  <tr><td>远端是否会返回</td><td>已删不返回</td><td>已删/已停售不返回（<code>dflag=0 AND status=0</code> 客户端过滤）</td></tr>
+  <tr><td>拉取字段是否含 dflag / status</td><td>否</td><td>否（拉了也只会被客户端过滤）</td></tr>
+  <tr><td>where 是否显式含 dflag / status</td><td>否</td><td><strong>是（<code>dflag=0 AND status=0</code>）</strong></td></tr>
+  <tr><td>本地清理依据</td><td><code>extraOnLocal</code>（远端物理删除）</td><td><code>extraOnLocalProducts</code>（远端 dflag=1 或 status=1）</td></tr>
+  <tr><td>是否需要二分法</td><td>是（保留工具函数）</td><td>否</td></tr>
+  <tr><td>是否需要时间戳</td><td>是（<code>amstamp</code>）</td><td>是（<code>modstm</code>）</td></tr>
+</table>
+
+<h2 id="sec-pinyin">6. 拼音生成流程</h2>
+
+<p>拼音生成在数据合并之后、<code>sync_time</code> 写入之前执行，是同步流程的<strong>最后一步数据加工</strong>。</p>
+
+<h3>6.1 默认实现 <code>defaultGeneratePinyin()</code></h3>
+<p>位于 <code>pinyin_sync.js</code>，调用方未传 <code>hooks.generatePinyin</code> 时自动启用：</p>
+<pre><code>async function defaultGeneratePinyin(info) {
+  const cp = await PinyinMatch.getCustomerPinyinAsync();
+  const pp = await PinyinMatch.getProductPinyinAsync();
+  let newCount = 0, updateCount = 0, skippedCount = 0;
+  let deletedCCount = 0, deletedPCount = 0;
+
+  // 1) 清理已删除的拼音
+  (info.deletedCustomerIds || []).forEach(id =&gt; {
+    if (cp[String(id)] !== undefined) { delete cp[String(id)]; deletedCCount++; }
+  });
+  (info.deletedProductIds || []).forEach(id =&gt; {
+    if (pp[String(id)] !== undefined) { delete pp[String(id)]; deletedPCount++; }
+  });
+
+  // 2) 客户：跳过 name 未变
+  (info.customerModified || []).forEach(c =&gt; {
+    const key = String(c.id);
+    const existing = cp[key];
+    if (existing &amp;&amp; existing.name === (c.name || '')) { skippedCount++; return; }
+    const py = PinyinMatch.generatePinyinForText(c.name || '');
+    if (!existing) newCount++; else updateCount++;
+    cp[key] = { id: c.id, name: c.name, pinyin: py.full, pinyin_abbr: py.abbr };
+  });
+
+  // 3) 产品：拼接 name + model + spec（过滤 placeholder）
+  (info.productModified || []).forEach(p =&gt; {
+    const key = String(p.id);
+    const existing = pp[key];
+    if (existing &amp;&amp; existing.name === p.name &amp;&amp;
+        existing.model === (p.model || '') &amp;&amp; existing.spec === (p.spec || '')) {
+      skippedCount++; return;
+    }
+    const parts = [p.name, p.model, p.spec]
+      .filter(s =&gt; s &amp;&amp; !PinyinMatch.isPlaceholder(s));
+    const py = PinyinMatch.generatePinyinForText(parts.join(' '));
+    if (!existing) newCount++; else updateCount++;
+    pp[key] = { id: p.id, name: p.name, model: p.model || '', spec: p.spec || '',
+                 pinyin: py.full, pinyin_abbr: py.abbr };
+  });
+
+  // 4) 写回（仅在有变化时）
+  if (newCount + updateCount + deletedCCount + deletedPCount &gt; 0) {
+    await PinyinMatch.setCustomerPinyinAsync(cp);
+    await PinyinMatch.setProductPinyinAsync(pp);
+  }
+}
+</code></pre>
+
+<h3>6.2 优化要点</h3>
+<table>
+  <tr><th>优化</th><th>说明</th></tr>
+  <tr>
+    <td><strong>跳过未变项</strong></td>
+    <td>客户：<code>existing.name === new.name</code>；产品：<code>existing.name/model/spec</code> 三项都未变 → 跳过 <code>pinyin-pro</code> 调用</td>
+  </tr>
+  <tr>
+    <td><strong>仅在变化时写回</strong></td>
+    <td><code>newCount + updateCount + deletedCCount + deletedPCount &gt; 0</code> 时才触发 <code>setCustomerPinyinAsync</code>，避免无谓 IO</td>
+  </tr>
+  <tr>
+    <td><strong>String 化 key</strong></td>
+    <td>所有 ID 统一用 <code>String(id)</code> 作为 key，与 IndexedDB 存储格式一致</td>
+  </tr>
+</table>
+
+<h3>6.3 调用方覆盖</h3>
+<p>调用方（如 <code>get_cus_pro.html</code>）可提供自己的 <code>hooks.generatePinyin</code> 实现，注入到 <code>syncData()</code>：</p>
+<pre><code>await PinyinSync.sync({
+  hooks: {
+    onLog: log,                              // 页面日志
+    onProgress: showProgress,                // 页面进度条
+    generatePinyin: async (info) =&gt; {        // 自定义实现
+      await generateIncrementalPinyin(...);  // 委托给页面的 UI 集成版本
+    }
+  }
+});
+</code></pre>
+
+<h2 id="sec-auto">7. 自动同步触发机制</h2>
+
+<p>自动同步在 <code>index.html</code> 初始化时挂载，由 <code>PinyinSync.autoSyncIfNeeded()</code> 驱动：</p>
+
+<h3>7.1 触发入口</h3>
+<pre><code>PinyinMatch.init().then(() =&gt; {
+  refreshPinyinStatus();
+  initCozeSDK();
+  PinyinSync.init();
+  PinyinSync.onSyncComplete(info =&gt; { /* 失效缓存 + 刷新 UI */ });
+
+  // 2 秒后启动自动同步（让 UI 先稳定）
+  setTimeout(() =&gt; {
+    PinyinSync.autoSyncIfNeeded({
+      thresholdHours: 1,
+      hooks: { onLog, onToast }
+    }).then(r =&gt; {
+      // 不论 skipped 与否都刷新一次
+      refreshPinyinStatus();
+      if (!r.skipped) showToast('数据已自动同步', 'success');
+    });
+  }, 2000);
+});
+</code></pre>
+
+<h3>7.2 决策逻辑</h3>
+<div class="flow">
+PinyinSync.autoSyncIfNeeded({ thresholdHours: 1 })
+  │
+  ├─ 读 sync_time
+  │     │
+  │     ├─ null（首次）──────────→ <span class="ok">PinyinSync.sync({ silent: true })</span> → { skipped: false, reason: 'first_time' }
+  │     │
+  │     └─ 有值
+  │           │
+  │           ├─ ageHours &lt; 1 ──→ { skipped: true, reason: 'fresh', ageHours }
+  │           │
+  │           └─ ageHours ≥ 1 ──→ <span class="ok">PinyinSync.sync({ silent: true })</span> → { skipped: false, reason: 'stale' }
+  │
+  └─ 返回结果给调用方决定是否显示 Toast
+</div>
+
+<h3>7.3 静默模式 <code>silent: true</code></h3>
+<p>自动同步场景下，用户没有主动点击，所以：</p>
+<ul>
+  <li>不显示 <code>progressOverlay</code>（避免视觉干扰）</li>
+  <li>不显示"取消"按钮（用户没主动操作）</li>
+  <li>日志只输出到 console（<code>console.log('[auto-sync]', msg)</code>）</li>
+  <li>完成后通过 Toast 短暂通知</li>
+</ul>
+
+<h3>7.4 时间显示</h3>
+<p><code>refreshPinyinStatus()</code> 读取 <code>sync_time</code> 后做时区安全的格式化：</p>
+<pre><code>const lastSync = await PinyinMatch.getSyncStatusAsync('sync_time');
+if (lastSync) {
+  // toISOString() 输出的是 UTC，加 'Z' 让 Date 解析为 UTC
+  const utcTime = lastSync.replace(' ', 'T') + 'Z';
+  const ageMs   = Date.now() - new Date(utcTime).getTime();
+  const ageMin  = Math.floor(ageMs / 60000);
+  const ageStr  = ageMin &lt; 1 ? '刚刚'
+                : ageMin &lt; 60 ? ageMin + ' 分钟前'
+                : ageMin &lt; 24 * 60 ? Math.floor(ageMin / 60) + ' 小时前'
+                : Math.floor(ageMin / (60 * 24)) + ' 天前';
+}
+</code></pre>
+
+<div class="callout warning">
+  <div class="callout-title">时区陷阱</div>
+  <code>new Date("2024-01-01 12:00:00")</code> 不带 <code>Z</code> 时按<strong>本地时间</strong>解析；存储的 <code>sync_time</code> 是 <code>toISOString()</code> 的 UTC 时间，<strong>必须显式加 <code>Z</code></strong> 才能正确显示"X 前"。
+</div>
+
+<h2 id="sec-broadcast">8. 跨标签页广播机制</h2>
+
+<p>当用户在 A 标签页触发同步时，B 标签页应能<strong>立即</strong>知道并刷新缓存。本方案用 <code>BroadcastChannel</code> 实现跨标签通知。</p>
+
+<h3>8.1 事件类型</h3>
+<table>
+  <tr><th>事件</th><th>触发时机</th><th>接收方典型动作</th></tr>
+  <tr>
+    <td><code>sync_started</code></td>
+    <td>syncData 进入临界区时</td>
+    <td>显示加载提示，标记 busy</td>
+  </tr>
+  <tr>
+    <td><code>sync_complete</code></td>
+    <td>同步成功（含全量/增量/降级）</td>
+    <td>失效缓存、刷新状态卡、Toast 通知</td>
+  </tr>
+  <tr>
+    <td><code>sync_error</code></td>
+    <td>同步抛异常</td>
+    <td>Toast 错误提示</td>
+  </tr>
+  <tr>
+    <td><code>sync_finished</code></td>
+    <td>syncData 的 <code>finally</code> 块</td>
+    <td>解除 busy 标记</td>
+  </tr>
+</table>
+
+<h3>8.2 双触发机制（关键）</h3>
+<div class="callout danger">
+  <div class="callout-title">陷阱</div>
+  <code>BroadcastChannel.onmessage</code> <strong>不会在发送方标签触发</strong>。如果只在发送方调用 <code>broadcast()</code>，同标签的 <code>onSyncComplete</code> 监听器永远收不到事件，导致 UI 不刷新。
+</div>
+
+<p>解决方案：每次 <code>broadcast()</code> 时<strong>同时</strong>调用 <code>emitLocal()</code>，让本地监听器也能收到事件。</p>
+
+<pre><code>// pinyin_sync.js
+function emitLocal(msg) {
+  if (msg.type === 'sync_complete' || msg.type === 'sync_started' ||
+      msg.type === 'sync_error'    || msg.type === 'sync_finished') {
+    _listeners.forEach(l =&gt; { try { l(msg); } catch (e) {} });
+  }
+}
+
+function broadcast(msg) {
+  if (_channel &amp;&amp; _channelSupported) {
+    try { _channel.postMessage(msg); } catch (e) {}
+  }
+}
+
+// syncData 中
+emitLocal({ type: 'sync_complete', strategy: 'full' });
+broadcast({ type: 'sync_complete', strategy: 'full' });
+</code></pre>
+
+<h3>8.3 时序图</h3>
+<div class="flow">
+【场景 1：同标签自动同步】
+[index.html]
+  setTimeout ─→ autoSyncIfNeeded ─→ syncData
+                                      ├─ emitLocal('sync_started')   → 本地 listener 触发
+                                      ├─ broadcast('sync_started')    → 其他标签
+                                      ├─ ... 拉数据 / 合并 / 拼音
+                                      └─ emitLocal('sync_complete')   → 本地 listener 触发
+                                                                              └─ refreshPinyinStatus() ✓
+
+【场景 2：跨标签同步】
+[A 标签：get_cus_pro.html 同步]  ──→  broadcast('sync_complete')
+[B 标签：index.html 监听中]      ──→  BroadcastChannel.onmessage
+                                            └─ _listeners.forEach(触发) → refreshPinyinStatus() ✓
+
+【场景 3：两个标签同时触发】
+[A 标签] syncData 进入临界区 → emitLocal('sync_started') → 本地 _syncing=true
+                                                       → broadcast('sync_started')
+[B 标签] 收到 broadcast → emitLocal('sync_started') → 本地 _syncing=true
+                                                    → 注册的 onSyncComplete 监听器
+[A 标签] _syncing 已经为 true 防止重复触发
+</div>
+
+<h2 id="sec-fallback">9. 异常降级链</h2>
+
+<p>同步过程中的任何异常都会被捕获，并尝试更"重"的策略重新执行：</p>
+
+<div class="flow">
+syncData()
+  │
+  ├─ detectSyncStrategy() 抛异常 ──→ <span class="warn">降级为 fetchFullData()</span>  返回 { reason: 'detect_failed' }
+  │
+  ├─ incrementalSync() 抛异常    ──→ <span class="warn">降级为 fetchFullData()</span>  返回 { reason: 'incremental_failed' }
+  │
+  ├─ fetchFullData() 抛异常      ──→  返回 { ok: false, error: e.message }    emitLocal('sync_error')
+  │
+  └─ 网络断开 / 401 / 500        ──→  hooks.onLog + console.error + Toast
+</div>
+
+<h3>9.1 降级原因传递</h3>
+<p>所有降级路径都会在返回对象里带上 <code>reason</code> 字段，便于上层判断与提示：</p>
+<pre><code>// 全量（用户手动）  → { strategy: 'full' }
+// 全量（差异率过高）→ { strategy: 'full', diffRate: 0.35 }
+// 全量（首次）     → { strategy: 'full' }
+// 全量（差异检测失败）→ { strategy: 'full', reason: 'detect_failed' }
+// 全量（增量失败）  → { strategy: 'full', reason: 'incremental_failed' }
+// 增量           → { strategy: 'incremental', diffRate: 0.05 }
+</code></pre>
+
+<h2 id="sec-edges">10. 边缘场景与守卫</h2>
+
+<table>
+  <tr><th>场景</th><th>处理方式</th></tr>
+  <tr>
+    <td>并发触发（用户多点按钮 + 自动同步）</td>
+    <td><code>_syncing</code> 锁 + 跨标签 broadcast；二次调用返回 <code>{ ok: false, reason: 'already_syncing' }</code></td>
+  </tr>
+  <tr>
+    <td>远端 ID 列表小于 1000</td>
+    <td>跳过差异检测，强制全量（避免小数据集下差异率失真）</td>
+  </tr>
+  <tr>
+    <td>客户/产品总数超过 50000</td>
+    <td>截断到 50000 条（上限保护，避免 IndexedDB 容量问题）</td>
+  </tr>
+  <tr>
+    <td>浏览器不支持 BroadcastChannel</td>
+    <td>降级为纯本地事件，跨标签联动失效但不影响主流程</td>
+  </tr>
+  <tr>
+    <td>IndexedDB 写失败（容量满、并发）</td>
+    <td>异常上抛 → <code>fetchFullData</code> 的 try/catch → 返回 <code>{ ok: false, error }</code> + Toast</td>
+  </tr>
+  <tr>
+    <td>首次访问（无 sync_time）</td>
+    <td>直接全量；完成后写入 <code>sync_time</code> 和 <code>incremental_time</code></td>
+  </tr>
+  <tr>
+    <td>拼音库升级后重生成</td>
+    <td>通过清空数据按钮触发 <code>clearAllData()</code>，下次同步会走全量且生成拼音</td>
+  </tr>
+  <tr>
+    <td>页面后台 → 切换回前台</td>
+    <td><code>window.addEventListener('focus', refreshPinyinStatus)</code> 重新拉时间</td>
+  </tr>
+</table>
+
+<h2 id="sec-api">11. 公开 API 参考</h2>
+
+<h3>11.1 PinyinSync 模块</h3>
+<pre><code>// 同步入口
+PinyinSync.sync({
+  silent: false,        // 静默模式（不显示进度覆盖层）
+  hooks: {
+    onLog: function(msg, type) {},
+    onProgress: function(title, current, total, detail) {},
+    onShowCancel: function(visible) {},
+    onToast: function(msg, type) {},
+    generatePinyin: async function(info) { ... }  // 可选，未传则用默认实现
+  }
+}) → Promise&lt;{ ok, strategy, customers, products, diffRate?, reason? }&gt;
+
+// 自动同步（按陈旧度判断）
+PinyinSync.autoSyncIfNeeded({
+  thresholdHours: 1,
+  hooks: { ... }
+}) → Promise&lt;{ skipped, reason, ageHours?, result? }&gt;
+
+// 跨标签完成监听
+PinyinSync.onSyncComplete(function(info) {
+  // info.type: 'sync_complete' | 'sync_started' | 'sync_error' | 'sync_finished'
+  // info.strategy: 'full' | 'incremental' | 'full_fallback'
+  // info.customers, info.products: 同步条数
+});
+
+// 初始化 BroadcastChannel
+PinyinSync.init();
+</code></pre>
+
+<h3>11.2 返回对象字段</h3>
+<table>
+  <tr><th>字段</th><th>类型</th><th>说明</th></tr>
+  <tr><td><code>ok</code></td><td>boolean</td><td>同步是否成功（即便降级也返回 true）</td></tr>
+  <tr><td><code>strategy</code></td><td>string</td><td><code>'full'</code> / <code>'incremental'</code> / <code>'full_fallback'</code></td></tr>
+  <tr><td><code>customers</code></td><td>number</td><td>合并后客户总数</td></tr>
+  <tr><td><code>products</code></td><td>number</td><td>合并后产品总数</td></tr>
+  <tr><td><code>diffRate</code></td><td>number</td><td>差异率（仅 detectSyncStrategy 触发时有值）</td></tr>
+  <tr><td><code>reason</code></td><td>string</td><td><code>'detect_failed'</code> / <code>'incremental_failed'</code> / <code>'first_time'</code> / <code>'fresh'</code> / <code>'stale'</code></td></tr>
+  <tr><td><code>error</code></td><td>string</td><td>异常信息（仅失败时有值）</td></tr>
+</table>
+
+<h3>11.3 内部 API（调试用）</h3>
+<pre><code>PinyinSync._fetchServerIds(dtname, whereClause)   // 拉远端 ID
+PinyinSync._findMissingIds(serverIds, localIds)  // 二分法（保留工具函数）
+PinyinSync._detectSyncStrategy(hooks)             // 差异检测
+PinyinSync._incrementalSync(decision, hooks)      // 增量同步
+PinyinSync._fetchFullData(hooks)                  // 全量同步
+</code></pre>
+
+<h2 id="sec-todo">12. 未来改进</h2>
+
+<table>
+  <tr><th>改进项</th><th>说明</th><th>优先级</th></tr>
+  <tr>
+    <td>拼音生成并发</td>
+    <td>目前是串行遍历，可拆为 200 条/批 + <code>await new Promise(r =&gt; setTimeout(r, 0))</code> 让出主线程</td>
+    <td>中</td>
+  </tr>
+  <tr>
+    <td>增量字段白名单</td>
+    <td>目前客户/产品的 <code>modified</code> 列表只含必要字段，跨表更新需扩展</td>
+    <td>低</td>
+  </tr>
+  <tr>
+    <td>Service Worker 后台同步</td>
+    <td>使用 Background Sync API，在用户关闭页面后仍能同步</td>
+    <td>低</td>
+  </tr>
+  <tr>
+    <td>同步进度事件</td>
+    <td>目前 onProgress 只发"批次"信息，可加 ETA / 速率 / 阶段</td>
+    <td>中</td>
+  </tr>
+  <tr>
+    <td>差异检测缓存</td>
+    <td>每次都重新拉远端 ID，可缓存上次的 ID 列表减少请求</td>
+    <td>低</td>
+  </tr>
+</table>
+
+<hr>
+<p class="meta" style="text-align: center; margin-top: 48px;">
+  <strong>文档结束</strong> · v1.1 · 2026-06-08 · 智能制单项目组
+  <br>
+  <span style="font-size: 12px; color: var(--gray-500);">
+    v1.1 变更：产品表同步需客户端在 where 中显式加 <code>dflag=0 AND status=0</code>（服务器不再自动追加 dflag / status 过滤）；产品表差异表新增"远端停售方式"行和"status 停售过滤"说明。
+  </span>
+</p>
+
+</body>
+</html>

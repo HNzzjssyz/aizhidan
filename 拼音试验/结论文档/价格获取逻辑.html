@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智能制单 · 价格获取逻辑：一键获取 + 两段式选择（v1.1.2）</title>
+<style>
+  :root {
+    --primary: #3b82f6;
+    --primary-dark: #1d4ed8;
+    --accent: #f59e0b;
+    --success: #16a34a;
+    --warning: #d97706;
+    --danger: #dc2626;
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-300: #d1d5db;
+    --gray-500: #6b7280;
+    --gray-700: #374151;
+    --gray-900: #111827;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    line-height: 1.75;
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 32px 24px 80px;
+    color: var(--gray-700);
+    background: #fff;
+  }
+  h1 {
+    font-size: 30px; color: var(--gray-900);
+    border-bottom: 3px solid var(--primary);
+    padding-bottom: 12px; margin-bottom: 8px;
+  }
+  h2 {
+    font-size: 22px; color: var(--gray-900);
+    margin-top: 56px; padding-left: 12px;
+    border-left: 5px solid var(--primary);
+  }
+  h3 { font-size: 17px; color: var(--primary-dark); margin-top: 28px; }
+  h4 { font-size: 15px; color: var(--gray-900); margin-top: 20px; }
+  p { margin: 12px 0; }
+  .meta { color: var(--gray-500); font-size: 13px; margin-bottom: 24px; }
+  .toc {
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border: 1px solid #bfdbfe;
+    border-radius: 10px;
+    padding: 20px 24px; margin: 24px 0 40px;
+  }
+  .toc h3 { margin-top: 0; color: var(--primary-dark); }
+  .toc ol { margin: 8px 0; padding-left: 22px; }
+  .toc li { margin: 4px 0; }
+  .toc a { color: var(--gray-700); text-decoration: none; }
+  .toc a:hover { color: var(--primary); text-decoration: underline; }
+  code {
+    font-family: "SF Mono", "Monaco", "Consolas", monospace;
+    font-size: 13px; background: var(--gray-100); color: #b91c1c;
+    padding: 2px 6px; border-radius: 4px;
+  }
+  pre {
+    background: #1e293b; color: #e2e8f0;
+    padding: 16px 18px; border-radius: 8px;
+    overflow-x: auto; font-size: 13px; line-height: 1.6; margin: 14px 0;
+  }
+  pre code { background: none; color: inherit; padding: 0; font-size: 13px; }
+  table {
+    width: 100%; border-collapse: collapse;
+    margin: 16px 0; font-size: 14px;
+  }
+  th, td {
+    border: 1px solid var(--gray-200);
+    padding: 10px 12px; text-align: left; vertical-align: top;
+  }
+  th { background: var(--gray-50); color: var(--gray-900); font-weight: 600; }
+  tr:nth-child(even) td { background: var(--gray-50); }
+  .callout {
+    border-left: 4px solid; padding: 14px 18px; margin: 18px 0;
+    border-radius: 6px; background: var(--gray-50);
+  }
+  .callout.info    { border-color: var(--primary);  background: #eff6ff; }
+  .callout.success { border-color: var(--success);  background: #f0fdf4; }
+  .callout.warning { border-color: var(--warning);  background: #fffbeb; }
+  .callout.danger  { border-color: var(--danger);   background: #fef2f2; }
+  .callout-title { font-weight: 700; margin-bottom: 6px; }
+  .callout.info .callout-title    { color: var(--primary-dark); }
+  .callout.success .callout-title { color: var(--success); }
+  .callout.warning .callout-title { color: var(--warning); }
+  .callout.danger .callout-title  { color: var(--danger); }
+  .pill { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+  .pill-blue { background: #dbeafe; color: var(--primary-dark); }
+  .pill-green { background: #dcfce7; color: var(--success); }
+  .pill-yellow { background: #fef3c7; color: var(--warning); }
+  .pill-red { background: #fee2e2; color: var(--danger); }
+  .pill-amber { background: #fde68a; color: #92400e; }
+  ul, ol { padding-left: 22px; }
+  li { margin: 4px 0; }
+  .flow {
+    display: flex; align-items: stretch; gap: 8px; flex-wrap: wrap;
+    margin: 20px 0; font-size: 13px;
+  }
+  .flow .step {
+    flex: 1 1 0; min-width: 160px;
+    background: var(--gray-50); border: 1px solid var(--gray-200);
+    border-radius: 8px; padding: 12px 14px; text-align: center;
+  }
+  .flow .step.active { background: #dbeafe; border-color: var(--primary); color: var(--primary-dark); font-weight: 600; }
+  .flow .step.hit    { background: #dcfce7; border-color: var(--success); color: var(--success); font-weight: 600; }
+  .flow .arrow { display: flex; align-items: center; color: var(--gray-500); font-size: 18px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 20px 0; }
+  .grid-2 > div { padding: 16px; background: var(--gray-50); border-radius: 8px; }
+  .grid-2 h4 { margin-top: 0; color: var(--primary-dark); }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 20px 0; }
+  .grid-4 > div { padding: 14px; background: var(--gray-50); border-radius: 8px; font-size: 13px; }
+  .grid-4 h4 { margin-top: 0; color: var(--primary-dark); font-size: 14px; }
+  @media (max-width: 720px) {
+    .grid-2, .grid-4 { grid-template-columns: 1fr; }
+  }
+  .metric {
+    text-align: center; padding: 20px 14px; border-radius: 10px;
+    background: linear-gradient(135deg, #eff6ff, #dbeafe); margin: 12px 0;
+  }
+  .metric .num { font-size: 32px; font-weight: 700; color: var(--primary-dark); line-height: 1; }
+  .metric .label { color: var(--gray-700); margin-top: 8px; font-size: 14px; }
+  .metric .sub { color: var(--gray-500); margin-top: 4px; font-size: 12px; }
+  hr { border: 0; border-top: 1px solid var(--gray-200); margin: 32px 0; }
+  .badge-version { background: var(--primary); color: white; padding: 2px 10px; border-radius: 12px; font-size: 12px; margin-left: 8px; vertical-align: middle; }
+  .file-path { color: var(--gray-500); font-size: 12px; }
+  .card-bad  { background: #fef2f2; border: 1px solid #fecaca; }
+  .card-bad h4 { color: var(--danger); margin-top: 0; }
+  .card-good { background: #f0fdf4; border: 1px solid #bbf7d0; }
+  .card-good h4 { color: var(--success); margin-top: 0; }
+</style>
+</head>
+<body>
+
+<h1>智能制单 · 价格获取逻辑：一键获取 + 两段式选择</h1>
+<p class="meta">
+  文档版本：<span class="badge-version">v1.1.2</span> ·
+  最后更新：2026-06-09 ·
+  文档类型：实施方案分析 ·
+  配套基线：<span class="file-path">dexiedb/pinyin_sync.js</span> + <span class="file-path">dexiedb/pinyin_match.js</span> + <span class="file-path">dexiedb/index.html</span>
+</p>
+
+<div class="callout warning">
+  <div class="callout-title">v1.1.2 重大调整说明（在 v1.1.1 基础上）</div>
+  <p>v1.1.2 将"<strong>两段式选择</strong>"机制从"仅价格策略"扩展为"<strong>A 和 C 都需要第二段</strong>"。具体而言：</p>
+  <ol>
+    <li><strong>第一段</strong>：4 选 1 价格来源（策略/历史/结算/标准）</li>
+    <li><strong>第二段（条件触发）</strong>：
+      <ul>
+        <li>选 <strong>A. 价格策略</strong> → 弹出"策略类型下拉"，从服务器动态拉取的字典中选具体类型</li>
+        <li>选 <strong>C. 内部结算价 + 上浮比例</strong> → 弹出"上浮比例输入框"，支持<strong>手工填写</strong>或<strong>取上次填写的值</strong></li>
+        <li>选 B / D → <strong>无需第二段</strong>，直接进入价格拉取</li>
+      </ul>
+    </li>
+  </ol>
+  <p><strong>v1.1.1 → v1.1.2 关键变化</strong>：</p>
+  <ul>
+    <li>两段式覆盖范围：<strong>从"仅 A"扩展为"A + C"</strong></li>
+    <li>上浮比例的"参考值"机制：localStorage 记忆 + 快捷采用按钮 + 历史记录</li>
+    <li>价格计算位置：C 来源在<strong>前端按 ratio 计算</strong>（远端只回原结算价）</li>
+  </ul>
+</div>
+
+<div class="toc">
+<h3>目录</h3>
+<ol>
+  <li><a href="#sec-why">为什么"价格核算"是智能制单的关键闭环</a></li>
+  <li><a href="#sec-status">现状盘点：现有数据基础与缺失</a></li>
+  <li><a href="#sec-sources">4 种价格来源详解</a></li>
+  <li><a href="#sec-compare">快速筛选 × 准确获取：4 来源对比</a></li>
+  <li><a href="#sec-strategy">推荐方案：一键获取 + 两段式选择（A 和 C，v1.1.2）</a></li>
+  <li><a href="#sec-data">数据结构设计（v1.1.2：双接口 + 字典表 + 比例记忆）</a></li>
+  <li><a href="#sec-sync">同步策略（v1.1.2：无需同步，按需查询）</a></li>
+  <li><a href="#sec-cost">复杂度与工时估算（v1.1.2：5-7 天）</a></li>
+  <li><a href="#sec-phase">阶段化推进路线（v1.1.2 简化）</a></li>
+  <li><a href="#sec-risk">风险与边界（v1.1.2）</a></li>
+  <li><a href="#sec-confirm">待确认事项（v1.1.2 增强 5 个）</a></li>
+</ol>
+</div>
+
+<h2 id="sec-why">1. 为什么"价格核算"是智能制单的关键闭环</h2>
+
+<p>智能制单的两大核心任务是<strong>客户/产品匹配</strong>与<strong>价格/税点核算</strong>。前者已经通过拼音 + 分词双引擎达到较高准确度，后者目前仍是空白：</p>
+
+<div class="callout info">
+  <div class="callout-title">现状：价格栏位的"裸露"</div>
+  <p>当甲方询价单/采购单中<strong>未提供价格</strong>时，系统在 [index.html:2080](file:///Users/guorui/同步空间/20021218/临时开发/智能制单/拼音试验/dexiedb/index.html#L2080) 处仅显示<strong>「待询价」</strong>占位，要求用户手工编辑：</p>
+  <pre><code>&lt;div ... onclick="editField(this,' + idx + ',\'price\')"&gt;' + (product.price || '待询价') + '&lt;/div&gt;</code></pre>
+  <p>这意味着：匹配做得再好，没有价格也<strong>无法生成可提交的订单</strong>。</p>
+</div>
+
+<p>价格核算之所以成为关键闭环，原因有三：</p>
+<ol>
+  <li><strong>真实场景高频</strong>：多数甲方询价单/采购单只列产品明细和数量，价格往往要求销售自行报价</li>
+  <li><strong>人工定价痛点深</strong>：销售凭印象报价、翻历史微信/Excel/订单系统问老板，<strong>30-60 分钟/单</strong>极为常见</li>
+  <li><strong>报价错误代价高</strong>：报高了丢单，报低了亏利润，"凭感觉"是最不可靠的方式</li>
+</ol>
+
+<div class="metric">
+  <div class="num">22 小时/月</div>
+  <div class="label">按 15 单/天 × 50 条/单估算，AI 定价可节省的工时</div>
+  <div class="sub">前提：客户 × 产品历史价有数据可用</div>
+</div>
+
+<p>但要实现这一目标，<strong>前提是把"价格数据"准备好</strong>。下面先盘点现有数据基础。</p>
+
+<h2 id="sec-status">2. 现状盘点：现有数据基础与缺失</h2>
+
+<table>
+  <thead>
+    <tr><th>维度</th><th>现状</th><th>是否具备"价格定价"基础</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>产品表同步字段</strong></td>
+      <td><code>id, pro_name, model, spec, modstm</code>（见 <span class="file-path">pinyin_sync.js:505</span>）</td>
+      <td>❌ 不含价格字段</td>
+    </tr>
+    <tr>
+      <td><strong>客户表同步字段</strong></td>
+      <td><code>id, cu_name, amstamp</code>（见 <span class="file-path">pinyin_sync.js:396</span>）</td>
+      <td>❌ 不含等级、VIP 标记</td>
+    </tr>
+    <tr>
+      <td><strong>价格策略表</strong></td>
+      <td>本地不存在</td>
+      <td>❌ 需新建/对接</td>
+    </tr>
+    <tr>
+      <td><strong>历史订单/报价表</strong></td>
+      <td>订单写入时使用 <code>amount, un_price</code>，但<strong>未拉取历史</strong></td>
+      <td>⚠️ 仅本地有写入，无远端历史聚合</td>
+    </tr>
+    <tr>
+      <td><strong>客户-产品对应关系</strong></td>
+      <td>无</td>
+      <td>❌ 需拉订单/明细聚合</td>
+    </tr>
+    <tr>
+      <td><strong>VIP/大客户标签</strong></td>
+      <td>未知</td>
+      <td>❌ 需确认数据源</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout warning">
+  <div class="callout-title">关键结论</div>
+  <p>4 种价格来源<strong>全部需要新数据接入</strong>。最轻量的是来源 ① ②（改一下同步字段即可），最重的是来源 ④（需要"客户 × 产品"二维聚合查询）。</p>
+</div>
+
+<h2 id="sec-sources">3. 4 种价格来源详解</h2>
+
+<h3>3.1 来源 ① — 产品表标准价</h3>
+<table>
+  <tbody>
+    <tr><th>数据源</th><td>product 表新增 <code>pro_standard_price</code>（或类似字段）</td></tr>
+    <tr><th>实施步骤</th><td>① 同步字段加 1 列；② 写入 IndexedDB；③ UI 拉价时直接取</td></tr>
+    <tr><th>优点</th><td>实施最简单（半天）、无额外接口</td></tr>
+    <tr><th>缺点</th><td>对个性化报价无帮助；标准价往往高于实际成交价</td></tr>
+    <tr><th>准确度</th><td>⭐⭐</td></tr>
+    <tr><th>性能</th><td>⭐⭐⭐⭐⭐（本地读，毫秒级）</td></tr>
+    <tr><th>推荐度</th><td>⭐⭐⭐ <span class="pill pill-yellow">作为兜底</span></td></tr>
+  </tbody>
+</table>
+
+<h3>3.2 来源 ② — 产品表内部结算价 + 上浮比例</h3>
+<table>
+  <tbody>
+    <tr><th>数据源</th><td>product 表 <code>pro_cost_price</code>（内部结算价）+ 用户输入上浮比例（8%、3% 等）</td></tr>
+    <tr><th>实施步骤</th><td>① 同步字段加 1 列；② 加 1 个上浮比例输入框；③ 提交时实时计算</td></tr>
+    <tr><th>优点</th><td>简单、有"加价率"概念，贴近 ERP 思维</td></tr>
+    <tr><th>缺点</th><td>比例需要用户每次输入，不便；与客户无关，不够灵活</td></tr>
+    <tr><th>准确度</th><td>⭐⭐（取决于比例设置）</td></tr>
+    <tr><th>性能</th><td>⭐⭐⭐⭐⭐</td></tr>
+    <tr><th>推荐度</th><td>⭐⭐ <span class="pill pill-yellow">作为补足</span></td></tr>
+  </tbody>
+</table>
+
+<h3>3.3 来源 ③ — 价格策略（VIP 大客户 × 12 种产品）</h3>
+<table>
+  <tbody>
+    <tr><th>数据源</th><td>价格策略表（按客户类型 × 产品 × 价格 矩阵）</td></tr>
+    <tr><th>实施步骤</th><td>① 新建/对接价格策略表；② 增量同步到本地；③ 拉价时按 (客户类型, 产品 ID) 查表</td></tr>
+    <tr><th>优点</th><td>业务规则清晰、配置化、便于业务侧维护</td></tr>
+    <tr><th>缺点</th><td>只能覆盖"已被规则定义的"组合；新客户/新产品需先建策略</td></tr>
+    <tr><th>准确度</th><td>⭐⭐⭐⭐（策略内的非常准）</td></tr>
+    <tr><th>性能</th><td>⭐⭐⭐⭐（本地表查询）</td></tr>
+    <tr><th>推荐度</th><td>⭐⭐⭐⭐ <span class="pill pill-blue">核心策略</span></td></tr>
+  </tbody>
+</table>
+
+<h3>3.4 来源 ④ — 历史最近成交价（按明细粒度）</h3>
+<table>
+  <tbody>
+    <tr><th>数据源</th><td>历史订单/报价明细表（按 客户 ID × 产品 ID × 时间）</td></tr>
+    <tr><th>实施步骤</th><td>① 拉订单/明细接口；② 本地构建 <code>cu_pro_recent</code> 索引表（按客户 ID+产品 ID 索引，取 max(时间)）；③ 同步时增量更新；④ 拉价时按 (客户 ID, 产品 ID) 查 max</td></tr>
+    <tr><th>优点</th><td><strong>最贴近真实成交</strong>；无需配置</td></tr>
+    <tr><th>缺点</th><td>计算量较大（要遍历订单）；老客户没历史就空</td></tr>
+    <tr><th>准确度</th><td>⭐⭐⭐⭐⭐（实际成交）</td></tr>
+    <tr><th>性能</th><td>⭐⭐⭐（聚合首次慢，可缓存）</td></tr>
+    <tr><th>推荐度</th><td>⭐⭐⭐⭐⭐ <span class="pill pill-green">最佳精度</span></td></tr>
+  </tbody>
+</table>
+
+<div class="callout info">
+  <div class="callout-title">为什么来源 ④"按明细颗粒度"是必要的？</div>
+  <p>用户给出的例子很典型：</p>
+  <blockquote>当前客户是菲尔德，产品明细包含 A、B、C、D，就分别获取 A 一个月前、B 十天前的成交价。</blockquote>
+  <p>这意味着：<strong>每个产品的"最近成交价"独立计算</strong>，互不影响。粒度必须是"客户 × 产品"，而非"客户"或"产品"。</p>
+</div>
+
+<h2 id="sec-compare">4. 快速筛选 × 准确获取：4 来源对比</h2>
+
+<p>用户提出的核心目标拆解为两个子目标：</p>
+<ul>
+  <li><strong>快速筛选</strong>：让用户能瞬间找到"我该用哪种方式定价"</li>
+  <li><strong>准确获取</strong>：选好后拿到正确价格，不出错</li>
+</ul>
+
+<table>
+  <thead>
+    <tr><th>来源</th><th>快速筛选</th><th>准确获取</th><th>短板</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>① 标准价</td>
+      <td>0 步直接用</td>
+      <td>字段查表，100%</td>
+      <td>但不准</td>
+    </tr>
+    <tr>
+      <td>② 结算价+上浮</td>
+      <td>需用户填比例（慢）</td>
+      <td>计算公式 100%</td>
+      <td>比例难定</td>
+    </tr>
+    <tr>
+      <td>③ 价格策略</td>
+      <td>看客户是否 VIP/在策略表内</td>
+      <td>矩阵查询 100%</td>
+      <td>仅覆盖被定义产品</td>
+    </tr>
+    <tr>
+      <td>④ 历史价</td>
+      <td>看客户是否有历史成交</td>
+      <td>max(time) 100%</td>
+      <td>拉订单首次慢</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout success">
+  <div class="callout-title">关键洞察</div>
+  <ul>
+    <li>来源 ① ② 是"无配置时也能用"——但用户每次都要决策</li>
+    <li>来源 ③ ④ 是"按场景自动命中"——最智能但需要数据基础</li>
+  </ul>
+</div>
+
+<h2 id="sec-strategy">5. 推荐方案：一键获取 + 两段式选择（v1.1.1）</h2>
+
+<p><strong>核心思想（v1.1 重大调整）</strong>：价格获取不是"自动阶梯匹配"，而是<strong>在已匹配好的明细基础上，弹出方式选择界面，由用户主动选择策略，再按需远端拉取</strong>。</p>
+
+<div class="callout warning">
+  <div class="callout-title">v1.0 → v1.1 关键变化</div>
+  <ul>
+    <li><strong>触发方式</strong>：从"匹配完成自动执行"改为"<strong>用户主动点击"一键获取价格"按钮</strong>"</li>
+    <li><strong>数据来源</strong>：从"本地缓存"改为"<strong>直接远端服务器拉取</strong>"</li>
+    <li><strong>前置条件</strong>：必须"全部产品已匹配完成"才能进入价格获取阶段</li>
+    <li><strong>方式选择</strong>：4 种来源 ① ② ③ ④ 改为<strong>互斥选项</strong>（用户 4 选 1），而非"阶梯自动"</li>
+  </ul>
+</div>
+
+<h3>5.1 整体流程（v1.1）</h3>
+<div class="flow">
+  <div class="step active">AI 制单：客户/产品匹配阶段</div>
+</div>
+<div style="text-align:center;color:var(--gray-500);font-size:20px;">↓ 全部确认</div>
+<div class="flow">
+  <div class="step hit">检查：所有明细是否 <code>status: 'confirmed'</code>？</div>
+  <div class="arrow">→ 是</div>
+  <div class="step active">解锁「一键获取价格」按钮</div>
+</div>
+<div style="text-align:center;color:var(--gray-500);font-size:20px;">↓ 用户点击</div>
+<div class="flow">
+  <div class="step active">弹出「价格策略选择」浮窗<br><small>4 选 1：策略价 / 历史价 / 结算价+上浮 / 产品表价</small></div>
+</div>
+<div style="text-align:center;color:var(--gray-500);font-size:20px;">↓ 用户选定</div>
+<div class="flow">
+  <div class="step hit">从远端服务器<strong>按需拉取</strong>所选策略相关数据</div>
+  <div class="arrow">→ 实时返回</div>
+  <div class="step active">回填价格到每条明细</div>
+</div>
+
+<h3>5.2 完整步骤详解</h3>
+
+<h4>步骤 ①：前置检查</h4>
+<p>当用户在 AI 制单界面完成所有产品匹配后，界面需<strong>先校验</strong>以下条件：</p>
+<pre><code>// 伪代码
+function isAllProductsMatched() {
+  return currentProducts.every(function(p) {
+    return p.matchedId &amp;&amp; p.status === 'confirmed';
+  });
+}</code></pre>
+<p>只有全部命中，<code>「一键获取价格」</code> 按钮才<strong>亮起</strong>。否则按钮置灰，hover 提示"请先完成所有产品匹配"。</p>
+
+<h4>步骤 ②：两段式选择（v1.1.2 扩展）</h4>
+<p>为支撑<strong>需要补充参数</strong>的两种价格来源，v1.1.2 将"两段式"机制<strong>从"仅价格策略"</strong>扩展为"<strong>A 和 C 都需要第二段</strong>"：</p>
+<ol>
+  <li><strong>第一段</strong>：4 选 1 价格来源（策略/历史/结算/标准）</li>
+  <li><strong>第二段（条件触发）</strong>：
+    <ul>
+      <li>选 <strong>A. 价格策略</strong> → 弹出"<strong>策略类型下拉</strong>"，从服务器动态拉取的字典中选具体类型</li>
+      <li>选 <strong>C. 内部结算价 + 上浮比例</strong> → 弹出"<strong>上浮比例输入框</strong>"，需用户填写或采用上次值</li>
+      <li>选 B / D → <strong>无需第二段</strong>，直接进入价格拉取</li>
+    </ul>
+  </li>
+</ol>
+
+<div class="callout success">
+  <div class="callout-title">v1.1.1 → v1.1.2 关键变化</div>
+  <ul>
+    <li><strong>第二段覆盖范围</strong>：从"仅 A"扩展为"A + C"，明确这两类来源都需要补充参数</li>
+    <li><strong>C 的上浮比例处理</strong>：
+      <ul>
+        <li>支持<strong>手工填写</strong>（如 8%、3% 等）</li>
+        <li>支持<strong>记忆上次填写的值</strong>（localStorage 持久化，作为下次默认值）</li>
+        <li>支持<strong>提示参考</strong>（显示"上次使用：8%"，单击快速采用）</li>
+      </ul>
+    </li>
+    <li><strong>UI 一致性</strong>：A 和 C 都通过"第二段面板"收集参数，UX 模式统一</li>
+  </ul>
+</div>
+
+<h4>2.1 第一段：4 大类来源</h4>
+<table>
+  <thead>
+    <tr><th>选项</th><th>对应来源</th><th>适用场景</th><th>拉取的远端数据</th><th>是否需第二段</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="pill pill-blue">A. 价格策略</span></td>
+      <td>来源 ③</td>
+      <td>VIP/大客户走公司配置</td>
+      <td>price_strategy 表（按 type_code + pro_id 查询）</td>
+      <td><strong>✅ 是（需选具体策略类型）</strong></td>
+    </tr>
+    <tr>
+      <td><span class="pill pill-green">B. 历史最近成交价</span></td>
+      <td>来源 ④</td>
+      <td>贴合历史交易习惯</td>
+      <td>order_detail 表（按 cu_id + pro_id 取 max(成交时间)）</td>
+      <td>否</td>
+    </tr>
+    <tr>
+      <td><span class="pill pill-yellow">C. 内部结算价 + 上浮比例</span></td>
+      <td>来源 ②</td>
+      <td>公司统一加价</td>
+      <td>product 表 <code>pro_cost_price</code>（用户输入上浮比例）</td>
+      <td><strong>✅ 是（需输入上浮比例）</strong> <span class="pill pill-blue">v1.1.2 新增</span></td>
+    </tr>
+    <tr>
+      <td><span class="pill pill-amber">D. 产品表标准价</span></td>
+      <td>来源 ①</td>
+      <td>无任何参考时的兜底</td>
+      <td>product 表 <code>pro_standard_price</code></td>
+      <td>否</td>
+    </tr>
+  </tbody>
+</table>
+
+<h4>2.2 第二段：价格策略的具体类型（动态下拉）</h4>
+<p>当用户在第一段选择"A. 价格策略"后，<strong>动态从服务器拉取</strong>当前可用的策略类型列表（如 VIP 客户价、样板客户价、新客户价、普通客户价等），呈现为<strong>二级下拉</strong>：</p>
+
+<div class="callout info">
+  <div class="callout-title">UI 草图（v1.1.1 增强版）</div>
+  <pre><code>┌────────────────────────────────────────────────┐
+│  💰 选择价格获取方式                              │
+├────────────────────────────────────────────────┤
+│  第一段：价格来源                                │
+│  ⦿ A. 价格策略（VIP/大客户规则）                  │
+│     ◯ B. 历史最近成交价（贴合交易习惯）            │
+│     ◯ C. 内部结算价 + 上浮比例 [__8__%]           │
+│     ◯ D. 产品表标准价（兜底）                     │
+│                                                │
+│  第二段：当前订单适用的价格策略类型                │
+│  ┌────────────────────────────────────────┐    │
+│  │ 策略类型  ▼ [请选择…]                   │    │
+│  │  ┌─────────────────────────────────┐    │    │
+│  │  │ VIP 客户价（标准）               │    │    │
+│  │  │ 样板客户价                       │    │    │
+│  │  │ 新客户价                         │    │    │
+│  │  │ 普通客户价                       │    │    │
+│  │  │ 战略合作客户价                   │    │    │
+│  │  │ ...（服务器动态返回）            │    │    │
+│  │  └─────────────────────────────────┘    │    │
+│  └────────────────────────────────────────┘    │
+│  💡 提示：策略类型由服务器动态下发，无需本地维护  │
+├────────────────────────────────────────────────┤
+│         [取消]      [确认获取]                   │
+└────────────────────────────────────────────────┘</code></pre>
+</div>
+
+<div class="callout success">
+  <div class="callout-title">为什么是"动态下拉"而不是"硬编码"？</div>
+  <ul>
+    <li><strong>策略类型可配置</strong>：业务侧可能随时新增/调整"特殊客户价""节日促销价"等类型</li>
+    <li><strong>避免前端硬编码</strong>：硬编码 5-10 个固定选项，前端每次业务调整都要发版</li>
+    <li><strong>多租户/多公司</strong>：不同分公司可能用不同策略集，下拉按需加载</li>
+    <li><strong>国际化</strong>：策略类型名称由服务端返回，支持多语言</li>
+  </ul>
+</div>
+
+<h4>2.3 策略类型数据结构（远端返回）</h4>
+<p>远端通过单独的<strong>元数据接口</strong>返回当前可用的策略类型列表：</p>
+<pre><code>// 拉取策略类型元数据（伪代码）
+GET /api.xt?cmd=load_data&amp;dtname=price_strategy_type&amp;field=type_code,type_name,sort_order,is_active&amp;where=is_active=1&amp;order=sort_order
+
+// 返回示例
+[
+  { type_code: 'VIP',       type_name: 'VIP 客户价（标准）',   sort_order: 1, is_active: 1 },
+  { type_code: 'SAMPLE',    type_name: '样板客户价',          sort_order: 2, is_active: 1 },
+  { type_code: 'NEW',       type_name: '新客户价',            sort_order: 3, is_active: 1 },
+  { type_code: 'NORMAL',    type_name: '普通客户价',          sort_order: 4, is_active: 1 },
+  { type_code: 'STRATEGIC', type_name: '战略合作客户价',       sort_order: 5, is_active: 1 },
+  { type_code: 'PROMO',     type_name: '节日促销价',          sort_order: 6, is_active: 1 }
+]</code></pre>
+
+<div class="callout warning">
+  <div class="callout-title">后端需新增 1 张"策略类型字典表"</div>
+  <p>为支持"动态策略类型"，后端需提供 1 张轻量字典表：</p>
+  <ul>
+    <li><strong>表名</strong>：<code>price_strategy_type</code></li>
+    <li><strong>字段</strong>：<code>type_code</code>（主键）、<code>type_name</code>（显示名）、<code>sort_order</code>（排序）、<code>is_active</code>（启用）</li>
+    <li><strong>数据量</strong>：通常 < 50 条，几乎不增长</li>
+    <li><strong>维护方式</strong>：业务侧在后台增删改即可，前端无需发版</li>
+  </ul>
+  <p>这是 v1.1.1 相比 v1.1 <strong>唯一</strong>的数据库层增量。</p>
+</div>
+
+<h4>2.4 价格策略接口升级（带 type_code 过滤）</h4>
+<p>用户从第二段选定具体策略类型后，调用 price_strategy 接口时<strong>带上 type_code</strong>：</p>
+<pre><code>// v1.1.2 升级：fetchPricesByStrategy 第 1 个分支
+if (strategy === 'A') {
+  return await loadData({
+    cmd: 'load_data',
+    dtname: 'price_strategy',
+    field: 'pro_id,price',
+    where: "type_code = '" + selectedTypeCode + "' AND pro_id IN (" + productIds.join(',') + ")"
+    //                            ^^^^^^^^^^^^^^^^^^^^
+    //                            新增：仅拉取用户选定的策略类型
+  });
+}</code></pre>
+
+<h4>2.4.1 <span class="pill pill-blue">v1.1.2 新增</span>上浮比例输入面板（C 来源专属）</h4>
+<p>当用户在第一段选择"C. 内部结算价 + 上浮比例"后，第二段切换为<strong>上浮比例输入面板</strong>，要求用户填写上浮百分比：</p>
+
+<div class="callout info">
+  <div class="callout-title">UI 草图（C 来源的"上浮比例"输入面板）</div>
+  <pre><code>┌────────────────────────────────────────────────┐
+│  💰 选择价格获取方式                              │
+├────────────────────────────────────────────────┤
+│  第一段：价格来源                                │
+│     ◯ A. 价格策略（VIP/大客户规则）                │
+│     ◯ B. 历史最近成交价（贴合交易习惯）            │
+│  ⦿ C. 内部结算价 + 上浮比例  ← 当前选中          │
+│     ◯ D. 产品表标准价（兜底）                     │
+│                                                │
+│  第二段：上浮比例参数                              │
+│  ┌────────────────────────────────────────┐    │
+│  │  上浮比例：[______8______] %            │    │
+│  │                                        │    │
+│  │  💡 常用参考：                          │    │
+│  │     [采用 8%]  ← 上次使用（2026-06-08） │    │
+│  │     [采用 3%]  ← 常见低利润加价          │    │
+│  │     [采用 15%] ← 常见高利润加价          │    │
+│  │                                        │    │
+│  │  📌 计算公式：                          │    │
+│  │     最终价 = 内部结算价 × (1 + 8%)      │    │
+│  │     例：结算价 100 → 售价 108            │    │
+│  └────────────────────────────────────────┘    │
+├────────────────────────────────────────────────┤
+│         [取消]      [确认获取]                   │
+└────────────────────────────────────────────────┘</code></pre>
+</div>
+
+<h4>2.4.2 上浮比例的"参考值"机制（v1.1.2 核心）</h4>
+<p>为减少用户每次重复输入，<strong>支持上浮比例的"上次值"参考</strong>：</p>
+<table>
+  <thead>
+    <tr><th>机制</th><th>实现方式</th><th>用户感知</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>默认填充</strong></td>
+      <td>localStorage 读取 <code>lastUsedPriceRatio</code>，自动填入输入框</td>
+      <td>打开浮窗，比例已是上次用值（如 8%）</td>
+    </tr>
+    <tr>
+      <td><strong>快速采用</strong></td>
+      <td>浮窗显示"上次使用：8%"快捷按钮，单击即采用</td>
+      <td>不必修改，直接单击即可</td>
+    </tr>
+    <tr>
+      <td><strong>历史记录</strong></td>
+      <td>localStorage 存最近 3-5 个使用过的比例，按时间倒序</td>
+      <td>可看到自己常用的几个比例</td>
+    </tr>
+    <tr>
+      <td><strong>提交时记忆</strong></td>
+      <td>用户确认获取时，把当前值写入 localStorage</td>
+      <td>下次打开自动用最近值</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout success">
+  <div class="callout-title">为什么需要"上次值"机制？</div>
+  <p>用户原话：</p>
+  <blockquote>上浮百分比可能需要手工填写，也可以取上次填写的值作为参考。</blockquote>
+  <p>这反映了两个需求：</p>
+  <ul>
+    <li><strong>灵活性</strong>：用户希望有完全控制权，能手工输入任意值（应对非标准情况）</li>
+    <li><strong>便捷性</strong>：希望系统记住常用值，避免每次都重新填（应对日常情况）</li>
+  </ul>
+  <p>"localStorage 默认填充 + 快捷采用按钮"同时满足这两个需求，<strong>不强制、不繁琐</strong>。</p>
+</div>
+
+<h4>2.4.3 C 来源的"结算价 × 上浮比例"价格计算（远端回前端计算）</h4>
+<p>v1.1.2 价格计算<strong>放在前端</strong>，远端只返回原始结算价：</p>
+<pre><code>// v1.1.2 升级：fetchPricesByStrategy 第 3 个分支
+if (strategy === 'C') {
+  // 1) 远端拉取产品结算价
+  var costData = await loadData({
+    cmd: 'load_data',
+    dtname: 'product',
+    field: 'id,pro_cost_price',
+    where: "id IN (" + productIds.join(',') + ") AND dflag=0 AND status=0"
+  });
+
+  // 2) 前端按用户输入的 ratio 计算最终价
+  //    最终价 = pro_cost_price × (1 + ratio/100)
+  return costData.map(function(row) {
+    return {
+      pro_id: row.id,
+      pro_cost_price: row.pro_cost_price,
+      // 关键：返回原值，前端按 ratio 计算后再回填
+      _ratio: extraParams.ratio   // 透传比例，便于 UI 标注
+    };
+  });
+}</code></pre>
+
+<h4>2.4.4 前端回填逻辑（应用 ratio）</h4>
+<pre><code>// 前端 applyPriceToProducts（v1.1.2 升级）
+function applyPriceToProducts(remoteData, strategy, extraParams) {
+  currentProducts.forEach(function(p) {
+    var row = remoteData.find(function(r) { return String(r.pro_id) === String(p.matchedId); });
+    if (!row) return;
+
+    if (strategy === 'C') {
+      // C 来源：按 ratio 计算
+      p.price = (row.pro_cost_price * (1 + extraParams.ratio / 100)).toFixed(2);
+      p._priceSource = 'costRatio';
+      p._priceMeta = {
+        strategy: '结算价上浮 ' + extraParams.ratio + '%',
+        costPrice: row.pro_cost_price,
+        ratio: extraParams.ratio,
+        finalPrice: p.price
+      };
+    } else {
+      // A / B / D 来源：直接使用远端返回的 price
+      p.price = row.price;
+      p._priceSource = strategy;
+    }
+  });
+
+  // v1.1.2 关键：记忆本次使用的 ratio
+  if (strategy === 'C' &amp;&amp; extraParams.ratio) {
+    localStorage.setItem('lastUsedPriceRatio', String(extraParams.ratio));
+    // 顺带记录到历史
+    var history = JSON.parse(localStorage.getItem('priceRatioHistory') || '[]');
+    history = [extraParams.ratio].concat(history.filter(function(r) { return r !== extraParams.ratio; })).slice(0, 5);
+    localStorage.setItem('priceRatioHistory', JSON.stringify(history));
+  }
+}</code></pre>
+
+<div class="callout info">
+  <div class="callout-title">localStorage 记忆的两个键</div>
+  <ul>
+    <li><code>lastUsedPriceRatio</code>：最近一次使用的比例（单值，用于默认填充）</li>
+    <li><code>priceRatioHistory</code>：最近使用过的 5 个比例（数组，用于快捷按钮）</li>
+  </ul>
+  <p>数据<strong>仅存本地</strong>，不与服务器同步，符合"用户偏好"语义。</p>
+</div>
+
+<h4>2.5 完整两段式流程（v1.1.2：条件触发版）</h4>
+<p>v1.1.2 的两段式<strong>按所选来源条件触发</strong>：A 和 C 需要第二段，B 和 D 不需要：</p>
+
+<h5>场景 1：选 A（价格策略）</h5>
+<div class="flow">
+  <div class="step active">① 用户点「一键获取价格」</div>
+</div>
+<div style="text-align:center;color:var(--gray-500);font-size:20px;">↓</div>
+<div class="flow">
+  <div class="step hit">② 弹出第一段<br><small>4 选 1，选 A</small></div>
+</div>
+<div style="text-align:center;color:var(--gray-500);font-size:20px;">↓ 选 A</div>
+<div class="flow">
+  <div class="step active">③ 远端拉取策略类型字典</div>
+  <div class="arrow">→ 5-10 个</div>
+  <div class="step hit">② 渲染策略类型下拉</div>
+</div>
+<div style="text-align:center;color:var(--gray-500);font-size:20px;">↓</div>
+<div class="flow">
+  <div class="step hit">④ 调用 price_strategy 接口<br><small>WHERE type_code = 选定值</small></div>
+</div>
+<div style="text-align:center;color:var(--gray-500);font-size:20px;">↓</div>
+<div class="flow">
+  <div class="step active">⑤ 回填价格</div>
+</div>
+
+<h5>场景 2：选 C（内部结算价+上浮比例）</h5>
+<div class="flow">
+  <div class="step active">① 用户点「一键获取价格」</div>
+</div>
+<div style="text-align:center;color:var(--gray-500);font-size:20px;">↓</div>
+<div class="flow">
+  <div class="step hit">② 弹出第一段<br><small>4 选 1，选 C</small></div>
+</div>
+<div style="text-align:center;color:var(--gray-500);font-size:20px;">↓ 选 C</div>
+<div class="flow">
+  <div class="step active">③ 读取 localStorage 上次比例</div>
+  <div class="arrow">→ 默认填充</div>
+  <div class="step hit">② 渲染上浮比例输入面板</div>
+</div>
+<div style="text-align:center;color:var(--gray-500);font-size:20px;">↓</div>
+<div class="flow">
+  <div class="step hit">④ 拉取 product.pro_cost_price</div>
+  <div class="arrow">→ 前端</div>
+  <div class="step active">按 ratio 计算最终价</div>
+</div>
+<div style="text-align:center;color:var(--gray-500);font-size:20px;">↓</div>
+<div class="flow">
+  <div class="step active">⑤ 回填价格 + 记忆新比例</div>
+</div>
+
+<h5>场景 3：选 B / D（无需第二段）</h5>
+<div class="flow">
+  <div class="step active">① 用户点「一键获取价格」</div>
+</div>
+<div style="text-align:center;color:var(--gray-500);font-size:20px;">↓</div>
+<div class="flow">
+  <div class="step hit">② 弹出第一段<br><small>4 选 1，选 B 或 D</small></div>
+</div>
+<div style="text-align:center;color:var(--gray-500);font-size:20px;">↓</div>
+<div class="flow">
+  <div class="step active">③ 跳过第二段，直接拉取</div>
+</div>
+<div style="text-align:center;color:var(--gray-500);font-size:20px;">↓</div>
+<div class="flow">
+  <div class="step active">④ 回填价格</div>
+</div>
+
+<h4>步骤 ③：按需远端拉取（v1.1.2 更新）</h4>
+<p>用户完成两段选择后，<strong>不再走本地缓存</strong>，直接调用远端接口：</p>
+<pre><code>// v1.1.2 伪代码：根据选择调用对应接口
+async function fetchPricesByStrategy(strategy, products, extraParams) {
+  if (strategy === 'A') {
+    // 策略 A 多了 type_code 参数
+    return await loadData({
+      cmd: 'load_data',
+      dtname: 'price_strategy',
+      field: 'pro_id,price',
+      where: "type_code = '" + extraParams.typeCode + "' " +
+             "AND pro_id IN (" + products.map(p => p.matchedId).join(',') + ")"
+    });
+  }
+  if (strategy === 'B') {
+    return await loadData({
+      cmd: 'load_data',
+      dtname: 'order_detail',
+      field: 'pro_id,price,order_time',
+      where: "cu_id = ? AND pro_id IN (...)",  // 按客户 + 多个产品
+      orderBy: 'order_time DESC',
+      groupBy: 'pro_id'  // 取每个产品最近一条
+    });
+  }
+  // C / D 类似，但拉 product 表字段
+}</code></pre>
+
+<p><strong>关键：拉取的对象是"已匹配的产品 ID 集合"</strong>，不是"全表"。这是性能的核心保障。</p>
+
+<h4>步骤 ④：价格回填</h4>
+<p>远端返回数据后，遍历每条产品明细按 ID 对应，<strong>回填价格字段</strong>：</p>
+<pre><code>// 伪代码
+products.forEach(function(p) {
+  var priceRow = remoteResult[String(p.matchedId)];
+  if (priceRow) {
+    p.price = priceRow.price;
+    p._priceSource = strategy;  // 标记来源，便于追溯
+  }
+});</code></pre>
+
+<h3>5.3 方案优势（v1.1）</h3>
+<div class="grid-2">
+  <div>
+    <h4>✅ 用户掌控感</h4>
+    <p>用户主动选择策略，而非被系统"代办"。符合"重要决策让用户做"原则。</p>
+  </div>
+  <div>
+    <h4>✅ 数据实时性</h4>
+    <p>远端拉取总能拿到最新策略/历史价，本地缓存导致的"数据陈旧"问题彻底消除。</p>
+  </div>
+  <div>
+    <h4>✅ 复杂度大幅下降</h4>
+    <p>无需本地构建 cu_pro_recent / price_strategy 索引表，省去 7-10 天的同步开发。</p>
+  </div>
+  <div>
+    <h4>✅ 接口最小化</h4>
+    <p>远端只需"按 ID 集合查"接口，<strong>1 个接口 + 4 个 SQL</strong> 即可支持全部 4 种策略。</p>
+  </div>
+  <div>
+    <h4>✅ 责任清晰</h4>
+    <p>用户选什么拉什么，错拉/漏拉由用户决策，系统只负责执行。</p>
+  </div>
+  <div>
+    <h4>✅ 拓展性</h4>
+    <p>未来新增"第 5 种价格来源"（如竞品价、活动价），只需加 1 个选项 + 1 个 SQL 即可。</p>
+  </div>
+</div>
+
+<h3>5.4 与 v1.0 的核心差异</h3>
+<table>
+  <thead>
+    <tr><th>维度</th><th>v1.0（4 级阶梯自动）</th><th>v1.1（一键 + 选方式）</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>触发方式</td>
+      <td>匹配完成<strong>自动执行</strong></td>
+      <td>用户<strong>主动点击按钮</strong></td>
+    </tr>
+    <tr>
+      <td>数据来源</td>
+      <td>本地 IndexedDB 缓存</td>
+      <td>远端服务器实时拉取</td>
+    </tr>
+    <tr>
+      <td>本地表</td>
+      <td>需新增 <code>cu_pro_recent</code> + <code>price_strategy</code> 2 张</td>
+      <td><strong>无需新增任何表</strong></td>
+    </tr>
+    <tr>
+      <td>同步逻辑</td>
+      <td>需复用 [pinyin_sync.js](file:///Users/guorui/同步空间/20021218/临时开发/智能制单/拼音试验/dexiedb/pinyin_sync.js) 增量/全量机制</td>
+      <td><strong>无需同步</strong>，按需查询</td>
+    </tr>
+    <tr>
+      <td>匹配方式</td>
+      <td>优先级阶梯（隐式）</td>
+      <td>4 选 1 互斥单选（显式）</td>
+    </tr>
+    <tr>
+      <td>用户参与度</td>
+      <td>低（自动化）</td>
+      <td>高（选择 + 确认）</td>
+    </tr>
+    <tr>
+      <td>实施工时</td>
+      <td>10-15 天（含 2 张表）</td>
+      <td><strong>3-5 天（仅 UI + 4 个接口）</strong></td>
+    </tr>
+  </tbody>
+</table>
+  <div>
+    <h4>业务规则优先</h4>
+    <p>价格策略 ③ 满足"销售必须按公司规则走"，作为强推荐项。</p>
+  </div>
+  <div>
+    <h4>历史贴近现实</h4>
+    <p>② 兜住"未配策略但已成交过"的客户，无需销售再翻 Excel。</p>
+  </div>
+  <div>
+    <h4>永不落空</h4>
+    <p>① ④ 总有兜底。最坏情况也有"产品表标准价"可用。</p>
+  </div>
+  <div>
+    <h4>可干预</h4>
+    <p>任何一步用户都可手工覆盖价格。系统不强制"必须用自动价"。</p>
+  </div>
+  <div>
+    <h4>按明细粒度</h4>
+    <p>来源 ④ 严格按"客户 × 产品"颗粒度，符合实际场景。</p>
+  </div>
+</div>
+
+<h3>5.3 用户视角的极简交互（v1.1 调整后）</h3>
+<p>用户上传甲方询价单 → 客户 + 产品匹配完成 → <strong>用户主动点击"一键获取价格"</strong> → 弹出 4 选 1 浮窗 → 选定后远端拉取并回填：</p>
+
+<div class="grid-2">
+  <div class="card-bad">
+    <h4>v1.0 自动阶梯（已弃用）</h4>
+    <pre><code>产品 A   数量 100   单价：¥128.00（自动·历史价）
+产品 B   数量 50    单价：¥135.00（自动·策略价）
+
+⚠️ 销售不知为何用了这个价
+⚠️ 历史价可能已陈旧但未提示
+⚠️ 策略有变但本地缓存未更新</code></pre>
+    <p>问题：用户失去控制感、数据可能过期、选择不可见</p>
+  </div>
+  <div class="card-good">
+    <h4>v1.1 一键 + 选方式（推荐）</h4>
+    <pre><code>① 客户/产品全部确认
+② 点「一键获取价格」按钮
+③ 弹窗 4 选 1：策略价/历史价/...
+④ 选定后回填：
+   产品 A  ¥128.00 ✓（来自·历史价）
+   产品 B  ¥135.00 ✓（来自·策略价）
+
+✅ 用户主动选择
+✅ 数据实时拉取
+✅ 责任清晰可追溯</code></pre>
+    <p>效果：用户掌控 + 数据实时 + 系统极简</p>
+  </div>
+</div>
+
+<h2 id="sec-data">6. 数据结构设计（v1.1.1：双接口 + 字典表）</h2>
+
+<div class="callout success">
+  <div class="callout-title">核心结论：v1.1 不再需要任何本地表</div>
+  <p>由于 v1.1 改为"<strong>按需远端拉取</strong>"，价格数据<strong>不进入本地 IndexedDB</strong>，只在内存中临时持有，关闭页面即丢弃。</p>
+  <p>因此<strong>无需</strong>新增 <code>price_strategy</code> 和 <code>cu_pro_recent</code> 2 张本地表，<strong>无需</strong>修改 Dexie schema，<strong>无需</strong>数据迁移。</p>
+</div>
+
+<h3>6.1 临时内存结构（仅本次会话）</h3>
+<p>远端拉取的价格仅作为<strong>当前订单的临时数据</strong>，保存在 <code>currentProducts</code> 数组中：</p>
+<pre><code>// 内存中的产品明细对象（已扩展）
+{
+  matchedId: '12345',        // 已匹配产品 ID
+  matchedName: 'A 产品',
+  qty: 100,
+  unit: '件',
+  // ↓ v1.1 新增字段 ↓
+  price: '128.00',          // 远端拉取的价格
+  _priceSource: 'history',  // 'strategy' | 'history' | 'costRatio' | 'standard'
+  _priceMeta: {             // 拉取元信息（用于 UI 提示）
+    strategy: '历史成交',
+    lastTime: '2025-12-15', // 策略/历史的来源时间
+    refOrder: 'PO-2025-12-001'  // 来源订单号
+  }
+}</code></pre>
+
+<h3>6.2 与 v1.0 的对比</h3>
+<table>
+  <thead>
+    <tr><th>维度</th><th>v1.0</th><th>v1.1</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>本地新增表</td>
+      <td>2 张（<code>price_strategy</code> + <code>cu_pro_recent</code>）</td>
+      <td><strong>0 张</strong></td>
+    </tr>
+    <tr>
+      <td>Dexie schema 升级</td>
+      <td>version(1) → version(2)</td>
+      <td><strong>无需升级</strong></td>
+    </tr>
+    <tr>
+      <td>同步模块改动</td>
+      <td>[pinyin_sync.js](file:///Users/guorui/同步空间/20021218/临时开发/智能制单/拼音试验/dexiedb/pinyin_sync.js) 增加 2 个 dtname 同步流程</td>
+      <td><strong>无需修改</strong></td>
+    </tr>
+    <tr>
+      <td>数据生命周期</td>
+      <td>长期持久化在 IndexedDB</td>
+      <td>仅会话内有效，关闭即丢</td>
+    </tr>
+    <tr>
+      <td>陈旧数据风险</td>
+      <td>有（缓存需手动同步）</td>
+      <td><strong>无</strong>（每次实时拉取）</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout info">
+  <div class="callout-title">为什么不缓存到本地？</div>
+  <p>用户原话强调：</p>
+  <blockquote>全量查询同步的复杂度较高，而当前已有准确的 ID 结果，无需从本地获取数据，直接从远端服务器获取相关数据即可。</blockquote>
+  <p>这意味着用户已经明确<strong>否决了本地缓存方案</strong>，选择"按需直连远端"的轻量路径。</p>
+</div>
+
+<h3>6.3 远端接口设计（v1.1.1 升级：双接口）</h3>
+<p>v1.1.1 共需<strong>2 类远端接口</strong>：</p>
+
+<h4>接口 1：拉取策略类型字典（仅第二段使用）</h4>
+<pre><code>// 策略类型字典（轻量元数据，几乎不变化）
+GET /api.xt?cmd=load_data&amp;dtname=price_strategy_type&amp;
+    field=type_code,type_name,sort_order,is_active&amp;
+    where=is_active=1&amp;order=sort_order
+
+// 返回示例
+[
+  { type_code: 'VIP',       type_name: 'VIP 客户价（标准）',   sort_order: 1, is_active: 1 },
+  { type_code: 'SAMPLE',    type_name: '样板客户价',          sort_order: 2, is_active: 1 },
+  { type_code: 'NEW',       type_name: '新客户价',            sort_order: 3, is_active: 1 },
+  { type_code: 'NORMAL',    type_name: '普通客户价',          sort_order: 4, is_active: 1 },
+  { type_code: 'STRATEGIC', type_name: '战略合作客户价',       sort_order: 5, is_active: 1 },
+  { type_code: 'PROMO',     type_name: '节日促销价',          sort_order: 6, is_active: 1 }
+]</code></pre>
+
+<h4>接口 2：通用价格拉取（4 种来源共用，策略 A 升级带 type_code）</h4>
+<pre><code>// 通用拉取接口（伪代码）
+// POST /api.xt?cmd=load_data&dtname={table}&field={fields}&where={condition}
+async function fetchPricesByStrategy(strategy, productIds, customerId, extraParams) {
+  var params = null;
+  switch (strategy) {
+    case 'A':  // 价格策略（v1.1.1 升级：带 type_code 过滤）
+      params = {
+        dtname: 'price_strategy',
+        field:  'pro_id,price',
+        where:  "type_code = '" + extraParams.typeCode + "' " +
+                "AND pro_id IN (" + productIds.join(',') + ")"
+      };
+      break;
+    case 'B':  // 历史最近成交价
+      params = {
+        dtname: 'order_detail',
+        field:  'pro_id,price,order_time,order_no',
+        where:  "cu_id = " + customerId + " AND pro_id IN (" + productIds.join(',') + ")",
+        orderBy: 'order_time DESC',
+        groupBy: 'pro_id'  // 取每个产品最近一条
+      };
+      break;
+    case 'C':  // 内部结算价 + 上浮比例
+      params = {
+        dtname: 'product',
+        field:  'id,pro_cost_price',
+        where:  "id IN (" + productIds.join(',') + ") AND dflag=0 AND status=0"
+      };
+      // 拉回后前端按用户输入的 ratio 计算
+      // 最终价 = pro_cost_price × (1 + ratio/100)
+      break;
+    case 'D':  // 产品表标准价
+      params = {
+        dtname: 'product',
+        field:  'id,pro_standard_price',
+        where:  "id IN (" + productIds.join(',') + ") AND dflag=0 AND status=0"
+      };
+      break;
+  }
+  return await loadData(params);
+}</code></pre>
+
+<h3>6.4 后端表与字段要求（v1.1.1 更新）</h3>
+<table>
+  <thead>
+    <tr><th>来源</th><th>表名</th><th>必要字段</th><th>可选字段</th><th>v1.1.1 变化</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>③ 价格策略（<strong>新增字典表</strong>）</td>
+      <td><code>price_strategy_type</code> <span class="pill pill-blue">新增</span></td>
+      <td><code>type_code, type_name</code></td>
+      <td><code>sort_order, is_active</code></td>
+      <td><strong>v1.1.1 新增</strong>，用于第二段下拉</td>
+    </tr>
+    <tr>
+      <td>③ 价格策略（<strong>升级</strong>）</td>
+      <td><code>price_strategy</code></td>
+      <td><code>pro_id, price, type_code</code></td>
+      <td><code>update_time</code></td>
+      <td><strong>v1.1.1 升级</strong>：cu_type → type_code</td>
+    </tr>
+    <tr>
+      <td>④ 历史最近成交价</td>
+      <td><code>order_detail</code>（已有）</td>
+      <td><code>cu_id, pro_id, price, order_time</code></td>
+      <td><code>order_no</code></td>
+      <td>无变化</td>
+    </tr>
+    <tr>
+      <td>② 结算价</td>
+      <td><code>product</code>（已有）</td>
+      <td><code>id, pro_cost_price</code></td>
+      <td>—</td>
+      <td>无变化</td>
+    </tr>
+    <tr>
+      <td>① 标准价</td>
+      <td><code>product</code>（已有）</td>
+      <td><code>id, pro_standard_price</code></td>
+      <td>—</td>
+      <td>无变化</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout warning">
+  <div class="callout-title">v1.1.1 数据库层总增量</div>
+  <ul>
+    <li><code>product</code> 表加 2 个字段：<code>pro_standard_price</code>（来源 ①） + <code>pro_cost_price</code>（来源 ②）</li>
+    <li><code>price_strategy_type</code> 表：<strong>新增 1 张字典表</strong>（数据量 < 50 条）</li>
+    <li><code>price_strategy</code> 表：<code>cu_type</code> 字段<strong>重命名/扩展</strong>为 <code>type_code</code>（与字典表对应）</li>
+  </ul>
+  <p>总计：<strong>2 字段 + 1 新表 + 1 字段重命名</strong>。后端工作量<strong>可控</strong>。</p>
+</div>
+
+<h2 id="sec-sync">7. 同步策略（v1.1.1：无需同步，按需查询）</h2>
+
+<div class="callout success">
+  <div class="callout-title">v1.1 核心原则：不做全量/增量同步，按需直连远端</div>
+  <p>用户原话："全量查询同步的复杂度较高，而当前已有准确的 ID 结果，无需从本地获取数据，直接从远端服务器获取相关数据即可。"</p>
+  <p>因此 v1.1 <strong>完全跳过</strong> [pinyin_sync.js](file:///Users/guorui/同步空间/20021218/临时开发/智能制单/拼音试验/dexiedb/pinyin_sync.js) 的同步机制，价格数据<strong>不进</strong>本地。</p>
+</div>
+
+<h3>7.1 拉取流程（按需）</h3>
+<p>用户在 AI 制单界面完成匹配后，触发价格获取的<strong>实时流程</strong>：</p>
+
+<pre><code>// index.html 中的触发逻辑（伪代码）
+async function onClickOneKeyGetPrice() {
+  // 1) 前置检查：所有产品已匹配
+  if (!currentProducts.every(p => p.matchedId)) {
+    return showToast('请先完成所有产品匹配', 'warning');
+  }
+
+  // 2) 弹出策略选择浮窗
+  var strategy = await openPriceStrategyModal();
+  if (!strategy) return;  // 用户取消
+
+  // 3) 收集已匹配的产品 ID 集合
+  var productIds = currentProducts.map(p => p.matchedId);
+  var customerId = currentCustomer.matchedId;
+
+  // 4) 远端拉取（带 loading）
+  showLoading('正在拉取价格...');
+  var remoteData = await fetchPricesByStrategy(strategy, productIds, customerId);
+  hideLoading();
+
+  // 5) 回填价格
+  applyPriceToProducts(remoteData, strategy);
+
+  // 6) 重新渲染 UI
+  renderProducts();
+  showToast('价格已更新', 'success');
+}</code></pre>
+
+<h3>7.2 与 v1.0 同步方案对比</h3>
+<table>
+  <thead>
+    <tr><th>维度</th><th>v1.0</th><th>v1.1</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>数据流向</td>
+      <td>远端 → 本地缓存 → 业务读取</td>
+      <td>远端 → 业务直接读取（无中间层）</td>
+    </tr>
+    <tr>
+      <td>同步触发</td>
+      <td>定时 / 手动 / 智能增量</td>
+      <td><strong>按需触发</strong>（用户点按钮时）</td>
+    </tr>
+    <tr>
+      <td>同步模块</td>
+      <td>[pinyin_sync.js](file:///Users/guorui/同步空间/20021218/临时开发/智能制单/拼音试验/dexiedb/pinyin_sync.js) 扩 2 个 dtname</td>
+      <td><strong>不改</strong></td>
+    </tr>
+    <tr>
+      <td>数据陈旧</td>
+      <td>取决于同步频率</td>
+      <td><strong>无此问题</strong>（实时）</td>
+    </tr>
+    <tr>
+      <td>拉取范围</td>
+      <td>全表 + 增量</td>
+      <td><strong>仅"已匹配 ID 集合"</strong></td>
+    </tr>
+    <tr>
+      <td>性能（典型 50 条明细）</td>
+      <td>同步耗时数秒 + 本地查询毫秒</td>
+      <td><strong>1 次远端查询 < 1 秒</strong></td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout info">
+  <div class="callout-title">性能小注</div>
+  <p>v1.1 的"按 ID 集合查询"是非常高效的 SQL 模式：</p>
+  <ul>
+    <li>远端 SQL：<code>WHERE pro_id IN (1,2,3,...,50)</code></li>
+    <li>索引命中：<code>pro_id</code> 为主键或索引</li>
+    <li>数据返回：通常 < 100ms</li>
+  </ul>
+  <p>远优于 v1.0 的"先全量拉 50000 条产品再过滤"。</p>
+</div>
+
+<h2 id="sec-cost">8. 复杂度与工时估算（v1.1.2）</h2>
+
+<table>
+  <thead>
+    <tr><th>模块</th><th>实施工时</th><th>说明</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>前端：两段式选择浮窗 + 价格回填 UI</td>
+      <td><strong>1.5-2 天</strong></td>
+      <td>纯前端工作：第一段 4 选 1 + 第二段动态下拉、价格展示、loading、错误处理</td>
+    </tr>
+    <tr>
+      <td>前端：onClickOneKeyGetPrice 主流程（含两段式状态）</td>
+      <td><strong>0.5-1 天</strong></td>
+      <td>前置检查 → 弹窗第一段 → 选 A 触发第二段 → 远端拉字典 → 拉价格 → 回填 → 渲染</td>
+    </tr>
+    <tr>
+      <td>后端：<code>price_strategy_type</code> 字典接口 <span class="pill pill-blue">v1.1.1 新增</span></td>
+      <td><strong>0.5 天</strong></td>
+      <td>复用现有 <code>load_data</code> 接口，1 个 SQL：<code>SELECT type_code, type_name FROM price_strategy_type WHERE is_active=1</code></td>
+    </tr>
+    <tr>
+      <td>后端：4 个价格 SQL（策略 A 升级带 type_code）</td>
+      <td><strong>1 天</strong></td>
+      <td>复用现有 <code>load_data</code> 接口，4 个 WHERE 条件即可</td>
+    </tr>
+    <tr>
+      <td>数据库：product 表加 2 字段 + price_strategy_type 新表 <span class="pill pill-blue">v1.1.1 新增字典表</span></td>
+      <td><strong>0.5-1 天</strong></td>
+      <td>DDL：product 加 <code>pro_standard_price</code> + <code>pro_cost_price</code>；新建 <code>price_strategy_type</code> 字典表；初始化 5-10 条常用策略类型数据</td>
+    </tr>
+    <tr>
+      <td>数据库：price_strategy 字段升级 <span class="pill pill-blue">v1.1.1 升级</span></td>
+      <td><strong>0.25 天</strong></td>
+      <td><code>cu_type</code> → <code>type_code</code>（字段重命名 / 扩展 + 数据迁移）</td>
+    </tr>
+    <tr>
+      <td>前端：上浮比例输入面板（C 来源专属） <span class="pill pill-blue">v1.1.2 新增</span></td>
+      <td><strong>0.5-0.75 天</strong></td>
+      <td>输入框 + 校验 + 常用参考按钮 + 公式说明</td>
+    </tr>
+    <tr>
+      <td>前端：上浮比例记忆机制 <span class="pill pill-blue">v1.1.2 新增</span></td>
+      <td><strong>0.25 天</strong></td>
+      <td>localStorage 读写 + 默认填充 + 历史记录 5 条 + 快捷采用</td>
+    </tr>
+    <tr>
+      <td>联调 + 测试</td>
+      <td><strong>0.5-1 天</strong></td>
+      <td>4 种策略各跑一遍，验证回填、覆盖、错误情况</td>
+    </tr>
+    <tr style="background:#dcfce7;font-weight:600;">
+      <td>合计</td>
+      <td><strong>5-7 天</strong></td>
+      <td>比 v1.1.1 增加 0.75-1 天（C 来源参数面板 + 比例记忆机制）</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout success">
+  <div class="callout-title">v1.1.2 复杂度可控</div>
+  <p>v1.1.2 相对 v1.1.1 增加的成本：</p>
+  <ul>
+    <li><strong>+0.5-0.75 天</strong> 上浮比例输入面板（含校验、参考按钮、公式说明）</li>
+    <li><strong>+0.25 天</strong> localStorage 记忆机制（默认填充 + 历史记录 + 快捷采用）</li>
+    <li><strong>+0</strong> 后端（无服务端增量，仅前端）</li>
+  </ul>
+  <p>总增加 <strong>约 1 天</strong>，但带来"<strong>两段式完整覆盖 A 和 C</strong>"的<strong>设计完整性</strong>。</p>
+</div>
+
+<h2 id="sec-phase">9. 阶段化推进路线（v1.1.1 简化）</h2>
+
+<h3>🥉 Phase 1（3-5 天）— 完整闭环一次性交付</h3>
+<div class="callout success">
+  <div class="callout-title">范围：4 种策略全部支持</div>
+  <ul>
+    <li><strong>后端</strong>：product 表加 2 字段 + 4 个 SQL（价格策略/历史/结算价/标准价）</li>
+    <li><strong>前端</strong>：策略选择浮窗 + 一键获取按钮 + 价格回填 UI</li>
+    <li><strong>集成</strong>：在 [index.html](file:///Users/guorui/同步空间/20021218/临时开发/智能制单/拼音试验/dexiedb/index.html) 中挂载 <code>onClickOneKeyGetPrice</code></li>
+    <li><strong>价值</strong>：4 种来源全部覆盖，可独立运营</li>
+  </ul>
+</div>
+
+<div class="callout info">
+  <div class="callout-title">为什么 v1.1 不再分阶段？</div>
+  <p>v1.0 之所以要分 4 阶段，是因为<strong>每种来源都需要单独的本地表 + 同步流程</strong>，开发量大。v1.1 改用"按需远端拉取"后，<strong>每种来源的成本只是 1 个 SQL</strong>，无需分阶段，<strong>一次性交付更简单</strong>。</p>
+</div>
+
+<h3>🏅 Phase 2（可选）— 增强体验</h3>
+<div class="callout info">
+  <div class="callout-title">范围：增值能力（非阻塞）</div>
+  <ul>
+    <li>策略选择浮窗内显示"<strong>推荐策略</strong>"标签（如 VIP 客户默认推荐 A）</li>
+    <li>支持"按明细单独覆盖"（某些明细用策略，某些用历史）</li>
+    <li>拉取失败时的友好降级（提示用户改用"手动输入"）</li>
+    <li>价格低于历史均价 80% 时弹窗警告"⚠️ 报价异常低"</li>
+  </ul>
+</div>
+
+<h2 id="sec-risk">10. 风险与边界（v1.1.1）</h2>
+
+<table>
+  <thead>
+    <tr><th>风险</th><th>缓解策略</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>历史价是"特批价"，批量推送误导</td>
+      <td>UI 上显示"<strong>来源：历史成交（2025-12-15）</strong>"，让用户看时间</td>
+    </tr>
+    <tr>
+      <td>老客户无历史成交记录</td>
+      <td>远端返回空 → 系统提示"该客户暂无历史成交，请选用其他策略"</td>
+    </tr>
+    <tr>
+      <td>远端接口异常（超时/404）</td>
+      <td>捕获异常 → 提示用户"价格拉取失败，请稍后重试或手动输入"</td>
+    </tr>
+    <tr>
+      <td>用户每次都要选策略，操作繁琐</td>
+      <td>提供"<strong>记住上次的策略</strong>"偏好（localStorage 记忆）</td>
+    </tr>
+    <tr>
+      <td>价格敏感（不让销售看到别人的价）</td>
+      <td>策略 B 接口 SQL 中强制 <code>cu_id = 当前客户</code>，不显示其他客户</td>
+    </tr>
+    <tr>
+      <td>价格策略表尚无数据（Phase 1 初期）</td>
+      <td>策略 A 远端返回空 → 浮窗内提示"价格策略未配置"并禁用该选项</td>
+    </tr>
+    <tr>
+      <td>网络抖动导致拉取慢</td>
+      <td>loading 态 + 1 秒后提示"正在拉取，请稍候"，避免用户重复点击</td>
+    </tr>
+    <tr>
+      <td>策略类型字典表为空 <span class="pill pill-blue">v1.1.1 新增</span></td>
+      <td>第二段下拉显示"暂无可用策略类型"，并提示业务侧去后台维护</td>
+    </tr>
+    <tr>
+      <td>所选策略类型在 price_strategy 中无对应数据</td>
+      <td>拉取返回空 → UI 提示"该策略下未配置价格，请选用其他策略类型"</td>
+    </tr>
+    <tr>
+      <td>localStorage 异常（隐私模式 / 容量满） <span class="pill pill-blue">v1.1.2 新增</span></td>
+      <td>try-catch 包装；失败时降级为"空白输入"，不影响主流程</td>
+    </tr>
+    <tr>
+      <td>用户输入上浮比例 ≤ 0 或 > 100 <span class="pill pill-blue">v1.1.2 新增</span></td>
+      <td>前端校验，提示"比例应在 0-100 之间"，不允许提交</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout info">
+  <div class="callout-title">v1.1.2 风险面 vs v1.1.1</div>
+  <p>相比 v1.1.1，v1.1.2 <strong>新增</strong>以下风险：</p>
+  <ul>
+    <li>⚠️ localStorage 在隐私模式下不可用（浏览器兼容）</li>
+    <li>⚠️ 上浮比例的取值范围需前端校验</li>
+    <li>⚠️ 历史记录需考虑清空/重置机制</li>
+  </ul>
+  <p>但<strong>带来长期收益</strong>：</p>
+  <ul>
+    <li>✅ C 来源用户操作更流畅，无需每次输入</li>
+    <li>✅ 两段式机制<strong>完整覆盖</strong>需要参数补充的来源（A 和 C）</li>
+    <li>✅ "上次值"作为参考，平衡灵活性与便捷性</li>
+  </ul>
+</div>
+
+<h2 id="sec-confirm">11. 待确认事项（v1.1.1 增强）</h2>
+
+<p>v1.1.1 增加了"<strong>策略类型字典</strong>"相关问题，待确认 <strong>4 个</strong>：</p>
+
+<h3>Q1：产品表价格字段命名</h3>
+<p>贵司产品表中 <strong>2 个新字段</strong>的名称：</p>
+<ul>
+  <li><strong>标准价</strong>字段名是？（<code>pro_standard_price</code> / <code>pro_sale_price</code> / 其他？）</li>
+  <li><strong>内部结算价</strong>字段名是？（<code>pro_cost_price</code> / <code>pro_settle_price</code> / 其他？）</li>
+</ul>
+
+<h3>Q2：历史成交价数据源</h3>
+<ul>
+  <li><strong>数据源</strong>：从"订单明细表"取，还是"报价单明细表"取，还是两者都要？</li>
+  <li><strong>时间窗口</strong>：仅取"最近 1 条"还是"近 N 个月的所有"？</li>
+</ul>
+
+<h3>Q3：价格策略主表</h3>
+<ul>
+  <li>贵司目前<strong>是否已有价格策略表</strong>？如有，结构如何？字段大致是？</li>
+  <li>若无，是否可以<strong>新建一张专门的策略表</strong>（推荐）？</li>
+  <li>现有策略区分客户类型时，使用的是什么字段？（v1.1.1 将统一为 <code>type_code</code>，需了解原字段名）</li>
+</ul>
+
+<h3>Q4：<span class="pill pill-blue">v1.1.1 新增</span>策略类型字典表</h3>
+<ul>
+  <li><strong>已有哪些策略类型？</strong>请列出 5-10 个常用类型（如 VIP 客户价、样板客户价、新客户价等），用于初始化字典表</li>
+  <li><strong>类型编码规则</strong>：建议用大写英文短码（如 <code>VIP</code> / <code>SAMPLE</code> / <code>NEW</code>），是否有现成编码体系？</li>
+  <li><strong>是否需要支持业务侧后台维护</strong>？（如需，建议配合后台管理页面，Phase 1 初期可手工 INSERT）</li>
+</ul>
+
+<h3>Q5：<span class="pill pill-blue">v1.1.2 新增</span>上浮比例（C 来源）规则</h3>
+<ul>
+  <li><strong>默认值来源</strong>：是否确认"取上次填写的值"作为默认？还是有其他偏好（如根据客户类型 / 产品类别自动推荐）？</li>
+  <li><strong>历史记录</strong>：是否需要记录最近 N 个比例供快捷选择？建议 N=5，是否符合贵司习惯？</li>
+  <li><strong>取值范围</strong>：上浮比例通常 0-100%，但是否需要支持负值（如打折）？</li>
+  <li><strong>精度</strong>：保留几位小数？（建议 1 位小数，如 8.5%）</li>
+  <li><strong>跨用户/跨设备</strong>：比例仅本地记忆（localStorage）还是需要服务器同步？（建议本地，理由：用户偏好，非业务规则）</li>
+</ul>
+
+<div class="callout success">
+  <div class="callout-title">v1.1.2 不再需要确认的问题</div>
+  <ul>
+    <li>❌ v1.0 Q4「上浮比例配置方式」：v1.1.2 改为<strong>用户每次手工填 + localStorage 默认填充 + 快捷按钮</strong>三重机制</li>
+    <li>❌ v1.0 Q5「Phase 1 起步范围」：v1.1.2 不再分阶段，<strong>一次性 4 选 1 + 两段式全部支持</strong></li>
+  </ul>
+</div>
+
+<hr>
+<p class="meta">待您回复 Q1-Q5 后，可进入 v1.1.2 的具体代码设计与 UI 草图阶段。预估开发周期：<strong>5-7 天</strong>（v1.1.1 基础上 + 1 天 C 来源参数面板 + 比例记忆机制）。</p>
+
+</body>
+</html>

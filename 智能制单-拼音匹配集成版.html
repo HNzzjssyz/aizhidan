@@ -1,0 +1,1703 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智能制单 - 拼音匹配集成版</title>
+<script src="https://lf-cdn.coze.cn/obj/unpkg/flow-platform/chat-app-sdk/1.2.0-beta.8/libs/cn/index.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pinyin-pro@3.25.0/dist/index.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+<style>
+:root {
+  --bg: #f0f2f5;
+  --card: #ffffff;
+  --border: #e5e9ef;
+  --text: #1f2937;
+  --text2: #6b7280;
+  --text3: #9ca3af;
+  --primary: #6366f1;
+  --primary-light: #eef2ff;
+  --primary-border: #c7d2fe;
+  --green: #10b981;
+  --green-light: #ecfdf5;
+  --green-border: #a7f3d0;
+  --amber: #f59e0b;
+  --amber-light: #fffbeb;
+  --amber-border: #fde68a;
+  --red: #ef4444;
+  --red-light: #fef2f2;
+  --red-border: #fecaca;
+  --purple: #8b5cf6;
+  --purple-light: #f5f3ff;
+  --purple-border: #ddd6fe;
+  --gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+.topbar {
+  background: white;
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 52px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.topbar-left .logo {
+  width: 32px;
+  height: 32px;
+  background: var(--gradient);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+}
+.topbar-left h1 {
+  font-size: 16px;
+  font-weight: 700;
+}
+.topbar-left .badge {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  background: var(--primary-light);
+  color: var(--primary);
+  border: 1px solid var(--primary-border);
+}
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--text2);
+}
+.topbar-right .data-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+}
+.topbar-right .data-status .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+.topbar-right .data-status .dot.green { background: var(--green); }
+.topbar-right .data-status .dot.amber { background: var(--amber); }
+.topbar-right .data-status .dot.red { background: var(--red); }
+
+.main-layout {
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  gap: 0;
+  height: calc(100vh - 52px);
+}
+
+.left-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-right: 1px solid var(--border);
+  background: white;
+}
+
+.left-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  background: #f8fafc;
+}
+.left-tab {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s;
+  border-bottom: 2px solid transparent;
+}
+.left-tab.active {
+  color: var(--primary);
+  background: white;
+  border-bottom-color: var(--primary);
+}
+.left-tab:hover:not(.active) { background: #f1f5f9; }
+
+.left-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+.left-content::-webkit-scrollbar { width: 5px; }
+.left-content::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+
+.section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+.section-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-header i { color: var(--primary); font-size: 16px; }
+.section-body { padding: 16px; }
+
+.config-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.config-input {
+  flex: 1;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 12px;
+  font-family: monospace;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.config-input:focus { border-color: var(--primary); }
+
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:hover:not(:disabled) { background: #4f46e5; }
+.btn-green { background: var(--green); color: white; }
+.btn-green:hover:not(:disabled) { background: #059669; }
+.btn-amber { background: var(--amber); color: white; }
+.btn-amber:hover:not(:disabled) { background: #d97706; }
+.btn-outline { background: white; color: var(--text2); border: 1px solid var(--border); }
+.btn-outline:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+.btn-red { background: white; color: var(--red); border: 1px solid var(--red-border); }
+.btn-red:hover:not(:disabled) { background: var(--red-light); }
+.btn-block { width: 100%; justify-content: center; }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+
+.btn-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.status-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.status-item {
+  padding: 10px 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+.status-item .label {
+  font-size: 11px;
+  color: var(--text3);
+  margin-bottom: 2px;
+}
+.status-item .value {
+  font-size: 14px;
+  font-weight: 700;
+}
+.status-item .value.green { color: var(--green); }
+.status-item .value.amber { color: var(--amber); }
+.status-item .value.red { color: var(--red); }
+
+.order-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.order-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text3);
+}
+.order-empty i { font-size: 40px; margin-bottom: 10px; display: block; opacity: 0.3; }
+.order-empty p { font-size: 13px; line-height: 1.8; }
+
+.match-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+.match-card.matched { border-color: var(--green-border); }
+.match-card.unmatched { border-color: var(--amber-border); }
+.match-card-header {
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 600;
+}
+.match-card.matched .match-card-header { background: var(--green-light); color: #065f46; }
+.match-card.unmatched .match-card-header { background: var(--amber-light); color: #92400e; }
+.match-card-body { padding: 12px 14px; }
+
+.match-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 13px;
+  border-bottom: 1px solid #f3f4f6;
+}
+.match-row:last-child { border-bottom: none; }
+.match-row .field-label {
+  width: 60px;
+  flex-shrink: 0;
+  color: var(--text2);
+  font-size: 12px;
+}
+.match-row .field-value {
+  flex: 1;
+  font-weight: 500;
+}
+.match-row .field-value .original {
+  color: var(--text3);
+  text-decoration: line-through;
+  font-size: 12px;
+  margin-left: 6px;
+}
+.match-row .match-tag {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+}
+.match-tag.exact { background: var(--green-light); color: #065f46; border: 1px solid var(--green-border); }
+.match-tag.fuzzy { background: var(--amber-light); color: #92400e; border: 1px solid var(--amber-border); }
+.match-tag.none { background: var(--red-light); color: #991b1b; border: 1px solid var(--red-border); }
+
+.product-match-item {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 8px;
+  position: relative;
+}
+.product-match-item:last-child { margin-bottom: 0; }
+.product-match-item .product-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.product-match-item .product-name {
+  font-weight: 600;
+  font-size: 14px;
+}
+.product-match-item .product-spec {
+  font-size: 12px;
+  color: var(--text2);
+  margin-bottom: 8px;
+}
+.product-match-item .product-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+.product-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.product-field label {
+  font-size: 10px;
+  color: var(--text3);
+  font-weight: 600;
+}
+.product-field input {
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 13px;
+  outline: none;
+  width: 100%;
+}
+.product-field input:focus { border-color: var(--primary); }
+
+.order-summary {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.order-summary .total-label {
+  font-size: 13px;
+  color: var(--text2);
+}
+.order-summary .total-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.order-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+.order-actions .btn { flex: 1; justify-content: center; padding: 10px; }
+
+.json-preview {
+  background: #1e293b;
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 12px;
+}
+.json-preview h4 {
+  color: #94a3b8;
+  font-size: 11px;
+  margin-bottom: 8px;
+}
+.json-preview pre {
+  color: #4ade80;
+  font-size: 11px;
+  font-family: 'SF Mono', Monaco, monospace;
+  overflow-x: auto;
+  line-height: 1.5;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.right-panel {
+  display: flex;
+  flex-direction: column;
+  background: #f8fafc;
+}
+.right-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.right-header .title {
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.right-header .title i { color: var(--primary); }
+.right-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.chat-placeholder {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--text3);
+  padding: 40px;
+}
+.chat-placeholder i { font-size: 48px; margin-bottom: 12px; display: block; opacity: 0.3; }
+.chat-placeholder p { font-size: 13px; line-height: 1.8; }
+
+.tips-box {
+  background: #fffbeb;
+  border: 1px solid var(--amber-border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 12px;
+  color: #92400e;
+  line-height: 1.7;
+  margin-bottom: 12px;
+}
+
+.log-area {
+  background: #1e293b;
+  color: #94a3b8;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  line-height: 1.6;
+  max-height: 140px;
+  overflow-y: auto;
+}
+.log-area::-webkit-scrollbar { width: 4px; }
+.log-area::-webkit-scrollbar-thumb { background: #475569; border-radius: 2px; }
+.log-area .log-time { color: #64748b; }
+.log-area .log-ok { color: #34d399; }
+.log-area .log-err { color: #f87171; }
+.log-area .log-info { color: #60a5fa; }
+
+.search-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.search-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  outline: none;
+}
+.search-input:focus { border-color: var(--primary); }
+.search-mode {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 12px;
+  background: white;
+  cursor: pointer;
+  outline: none;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.data-table th, .data-table td {
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid #f3f4f6;
+}
+.data-table th {
+  background: #f8fafc;
+  font-weight: 600;
+  font-size: 11px;
+  color: var(--text2);
+  position: sticky;
+  top: 0;
+}
+.data-table .pinyin { color: var(--primary); font-family: monospace; font-size: 11px; }
+.data-table .abbr { color: var(--purple); font-family: monospace; font-size: 11px; }
+
+.table-wrapper {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.table-wrapper::-webkit-scrollbar { width: 4px; }
+.table-wrapper::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 2px; }
+
+.result-stats {
+  font-size: 12px;
+  color: var(--text2);
+  margin-bottom: 8px;
+}
+.result-stats strong { color: var(--primary); }
+
+.progress-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.4);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.progress-overlay.active { display: flex; }
+.progress-card {
+  background: white;
+  border-radius: 16px;
+  padding: 28px;
+  width: 380px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+.progress-card h3 {
+  font-size: 15px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.progress-bar-outer {
+  width: 100%;
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+.progress-bar-inner {
+  height: 100%;
+  background: var(--gradient);
+  border-radius: 3px;
+  transition: width 0.3s;
+  width: 0%;
+}
+.progress-text {
+  font-size: 12px;
+  color: var(--text2);
+}
+
+.toast {
+  position: fixed;
+  top: 64px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  z-index: 2000;
+  opacity: 0;
+  transition: all 0.3s;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.success { background: var(--green); color: white; }
+.toast.error { background: var(--red); color: white; }
+.toast.info { background: var(--primary); color: white; }
+
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+.candidate-list {
+  max-height: 180px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-top: 6px;
+}
+.candidate-item {
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 13px;
+  transition: background 0.15s;
+}
+.candidate-item:last-child { border-bottom: none; }
+.candidate-item:hover { background: var(--primary-light); }
+.candidate-item .c-name { font-weight: 500; }
+.candidate-item .c-pinyin { font-size: 11px; color: var(--text3); font-family: monospace; }
+.candidate-item .c-score {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="logo"><i class="ri-file-list-3-line"></i></div>
+    <h1>智能制单</h1>
+    <span class="badge">拼音匹配集成版</span>
+  </div>
+  <div class="topbar-right">
+    <div class="data-status" id="dataStatusBadge">
+      <span class="dot red" id="dataDot"></span>
+      <span id="dataStatusText">未加载数据</span>
+    </div>
+    <span id="storageInfo">0 KB</span>
+  </div>
+</div>
+
+<div class="main-layout">
+  <div class="left-panel">
+    <div class="left-tabs">
+      <button class="left-tab active" onclick="switchLeftTab('order')"><i class="ri-file-list-3-line"></i> 制单</button>
+      <button class="left-tab" onclick="switchLeftTab('data')"><i class="ri-database-2-line"></i> 数据管理</button>
+      <button class="left-tab" onclick="switchLeftTab('query')"><i class="ri-search-line"></i> 拼音查询</button>
+    </div>
+    <div class="left-content">
+
+      <div class="tab-pane active" id="pane-order">
+        <div class="order-form" id="orderForm">
+          <div class="order-empty" id="orderEmpty">
+            <i class="ri-chat-smile-2-line"></i>
+            <p>在右侧与 AI 对话生成订单<br>或点击下方手动输入</p>
+            <div class="btn-row" style="justify-content:center;margin-top:16px;">
+              <button class="btn btn-outline btn-sm" onclick="showManualInput()"><i class="ri-edit-line"></i> 手动输入JSON</button>
+            </div>
+          </div>
+
+          <div id="orderContent" style="display:none;">
+            <div class="section">
+              <div class="section-header"><i class="ri-building-line"></i> 客户信息</div>
+              <div class="section-body">
+                <div id="customerMatchArea"></div>
+              </div>
+            </div>
+
+            <div class="section">
+              <div class="section-header"><i class="ri-shopping-bag-line"></i> 产品明细</div>
+              <div class="section-body" id="productMatchArea"></div>
+            </div>
+
+            <div class="section">
+              <div class="section-header"><i class="ri-information-line"></i> 其他信息</div>
+              <div class="section-body">
+                <div class="match-row">
+                  <span class="field-label">单据类型</span>
+                  <span class="field-value" id="orderDocType">-</span>
+                </div>
+                <div class="match-row">
+                  <span class="field-label">付款方式</span>
+                  <span class="field-value" id="orderPayment">-</span>
+                </div>
+                <div class="match-row">
+                  <span class="field-label">备注</span>
+                  <span class="field-value" id="orderRemark">-</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="order-summary">
+              <span class="total-label">订单总额</span>
+              <span class="total-value" id="orderTotal">¥0.00</span>
+            </div>
+
+            <div class="order-actions">
+              <button class="btn btn-outline" onclick="resetOrder()"><i class="ri-refresh-line"></i> 重新录入</button>
+              <button class="btn btn-primary" onclick="submitOrder()"><i class="ri-check-line"></i> 确认提交</button>
+            </div>
+
+            <div class="json-preview" id="jsonPreview">
+              <h4>原始 JSON</h4>
+              <pre id="jsonContent"></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-pane" id="pane-data">
+        <div class="section">
+          <div class="section-header"><i class="ri-plug-line"></i> 接口配置</div>
+          <div class="section-body">
+            <div style="background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:10px;font-size:11px;color:var(--text2);line-height:1.7;">
+              <div style="font-weight:600;color:var(--text);margin-bottom:4px;">接口地址</div>
+              <div style="font-family:monospace;color:var(--primary);">/system/api.xt</div>
+            </div>
+            <div class="config-row">
+              <input type="text" class="config-input" id="apiUrl" placeholder="API地址（默认 /system/api.xt）" value="/system/api.xt">
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-primary btn-block" onclick="fetchFullData()"><i class="ri-download-line"></i> 全量获取</button>
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-amber btn-block" onclick="fetchIncrementalData()"><i class="ri-refresh-line"></i> 增量获取</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-header"><i class="ri-database-2-line"></i> 数据状态</div>
+          <div class="section-body">
+            <div class="status-grid">
+              <div class="status-item">
+                <div class="label">客户数据</div>
+                <div class="value" id="customerCount">0</div>
+              </div>
+              <div class="status-item">
+                <div class="label">客户拼音</div>
+                <div class="value" id="customerPinyinCount">0</div>
+              </div>
+              <div class="status-item">
+                <div class="label">产品数据</div>
+                <div class="value" id="productCount">0</div>
+              </div>
+              <div class="status-item">
+                <div class="label">产品拼音</div>
+                <div class="value" id="productPinyinCount">0</div>
+              </div>
+            </div>
+            <div style="margin-top:8px;font-size:12px;color:var(--text2);">
+              最后同步：<span id="lastSync">-</span>
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-green btn-block" onclick="generateAllPinyin()"><i class="ri-translate-2"></i> 生成拼音</button>
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-outline btn-sm" onclick="exportJSON('customer')" style="flex:1"><i class="ri-file-download-line"></i> 导出客户</button>
+              <button class="btn btn-outline btn-sm" onclick="exportJSON('product')" style="flex:1"><i class="ri-file-download-line"></i> 导出产品</button>
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-outline btn-sm" onclick="importJSON()" style="flex:1"><i class="ri-file-upload-line"></i> 导入</button>
+              <button class="btn btn-outline btn-sm" onclick="loadDemoData()" style="flex:1"><i class="ri-flask-line"></i> 演示数据</button>
+              <button class="btn btn-red btn-sm" onclick="clearAllData()" style="flex:1"><i class="ri-delete-bin-line"></i> 清空</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-header"><i class="ri-terminal-box-line"></i> 操作日志</div>
+          <div class="section-body" style="padding:0;">
+            <div class="log-area" id="logArea"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-pane" id="pane-query">
+        <div class="search-bar">
+          <input type="text" class="search-input" id="queryInput" placeholder="输入拼音或中文搜索客户和产品..." oninput="doQuery()">
+          <select class="search-mode" id="queryType" onchange="doQuery()">
+            <option value="all">客户+产品</option>
+            <option value="customer">仅客户</option>
+            <option value="product">仅产品</option>
+          </select>
+        </div>
+        <div id="queryResults">
+          <div class="order-empty">
+            <i class="ri-search-line"></i>
+            <p>输入拼音或中文进行匹配查询<br>支持全拼、首字母、中文混合搜索</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="right-panel">
+    <div class="right-header">
+      <div class="title"><i class="ri-robot-line"></i> AI 对话</div>
+      <span id="cozeStatus" style="font-size:12px;color:var(--text3);">未连接</span>
+    </div>
+    <div class="right-body">
+      <div class="tips-box">
+        <strong>使用说明：</strong>填写 Bot ID 和 Token 后点击初始化，右下角出现聊天框。与 AI 对话后，左侧自动填充订单并匹配本地数据。
+      </div>
+
+      <div class="config-row">
+        <input type="text" class="config-input" id="botId" placeholder="Bot ID" value="7638933573109792777">
+      </div>
+      <div class="config-row">
+        <input type="password" class="config-input" id="token" placeholder="Personal Access Token" value="pat_zwWR14W4YEjLnqpD2BhItuhzKhC4VYH52oWfwYoeiB2Y9JuKBR1g1TfRzFDTbWQe">
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary btn-block" id="initBtn" onclick="initCoze()"><i class="ri-robot-line"></i> 初始化 Coze</button>
+      </div>
+
+      <div class="chat-placeholder" id="chatPlaceholder">
+        <div>
+          <i class="ri-robot-line"></i>
+          <p>初始化后聊天框出现在右下角</p>
+        </div>
+      </div>
+
+      <div class="section" style="margin-top:16px;">
+        <div class="section-header"><i class="ri-clipboard-line"></i> 剪贴板输入</div>
+        <div class="section-body">
+          <div style="font-size:12px;color:var(--text2);margin-bottom:8px;">从 Coze 聊天区复制 JSON 后，在页面任意位置 <strong>Ctrl+V / Cmd+V 粘贴</strong>即可自动解析匹配；也可粘贴到下方文本框</div>
+          <textarea id="clipboardInput" style="width:100%;height:80px;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:11px;font-family:monospace;resize:vertical;outline:none;" placeholder='粘贴JSON，如：{"doc_type":"销售订单","customer_name":"深圳华创","products":[...]}'></textarea>
+          <div class="btn-row">
+            <button class="btn btn-primary btn-block btn-sm" onclick="parseClipboardInput()"><i class="ri-clipboard-line"></i> 解析并匹配</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="progress-overlay" id="progressOverlay">
+  <div class="progress-card">
+    <h3><i class="ri-loader-4-line" style="animation:spin 1s linear infinite;"></i> <span id="progressTitle">处理中...</span></h3>
+    <div class="progress-bar-outer"><div class="progress-bar-inner" id="progressBar"></div></div>
+    <div class="progress-text" id="progressText">0 / 0</div>
+  </div>
+</div>
+
+<input type="file" id="importFileInput" accept=".json" style="display:none;" onchange="handleImportFile(event)">
+
+<script>
+var LS_KEY_CUSTOMER = 'pinyin_tool_customers';
+var LS_KEY_PRODUCT = 'pinyin_tool_products';
+var LS_KEY_PINYIN_CUSTOMER = 'pinyin_tool_customer_pinyin';
+var LS_KEY_PINYIN_PRODUCT = 'pinyin_tool_product_pinyin';
+var LS_KEY_SYNC_TIME = 'pinyin_tool_sync_time';
+
+var currentOrderData = null;
+var matchedCustomer = null;
+var matchedProducts = [];
+var cozeClient = null;
+var checkInterval = null;
+var currentLeftTab = 'order';
+
+function getStore(key, fallback) {
+  try { var raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }
+  catch (e) { return fallback; }
+}
+function setStore(key, data) {
+  try { localStorage.setItem(key, JSON.stringify(data)); }
+  catch (e) { log('存储空间不足', 'err'); }
+}
+function getCustomers() { return getStore(LS_KEY_CUSTOMER, []); }
+function getProducts() { return getStore(LS_KEY_PRODUCT, []); }
+function getCustomerPinyin() { return getStore(LS_KEY_PINYIN_CUSTOMER, {}); }
+function getProductPinyin() { return getStore(LS_KEY_PINYIN_PRODUCT, {}); }
+
+function log(msg, type) {
+  var area = document.getElementById('logArea');
+  var now = new Date();
+  var time = now.toTimeString().substring(0, 8);
+  var cls = type === 'ok' ? 'log-ok' : type === 'err' ? 'log-err' : type === 'info' ? 'log-info' : '';
+  area.innerHTML += '<div><span class="log-time">[' + time + ']</span> <span class="' + cls + '">' + msg + '</span></div>';
+  area.scrollTop = area.scrollHeight;
+}
+
+function showToast(msg, type) {
+  var t = document.createElement('div');
+  t.className = 'toast ' + (type || 'info');
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(function() { t.classList.add('show'); }, 10);
+  setTimeout(function() { t.classList.remove('show'); setTimeout(function() { t.remove(); }, 300); }, 2500);
+}
+
+function switchLeftTab(tab) {
+  currentLeftTab = tab;
+  document.querySelectorAll('.left-tab').forEach(function(t) {
+    var tabs = ['order', 'data', 'query'];
+    t.classList.toggle('active', tabs[Array.prototype.indexOf.call(t.parentElement.children, t)] === tab);
+  });
+  document.querySelectorAll('.tab-pane').forEach(function(p) {
+    p.classList.toggle('active', p.id === 'pane-' + tab);
+  });
+}
+
+function updateDataStatus() {
+  var customers = getCustomers();
+  var products = getProducts();
+  var cp = getCustomerPinyin();
+  var pp = getProductPinyin();
+  var cpCount = Object.keys(cp).length;
+  var ppCount = Object.keys(pp).length;
+
+  document.getElementById('customerCount').textContent = customers.length;
+  document.getElementById('customerPinyinCount').textContent = cpCount;
+  document.getElementById('customerPinyinCount').className = 'value' + (cpCount === customers.length && customers.length > 0 ? ' green' : cpCount > 0 ? ' amber' : '');
+  document.getElementById('productCount').textContent = products.length;
+  document.getElementById('productPinyinCount').textContent = ppCount;
+  document.getElementById('productPinyinCount').className = 'value' + (ppCount === products.length && products.length > 0 ? ' green' : ppCount > 0 ? ' amber' : '');
+  document.getElementById('lastSync').textContent = localStorage.getItem(LS_KEY_SYNC_TIME) || '-';
+
+  var hasData = customers.length > 0 || products.length > 0;
+  var hasPinyin = cpCount > 0 || ppCount > 0;
+  var dot = document.getElementById('dataDot');
+  var text = document.getElementById('dataStatusText');
+  if (hasData && hasPinyin) { dot.className = 'dot green'; text.textContent = '数据就绪'; }
+  else if (hasData) { dot.className = 'dot amber'; text.textContent = '需生成拼音'; }
+  else { dot.className = 'dot red'; text.textContent = '未加载数据'; }
+
+  var totalSize = 0;
+  for (var i = 0; i < localStorage.length; i++) {
+    var key = localStorage.key(i);
+    if (key && key.indexOf('pinyin_tool_') === 0) {
+      totalSize += localStorage.getItem(key).length * 2;
+    }
+  }
+  document.getElementById('storageInfo').textContent = (totalSize / 1024).toFixed(1) + ' KB';
+}
+
+function showProgress(title, current, total) {
+  document.getElementById('progressTitle').textContent = title;
+  var pct = total > 0 ? (current / total * 100) : 0;
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressText').textContent = current + ' / ' + total;
+}
+
+function generatePinyinForText(text) {
+  if (!text || typeof text !== 'string') return { full: '', abbr: '' };
+  try {
+    var segments = [];
+    var current = '';
+    var currentIsChinese = null;
+    for (var i = 0; i < text.length; i++) {
+      var ch = text.charAt(i);
+      var isChinese = /[\u4e00-\u9fff\u3400-\u4dbf]/.test(ch);
+      if (currentIsChinese === null) { currentIsChinese = isChinese; current = ch; }
+      else if (isChinese === currentIsChinese) { current += ch; }
+      else { segments.push({ text: current, isChinese: currentIsChinese }); current = ch; currentIsChinese = isChinese; }
+    }
+    if (current) segments.push({ text: current, isChinese: currentIsChinese });
+    var fullParts = [], abbrParts = [];
+    for (var j = 0; j < segments.length; j++) {
+      var seg = segments[j];
+      if (seg.isChinese) {
+        var py = pinyinPro.pinyin(seg.text, { toneType: 'none', type: 'array' });
+        for (var k = 0; k < py.length; k++) fullParts.push(py[k].toLowerCase());
+        var abbrPy = pinyinPro.pinyin(seg.text, { pattern: 'first', toneType: 'none', type: 'array' });
+        for (var k = 0; k < abbrPy.length; k++) abbrParts.push(abbrPy[k].toLowerCase());
+      } else {
+        var trimmed = seg.text.trim();
+        if (!trimmed) continue;
+        fullParts.push(trimmed.toLowerCase().replace(/\s+/g, '_'));
+        abbrParts.push(trimmed.toLowerCase().replace(/\s+/g, ''));
+      }
+    }
+    return { full: fullParts.join('_'), abbr: abbrParts.join('') };
+  } catch (e) { return { full: '', abbr: '' }; }
+}
+
+function matchByName(keyword, type) {
+  var kw = (keyword || '').trim().toLowerCase();
+  if (!kw) return [];
+  var kwPinyin = generatePinyinForText(keyword);
+  var kwFull = kwPinyin.full.toLowerCase();
+  var kwAbbr = kwPinyin.abbr.toLowerCase();
+  var results = [];
+
+  if (type === 'customer') {
+    var customers = getCustomers();
+    var cp = getCustomerPinyin();
+    customers.forEach(function(c) {
+      var py = cp[c.id];
+      if (!py) return;
+      var score = 0, matchType = '';
+      if (c.name && c.name.toLowerCase() === kw) { score = 100; matchType = '精确匹配'; }
+      else if (c.name && c.name.toLowerCase().indexOf(kw) !== -1) { score = 95; matchType = '中文包含'; }
+      else if (py.pinyin === kwFull) { score = 90; matchType = '全拼精确'; }
+      else if (py.pinyin_abbr === kwAbbr) { score = 85; matchType = '首字母精确'; }
+      else if (py.pinyin.indexOf(kw) !== -1 || py.pinyin.indexOf(kwFull) !== -1) { score = 75; matchType = '全拼包含'; }
+      else if (py.pinyin_abbr.indexOf(kw) !== -1 || py.pinyin_abbr.indexOf(kwAbbr) !== -1) { score = 65; matchType = '首字母包含'; }
+      if (score > 0) results.push({ id: c.id, name: c.name, pinyin: py.pinyin, abbr: py.pinyin_abbr, score: score, matchType: matchType });
+    });
+  } else {
+    var products = getProducts();
+    var pp = getProductPinyin();
+    products.forEach(function(p) {
+      var py = pp[p.id];
+      if (!py) return;
+      var combined = [p.name, p.model, p.spec].filter(function(s) { return s && s.trim(); }).join(' ');
+      var score = 0, matchType = '';
+      if (p.name && p.name.toLowerCase() === kw) { score = 100; matchType = '精确匹配'; }
+      else if (combined && combined.toLowerCase().indexOf(kw) !== -1) { score = 95; matchType = '中文包含'; }
+      else if (py.pinyin === kwFull) { score = 90; matchType = '全拼精确'; }
+      else if (py.pinyin_abbr === kwAbbr) { score = 85; matchType = '首字母精确'; }
+      else if (py.pinyin.indexOf(kw) !== -1 || py.pinyin.indexOf(kwFull) !== -1) { score = 75; matchType = '全拼包含'; }
+      else if (py.pinyin_abbr.indexOf(kw) !== -1 || py.pinyin_abbr.indexOf(kwAbbr) !== -1) { score = 65; matchType = '首字母包含'; }
+      if (score > 0) results.push({ id: p.id, name: p.name, model: p.model || '', spec: p.spec || '', pinyin: py.pinyin, abbr: py.pinyin_abbr, score: score, matchType: matchType });
+    });
+  }
+  results.sort(function(a, b) { return b.score - a.score; });
+  return results;
+}
+
+function fetchFullData() {
+  var apiUrl = document.getElementById('apiUrl').value.trim() || '/system/api.xt';
+  document.getElementById('progressOverlay').classList.add('active');
+  showProgress('正在获取数据...', 0, 2);
+  var customerParams = { cmd: 'load_data', dtname: 'customer', field: 'id,cu_name', flag: 1 };
+  var productParams = { cmd: 'load_data', dtname: 'product', field: 'id,pro_name,model,spec', flag: 1 };
+  fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(customerParams) })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var list = data.ok === 1 && data.data ? data.data : Array.isArray(data) ? data : data.data && Array.isArray(data.data) ? data.data : [];
+      var normalized = list.map(function(item) { return { id: item.id, name: item.cu_name || item.name || '' }; });
+      setStore(LS_KEY_CUSTOMER, normalized);
+      log('客户全量获取：' + normalized.length + ' 条', 'ok');
+      showProgress('正在获取数据...', 1, 2);
+      return fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(productParams) }).then(function(r) { return r.json(); });
+    })
+    .then(function(data) {
+      var list = data.ok === 1 && data.data ? data.data : Array.isArray(data) ? data.data : data.data && Array.isArray(data.data) ? data.data : [];
+      var normalized = list.map(function(item) { return { id: item.id, name: item.pro_name || item.name || '', model: item.model || '', spec: item.spec || '' }; });
+      setStore(LS_KEY_PRODUCT, normalized);
+      log('产品全量获取：' + normalized.length + ' 条', 'ok');
+      showProgress('正在获取数据...', 2, 2);
+    })
+    .catch(function(e) { log('获取失败：' + e.message, 'err'); })
+    .then(function() {
+      localStorage.setItem(LS_KEY_SYNC_TIME, new Date().toLocaleString());
+      document.getElementById('progressOverlay').classList.remove('active');
+      updateDataStatus();
+      showToast('数据获取完成', 'success');
+    });
+}
+
+function fetchIncrementalData() {
+  var apiUrl = document.getElementById('apiUrl').value.trim() || '/system/api.xt';
+  document.getElementById('progressOverlay').classList.add('active');
+  showProgress('增量获取...', 0, 2);
+  var customerParams = { cmd: 'load_data', dtname: 'customer', field: 'id,cu_name', flag: 1 };
+  var productParams = { cmd: 'load_data', dtname: 'product', field: 'id,pro_name,model,spec', flag: 1 };
+  fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(customerParams) })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var list = data.ok === 1 && data.data ? data.data : [];
+      var normalized = list.map(function(item) { return { id: item.id, name: item.cu_name || item.name || '' }; });
+      var existing = getCustomers();
+      var map = {};
+      existing.forEach(function(c) { map[c.id] = c; });
+      normalized.forEach(function(c) { map[c.id] = c; });
+      var merged = Object.values(map);
+      setStore(LS_KEY_CUSTOMER, merged);
+      log('客户增量：合并后 ' + merged.length + ' 条', 'ok');
+      showProgress('增量获取...', 1, 2);
+      return fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(productParams) }).then(function(r) { return r.json(); });
+    })
+    .then(function(data) {
+      var list = data.ok === 1 && data.data ? data.data : [];
+      var normalized = list.map(function(item) { return { id: item.id, name: item.pro_name || item.name || '', model: item.model || '', spec: item.spec || '' }; });
+      var existing = getProducts();
+      var map = {};
+      existing.forEach(function(p) { map[p.id] = p; });
+      normalized.forEach(function(p) { map[p.id] = p; });
+      var merged = Object.values(map);
+      setStore(LS_KEY_PRODUCT, merged);
+      log('产品增量：合并后 ' + merged.length + ' 条', 'ok');
+      showProgress('增量获取...', 2, 2);
+    })
+    .catch(function(e) { log('增量获取失败：' + e.message, 'err'); })
+    .then(function() {
+      localStorage.setItem(LS_KEY_SYNC_TIME, new Date().toLocaleString());
+      document.getElementById('progressOverlay').classList.remove('active');
+      updateDataStatus();
+      showToast('增量获取完成', 'success');
+    });
+}
+
+function generateAllPinyin() {
+  var customers = getCustomers();
+  var products = getProducts();
+  var total = customers.length + products.length;
+  if (total === 0) { showToast('暂无数据', 'error'); return; }
+  document.getElementById('progressOverlay').classList.add('active');
+  var cp = getCustomerPinyin();
+  var pp = getProductPinyin();
+  var batchSize = 200;
+  var idx = 0;
+  function processBatch() {
+    var end = Math.min(idx + batchSize, total);
+    for (var i = idx; i < end; i++) {
+      if (i < customers.length) {
+        var c = customers[i];
+        var py = generatePinyinForText(c.name);
+        cp[c.id] = { id: c.id, name: c.name, pinyin: py.full, pinyin_abbr: py.abbr };
+      } else {
+        var pi = i - customers.length;
+        var p = products[pi];
+        var combined = [p.name, p.model, p.spec].filter(function(s) { return s && s.trim(); }).join(' ');
+        var py = generatePinyinForText(combined);
+        pp[p.id] = { id: p.id, name: p.name, model: p.model || '', spec: p.spec || '', pinyin: py.full, pinyin_abbr: py.abbr };
+      }
+    }
+    idx = end;
+    showProgress('生成拼音...', idx, total);
+    if (idx < total) { setTimeout(processBatch, 50); }
+    else {
+      setStore(LS_KEY_PINYIN_CUSTOMER, cp);
+      setStore(LS_KEY_PINYIN_PRODUCT, pp);
+      document.getElementById('progressOverlay').classList.remove('active');
+      log('拼音生成完成', 'ok');
+      updateDataStatus();
+      showToast('拼音生成完成', 'success');
+    }
+  }
+  processBatch();
+}
+
+function exportJSON(type) {
+  var data, filename;
+  if (type === 'customer') {
+    data = { customers: getCustomers(), pinyin: getCustomerPinyin(), exportedAt: new Date().toISOString() };
+    filename = 'customer_pinyin_' + new Date().toISOString().slice(0, 10) + '.json';
+  } else {
+    data = { products: getProducts(), pinyin: getProductPinyin(), exportedAt: new Date().toISOString().slice(0, 10) };
+    filename = 'product_pinyin_' + new Date().toISOString().slice(0, 10) + '.json';
+  }
+  var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  log('已导出 ' + filename, 'ok');
+}
+
+function importJSON() { document.getElementById('importFileInput').click(); }
+function handleImportFile(event) {
+  var file = event.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var data = JSON.parse(e.target.result);
+      if (data.customers) { setStore(LS_KEY_CUSTOMER, data.customers); log('导入客户：' + data.customers.length + ' 条', 'ok'); }
+      if (data.products) { setStore(LS_KEY_PRODUCT, data.products); log('导入产品：' + data.products.length + ' 条', 'ok'); }
+      if (data.pinyin) {
+        if (data.customers) setStore(LS_KEY_PINYIN_CUSTOMER, data.pinyin);
+        if (data.products) setStore(LS_KEY_PINYIN_PRODUCT, data.pinyin);
+        log('导入拼音：' + Object.keys(data.pinyin).length + ' 条', 'ok');
+      }
+      updateDataStatus();
+      showToast('导入成功', 'success');
+    } catch (err) { log('导入失败：' + err.message, 'err'); showToast('JSON格式错误', 'error'); }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function loadDemoData() {
+  var demoCustomers = [
+    { id: 'C001', name: '深圳华创科技有限公司' },
+    { id: 'C002', name: '广州明达电子有限公司' },
+    { id: 'C003', name: '上海瑞丰贸易有限公司' },
+    { id: 'C004', name: '北京中科智能设备有限公司' },
+    { id: 'C005', name: '东莞恒信五金制品厂' },
+    { id: 'C006', name: '杭州云联信息技术有限公司' },
+    { id: 'C007', name: '成都博远电气有限公司' },
+    { id: 'C008', name: '武汉光谷激光科技有限公司' }
+  ];
+  var demoProducts = [
+    { id: 'P001', name: 'A3打印纸', model: 'A3', spec: '70g 500张/包' },
+    { id: 'P002', name: '无线鼠标', model: 'M220', spec: '2.4G 静音' },
+    { id: 'P003', name: 'LED灯珠', model: '5050', spec: '白光 6000K' },
+    { id: 'P004', name: '电容', model: 'C0805', spec: '1μF 50V' },
+    { id: 'P005', name: '电阻', model: 'R0603', spec: '10kΩ 1%' },
+    { id: 'P006', name: '不锈钢螺丝', model: 'M8', spec: '10mm 十字' },
+    { id: 'P007', name: 'PVC管材', model: 'DN50', spec: '4m/根' },
+    { id: 'P008', name: '电缆', model: 'RVV3×2.5', spec: '100m/卷' },
+    { id: 'P009', name: '惠普墨盒', model: '680', spec: '黑色' },
+    { id: 'P010', name: '锂电池', model: '18650', spec: '3.7V 2600mAh' }
+  ];
+  setStore(LS_KEY_CUSTOMER, demoCustomers);
+  setStore(LS_KEY_PRODUCT, demoProducts);
+  localStorage.setItem(LS_KEY_SYNC_TIME, new Date().toLocaleString());
+  log('演示数据已加载：客户 ' + demoCustomers.length + ' 条，产品 ' + demoProducts.length + ' 条', 'ok');
+  updateDataStatus();
+  generateAllPinyin();
+}
+
+function clearAllData() {
+  if (!confirm('确定清空所有本地数据？')) return;
+  localStorage.removeItem(LS_KEY_CUSTOMER);
+  localStorage.removeItem(LS_KEY_PRODUCT);
+  localStorage.removeItem(LS_KEY_PINYIN_CUSTOMER);
+  localStorage.removeItem(LS_KEY_PINYIN_PRODUCT);
+  localStorage.removeItem(LS_KEY_SYNC_TIME);
+  log('数据已清空', 'info');
+  updateDataStatus();
+  showToast('数据已清空', 'info');
+}
+
+function doQuery() {
+  var keyword = document.getElementById('queryInput').value.trim();
+  var type = document.getElementById('queryType').value;
+  var container = document.getElementById('queryResults');
+  if (!keyword) {
+    container.innerHTML = '<div class="order-empty"><i class="ri-search-line"></i><p>输入拼音或中文进行匹配查询</p></div>';
+    return;
+  }
+  var results = [];
+  if (type === 'all' || type === 'customer') {
+    matchByName(keyword, 'customer').forEach(function(r) { r._type = 'customer'; results.push(r); });
+  }
+  if (type === 'all' || type === 'product') {
+    matchByName(keyword, 'product').forEach(function(r) { r._type = 'product'; results.push(r); });
+  }
+  results.sort(function(a, b) { return b.score - a.score; });
+  if (results.length === 0) {
+    container.innerHTML = '<div class="order-empty"><i class="ri-search-line"></i><p>未找到匹配结果</p></div>';
+    return;
+  }
+  var html = '<div class="result-stats">找到 <strong>' + results.length + '</strong> 条匹配</div>';
+  html += '<div class="table-wrapper"><table class="data-table"><thead><tr>';
+  html += '<th>类型</th><th>名称</th><th>全拼</th><th>首字母</th><th>匹配</th><th>得分</th>';
+  html += '</tr></thead><tbody>';
+  results.forEach(function(r) {
+    var typeLabel = r._type === 'customer' ? '<span style="color:var(--primary);"><i class="ri-building-line"></i> 客户</span>' : '<span style="color:var(--green);"><i class="ri-shopping-bag-line"></i> 产品</span>';
+    html += '<tr><td>' + typeLabel + '</td><td>' + r.name + '</td><td class="pinyin">' + r.pinyin + '</td><td class="abbr">' + r.abbr + '</td>';
+    html += '<td><span class="match-tag ' + (r.score >= 90 ? 'exact' : r.score >= 70 ? 'fuzzy' : 'none') + '">' + r.matchType + '</span></td>';
+    html += '<td style="font-weight:600;color:' + (r.score >= 90 ? 'var(--green)' : r.score >= 70 ? 'var(--amber)' : 'var(--text3)') + ';">' + r.score + '</td></tr>';
+  });
+  html += '</tbody></table></div>';
+  container.innerHTML = html;
+}
+
+function initCoze() {
+  var botId = document.getElementById('botId').value.trim();
+  var token = document.getElementById('token').value.trim();
+  if (!botId || !token) { alert('请填写 Bot ID 和 Token'); return; }
+  var btn = document.getElementById('initBtn');
+  btn.disabled = true;
+  btn.textContent = '初始化中...';
+  try {
+    if (typeof CozeWebSDK === 'undefined') throw new Error('Coze SDK 未加载');
+    if (cozeClient) { try { cozeClient.destroy(); } catch (e) {} }
+    cozeClient = new CozeWebSDK.WebChatClient({
+      config: { type: 'bot', botId: botId, isIframe: false },
+      auth: { type: 'token', token: token, onRefreshToken: function() { return token; } }
+    });
+    document.getElementById('cozeStatus').textContent = '已连接';
+    document.getElementById('cozeStatus').style.color = 'var(--green)';
+    btn.textContent = '已初始化';
+    btn.style.background = 'var(--green)';
+    document.getElementById('chatPlaceholder').style.display = 'none';
+    setTimeout(function() { startCheckingMessages(); }, 1000);
+    log('Coze SDK 初始化成功', 'ok');
+  } catch (error) {
+    log('初始化失败：' + error.message, 'err');
+    alert('初始化失败: ' + error.message);
+    btn.disabled = false;
+    btn.textContent = '初始化 Coze';
+  }
+}
+
+function startCheckingMessages() {
+  if (checkInterval) clearInterval(checkInterval);
+  checkInterval = setInterval(function() { checkForJSON(); }, 1500);
+  startMutationObserver();
+}
+
+var lastExtractedJSON = '';
+var lastExtractTime = 0;
+
+function checkForJSON() {
+  var cozeElements = document.querySelectorAll('[class*="coze"], [class*="coz-"]');
+  var chatTexts = [];
+  cozeElements.forEach(function(el) {
+    var msgEls = el.querySelectorAll('[class*="message"], [class*="msg"], [class*="bubble"], [class*="content"], [class*="text"], [class*="markdown"]');
+    msgEls.forEach(function(m) { chatTexts.push(m.innerText); });
+  });
+  if (chatTexts.length === 0) {
+    chatTexts.push(document.body.innerText);
+  }
+  var combinedText = chatTexts.join('\n');
+  var json = extractJSON(combinedText);
+  if (json) {
+    var jsonStr = JSON.stringify(json);
+    var now = Date.now();
+    if (jsonStr !== lastExtractedJSON || now - lastExtractTime > 10000) {
+      lastExtractedJSON = jsonStr;
+      lastExtractTime = now;
+      handleOrderJSON(json);
+    }
+  }
+}
+
+function startMutationObserver() {
+  var observer = new MutationObserver(function(mutations) {
+    var hasNewContent = false;
+    for (var i = 0; i < mutations.length; i++) {
+      if (mutations[i].addedNodes.length > 0) {
+        for (var j = 0; j < mutations[i].addedNodes.length; j++) {
+          var node = mutations[i].addedNodes[j];
+          if (node.nodeType === 1) {
+            var cls = node.className || '';
+            if (typeof cls === 'string' && (cls.indexOf('coze') !== -1 || cls.indexOf('coz-') !== -1)) {
+              hasNewContent = true;
+              break;
+            }
+            var children = node.querySelectorAll('[class*="coze"], [class*="coz-"]');
+            if (children.length > 0) { hasNewContent = true; break; }
+          }
+        }
+      }
+      if (hasNewContent) break;
+    }
+    if (hasNewContent) {
+      setTimeout(function() { checkForJSON(); }, 500);
+    }
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+  log('MutationObserver 已启动，监听 Coze 消息变化', 'info');
+}
+
+document.addEventListener('paste', function(e) {
+  var clipboardText = '';
+  if (e.clipboardData && e.clipboardData.getData) {
+    clipboardText = e.clipboardData.getData('text/plain');
+  }
+  if (!clipboardText || clipboardText.trim().length < 10) return;
+
+  var json = extractJSON(clipboardText);
+  if (json) {
+    log('检测到剪贴板粘贴的 JSON 数据', 'ok');
+    var jsonStr = JSON.stringify(json);
+    var now = Date.now();
+    if (jsonStr !== lastExtractedJSON || now - lastExtractTime > 3000) {
+      lastExtractedJSON = jsonStr;
+      lastExtractTime = now;
+      handleOrderJSON(json);
+      showToast('已从剪贴板捕获 JSON 并匹配', 'success');
+    }
+    if (e.target && e.target.id === 'clipboardInput') {
+      e.preventDefault();
+      document.getElementById('clipboardInput').value = clipboardText;
+    }
+  }
+}, true);
+
+document.getElementById('clipboardInput').addEventListener('input', function() {
+  var text = this.value.trim();
+  if (text.length < 10) return;
+  var json = extractJSON(text);
+  if (json) {
+    var jsonStr = JSON.stringify(json);
+    var now = Date.now();
+    if (jsonStr !== lastExtractedJSON || now - lastExtractTime > 3000) {
+      lastExtractedJSON = jsonStr;
+      lastExtractTime = now;
+      handleOrderJSON(json);
+      showToast('JSON 已自动解析并匹配', 'success');
+    }
+  }
+});
+
+function extractJSON(text) {
+  if (!text || typeof text !== 'string') return null;
+  text = text.trim();
+
+  try {
+    var obj = JSON.parse(text);
+    if (obj && (obj.doc_type || obj.customer_name || obj.products)) return obj;
+  } catch (e) {}
+
+  var codeBlockPatterns = [
+    /```json\s*([\s\S]*?)```/,
+    /```\s*([\s\S]*?)```/
+  ];
+  for (var i = 0; i < codeBlockPatterns.length; i++) {
+    var match = text.match(codeBlockPatterns[i]);
+    if (match && match[1]) {
+      try {
+        var obj = JSON.parse(match[1].trim());
+        if (obj && (obj.doc_type || obj.customer_name || obj.products)) return obj;
+      } catch (e) { continue; }
+    }
+  }
+
+  var jsonCandidate = text;
+  var startIdx = jsonCandidate.indexOf('{');
+  if (startIdx === -1) return null;
+  jsonCandidate = jsonCandidate.substring(startIdx);
+
+  var depth = 0;
+  var endIdx = -1;
+  for (var i = 0; i < jsonCandidate.length; i++) {
+    if (jsonCandidate[i] === '{') depth++;
+    else if (jsonCandidate[i] === '}') depth--;
+    if (depth === 0) { endIdx = i + 1; break; }
+  }
+  if (endIdx === -1) return null;
+
+  var candidate = jsonCandidate.substring(0, endIdx);
+  try {
+    var obj = JSON.parse(candidate);
+    if (obj && (obj.doc_type || obj.customer_name || obj.products)) return obj;
+  } catch (e) {}
+
+  if (endIdx < jsonCandidate.length) {
+    var rest = jsonCandidate.substring(endIdx);
+    var nextJson = extractJSON(rest);
+    if (nextJson) return nextJson;
+  }
+
+  return null;
+}
+
+function parseClipboardInput() {
+  var text = document.getElementById('clipboardInput').value.trim();
+  if (!text) { showToast('请输入JSON', 'error'); return; }
+  try {
+    var obj = JSON.parse(text);
+    if (obj.doc_type || obj.customer_name || obj.products) {
+      handleOrderJSON(obj);
+      showToast('解析成功', 'success');
+    } else {
+      showToast('JSON格式不正确', 'error');
+    }
+  } catch (e) {
+    var extracted = extractJSON(text);
+    if (extracted) {
+      handleOrderJSON(extracted);
+      showToast('解析成功', 'success');
+    } else {
+      showToast('JSON解析失败：' + e.message, 'error');
+    }
+  }
+}
+
+function showManualInput() {
+  switchLeftTab('order');
+  document.getElementById('orderEmpty').style.display = 'none';
+  document.getElementById('orderContent').style.display = 'block';
+  document.getElementById('customerMatchArea').innerHTML =
+    '<div class="match-row"><span class="field-label">客户名称</span><input type="text" class="config-input" id="manualCustomerName" placeholder="输入客户名称后自动匹配" oninput="manualMatchCustomer()" style="flex:1;"></div>' +
+    '<div id="manualCustomerCandidates"></div>';
+  document.getElementById('productMatchArea').innerHTML =
+    '<div class="product-match-item"><div class="product-fields">' +
+    '<div class="product-field"><label>产品名称</label><input type="text" id="manualProductName" placeholder="输入产品名称" oninput="manualMatchProduct()" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;"></div>' +
+    '<div class="product-field"><label>规格</label><input type="text" id="manualProductSpec" placeholder="规格型号" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;"></div>' +
+    '<div class="product-field"><label>数量</label><input type="number" id="manualProductQty" placeholder="0" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;"></div>' +
+    '</div></div><div id="manualProductCandidates"></div>';
+  document.getElementById('orderDocType').textContent = '销售订单';
+  document.getElementById('orderPayment').textContent = '-';
+  document.getElementById('orderRemark').textContent = '-';
+}
+
+function manualMatchCustomer() {
+  var name = document.getElementById('manualCustomerName').value.trim();
+  var container = document.getElementById('manualCustomerCandidates');
+  if (!name) { container.innerHTML = ''; return; }
+  var results = matchByName(name, 'customer').slice(0, 5);
+  if (results.length === 0) {
+    container.innerHTML = '<div style="padding:8px;font-size:12px;color:var(--text3);">未找到匹配客户</div>';
+    return;
+  }
+  var html = '<div class="candidate-list">';
+  results.forEach(function(r) {
+    html += '<div class="candidate-item" onclick="selectCandidateCustomer(\'' + r.id + '\',\'' + r.name.replace(/'/g, "\\'") + '\')">';
+    html += '<div><span class="c-name">' + r.name + '</span><br><span class="c-pinyin">' + r.pinyin + '</span></div>';
+    html += '<span class="c-score match-tag ' + (r.score >= 90 ? 'exact' : 'fuzzy') + '">' + r.matchType + ' ' + r.score + '</span>';
+    html += '</div>';
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function selectCandidateCustomer(id, name) {
+  document.getElementById('manualCustomerName').value = name;
+  document.getElementById('manualCustomerCandidates').innerHTML = '';
+  matchedCustomer = { id: id, name: name };
+  showToast('已选择客户：' + name, 'success');
+}
+
+function manualMatchProduct() {
+  var name = document.getElementById('manualProductName').value.trim();
+  var container = document.getElementById('manualProductCandidates');
+  if (!name) { container.innerHTML = ''; return; }
+  var results = matchByName(name, 'product').slice(0, 5);
+  if (results.length === 0) {
+    container.innerHTML = '<div style="padding:8px;font-size:12px;color:var(--text3);">未找到匹配产品</div>';
+    return;
+  }
+  var html = '<div class="candidate-list">';
+  results.forEach(function(r) {
+    html += '<div class="candidate-item" onclick="selectCandidateProduct(\'' + r.id + '\',\'' + r.name.replace(/'/g, "\\'") + '\',\'' + (r.model || '').replace(/'/g, "\\'") + '\',\'' + (r.spec || '').replace(/'/g, "\\'") + '\')">';
+    html += '<div><span class="c-name">' + r.name + '</span>' + (r.spec ? ' <span class="c-pinyin">' + r.spec + '</span>' : '') + '</div>';
+    html += '<span class="c-score match-tag ' + (r.score >= 90 ? 'exact' : 'fuzzy') + '">' + r.matchType + ' ' + r.score + '</span>';
+    html += '</div>';
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function selectCandidateProduct(id, name, model, spec) {
+  document.getElementById('manualProductName').value = name;
+  if (spec) document.getElementById('manualProductSpec').value = spec;
+  document.getElementById('manualProductCandidates').innerHTML = '';
+  showToast('已选择产品：' + name, 'success');
+}
+
+function handleOrderJSON(data) {
+  currentOrderData = data;
+  matchedCustomer = null;
+  matchedProducts = [];
+
+  document.getElementById('orderEmpty').style.display = 'none';
+  document.getElementById('orderContent').style.display = 'block';
+
+  if (data.customer_name) {
+    var customerResults = matchByName(data.customer_name, 'customer');
+    matchedCustomer = customerResults.length > 0 ? customerResults[0] : null;
+    renderCustomerMatch(data.customer_name, customerResults);
+  }
+
+  if (data.products && data.products.length > 0) {
+    matchedProducts = [];
+    var productHtml = '';
+    data.products.forEach(function(p, idx) {
+      var productResults = matchByName(p.name, 'product');
+      var bestMatch = productResults.length > 0 ? productResults[0] : null;
+      matchedProducts.push(bestMatch);
+      productHtml += renderProductMatchItem(p, idx, bestMatch, productResults);
+    });
+    document.getElementById('productMatchArea').innerHTML = productHtml;
+  }
+
+  document.getElementById('orderDocType').textContent = data.doc_type || '-';
+  document.getElementById('orderPayment').textContent = data.payment_term || '-';
+  document.getElementById('orderRemark').textContent = data.remark || '-';
+
+  calculateTotal();
+
+  document.getElementById('jsonPreview').style.display = 'block';
+  document.getElementById('jsonContent').textContent = JSON.stringify(data, null, 2);
+
+  switchLeftTab('order');
+  log('订单JSON已解析，客户匹配：' + (matchedCustomer ? matchedCustomer.name + ' (' + matchedCustomer.matchType + ')' : '未匹配'), matchedCustomer ? 'ok' : 'err');
+}
+
+function renderCustomerMatch(originalName, results) {
+  var area = document.getElementById('customerMatchArea');
+  var best = results.length > 0 ? results[0] : null;
+  var isMatched = best && best.score >= 70;
+  var html = '<div class="match-card ' + (isMatched ? 'matched' : 'unmatched') + '">';
+  html += '<div class="match-card-header">';
+  html += '<span><i class="ri-building-line"></i> ' + (isMatched ? '已匹配' : '未匹配') + '</span>';
+  if (best) html += '<span class="match-tag ' + (best.score >= 90 ? 'exact' : 'fuzzy') + '">' + best.matchType + ' ' + best.score + '</span>';
+  html += '</div>';
+  html += '<div class="match-card-body">';
+  html += '<div class="match-row"><span class="field-label">AI识别</span><span class="field-value">' + originalName + '</span></div>';
+  if (best) {
+    html += '<div class="match-row"><span class="field-label">匹配结果</span><span class="field-value" style="font-weight:600;color:var(--green);">' + best.name + '</span></div>';
+    html += '<div class="match-row"><span class="field-label">拼音</span><span class="field-value" style="font-family:monospace;font-size:12px;color:var(--primary);">' + best.pinyin + '</span></div>';
+  }
+  if (results.length > 1) {
+    html += '<div style="margin-top:8px;font-size:12px;color:var(--text2);">其他候选：</div>';
+    html += '<div class="candidate-list">';
+    results.slice(1, 5).forEach(function(r) {
+      html += '<div class="candidate-item" onclick="switchCustomerMatch(\'' + r.id + '\',\'' + r.name.replace(/'/g, "\\'") + '\')">';
+      html += '<div><span class="c-name">' + r.name + '</span><br><span class="c-pinyin">' + r.pinyin + '</span></div>';
+      html += '<span class="c-score match-tag ' + (r.score >= 90 ? 'exact' : 'fuzzy') + '">' + r.matchType + ' ' + r.score + '</span>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+  html += '</div></div>';
+  area.innerHTML = html;
+}
+
+function switchCustomerMatch(id, name) {
+  matchedCustomer = { id: id, name: name };
+  showToast('已切换客户：' + name, 'success');
+  if (currentOrderData) {
+    var results = matchByName(currentOrderData.customer_name, 'customer');
+    var newResults = results.filter(function(r) { return r.id !== id; });
+    var selected = results.filter(function(r) { return r.id === id; });
+    renderCustomerMatch(currentOrderData.customer_name, selected.concat(newResults));
+  }
+}
+
+function renderProductMatchItem(product, idx, bestMatch, allResults) {
+  var isMatched = bestMatch && bestMatch.score >= 70;
+  var html = '<div class="product-match-item" style="border-color:' + (isMatched ? 'var(--green-border)' : 'var(--amber-border)') + ';">';
+  html += '<div class="product-header">';
+  html += '<span class="product-name">' + (product.name || '-') + '</span>';
+  if (bestMatch) html += '<span class="match-tag ' + (bestMatch.score >= 90 ? 'exact' : 'fuzzy') + '">' + bestMatch.matchType + ' ' + bestMatch.score + '</span>';
+  else html += '<span class="match-tag none">未匹配</span>';
+  html += '</div>';
+  if (product.spec) html += '<div class="product-spec">规格：' + product.spec + '</div>';
+  if (bestMatch && bestMatch.name !== product.name) {
+    html += '<div style="font-size:12px;color:var(--green);margin-bottom:6px;"><i class="ri-link"></i> 匹配到：' + bestMatch.name + (bestMatch.spec ? ' (' + bestMatch.spec + ')' : '') + '</div>';
+  }
+  html += '<div class="product-fields">';
+  html += '<div class="product-field"><label>数量</label><input type="number" value="' + (product.qty || 0) + '" onchange="calculateTotal()" data-idx="' + idx + '" class="qty-field"></div>';
+  html += '<div class="product-field"><label>单位</label><input type="text" value="' + (product.unit || '') + '" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;"></div>';
+  html += '<div class="product-field"><label>单价</label><input type="number" value="' + (product.price || 0) + '" onchange="calculateTotal()" data-idx="' + idx + '" class="price-field"></div>';
+  html += '</div>';
+  if (allResults && allResults.length > 1) {
+    html += '<div style="margin-top:6px;"><div style="font-size:11px;color:var(--text3);cursor:pointer;" onclick="toggleCandidates(' + idx + ')"><i class="ri-arrow-down-s-line"></i> 其他候选 (' + (allResults.length - 1) + ')</div>';
+    html += '<div class="candidate-list" id="candidates-' + idx + '" style="display:none;">';
+    allResults.slice(1, 5).forEach(function(r) {
+      html += '<div class="candidate-item">';
+      html += '<div><span class="c-name">' + r.name + '</span>' + (r.spec ? '<br><span class="c-pinyin">' + r.spec + '</span>' : '') + '</div>';
+      html += '<span class="c-score match-tag ' + (r.score >= 90 ? 'exact' : 'fuzzy') + '">' + r.matchType + ' ' + r.score + '</span>';
+      html += '</div>';
+    });
+    html += '</div></div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function toggleCandidates(idx) {
+  var el = document.getElementById('candidates-' + idx);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function calculateTotal() {
+  var total = 0;
+  var qtyFields = document.querySelectorAll('.qty-field');
+  var priceFields = document.querySelectorAll('.price-field');
+  qtyFields.forEach(function(qf, i) {
+    var qty = parseFloat(qf.value) || 0;
+    var price = parseFloat(priceFields[i] ? priceFields[i].value : 0) || 0;
+    total += qty * price;
+  });
+  document.getElementById('orderTotal').textContent = '¥' + total.toFixed(2);
+}
+
+function resetOrder() {
+  currentOrderData = null;
+  matchedCustomer = null;
+  matchedProducts = [];
+  document.getElementById('orderEmpty').style.display = 'block';
+  document.getElementById('orderContent').style.display = 'none';
+  document.getElementById('clipboardInput').value = '';
+}
+
+function submitOrder() {
+  if (!currentOrderData) { showToast('暂无订单数据', 'error'); return; }
+  var summary = '客户：' + (matchedCustomer ? matchedCustomer.name : (currentOrderData.customer_name || '未匹配'));
+  summary += '\n产品：' + (currentOrderData.products ? currentOrderData.products.length : 0) + ' 项';
+  summary += '\n总额：' + document.getElementById('orderTotal').textContent;
+  alert('订单提交确认\n\n' + summary + '\n\n（原型演示，实际将调用后端API）');
+  showToast('订单已提交（演示）', 'success');
+}
+
+updateDataStatus();
+log('智能制单 - 拼音匹配集成版已就绪', 'info');
+log('pinyin-pro：' + (typeof pinyinPro !== 'undefined' ? '已加载' : '未加载'), typeof pinyinPro !== 'undefined' ? 'ok' : 'err');
+log('Coze SDK：' + (typeof CozeWebSDK !== 'undefined' ? '已加载' : '未加载'), typeof CozeWebSDK !== 'undefined' ? 'ok' : 'err');
+</script>
+</body>
+</html>

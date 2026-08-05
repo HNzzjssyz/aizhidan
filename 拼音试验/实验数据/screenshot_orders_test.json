@@ -1,0 +1,727 @@
+{
+  "description": "模拟截图订单数据 - 用于拼音匹配实验测试（多产品订单）",
+  "generatedAt": "2026-05-16T08:50:37.753916",
+  "totalOrders": 15,
+  "data": [
+    {
+      "id": "SS-001",
+      "date": "2026-05-18",
+      "order_no": "ORD20260518001",
+      "customer_name": "南海装饰材料有限公司",
+      "customer_id": "5722",
+      "contact": "刘总",
+      "phone": "18507437181",
+      "address": "广州市天河区天河路385号",
+      "remark": "加急",
+      "products": [
+        {
+          "product_id": "100",
+          "name": "烟雾报警器",
+          "model": "",
+          "spec": "-",
+          "qty": 25,
+          "unit": "件",
+          "price": 49268.47,
+          "amount": 1231711.75
+        },
+        {
+          "product_id": "33",
+          "name": "三星画面分割器",
+          "model": "SOMC-420T",
+          "spec": "-",
+          "qty": 28,
+          "unit": "台",
+          "price": 43390.94,
+          "amount": 1214946.32
+        },
+        {
+          "product_id": "78",
+          "name": "岡祈家用智能燃气报警器",
+          "model": "HM-710",
+          "spec": "-",
+          "qty": 13,
+          "unit": "件",
+          "price": 22943.81,
+          "amount": 298269.53
+        }
+      ],
+      "total_amount": 2744927.6
+    },
+    {
+      "id": "SS-002",
+      "date": "2026-05-19",
+      "order_no": "ORD20260519002",
+      "customer_name": "北京安助置业地产公司",
+      "customer_id": "76",
+      "contact": "赵主任",
+      "phone": "13699251800",
+      "address": "广州市天河区天河路385号",
+      "remark": "",
+      "products": [
+        {
+          "product_id": "50",
+          "name": "防护服",
+          "model": "3M白",
+          "spec": "-",
+          "qty": 18,
+          "unit": "台",
+          "price": 8588.42,
+          "amount": 154591.56
+        },
+        {
+          "product_id": "115",
+          "name": "脚手架",
+          "model": "120x",
+          "spec": "-",
+          "qty": 13,
+          "unit": "件",
+          "price": 49481.41,
+          "amount": 643258.33
+        }
+      ],
+      "total_amount": 797849.89
+    },
+    {
+      "id": "SS-003",
+      "date": "2026-05-20",
+      "order_no": "ORD20260520003",
+      "customer_name": "天津天地伟业数码科技有限公司",
+      "customer_id": "23",
+      "contact": "王工",
+      "phone": "15201239876",
+      "address": "杭州市西湖区文三路200号",
+      "remark": "需开票",
+      "products": [
+        {
+          "product_id": "14",
+          "name": "针式打印机",
+          "model": "ZSP4",
+          "spec": "-",
+          "qty": 30,
+          "unit": "箱",
+          "price": 43880.2,
+          "amount": 1316406.0
+        },
+        {
+          "product_id": "1",
+          "name": "惠普笔记本",
+          "model": "i7-3632QM/GT650M",
+          "spec": "-",
+          "qty": 11,
+          "unit": "台",
+          "price": 32944.21,
+          "amount": 362386.31
+        },
+        {
+          "product_id": "100",
+          "name": "烟雾报警器",
+          "model": "",
+          "spec": "-",
+          "qty": 13,
+          "unit": "套",
+          "price": 7572.14,
+          "amount": 98437.82
+        },
+        {
+          "product_id": "32",
+          "name": "台式电脑",
+          "model": "DN-837A",
+          "spec": "-",
+          "qty": 5,
+          "unit": "台",
+          "price": 37376.95,
+          "amount": 186884.75
+        }
+      ],
+      "total_amount": 1964114.88
+    },
+    {
+      "id": "SS-004",
+      "date": "2026-05-21",
+      "order_no": "ORD20260521004",
+      "customer_name": "赐金商贸有限公司",
+      "customer_id": "172",
+      "contact": "周经理",
+      "phone": "13875340444",
+      "address": "上海市浦东新区张江路88号",
+      "remark": "常规",
+      "products": [
+        {
+          "product_id": "117",
+          "name": "硬件设备",
+          "model": "wr",
+          "spec": "-",
+          "qty": 3,
+          "unit": "个",
+          "price": 43124.59,
+          "amount": 129373.77
+        },
+        {
+          "product_id": "6",
+          "name": "金士顿CF(8G)",
+          "model": "CF8G",
+          "spec": "-",
+          "qty": 5,
+          "unit": "台",
+          "price": 39707.93,
+          "amount": 198539.65
+        },
+        {
+          "product_id": "37",
+          "name": "视频会议",
+          "model": "DSNNY DSN-D40",
+          "spec": "-",
+          "qty": 14,
+          "unit": "箱",
+          "price": 3644.62,
+          "amount": 51024.68
+        }
+      ],
+      "total_amount": 378938.1
+    },
+    {
+      "id": "SS-005",
+      "date": "2026-05-22",
+      "order_no": "ORD20260522005",
+      "customer_name": "陕西艾诺威",
+      "customer_id": "157",
+      "contact": "王工",
+      "phone": "19906248900",
+      "address": "北京市海淀区中关村大街1号",
+      "remark": "常规",
+      "products": [
+        {
+          "product_id": "16",
+          "name": "扫描仪",
+          "model": "SMY3",
+          "spec": "-",
+          "qty": 25,
+          "unit": "件",
+          "price": 6021.83,
+          "amount": 150545.75
+        },
+        {
+          "product_id": "1",
+          "name": "惠普笔记本",
+          "model": "i7-3632QM/GT650M",
+          "spec": "-",
+          "qty": 14,
+          "unit": "台",
+          "price": 22959.32,
+          "amount": 321430.48
+        }
+      ],
+      "total_amount": 471976.23
+    },
+    {
+      "id": "SS-006",
+      "date": "2026-05-23",
+      "order_no": "ORD20260523006",
+      "customer_name": "山东佰特商贸有限公司",
+      "customer_id": "146",
+      "contact": "王工",
+      "phone": "13964411347",
+      "address": "深圳市南山区科技园路66号",
+      "remark": "月结",
+      "products": [
+        {
+          "product_id": "108",
+          "name": "15mm木塑197-29-3",
+          "model": "",
+          "spec": "基准",
+          "qty": 18,
+          "unit": "箱",
+          "price": 45965.43,
+          "amount": 827377.74
+        },
+        {
+          "product_id": "126",
+          "name": "琳娜贝尔",
+          "model": "",
+          "spec": "-",
+          "qty": 20,
+          "unit": "件",
+          "price": 24685.98,
+          "amount": 493719.6
+        },
+        {
+          "product_id": "115",
+          "name": "脚手架",
+          "model": "120x",
+          "spec": "-",
+          "qty": 4,
+          "unit": "件",
+          "price": 43996.73,
+          "amount": 175986.92
+        }
+      ],
+      "total_amount": 1497084.26
+    },
+    {
+      "id": "SS-007",
+      "date": "2026-05-24",
+      "order_no": "ORD20260524007",
+      "customer_name": "180club",
+      "customer_id": "92",
+      "contact": "吴主管",
+      "phone": "17853573823",
+      "address": "北京市海淀区中关村大街1号",
+      "remark": "月结",
+      "products": [
+        {
+          "product_id": "100",
+          "name": "烟雾报警器",
+          "model": "",
+          "spec": "-",
+          "qty": 6,
+          "unit": "件",
+          "price": 26619.85,
+          "amount": 159719.1
+        },
+        {
+          "product_id": "16",
+          "name": "扫描仪",
+          "model": "SMY3",
+          "spec": "-",
+          "qty": 20,
+          "unit": "套",
+          "price": 48235.96,
+          "amount": 964719.2
+        },
+        {
+          "product_id": "117",
+          "name": "硬件设备",
+          "model": "wr",
+          "spec": "-",
+          "qty": 30,
+          "unit": "箱",
+          "price": 37885.63,
+          "amount": 1136568.9
+        },
+        {
+          "product_id": "48",
+          "name": "CPU风扇",
+          "model": "双12CM风扇",
+          "spec": "基准",
+          "qty": 23,
+          "unit": "台",
+          "price": 35790.97,
+          "amount": 823192.31
+        },
+        {
+          "product_id": "96",
+          "name": "kindle",
+          "model": "黑色",
+          "spec": "-",
+          "qty": 13,
+          "unit": "件",
+          "price": 22185.95,
+          "amount": 288417.35
+        }
+      ],
+      "total_amount": 3372616.86
+    },
+    {
+      "id": "SS-008",
+      "date": "2026-05-25",
+      "order_no": "ORD20260525008",
+      "customer_name": "河北绿健康生物有限公司",
+      "customer_id": "71",
+      "contact": "李总",
+      "phone": "18726563708",
+      "address": "深圳市南山区科技园路66号",
+      "remark": "常规",
+      "products": [
+        {
+          "product_id": "41",
+          "name": "模拟半球安防监控",
+          "model": "2.8mm",
+          "spec": "-",
+          "qty": 8,
+          "unit": "箱",
+          "price": 11400.76,
+          "amount": 91206.08
+        },
+        {
+          "product_id": "96",
+          "name": "kindle",
+          "model": "黑色",
+          "spec": "-",
+          "qty": 3,
+          "unit": "个",
+          "price": 11832.62,
+          "amount": 35497.86
+        }
+      ],
+      "total_amount": 126703.94
+    },
+    {
+      "id": "SS-009",
+      "date": "2026-05-26",
+      "order_no": "ORD20260526009",
+      "customer_name": "费尔工贸有限公司",
+      "customer_id": "5741",
+      "contact": "刘总",
+      "phone": "17853573823",
+      "address": "北京市海淀区中关村大街1号",
+      "remark": "月结",
+      "products": [
+        {
+          "product_id": "32",
+          "name": "台式电脑",
+          "model": "DN-837A",
+          "spec": "-",
+          "qty": 8,
+          "unit": "套",
+          "price": 40471.1,
+          "amount": 323768.8
+        },
+        {
+          "product_id": "16",
+          "name": "扫描仪",
+          "model": "SMY3",
+          "spec": "-",
+          "qty": 7,
+          "unit": "个",
+          "price": 5298.08,
+          "amount": 37086.56
+        },
+        {
+          "product_id": "117",
+          "name": "硬件设备",
+          "model": "wr",
+          "spec": "-",
+          "qty": 14,
+          "unit": "件",
+          "price": 21467.14,
+          "amount": 300539.96
+        },
+        {
+          "product_id": "11",
+          "name": "防水罩",
+          "model": "FHZ2014",
+          "spec": "基准",
+          "qty": 15,
+          "unit": "个",
+          "price": 33831.55,
+          "amount": 507473.25
+        },
+        {
+          "product_id": "48",
+          "name": "CPU风扇",
+          "model": "双12CM风扇",
+          "spec": "基准",
+          "qty": 21,
+          "unit": "个",
+          "price": 3500.33,
+          "amount": 73506.93
+        }
+      ],
+      "total_amount": 1242375.5
+    },
+    {
+      "id": "SS-010",
+      "date": "2026-05-27",
+      "order_no": "ORD20260527010",
+      "customer_name": "富豪酒店",
+      "customer_id": "5672",
+      "contact": "李总",
+      "phone": "17853573823",
+      "address": "北京市海淀区中关村大街1号",
+      "remark": "月结",
+      "products": [
+        {
+          "product_id": "66",
+          "name": "排线",
+          "model": "PM1200",
+          "spec": "20米",
+          "qty": 15,
+          "unit": "台",
+          "price": 43787.05,
+          "amount": 656805.75
+        },
+        {
+          "product_id": "91",
+          "name": "主板",
+          "model": "四核工控研能",
+          "spec": "-",
+          "qty": 3,
+          "unit": "套",
+          "price": 40497.1,
+          "amount": 121491.3
+        },
+        {
+          "product_id": "1",
+          "name": "惠普笔记本",
+          "model": "i7-3632QM/GT650M",
+          "spec": "-",
+          "qty": 28,
+          "unit": "箱",
+          "price": 5346.48,
+          "amount": 149701.44
+        }
+      ],
+      "total_amount": 927998.49
+    },
+    {
+      "id": "SS-011",
+      "date": "2026-05-28",
+      "order_no": "ORD20260528011",
+      "customer_name": "电信景小斌",
+      "customer_id": "60",
+      "contact": "李总",
+      "phone": "15201239876",
+      "address": "广州市天河区天河路385号",
+      "remark": "",
+      "products": [
+        {
+          "product_id": "32",
+          "name": "台式电脑",
+          "model": "DN-837A",
+          "spec": "-",
+          "qty": 1,
+          "unit": "套",
+          "price": 13627.55,
+          "amount": 13627.55
+        },
+        {
+          "product_id": "14",
+          "name": "针式打印机",
+          "model": "ZSP4",
+          "spec": "-",
+          "qty": 26,
+          "unit": "套",
+          "price": 14619.84,
+          "amount": 380115.84
+        },
+        {
+          "product_id": "85",
+          "name": "红外探头KL900",
+          "model": "白色",
+          "spec": "-",
+          "qty": 23,
+          "unit": "箱",
+          "price": 33262.63,
+          "amount": 765040.49
+        },
+        {
+          "product_id": "115",
+          "name": "脚手架",
+          "model": "120x",
+          "spec": "-",
+          "qty": 16,
+          "unit": "台",
+          "price": 9899.94,
+          "amount": 158399.04
+        },
+        {
+          "product_id": "106",
+          "name": "手机",
+          "model": "r11s",
+          "spec": "-",
+          "qty": 7,
+          "unit": "个",
+          "price": 29169.42,
+          "amount": 204185.94
+        }
+      ],
+      "total_amount": 1521368.86
+    },
+    {
+      "id": "SS-012",
+      "date": "2026-05-29",
+      "order_no": "ORD20260529012",
+      "customer_name": "个人零售商",
+      "customer_id": "5695",
+      "contact": "李总",
+      "phone": "13875340444",
+      "address": "深圳市南山区科技园路66号",
+      "remark": "需开票",
+      "products": [
+        {
+          "product_id": "85",
+          "name": "红外探头KL900",
+          "model": "白色",
+          "spec": "-",
+          "qty": 28,
+          "unit": "台",
+          "price": 3891.81,
+          "amount": 108970.68
+        },
+        {
+          "product_id": "6",
+          "name": "金士顿CF(8G)",
+          "model": "CF8G",
+          "spec": "-",
+          "qty": 3,
+          "unit": "台",
+          "price": 20486.89,
+          "amount": 61460.67
+        },
+        {
+          "product_id": "4",
+          "name": "金士顿Micro SD卡(16G)",
+          "model": "Micro5",
+          "spec": "-",
+          "qty": 29,
+          "unit": "箱",
+          "price": 12687.66,
+          "amount": 367942.14
+        }
+      ],
+      "total_amount": 538373.49
+    },
+    {
+      "id": "SS-013",
+      "date": "2026-05-30",
+      "order_no": "ORD20260530013",
+      "customer_name": "华魏门业有限公司",
+      "customer_id": "5609",
+      "contact": "陈经理",
+      "phone": "17853573823",
+      "address": "杭州市西湖区文三路200号",
+      "remark": "月结",
+      "products": [
+        {
+          "product_id": "47",
+          "name": "散热器Frostflow",
+          "model": "240L-R",
+          "spec": "基准",
+          "qty": 13,
+          "unit": "台",
+          "price": 33748.67,
+          "amount": 438732.71
+        },
+        {
+          "product_id": "97",
+          "name": "摄像头-400万半球网络",
+          "model": "DS-2CD2F45F(D)-I(W)(S)",
+          "spec": "-",
+          "qty": 10,
+          "unit": "套",
+          "price": 16150.77,
+          "amount": 161507.7
+        },
+        {
+          "product_id": "39",
+          "name": "视频会议",
+          "model": "POLYCOM HDX 6000-720",
+          "spec": "-",
+          "qty": 25,
+          "unit": "个",
+          "price": 961.12,
+          "amount": 24028.0
+        }
+      ],
+      "total_amount": 624268.41
+    },
+    {
+      "id": "SS-014",
+      "date": "2026-05-31",
+      "order_no": "ORD20260531014",
+      "customer_name": "珠海市太川电子企业有限公司",
+      "customer_id": "27",
+      "contact": "陈经理",
+      "phone": "18507437181",
+      "address": "广州市天河区天河路385号",
+      "remark": "",
+      "products": [
+        {
+          "product_id": "100",
+          "name": "烟雾报警器",
+          "model": "",
+          "spec": "-",
+          "qty": 6,
+          "unit": "套",
+          "price": 41770.38,
+          "amount": 250622.28
+        },
+        {
+          "product_id": "97",
+          "name": "摄像头-400万半球网络",
+          "model": "DS-2CD2F45F(D)-I(W)(S)",
+          "spec": "-",
+          "qty": 23,
+          "unit": "件",
+          "price": 30778.05,
+          "amount": 707895.15
+        },
+        {
+          "product_id": "126",
+          "name": "琳娜贝尔",
+          "model": "",
+          "spec": "-",
+          "qty": 26,
+          "unit": "箱",
+          "price": 887.24,
+          "amount": 23068.24
+        },
+        {
+          "product_id": "22",
+          "name": "iPhone6",
+          "model": "",
+          "spec": "-",
+          "qty": 27,
+          "unit": "箱",
+          "price": 15319.25,
+          "amount": 413619.75
+        }
+      ],
+      "total_amount": 1395205.42
+    },
+    {
+      "id": "SS-015",
+      "date": "2026-06-01",
+      "order_no": "ORD20260601015",
+      "customer_name": "深圳市世通工业软管有限公司",
+      "customer_id": "26",
+      "contact": "王工",
+      "phone": "18507437181",
+      "address": "南京市鼓楼区汉中路100号",
+      "remark": "需开票",
+      "products": [
+        {
+          "product_id": "22",
+          "name": "iPhone6",
+          "model": "",
+          "spec": "-",
+          "qty": 7,
+          "unit": "件",
+          "price": 25517.75,
+          "amount": 178624.25
+        },
+        {
+          "product_id": "50",
+          "name": "防护服",
+          "model": "3M白",
+          "spec": "-",
+          "qty": 9,
+          "unit": "个",
+          "price": 5068.77,
+          "amount": 45618.93
+        },
+        {
+          "product_id": "32",
+          "name": "台式电脑",
+          "model": "DN-837A",
+          "spec": "-",
+          "qty": 14,
+          "unit": "件",
+          "price": 2682.29,
+          "amount": 37552.06
+        },
+        {
+          "product_id": "110",
+          "name": "15mm木塑197-29-3",
+          "model": "",
+          "spec": "张",
+          "qty": 11,
+          "unit": "台",
+          "price": 32037.11,
+          "amount": 352408.21
+        }
+      ],
+      "total_amount": 614203.45
+    }
+  ]
+}

@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>超兔-AI制单 用户说明书</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; line-height: 1.85; color: #1f2937; background: #f8fafc; padding: 0; }
+.container { max-width: 1100px; margin: 0 auto; background: white; box-shadow: 0 4px 24px rgba(0,0,0,0.05); }
+
+/* 封面 */
+.cover { background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%); color: white; padding: 80px 48px; text-align: center; }
+.cover-logo { font-size: 56px; margin-bottom: 16px; }
+.cover h1 { font-size: 36px; margin-bottom: 12px; font-weight: 700; }
+.cover .subtitle { font-size: 16px; opacity: 0.9; margin-bottom: 32px; }
+.cover .meta { display: inline-block; background: rgba(255,255,255,0.15); padding: 8px 20px; border-radius: 20px; font-size: 13px; margin-top: 16px; }
+
+/* 内容区 */
+.content { padding: 40px 48px; }
+h1.chapter { font-size: 26px; color: #1e40af; margin: 48px 0 20px; padding-bottom: 10px; border-bottom: 3px solid #3b82f6; }
+h1.chapter:first-of-type { margin-top: 0; }
+h2 { font-size: 20px; color: #1e40af; margin-top: 28px; margin-bottom: 12px; padding-left: 12px; border-left: 5px solid #3b82f6; }
+h3 { font-size: 16px; color: #4338ca; margin-top: 20px; margin-bottom: 10px; padding: 6px 12px; background: #eef2ff; border-radius: 6px; }
+h4 { font-size: 14px; color: #7c3aed; margin-top: 14px; margin-bottom: 8px; }
+p { margin-bottom: 12px; text-align: justify; }
+ul, ol { margin: 8px 0 16px 24px; }
+li { margin-bottom: 6px; }
+code { background: #f1f5f9; color: #be185d; padding: 2px 6px; border-radius: 4px; font-family: "SFMono-Regular", Consolas, monospace; font-size: 13px; }
+pre { background: #1e293b; color: #e2e8f0; padding: 16px 20px; border-radius: 8px; overflow-x: auto; margin: 12px 0; font-size: 13px; line-height: 1.6; }
+pre code { background: transparent; color: inherit; padding: 0; font-size: 13px; }
+
+/* 提示框 */
+.box { padding: 14px 18px; border-radius: 8px; margin: 14px 0; }
+.info { background: #ecfeff; border-left: 4px solid #06b6d4; }
+.warn { background: #fef3c7; border-left: 4px solid #f59e0b; }
+.tip { background: #ecfdf5; border-left: 4px solid #10b981; }
+.danger { background: #fef2f2; border-left: 4px solid #ef4444; }
+.box p:last-child { margin-bottom: 0; }
+
+/* 截图占位框 */
+.shot { background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); border: 2px dashed #94a3b8; border-radius: 10px; padding: 32px 20px; margin: 16px 0; text-align: center; color: #64748b; min-height: 140px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.shot .icon { font-size: 36px; color: #94a3b8; margin-bottom: 8px; }
+.shot .label { font-size: 14px; font-weight: 600; color: #475569; margin-bottom: 4px; }
+.shot .desc { font-size: 12px; color: #64748b; }
+.shot.wide { min-height: 220px; }
+.shot.tall { min-height: 320px; }
+.shot::before { content: "📷 待截图"; position: absolute; top: 8px; right: 12px; font-size: 11px; color: #94a3b8; font-weight: 500; }
+.shot-wrap { position: relative; }
+
+/* 表格 */
+table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+th, td { border: 1px solid #e5e7eb; padding: 8px 12px; text-align: left; }
+th { background: #f3f4f6; color: #374151; font-weight: 600; }
+tr:nth-child(even) td { background: #fafafa; }
+
+/* 步骤 */
+.steps { counter-reset: step; margin: 14px 0; padding: 0; list-style: none; }
+.steps > li { counter-increment: step; position: relative; padding: 10px 12px 10px 50px; margin-bottom: 8px; background: #f8fafc; border-radius: 8px; border-left: 3px solid #3b82f6; }
+.steps > li::before { content: counter(step); position: absolute; left: 12px; top: 10px; width: 28px; height: 28px; background: #3b82f6; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; }
+
+/* 目录 */
+.toc { background: linear-gradient(135deg, #eff6ff 0%, #f5f3ff 100%); border: 1px solid #c7d2fe; border-radius: 10px; padding: 20px 28px; margin-bottom: 32px; }
+.toc-title { font-weight: 700; color: #4338ca; margin-bottom: 10px; font-size: 16px; }
+.toc ul { list-style: none; margin: 0; padding: 0; }
+.toc > ul > li { margin-bottom: 4px; font-weight: 600; color: #1e40af; }
+.toc > ul > li > ul { margin: 4px 0 8px 20px; font-weight: 400; }
+.toc > ul > li > ul > li { color: #475569; }
+
+/* 索引卡片 */
+.feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin: 16px 0; }
+.feature-card { background: white; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px; transition: all 0.2s; }
+.feature-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-2px); }
+.feature-card .icon { font-size: 28px; color: #3b82f6; margin-bottom: 8px; }
+.feature-card h4 { color: #1e40af; margin-top: 0; }
+.feature-card p { font-size: 13px; color: #6b7280; margin-bottom: 0; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- ========== 封面 ========== -->
+<div class="cover">
+  <div class="cover-logo">🤖</div>
+  <h1>超兔-AI 制单</h1>
+  <div class="subtitle">分词 + 拼音双擎版 · 用户说明书</div>
+  <div style="margin: 24px 0; font-size: 14px; line-height: 1.8; opacity: 0.9;">
+    一句话简介：把 AI 对话/截图/JSON → 自动匹配 CRM 客户和产品 → 一键生成销售订单或报价单
+  </div>
+  <div class="meta">📅 版本 v1.5+ · 2026-06-11</div>
+</div>
+
+<!-- ========== 目录 ========== -->
+<div class="content">
+
+<div class="toc">
+  <div class="toc-title">📑 目录</div>
+  <ul>
+    <li>第一章 · 快速上手
+      <ul>
+        <li>1.1 系统简介 & 适用场景</li>
+        <li>1.2 启动方式</li>
+        <li>1.3 5 分钟快速体验</li>
+      </ul>
+    </li>
+    <li>第二章 · 主界面总览
+      <ul>
+        <li>2.1 整体布局</li>
+        <li>2.2 顶部配置栏（Coze 智能体 / 拼音数据）</li>
+        <li>2.3 左侧单据草稿区</li>
+        <li>2.4 右侧 AI 助手聊天区</li>
+      </ul>
+    </li>
+    <li>第三章 · 核心流程 - 智能制单
+      <ul>
+        <li>3.1 录入客户和产品</li>
+        <li>3.2 复制 AI 生成的 JSON 自动匹配</li>
+        <li>3.3 单据截图贴入</li>
+        <li>3.4 单据文本贴入</li>
+      </ul>
+    </li>
+    <li>第四章 · 客户识别与选择
+      <ul>
+        <li>4.1 自动识别（精确/简称）</li>
+        <li>4.2 候选列表</li>
+        <li>4.3 手动搜索</li>
+      </ul>
+    </li>
+    <li>第五章 · 产品匹配
+      <ul>
+        <li>5.1 匹配模式（精确 / 品名 / 拼音 / 混合）</li>
+        <li>5.2 匹配结果状态</li>
+        <li>5.3 行内编辑（数量/单价/折扣）</li>
+        <li>5.4 批量确认/批量删除</li>
+        <li>5.5 创建新产品</li>
+      </ul>
+    </li>
+    <li>第六章 · 价格与税率
+      <ul>
+        <li>6.1 折扣</li>
+        <li>6.2 税率（行内 + 统一）</li>
+        <li>6.3 含税金额自动计算</li>
+        <li>6.4 一键获取价格（自动核价）</li>
+      </ul>
+    </li>
+    <li>第七章 · 单据生成
+      <ul>
+        <li>7.1 创建报价单</li>
+        <li>7.2 创建销售订单</li>
+        <li>7.3 完成去视图（自动跳 CRM 详情）</li>
+        <li>7.4 导出 Excel（贴右边）</li>
+      </ul>
+    </li>
+    <li>第八章 · AI 智能体配置
+      <ul>
+        <li>8.1 默认智能体</li>
+        <li>8.2 添加自定义智能体</li>
+        <li>8.3 切换/删除/导入导出</li>
+      </ul>
+    </li>
+    <li>第九章 · 拼音数据管理
+      <ul>
+        <li>9.1 拼音数据准备</li>
+        <li>9.2 数据同步</li>
+      </ul>
+    </li>
+    <li>第十章 · 常见问题 FAQ</li>
+    <li>附录 · 术语表 & 快捷键 & 错误码</li>
+  </ul>
+</div>
+
+<!-- ========== 第一章 ========== -->
+<h1 class="chapter">第一章 · 快速上手</h1>
+
+<h2>1.1 系统简介 & 适用场景</h2>
+
+<p><strong>超兔-AI 制单</strong> 是一个"嵌入到现有 CRM"的浏览器端工具，解决一线业务员每天面对的"录单"工作：</p>
+
+<ul>
+  <li>从客户/老板那里拿到手写单据、Excel 截图、AI 生成的 JSON</li>
+  <li>手工录入到 CRM 系统中（费时、易错）</li>
+</ul>
+
+<p>本工具用 <strong>分词+拼音双引擎</strong> 解决"模糊匹配"问题（如"爱国者"被写作"aiguo"、"Mini SD"被写作"mirco sd"），用 <strong>Coze 智能体</strong> 解决"AI 对话辅助"，让录单从<strong>分钟级降到秒级</strong>。</p>
+
+<h3>典型适用场景</h3>
+<div class="feature-grid">
+  <div class="feature-card">
+    <div class="icon">📋</div>
+    <h4>客户发来报价单截图</h4>
+    <p>把截图 Ctrl+V 贴入右侧 AI 助手 → 自动解析 → 匹配 CRM 产品 → 一键生成报价单</p>
+  </div>
+  <div class="feature-card">
+    <div class="icon">💬</div>
+    <h4>老板用 AI 写的采购单</h4>
+    <p>老板在豆包/通义/Kimi 上生成 JSON → 复制粘贴到本工具 → 自动匹配 → 一键生成订单</p>
+  </div>
+  <div class="feature-card">
+    <div class="icon">🎙️</div>
+    <h4>电话报价录音转写</h4>
+    <p>语音录入"6 个爱国者迷你王 67 块 88 折 13% 税" → 智能体理解 → 自动填充产品明细</p>
+  </div>
+  <div class="feature-card">
+    <div class="icon">🔄</div>
+    <h4>批量产品询价</h4>
+    <p>20 个产品的 Excel 贴入 → 一键获取价格（含税）→ 导出 Excel 贴回原文档</p>
+  </div>
+</div>
+
+<h2>1.2 启动方式</h2>
+
+<p>本项目是纯前端 HTML 页面，<strong>无需安装 Node/NPM</strong>。Mac 用户双击 <code>一键启动监听.command</code> 即可：</p>
+
+<div class="shot-wrap">
+<div class="shot">
+  <div class="icon">🚀</div>
+  <div class="label">启动文件位置</div>
+  <div class="desc">dexiedb/ 一键启动监听.command</div>
+</div>
+</div>
+
+<p>启动后会弹出终端窗口，显示"监听模式"提示：</p>
+<pre><code>════════════════════════════════════════════
+ 一键价格·监听模式
+ 启动中...
+════════════════════════════════════════════
+ 监控:  dexiedb/ 下的 4 个源文件
+ 触发:  mtime 变化（保存即生效，1 秒内）
+ 输出:  dev/  (带注释) + prod/ (去注释压缩)
+ 退出:  Ctrl+C  或 直接关闭此窗口
+════════════════════════════════════════════</code></pre>
+
+<p>浏览器自动打开 <code>http://localhost:8000/dev/index.html</code>（推荐使用 dev/ 调试版）。</p>
+
+<div class="box info">
+<p><strong>两种版本</strong>：</p>
+<ul>
+  <li><code>dev/index.html</code>：带注释的调试版（推荐开发/问题排查）</li>
+  <li><code>prod/index.html</code>：去注释压缩版（生产部署）</li>
+</ul>
+</div>
+
+<h2>1.3 5 分钟快速体验</h2>
+
+<p>假设你已经登录 CRM 系统，浏览器打开了本工具页面：</p>
+
+<ol class="steps">
+  <li>在右侧 AI 助手输入框中输入：<code>给我生成一个示例报价单，3 个爱国者迷你王商务型 L8202，单价 67 块，13% 税</code></li>
+  <li>AI 返回一段文字 + JSON 格式的结构化数据</li>
+  <li>复制 JSON，<strong>回到本工具页面</strong>，按 <code>Ctrl+V</code> 粘贴</li>
+  <li>左侧"单据草稿"自动出现：客户识别 + 3 行产品明细</li>
+  <li>点击"全部确认" → 调整税率（行内下拉，默认 13%）→ 点击"生成销售订单"</li>
+  <li>弹窗显示"订单创建成功" → 点击"完成去视图" → 新窗口打开 CRM 订单详情</li>
+</ol>
+
+<div class="box tip">
+<p><strong>恭喜你！</strong> 整个流程用时 &lt; 1 分钟，比手工录入快了 10 倍以上。</p>
+</div>
+
+<!-- ========== 第二章 ========== -->
+<h1 class="chapter">第二章 · 主界面总览</h1>
+
+<h2>2.1 整体布局</h2>
+
+<p>本工具页面采用<strong>左右双栏布局</strong>：</p>
+
+<div class="shot-wrap">
+<div class="shot wide">
+  <div class="icon">🖼️</div>
+  <div class="label">主界面整体布局</div>
+  <div class="desc">顶部配置栏（Coze 智能体 + 拼音数据） + 左侧单据草稿区 + 右侧 AI 助手</div>
+</div>
+</div>
+
+<table>
+  <tr><th>区域</th><th>位置</th><th>作用</th></tr>
+  <tr><td>① 顶部配置栏</td><td>页面顶部</td><td>显示当前 Coze 智能体 / 拼音数据状态 / 配置入口</td></tr>
+  <tr><td>② 单据草稿区</td><td>左侧（约 60% 宽）</td><td>展示已识别的客户 + 产品明细 + 操作按钮</td></tr>
+  <tr><td>③ AI 助手聊天</td><td>右侧（约 40% 宽）</td><td>嵌入式 Coze 智能体，可语音/文字/图片对话</td></tr>
+</table>
+
+<h2>2.2 顶部配置栏</h2>
+
+<div class="shot-wrap">
+<div class="shot">
+  <div class="icon">⚙️</div>
+  <div class="label">顶部配置栏</div>
+  <div class="desc">左：Coze 智能体图标 + 当前名称 + 状态 + ⚙️ 配置按钮<br>右：拼音数据图标 + 状态 + 打开拼音工具按钮</div>
+</div>
+</div>
+
+<h3>2.2.1 Coze 智能体区</h3>
+<ul>
+  <li><strong>当前名称</strong>：显示当前激活的智能体（如"默认"或自定义名称）</li>
+  <li><strong>状态文字</strong>：显示"智能助手已就绪"或"加载中..."</li>
+  <li><strong>⚙️ 配置按钮</strong>：点击打开"智能体配置"弹窗（详见第八章）</li>
+</ul>
+
+<h3>2.2.2 拼音数据区</h3>
+<ul>
+  <li><strong>状态文字</strong>：显示已加载的客户数/产品数</li>
+  <li><strong>打开拼音工具</strong>：在新标签页打开 <code>get_cus_pro.html</code>（详见第九章）</li>
+</ul>
+
+<h2>2.3 左侧单据草稿区</h2>
+
+<div class="shot-wrap">
+<div class="shot tall">
+  <div class="icon">📋</div>
+  <div class="label">单据草稿区</div>
+  <div class="desc">自上而下：标题栏（已确认/待确认统计）→ 空状态/客户卡片 → 产品列表 → 操作按钮区</div>
+</div>
+</div>
+
+<h3>2.3.1 标题栏</h3>
+<ul>
+  <li><strong>单据草稿</strong>：区域标题</li>
+  <li><strong>已确认 X/X</strong>：绿色，已确认产品数 / 总数</li>
+  <li><strong>待确认 X/X</strong>：黄色，待确认产品数 / 总数</li>
+</ul>
+
+<h3>2.3.2 客户卡片</h3>
+<p>显示识别到的客户信息：</p>
+<ul>
+  <li>客户名称 + 匹配状态（精确匹配 / 候选 / 待识别）</li>
+  <li>原始名称（如"上海飞奥德"）</li>
+  <li>客户编号、联系人、地址（自动从 CRM 读取）</li>
+</ul>
+<p>点击客户卡片可弹出"选择客户"弹窗，更换匹配结果。</p>
+
+<h3>2.3.3 产品明细列表</h3>
+<p>每行产品显示：</p>
+<table>
+  <tr><th>列</th><th>说明</th></tr>
+  <tr><td>复选框</td><td>用于批量选择</td></tr>
+  <tr><td>序号</td><td>1, 2, 3...</td></tr>
+  <tr><td>产品图 + 名称 + 编号</td><td>匹配后自动显示</td></tr>
+  <tr><td>省 X% 标签</td><td>绿色，折扣相对原价的节省比例</td></tr>
+  <tr><td>匹配状态</td><td>品名匹配 / 编号匹配 / 拼音匹配 / 分词匹配 / 候选</td></tr>
+  <tr><td>数量（可编辑）</td><td>点击直接修改</td></tr>
+  <tr><td>单价（可编辑）</td><td>点击直接修改</td></tr>
+  <tr><td>折扣（可编辑）</td><td>百分比，0~100</td></tr>
+  <tr><td>税率（行内下拉）</td><td>0% / 3% / 5% / 6% / 9% / 13%</td></tr>
+  <tr><td>含税小计（自动算）</td><td>红字，¥xxx（含税）</td></tr>
+  <tr><td>行内操作按钮</td><td>取消确认 / 重新匹配 / 删除</td></tr>
+</table>
+
+<h2>2.4 右侧 AI 助手聊天区</h2>
+
+<p>这是 Coze 官方提供的嵌入式聊天浮窗，UI 风格和功能由 Coze 决定。本工具做了<strong>图片粘贴转发增强</strong>（详见 3.3）。</p>
+
+<div class="box tip">
+<p>建议在 AI 助手中<strong>明确要求返回 JSON 格式</strong>，例如：</p>
+<blockquote>"请生成一个包含订单详情的 JSON 数组，每项包含 pro_name（产品名）、qty（数量）、price（单价）字段"</blockquote>
+</div>
+
+<!-- ========== 第三章 ========== -->
+<h1 class="chapter">第三章 · 核心流程 - 智能制单</h1>
+
+<h2>3.1 录入客户和产品</h2>
+<p>有 <strong>4 种</strong> 录入方式：</p>
+
+<table>
+  <tr><th>方式</th><th>操作</th><th>适用场景</th></tr>
+  <tr><td>① AI 对话</td><td>在右侧 AI 助手中用文字/语音描述</td><td>需求模糊、想边聊边调整</td></tr>
+  <tr><td>② 复制 JSON</td><td>从任意 AI 工具生成 JSON → Ctrl+V 粘贴</td><td>数据已有结构化形式</td></tr>
+  <tr><td>③ 单据截图</td><td>Ctrl+V 粘贴图片到 AI 助手</td><td>客户发来微信截图/PDF 截图</td></tr>
+  <tr><td>④ 单据文本</td><td>纯文本贴入 AI 助手</td><td>邮件正文、纯文本单据</td></tr>
+</table>
+
+<h2>3.2 复制 AI 生成的 JSON 自动匹配</h2>
+
+<p>这是<strong>最高效</strong>的录入方式。流程：</p>
+
+<ol class="steps">
+  <li>在任意 AI 工具（豆包/通义/Kimi/ChatGPT）生成结构化 JSON</li>
+  <li>在 AI 回复中找到 JSON 块（用 <code>```json</code> 包裹的代码块）</li>
+  <li>点击代码块右上角的"复制"按钮</li>
+  <li>切换回本工具页面，按 <code>Ctrl+V</code> 粘贴</li>
+  <li>系统自动识别 JSON 格式 → 触发匹配流程</li>
+</ol>
+
+<div class="shot-wrap">
+<div class="shot">
+  <div class="icon">📥</div>
+  <div class="label">JSON 粘贴触发匹配</div>
+  <div class="desc">页面顶部弹出绿色 Toast："已捕获订单JSON，匹配耗时 235ms"</div>
+</div>
+</div>
+
+<h3>3.2.1 支持的 JSON 字段</h3>
+<table>
+  <tr><th>字段</th><th>必填</th><th>说明</th></tr>
+  <tr><td>cu_id 或 customer</td><td>是</td><td>客户名称</td></tr>
+  <tr><td>subject / title</td><td>否</td><td>订单主题（用于报价单/订单）</td></tr>
+  <tr><td>pro_name / name / pn</td><td>是</td><td>产品名 / 品名 / 编号</td></tr>
+  <tr><td>qty / amount / num</td><td>是</td><td>数量</td></tr>
+  <tr><td>price / un_price</td><td>是</td><td>单价</td></tr>
+  <tr><td>discount / zk</td><td>否</td><td>折扣（百分比）</td></tr>
+  <tr><td>tax_rate</td><td>否</td><td>税率（0/3/5/6/9/13）</td></tr>
+</table>
+
+<h3>3.2.2 标准化 JSON 示例</h3>
+<pre><code>[
+  {
+    "cu_id": "上海飞奥德",
+    "subject": "2026-Q2 报价",
+    "subdata": [
+      { "pro_name": "爱国者迷你王 商务型 L8202(16G)", "qty": 6, "price": 67, "discount": 88, "tax_rate": 5 },
+      { "pro_name": "金士顿 Micro SD卡(16G)", "qty": 4, "price": 56, "discount": 99, "tax_rate": 6 }
+    ]
+  }
+]</code></pre>
+
+<div class="box warn">
+<p>本工具会自动尝试标准化各种 AI 输出格式（即使字段名不一样），但<strong>标准字段名</strong>识别成功率最高。</p>
+</div>
+
+<h2>3.3 单据截图贴入</h2>
+
+<ol class="steps">
+  <li>在微信/邮件/PDF 中看到单据图片</li>
+  <li>用截图工具（微信自带 / 系统截图 / Snipaste）截取单据区域</li>
+  <li>复制图片（<code>Ctrl+C</code> 或右键复制）</li>
+  <li>回到本工具页面，按 <code>Ctrl+V</code> 粘贴</li>
+  <li>图片自动转发到右侧 AI 助手上传框</li>
+  <li>在 AI 助手中加一句"请解析这张图并返回 JSON"</li>
+  <li>AI 返回 JSON 后再按 3.2 的流程走一次</li>
+</ol>
+
+<div class="box tip">
+<p><strong>增强体验</strong>：本工具做了<strong>图片粘贴全局监听</strong>，即使焦点不在 AI 助手的输入框，按 <code>Ctrl+V</code> 也会自动把图片喂给 Coze SDK。</p>
+</div>
+
+<h2>3.4 单据文本贴入</h2>
+
+<p>如果客户发的是<strong>纯文本</strong>（如邮件正文），直接复制文本贴入 AI 助手，让 AI 提取信息即可。本工具暂不直接解析纯文本（避免误识别），统一走 AI 助手中转。</p>
+
+<!-- ========== 第四章 ========== -->
+<h1 class="chapter">第四章 · 客户识别与选择</h1>
+
+<h2>4.1 自动识别（精确/简称）</h2>
+
+<p>系统对每个 JSON 中的 <code>cu_id</code> 字段自动做匹配：</p>
+
+<ol class="steps">
+  <li><strong>精确匹配</strong>：在 CRM 客户库中查找全称或简称完全一致的</li>
+  <li><strong>简称匹配</strong>：CRM 客户的简称等于输入名称</li>
+  <li><strong>全称匹配</strong>：CRM 客户的全称等于输入名称</li>
+</ol>
+
+<div class="shot-wrap">
+<div class="shot">
+  <div class="icon">✅</div>
+  <div class="label">客户精确匹配成功</div>
+  <div class="desc">绿色"精确匹配"标签 + 客户原始名称"上海飞奥德"</div>
+</div>
+</div>
+
+<h2>4.2 候选列表</h2>
+<p>如果匹配到多条候选，弹出"选择客户"弹窗让你选：</p>
+
+<div class="shot-wrap">
+<div class="shot">
+  <div class="icon">👥</div>
+  <div class="label">客户选择弹窗</div>
+  <div class="desc">显示多个候选客户，点击切换</div>
+</div>
+</div>
+
+<h2>4.3 手动搜索</h2>
+<p>如果自动匹配失败，点击客户卡片 → 弹窗 → 点"搜索其他" → 输入关键词搜索。</p>
+
+<!-- ========== 第五章 ========== -->
+<h1 class="chapter">第五章 · 产品匹配</h1>
+
+<h2>5.1 匹配模式（精确 / 品名 / 拼音 / 混合）</h2>
+
+<p>本工具使用<strong>4 套匹配策略</strong>，按优先级依次尝试：</p>
+
+<table>
+  <tr><th>优先级</th><th>策略</th><th>适用场景</th><th>示例</th></tr>
+  <tr>
+    <td>1</td>
+    <td><strong>编号精确匹配</strong></td>
+    <td>AI 给出了产品编号</td>
+    <td>编号 = "P001" → 直接命中</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td><strong>品名精确匹配</strong></td>
+    <td>品名完全一致</td>
+    <td>"爱国者迷你王" = "爱国者迷你王"</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td><strong>拼音匹配</strong></td>
+    <td>客户写错字、音近字</td>
+    <td>"爱国者" → aiguo → aiguo</td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td><strong>分词匹配</strong></td>
+    <td>产品名拆解后部分命中</td>
+    <td>"爱国者迷你王 商务型 L8202" → 拆成 ["爱国者","迷你王","商务型","L8202"]</td>
+  </tr>
+</table>
+
+<div class="box info">
+<p><strong>双擎</strong>：分词 + 拼音<strong>并行</strong>运行，谁先命中就用谁，匹配速度快（&lt; 300ms 处理 50 个产品）。</p>
+</div>
+
+<h2>5.2 匹配结果状态</h2>
+<p>每个产品行有 5 种状态标签：</p>
+<table>
+  <tr><th>标签</th><th>颜色</th><th>含义</th></tr>
+  <tr><td>编号匹配</td><td>绿</td><td>按产品编号精确命中</td></tr>
+  <tr><td>品名匹配</td><td>绿</td><td>按品名精确命中</td></tr>
+  <tr><td>拼音匹配</td><td>黄</td><td>按拼音首字母命中</td></tr>
+  <tr><td>分词匹配</td><td>黄</td><td>按分词命中</td></tr>
+  <tr><td>候选 X</td><td>橙</td><td>未匹配到，弹候选让用户选</td></tr>
+</table>
+
+<h2>5.3 行内编辑（数量/单价/折扣）</h2>
+<p>数量、单价、折扣三列<strong>点击即可编辑</strong>：</p>
+<ol class="steps">
+  <li>点击单元格，背景变黄</li>
+  <li>直接输入新值</li>
+  <li>按 <code>Enter</code> 或点击其他位置保存</li>
+  <li>右侧"含税小计"自动重算</li>
+</ol>
+
+<h2>5.4 批量确认/批量删除</h2>
+<ul>
+  <li><strong>全部确认</strong>（顶部按钮）：一键确认所有产品为"已确认"状态</li>
+  <li><strong>批量确认</strong>（行内按钮）：先勾选复选框，再点批量确认</li>
+  <li><strong>批量删除</strong>：先勾选，再点删除（红色按钮）</li>
+</ul>
+
+<h2>5.5 创建新产品</h2>
+<p>如果某个产品在 CRM 中不存在，可以现场创建：</p>
+<ol class="steps">
+  <li>点击该产品行的"重新匹配"按钮</li>
+  <li>在弹窗中点"创建新产品"</li>
+  <li>填写：编号、名称、型号、单位、单价</li>
+  <li>点"保存并确认" → 新产品入库 + 自动匹配当前单据</li>
+</ol>
+
+<div class="shot-wrap">
+<div class="shot">
+  <div class="icon">➕</div>
+  <div class="label">创建新产品弹窗</div>
+  <div class="desc">编号 / 品名 / 型号 / 单位 / 单价 输入框 + 保存按钮</div>
+</div>
+</div>
+
+<!-- ========== 第六章 ========== -->
+<h1 class="chapter">第六章 · 价格与税率</h1>
+
+<h2>6.1 折扣</h2>
+<p>折扣是<strong>百分比</strong>（0~100），可编辑：</p>
+<ul>
+  <li>100% = 不打折</li>
+  <li>88% = 88 折</li>
+  <li>50% = 5 折</li>
+</ul>
+
+<div class="box warn">
+<p><strong>小数折扣</strong>：本工具支持 95.5% 这样的小数折扣（修复了早先 parseInt 截断 bug）。</p>
+</div>
+
+<h2>6.2 税率（行内 + 统一）</h2>
+<p>本系统支持 <strong>6 个税率档位</strong>：0% / 3% / 5% / 6% / 9% / 13%。</p>
+
+<h3>6.2.1 行内税率下拉（每行独立）</h3>
+<p>每行产品都有一个税率下拉框：</p>
+
+<div class="shot-wrap">
+<div class="shot">
+  <div class="icon">💲</div>
+  <div class="label">行内税率下拉</div>
+  <div class="desc">下拉选项：0% / 3% / 5% / 6% / 9% / 13% / 锁图标（手动改过）</div>
+</div>
+</div>
+
+<ul>
+  <li>默认 13%（最常见）</li>
+  <li>手动改过某行后，右边出现 <i class="ri-lock-fill"></i> 锁图标</li>
+  <li>锁定的行不会被"统一税率"批量覆盖</li>
+</ul>
+
+<h3>6.2.2 统一税率工具栏（批量设置）</h3>
+<p>在"操作按钮区"上方有一行工具栏：</p>
+
+<div class="shot-wrap">
+<div class="shot">
+  <div class="icon">🔧</div>
+  <div class="label">统一税率工具栏</div>
+  <div class="desc">下拉选择税率 + "应用到未锁定的行" 按钮 + 锁图标说明</div>
+</div>
+</div>
+
+<p>操作步骤：</p>
+<ol class="steps">
+  <li>从下拉选择目标税率（如 13%）</li>
+  <li>点"应用到未锁定的行"按钮</li>
+  <li>所有未手动改过的行税率都变成 13%</li>
+  <li>已锁定的行（带锁图标）保持原值</li>
+</ol>
+
+<h2>6.3 含税金额自动计算</h2>
+<p>本工具的含税计算公式（符合中国增值税计税基础）：</p>
+
+<pre><code>含税单价 = un_price × (1 + taxRate/100)
+税金     = qty × un_price × taxRate/100   ← 基于原价，**不受折扣影响**
+订单 sum = qty × un_price × zk/100 + tax_money
+报价单 money = (1 + tax_rate/100) × num × price   ← 折扣已折入 price</code></pre>
+
+<div class="box tip">
+<p><strong>实时刷新</strong>：改数量/单价/折扣/税率任意一项，"含税小计"自动重算，"总金额"自动汇总。</p>
+</div>
+
+<h2>6.4 一键获取价格（自动核价）</h2>
+<p>在所有产品<strong>确认匹配完成后</strong>，可使用"一键获取价格"功能：</p>
+
+<div class="shot-wrap">
+<div class="shot">
+  <div class="icon">⚡</div>
+  <div class="label">一键获取价格按钮</div>
+  <div class="desc">橙黄色按钮，在"创建报价单"左侧</div>
+</div>
+</div>
+
+<ol class="steps">
+  <li>点"一键获取价格" → 弹出"价格获取"弹窗</li>
+  <li>弹窗显示每个产品的可选价格档（标准价 / 客户历史价 / 促销价）</li>
+  <li>逐项勾选确认（或点"全部按最低价"）</li>
+  <li>点"确认获取" → 批量更新单价 + 自动刷新含税小计</li>
+</ol>
+
+<!-- ========== 第七章 ========== -->
+<h1 class="chapter">第七章 · 单据生成</h1>
+
+<h2>7.1 创建报价单</h2>
+<ol class="steps">
+  <li>确保所有产品都已确认（"已确认 X/X" 等于总数）</li>
+  <li>点击"创建报价单"按钮</li>
+  <li>系统自动按公式计算 money = num × price × (1 + tax_rate/100)</li>
+  <li>弹窗显示"报价单创建成功"+ 报价单ID</li>
+  <li>点"完成去视图" → 新窗口打开 CRM 报价单详情</li>
+</ol>
+
+<h2>7.2 创建销售订单</h2>
+<ol class="steps">
+  <li>确保所有产品都已确认</li>
+  <li>点击"生成销售订单"按钮（蓝色主按钮）</li>
+  <li>系统按公式计算 sum = amount × un_price × zk/100 + tax_money</li>
+  <li>弹窗显示"订单创建成功" + 订单ID + 订单总额</li>
+  <li>点"完成去视图" → 新窗口打开 CRM 订单详情</li>
+</ol>
+
+<div class="shot-wrap">
+<div class="shot">
+  <div class="icon">🎉</div>
+  <div class="label">订单创建成功弹窗</div>
+  <div class="desc">订单主题 / 订单ID / 明细数量 / 订单总额 + [关闭] [完成去视图] 按钮</div>
+</div>
+</div>
+
+<h2>7.3 完成去视图（自动跳 CRM 详情）</h2>
+<p>订单/报价单创建成功后，"完成去视图"按钮会<strong>自动</strong>：</p>
+<ul>
+  <li>从 API 响应中取 <code>id</code>（新生成的主表 ID）</li>
+  <li>新窗口打开对应的 CRM 详情页：</li>
+  <li>订单 → <code>/xcrm/contract/contract/detail.xt?id=&lt;id&gt;</code></li>
+  <li>报价单 → <code>/xcrm/tracing/price/detail.xt?id=&lt;id&gt;</code></li>
+</ul>
+
+<div class="box tip">
+<p>无需手动复制 ID 拼 URL，<strong>一键直达</strong> CRM 详情页，方便立即做后续操作（如打印、加备注、关联项目）。</p>
+</div>
+
+<h2>7.4 导出 Excel（贴右边）</h2>
+<p>如果客户发来的是 Excel 格式的询价单，导出时可保持原文档格式：</p>
+<ol class="steps">
+  <li>点"导出 Excel（贴右边）"按钮</li>
+  <li>下载一个 .xlsx 文件，含产品图</li>
+  <li>打开客户原询价单，把下载的文件<strong>贴到右侧</strong>（即原文档的"产品明细"列）</li>
+  <li>原文档的标题/客户信息保持不变，产品列被自动填充</li>
+</ol>
+
+<!-- ========== 第八章 ========== -->
+<h1 class="chapter">第八章 · AI 智能体配置</h1>
+
+<h2>8.1 默认智能体</h2>
+<p>本系统开箱自带一个"默认"智能体，无需配置即可使用。它的鉴权走<strong>后端代理</strong>，前端永不接触 PAT：</p>
+
+<div class="flow" style="background:#fafafa;padding:12px;border-radius:6px;font-family:monospace;font-size:13px;">
+浏览器 ──GET /system/bot/token.xt──► 后端 ──用服务端凭证──► Coze
+  ▲                                       │                       │
+  │◄───── { ok:1, accessToken:"..." }─────┘◄── accessToken ──────┘
+  │
+  JS 内存使用（绝不写 localStorage）
+</div>
+
+<h2>8.2 添加自定义智能体</h2>
+<p>如果需要接入自己的 Bot（个人调试 / 测试新功能）：</p>
+
+<ol class="steps">
+  <li>点顶部"⚙️ 配置"按钮 → 打开"智能体配置"弹窗</li>
+  <li>点"添加"按钮 → 新增一行</li>
+  <li>填写：<strong>Bot ID</strong>、<strong>Token</strong>（你自己的 PAT）、<strong>名称</strong></li>
+  <li>点新行的圆点 → 设为"激活"</li>
+  <li>系统自动重连 → 右上角标签更新为新名称</li>
+</ol>
+
+<div class="shot-wrap">
+<div class="shot">
+  <div class="icon">🤖</div>
+  <div class="label">智能体配置弹窗</div>
+  <div class="desc">列表显示所有智能体，每行：圆点（单选）+ 名称 + Bot ID + Token + 删除按钮</div>
+</div>
+</div>
+
+<div class="box warn">
+<p><strong>注意</strong>：自定义智能体的 PAT 会存到浏览器 IndexedDB（明文），<strong>不要在生产环境用</strong>。仅用于个人调试。</p>
+</div>
+
+<h2>8.3 切换/删除/导入导出</h2>
+
+<table>
+  <tr><th>操作</th><th>做法</th></tr>
+  <tr><td>切换</td><td>点新智能体的圆点 → 自动重连</td></tr>
+  <tr><td>删除</td><td>点行尾"🗑️"按钮 → 确认 → 删除（激活中的会回退到默认）</td></tr>
+  <tr><td>导出</td><td>顶部"导出"按钮 → 下载 JSON 文件</td></tr>
+  <tr><td>导入</td><td>顶部"导入"按钮 → 选择之前导出的 JSON → 自动应用</td></tr>
+</table>
+
+<div class="box tip">
+<p><strong>跨设备迁移</strong>：用导出/导入功能，可以把智能体配置在多台电脑间共享。</p>
+</div>
+
+<!-- ========== 第九章 ========== -->
+<h1 class="chapter">第九章 · 拼音数据管理</h1>
+
+<p>本工具的<strong>分词 + 拼音匹配</strong>需要预先把 CRM 的客户和产品数据同步到本地（IndexedDB）。</p>
+
+<h2>9.1 拼音数据准备</h2>
+
+<ol class="steps">
+  <li>点顶部"打开拼音工具"按钮 → 新标签页打开 <code>get_cus_pro.html</code></li>
+  <li>页面自动从 CRM 加载客户和产品列表</li>
+  <li>逐项检查：每个客户/产品都自动生成了拼音首字母 + 分词结果</li>
+  <li>如有错误，可手动修正（极少见）</li>
+  <li>点"保存到本地" → 数据写入 IndexedDB</li>
+</ol>
+
+<div class="shot-wrap">
+<div class="shot">
+  <div class="icon">📊</div>
+  <div class="label">拼音数据工具页面</div>
+  <div class="desc">客户表 + 产品表 + 拼音列 + 分词列 + 保存按钮</div>
+</div>
+</div>
+
+<h2>9.2 数据同步</h2>
+<p>拼音数据<strong>每天首次打开工具时</strong>自动检查更新：</p>
+<ul>
+  <li>如果本地数据 &lt; 7 天前 → 直接用本地数据</li>
+  <li>如果本地数据 &gt; 7 天前 → 弹窗提示"是否重新同步"</li>
+  <li>如果 CRM 有新产品 → 弹窗提示"发现 X 个新产品，是否同步"</li>
+</ul>
+
+<div class="box info">
+<p><strong>手动强制同步</strong>：随时可以打开"拼音工具"页 → 点"重新拉取"按钮。</p>
+</div>
+
+<!-- ========== 第十章 ========== -->
+<h1 class="chapter">第十章 · 常见问题 FAQ</h1>
+
+<h3>Q1: 粘贴 JSON 后没反应？</h3>
+<p>A: 检查 JSON 格式：必须用 <code>```json</code> 代码块包裹，或确保是合法 JSON 数组/对象。本工具会忽略非 JSON 内容。</p>
+
+<h3>Q2: 客户匹配不到？</h3>
+<p>A: 三种可能：① CRM 中无此客户 → 需先去 CRM 创建；② 简称写错 → 手动搜索；③ 名称太泛（如"公司"）→ 提供更具体名称。</p>
+
+<h3>Q3: 产品匹配错（匹配到不相关产品）？</h3>
+<p>A: 点"重新匹配" → 选其他候选 → 必要时点"创建新产品"。本工具有<strong>冲突订单保护</strong>（同一 CRM 订单内产品不可重复）。</p>
+
+<h3>Q4: 税率下拉怎么默认是 13%？可以改成 0% 吗？</h3>
+<p>A: 可以。改法：① 行内下拉直接选；② 工具栏"统一税率"批量改。本系统对税率有校验（必须是 0/3/5/6/9/13 之一），其他值会被自动修正为 0。</p>
+
+<h3>Q5: 创建订单时报"折扣格式错误"？</h3>
+<p>A: 折扣必须是百分比数字（如 88），<strong>不要</strong>写"88%"或"0.88"。本工具会自动补上 "%"。</p>
+
+<h3>Q6: CRM 后端显示的税率和我选的不一样？</h3>
+<p>A: 这是已知的 CRM 显示层 bug：CRM 的"税率"列读产品主表的默认税率（不是子表传入的）。实际入库的税率/税金是正确的。已加 Console 调试日志，下单时可在控制台看到实际发送值。</p>
+
+<h3>Q7: 智能体没反应 / 加载失败？</h3>
+<p>A: ① 检查网络（Coze CDN 国外可能慢）；② 刷新页面重试；③ 点"⚙️ 配置"切换到"默认"智能体；④ 浏览器控制台查看错误信息。</p>
+
+<h3>Q8: 一键获取价格没数据？</h3>
+<p>A: ① 该客户没有历史订单 → 需先手动维护价格；② CRM 价格表无数据 → 联系 CRM 管理员。</p>
+
+<h3>Q9: 导出 Excel 后产品图没显示？</h3>
+<p>A: ① 产品图需要预先同步（拼音工具页面）；② 浏览器安全策略禁止外链图片时也会失败；③ 试用 Excel 2016+ 打开 .xlsx。</p>
+
+<h3>Q10: 报"请先完成所有产品匹配"？</h3>
+<p>A: 有产品还在"候选"状态（橙色标签），需手动选择匹配项或创建新产品。</p>
+
+<!-- ========== 附录 ========== -->
+<h1 class="chapter">附录 · 术语表 & 快捷键 & 错误码</h1>
+
+<h2>A. 术语表</h2>
+<table>
+  <tr><th>术语</th><th>解释</th></tr>
+  <tr><td>单据</td><td>订单、报价单、采购单等的统称</td></tr>
+  <tr><td>主表</td><td>单据的总体信息（客户、主题、日期、总额）</td></tr>
+  <tr><td>子表</td><td>单据的产品明细行</td></tr>
+  <tr><td>草稿</td><td>本工具的中间状态，尚未提交到 CRM</td></tr>
+  <tr><td>匹配</td><td>把 AI 输出的产品名对应到 CRM 已有产品</td></tr>
+  <tr><td>Coze</td><td>字节跳动旗下的 AI 智能体平台（https://www.coze.cn）</td></tr>
+  <tr><td>PAT</td><td>Personal Access Token，Coze 平台的用户访问令牌</td></tr>
+  <tr><td>Token</td><td>本工具中泛指鉴权凭证（短期 PAT 或自定义 PAT）</td></tr>
+  <tr><td>含税</td><td>单价 × (1 + 税率)，含增值税</td></tr>
+  <tr><td>不含税</td><td>单价 × 折扣，不含增值税</td></tr>
+  <tr><td>税金</td><td>基于"原价"计算的增值税（不受折扣影响，符合税法）</td></tr>
+</table>
+
+<h2>B. 快捷键</h2>
+<table>
+  <tr><th>快捷键</th><th>作用</th></tr>
+  <tr><td><code>Ctrl+V</code>（页面任意位置）</td><td>粘贴 JSON 触发匹配 / 粘贴图片转发到 AI 助手</td></tr>
+  <tr><td><code>Enter</code>（编辑单元格时）</td><td>保存编辑</td></tr>
+  <tr><td><code>Esc</code>（弹窗打开时）</td><td>关闭弹窗</td></tr>
+  <tr><td><code>F12</code></td><td>打开浏览器 DevTools，查看 Coze 调试日志</td></tr>
+</table>
+
+<h2>C. 常见错误码</h2>
+<table>
+  <tr><th>错误</th><th>原因 & 解决</th></tr>
+  <tr><td>产品匹配异常：xxx</td><td>拼音/分词引擎异常 → 刷新页面重试</td></tr>
+  <tr><td>订单 JSON 标准化失败</td><td>JSON 格式不规范 → 检查是否合法 JSON</td></tr>
+  <tr><td>折扣 xxx 不是百分比</td><td>折扣格式错 → 用 0~100 的数字</td></tr>
+  <tr><td>订单编号重复</td><td>编号已存在 → 留空让系统自动生成</td></tr>
+  <tr><td>客户名称不存在</td><td>CRM 中无此客户 → 先去 CRM 创建</td></tr>
+  <tr><td>产品匹配到多个</td><td>品名+型号对应多个产品 → 改用产品编号</td></tr>
+  <tr><td>您没有订单管理权限</td><td>当前用户无订单权限 → 联系 CRM 管理员</td></tr>
+</table>
+
+<h2>D. 版本与变更</h2>
+<table>
+  <tr><th>版本</th><th>日期</th><th>主要变更</th></tr>
+  <tr><td>v1.0</td><td>2025-12</td><td>初版：基础匹配 + JSON 粘贴</td></tr>
+  <tr><td>v1.3</td><td>2026-04</td><td>Coze 智能体嵌入（双轨制鉴权）</td></tr>
+  <tr><td>v1.4</td><td>2026-05</td><td>图片粘贴全局转发</td></tr>
+  <tr><td>v1.5</td><td>2026-06</td><td>税率功能（0/3/5/6/9/13 档位 + 统一/行内双模式）</td></tr>
+  <tr><td>v1.5+</td><td>2026-06-11</td><td>报价单 money 显式计算、订单/报价单"完成去视图"按钮</td></tr>
+</table>
+
+<hr style="margin: 48px 0; border: none; border-top: 1px dashed #cbd5e1;">
+<p style="color: #9ca3af; font-size: 13px; text-align: center;">
+  文档版本 v1.0 · 2026-06-11 · 配套产品 v1.5+<br>
+  本文档中所有截图均为占位框，实际部署时需替换为真实界面截图
+</p>
+
+</div>
+</div>
+</body>
+</html>

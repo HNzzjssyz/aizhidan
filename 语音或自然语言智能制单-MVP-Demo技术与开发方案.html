@@ -1,0 +1,1384 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>语音/自然语言智能制单 MVP Demo — 技术与开发方案</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Noto+Sans+SC:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-primary: #0a0d10;
+  --bg-secondary: #10141a;
+  --bg-card: #151a22;
+  --bg-card-hover: #1a2029;
+  --border: #252d3a;
+  --border-light: #303a4a;
+  --text-primary: #e4e2dd;
+  --text-secondary: #95979c;
+  --text-muted: #5a5d65;
+  --accent: #3ecfa5;
+  --accent-light: #6eecc8;
+  --accent-dim: #1f7a5e;
+  --accent-glow: rgba(62, 207, 165, 0.12);
+  --accent2: #f0a050;
+  --accent2-dim: rgba(240, 160, 80, 0.12);
+  --success: #4ade80;
+  --success-dim: rgba(74, 222, 128, 0.10);
+  --warning: #fb923c;
+  --warning-dim: rgba(251, 146, 60, 0.10);
+  --info: #60a5fa;
+  --info-dim: rgba(96, 165, 250, 0.10);
+  --danger: #f87171;
+  --danger-dim: rgba(248, 113, 113, 0.10);
+  --serif: 'Noto Serif SC', serif;
+  --sans: 'Noto Sans SC', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+  --radius: 14px;
+  --radius-sm: 8px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; scrollbar-width: thin; scrollbar-color: var(--border) var(--bg-primary); }
+body { background: var(--bg-primary); color: var(--text-primary); font-family: var(--sans); font-size: 15px; line-height: 1.75; -webkit-font-smoothing: antialiased; }
+::selection { background: var(--accent); color: var(--bg-primary); }
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(10, 13, 16, 0.88); backdrop-filter: blur(24px);
+  border-bottom: 1px solid var(--border); transition: transform 0.3s ease;
+}
+nav .nav-inner { max-width: 1200px; margin: 0 auto; padding: 0 40px; display: flex; align-items: center; justify-content: space-between; height: 54px; }
+nav .nav-brand { font-family: var(--serif); font-weight: 700; font-size: 15px; color: var(--accent); letter-spacing: 0.5px; }
+nav .nav-brand span { color: var(--text-muted); font-weight: 400; font-size: 12px; margin-left: 8px; font-family: var(--sans); }
+nav .nav-links { display: flex; gap: 4px; }
+nav .nav-links a { color: var(--text-secondary); text-decoration: none; font-size: 12px; font-weight: 500; padding: 5px 11px; border-radius: 6px; transition: all 0.2s ease; letter-spacing: 0.3px; }
+nav .nav-links a:hover, nav .nav-links a.active { color: var(--accent); background: var(--accent-glow); }
+
+.hero {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  position: relative; overflow: hidden; padding: 80px 40px;
+}
+.hero::before {
+  content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+  background: radial-gradient(ellipse at 25% 30%, rgba(62, 207, 165, 0.05) 0%, transparent 50%),
+              radial-gradient(ellipse at 75% 70%, rgba(240, 160, 80, 0.03) 0%, transparent 50%);
+  animation: heroGlow 25s ease-in-out infinite alternate;
+}
+@keyframes heroGlow { 0% { transform: translate(0, 0) rotate(0deg); } 100% { transform: translate(-3%, 2%) rotate(2deg); } }
+
+.hero-grid {
+  position: absolute; inset: 0;
+  background-image: linear-gradient(rgba(37, 45, 58, 0.25) 1px, transparent 1px), linear-gradient(90deg, rgba(37, 45, 58, 0.25) 1px, transparent 1px);
+  background-size: 80px 80px;
+  mask-image: radial-gradient(ellipse at center, black 15%, transparent 65%);
+  -webkit-mask-image: radial-gradient(ellipse at center, black 15%, transparent 65%);
+}
+
+.hero-content { position: relative; text-align: center; max-width: 820px; }
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--accent-glow); border: 1px solid var(--accent-dim); color: var(--accent);
+  font-size: 11px; font-weight: 600; padding: 5px 16px; border-radius: 20px;
+  letter-spacing: 2px; text-transform: uppercase; margin-bottom: 28px;
+  animation: fadeInUp 0.8s ease both;
+}
+.hero-badge .dot { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; animation: pulse 2s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+.hero h1 {
+  font-family: var(--serif); font-size: clamp(32px, 5vw, 58px); font-weight: 900;
+  line-height: 1.15; margin-bottom: 22px; animation: fadeInUp 0.8s ease 0.12s both;
+}
+.hero h1 .accent { color: var(--accent); position: relative; }
+.hero h1 .accent::after { content: ''; position: absolute; bottom: 2px; left: 0; right: 0; height: 3px; background: var(--accent); border-radius: 2px; opacity: 0.35; }
+.hero h1 .accent2 { color: var(--accent2); }
+
+.hero .subtitle {
+  font-size: 16.5px; color: var(--text-secondary); line-height: 1.85;
+  max-width: 620px; margin: 0 auto 36px; animation: fadeInUp 0.8s ease 0.25s both;
+}
+.hero-meta { display: flex; justify-content: center; gap: 28px; animation: fadeInUp 0.8s ease 0.4s both; }
+.hero-meta .meta-item { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.hero-meta .meta-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; }
+.hero-meta .meta-value { font-family: var(--mono); font-size: 12.5px; color: var(--text-secondary); }
+
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: translateY(0); } }
+
+.container { max-width: 1200px; margin: 0 auto; padding: 0 40px; }
+section { padding: 90px 0; position: relative; }
+
+.section-header { margin-bottom: 48px; }
+.section-number { font-family: var(--mono); font-size: 11.5px; color: var(--accent); font-weight: 500; letter-spacing: 2px; margin-bottom: 10px; display: block; }
+.section-title { font-family: var(--serif); font-size: clamp(26px, 3.5vw, 38px); font-weight: 700; line-height: 1.25; margin-bottom: 14px; }
+.section-desc { font-size: 15px; color: var(--text-secondary); max-width: 640px; line-height: 1.8; }
+
+.divider { width: 100%; height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); }
+
+.card-grid { display: grid; gap: 18px; }
+.card-grid-2 { grid-template-columns: repeat(2, 1fr); }
+.card-grid-3 { grid-template-columns: repeat(3, 1fr); }
+.card-grid-4 { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 900px) { .card-grid-2, .card-grid-3, .card-grid-4 { grid-template-columns: 1fr; } }
+@media (min-width: 901px) and (max-width: 1100px) { .card-grid-3 { grid-template-columns: repeat(2, 1fr); } .card-grid-4 { grid-template-columns: repeat(2, 1fr); } }
+
+.card {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 26px; transition: all 0.3s ease; position: relative; overflow: hidden;
+}
+.card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0; transition: opacity 0.3s ease;
+}
+.card:hover { border-color: var(--border-light); background: var(--bg-card-hover); transform: translateY(-2px); }
+.card:hover::before { opacity: 1; }
+
+.card-icon { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 19px; margin-bottom: 16px; }
+.card-icon.accent { background: var(--accent-glow); color: var(--accent); }
+.card-icon.accent2 { background: var(--accent2-dim); color: var(--accent2); }
+.card-icon.success { background: var(--success-dim); color: var(--success); }
+.card-icon.info { background: var(--info-dim); color: var(--info); }
+.card-icon.warning { background: var(--warning-dim); color: var(--warning); }
+.card-icon.danger { background: var(--danger-dim); color: var(--danger); }
+
+.card h3 { font-family: var(--serif); font-size: 17px; font-weight: 700; margin-bottom: 8px; line-height: 1.4; }
+.card p { color: var(--text-secondary); font-size: 13px; line-height: 1.75; }
+
+.tag { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 4px; font-size: 10.5px; font-weight: 600; letter-spacing: 0.5px; }
+.tag-accent { background: var(--accent-glow); color: var(--accent); }
+.tag-accent2 { background: var(--accent2-dim); color: var(--accent2); }
+.tag-success { background: var(--success-dim); color: var(--success); }
+.tag-info { background: var(--info-dim); color: var(--info); }
+.tag-warning { background: var(--warning-dim); color: var(--warning); }
+.tag-danger { background: var(--danger-dim); color: var(--danger); }
+
+.metric-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 44px; }
+@media (max-width: 900px) { .metric-row { grid-template-columns: repeat(2, 1fr); } }
+.metric-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; text-align: center; }
+.metric-card .metric-value { font-family: var(--serif); font-size: 34px; font-weight: 900; color: var(--accent); line-height: 1; margin-bottom: 7px; }
+.metric-card .metric-label { font-size: 11.5px; color: var(--text-muted); font-weight: 500; letter-spacing: 0.3px; }
+
+.feature-detail { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 32px; margin-bottom: 22px; }
+.feature-detail .feature-header { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+.feature-detail .feature-num { font-family: var(--mono); font-size: 30px; font-weight: 700; color: var(--accent); opacity: 0.35; line-height: 1; }
+.feature-detail h3 { font-family: var(--serif); font-size: 20px; font-weight: 700; }
+.feature-detail .feature-body { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+@media (max-width: 900px) { .feature-detail .feature-body { grid-template-columns: 1fr; } }
+.feature-detail .feature-col h4 { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+.feature-detail .feature-col ul { list-style: none; display: flex; flex-direction: column; gap: 7px; }
+.feature-detail .feature-col li { font-size: 13px; color: var(--text-secondary); padding-left: 16px; position: relative; line-height: 1.65; }
+.feature-detail .feature-col li::before { content: '▸'; position: absolute; left: 0; color: var(--accent); font-size: 10px; }
+
+.callout { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px 26px; display: flex; gap: 14px; margin: 22px 0; }
+.callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 2px; }
+.callout-body h4 { font-size: 13.5px; font-weight: 600; margin-bottom: 5px; }
+.callout-body p { font-size: 12.5px; color: var(--text-secondary); line-height: 1.7; }
+.callout.warning { border-left: 3px solid var(--warning); }
+.callout.info { border-left: 3px solid var(--info); }
+.callout.success { border-left: 3px solid var(--success); }
+.callout.danger { border-left: 3px solid var(--danger); }
+.callout.accent { border-left: 3px solid var(--accent); }
+
+.flow-steps { display: flex; gap: 0; align-items: stretch; overflow-x: auto; padding-bottom: 6px; }
+.flow-step { flex: 1; min-width: 170px; background: var(--bg-card); border: 1px solid var(--border); padding: 22px; position: relative; display: flex; flex-direction: column; }
+.flow-step:first-child { border-radius: var(--radius) 0 0 var(--radius); }
+.flow-step:last-child { border-radius: 0 var(--radius) var(--radius) 0; }
+.flow-step:not(:last-child)::after {
+  content: '→'; position: absolute; right: -13px; top: 50%; transform: translateY(-50%); z-index: 2;
+  color: var(--accent); font-size: 16px; font-weight: 700; background: var(--bg-primary);
+  width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
+  border-radius: 50%; border: 1px solid var(--border);
+}
+.flow-step .step-num { font-family: var(--mono); font-size: 10.5px; color: var(--accent); font-weight: 600; margin-bottom: 6px; }
+.flow-step h4 { font-size: 13.5px; font-weight: 600; margin-bottom: 5px; }
+.flow-step p { font-size: 11.5px; color: var(--text-secondary); line-height: 1.55; }
+
+.arch-diagram { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 40px 28px; overflow-x: auto; }
+.arch-layer { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 20px; }
+.arch-layer:last-child { margin-bottom: 0; }
+.arch-layer-label { font-family: var(--mono); font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 3px; }
+.arch-nodes { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+.arch-node { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 20px; text-align: center; min-width: 130px; transition: all 0.2s ease; }
+.arch-node:hover { border-color: var(--accent-dim); background: var(--bg-card-hover); }
+.arch-node .node-icon { font-size: 20px; margin-bottom: 5px; }
+.arch-node .node-name { font-size: 12.5px; font-weight: 600; color: var(--text-primary); margin-bottom: 1px; }
+.arch-node .node-desc { font-size: 10px; color: var(--text-muted); }
+.arch-arrow { text-align: center; color: var(--text-muted); font-size: 18px; padding: 3px 0; opacity: 0.45; }
+
+.coze-flow { display: flex; flex-direction: column; gap: 14px; margin-top: 20px; }
+.coze-step { display: flex; gap: 14px; align-items: flex-start; }
+.coze-step .step-marker { width: 30px; height: 30px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; font-family: var(--mono); }
+.coze-step .step-marker.m-accent { background: var(--accent-glow); color: var(--accent); }
+.coze-step .step-marker.m-info { background: var(--info-dim); color: var(--info); }
+.coze-step .step-marker.m-success { background: var(--success-dim); color: var(--success); }
+.coze-step .step-marker.m-warning { background: var(--warning-dim); color: var(--warning); }
+.coze-step .step-marker.m-accent2 { background: var(--accent2-dim); color: var(--accent2); }
+.coze-step .step-content h4 { font-size: 13.5px; font-weight: 600; margin-bottom: 3px; }
+.coze-step .step-content p { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+
+.prompt-box {
+  background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 18px; margin-top: 10px; font-family: var(--mono); font-size: 11.5px;
+  line-height: 1.7; color: var(--text-secondary); position: relative;
+}
+.prompt-box::before { content: 'PROMPT'; position: absolute; top: -8px; left: 11px; font-size: 8.5px; font-weight: 700; letter-spacing: 1.5px; color: var(--accent); background: var(--bg-secondary); padding: 0 5px; }
+
+.interaction-demo { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; margin-top: 18px; }
+.chat-bubble { max-width: 85%; padding: 11px 15px; border-radius: 11px; font-size: 13px; line-height: 1.6; margin-bottom: 10px; }
+.chat-bubble.user { background: var(--accent-glow); border: 1px solid var(--accent-dim); color: var(--accent-light); margin-left: auto; border-bottom-right-radius: 3px; }
+.chat-bubble.system { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-secondary); margin-right: auto; border-bottom-left-radius: 3px; }
+.chat-bubble .bubble-label { font-size: 9.5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 3px; opacity: 0.55; }
+
+.doc-preview { background: #fafafa; color: #1a1a1a; border-radius: var(--radius-sm); padding: 18px; font-size: 11.5px; margin-top: 10px; }
+.doc-preview .doc-title { text-align: center; font-weight: 700; font-size: 13.5px; margin-bottom: 10px; padding-bottom: 7px; border-bottom: 2px solid #1a1a1a; }
+.doc-preview table { width: 100%; border-collapse: collapse; font-size: 10.5px; }
+.doc-preview table th, .doc-preview table td { border: 1px solid #d0d0d0; padding: 4px 7px; text-align: left; }
+.doc-preview table th { background: #f0f0f0; font-weight: 600; }
+.doc-preview .highlight { background: #fff3cd; padding: 1px 3px; border-radius: 2px; }
+.doc-preview .confirm-bar { display: flex; gap: 7px; margin-top: 10px; justify-content: flex-end; }
+.doc-preview .btn { padding: 4px 13px; border-radius: 4px; font-size: 10.5px; font-weight: 600; border: none; cursor: pointer; }
+.doc-preview .btn-primary { background: #1a1a1a; color: #fff; }
+.doc-preview .btn-secondary { background: #e0e0e0; color: #1a1a1a; }
+
+.data-sample { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 18px; margin: 14px 0; }
+.data-sample .data-title { font-size: 10.5px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+.data-sample .data-row { display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; }
+.data-sample .data-row .data-key { color: var(--text-muted); }
+.data-sample .data-row .data-val { font-family: var(--mono); color: var(--text-secondary); font-size: 11.5px; }
+
+.table-wrapper { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); }
+.spec-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.spec-table thead th { text-align: left; padding: 11px 14px; font-size: 10.5px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border); background: var(--bg-secondary); }
+.spec-table thead th:first-child { border-radius: var(--radius-sm) 0 0 0; }
+.spec-table thead th:last-child { border-radius: 0 var(--radius-sm) 0 0; }
+.spec-table tbody td { padding: 12px 14px; border-bottom: 1px solid rgba(37, 45, 58, 0.4); color: var(--text-secondary); vertical-align: top; }
+.spec-table tbody tr:hover td { background: var(--bg-card); }
+.spec-table tbody td:first-child { color: var(--text-primary); font-weight: 500; }
+
+.timeline { position: relative; padding-left: 34px; }
+.timeline::before { content: ''; position: absolute; left: 14px; top: 7px; bottom: 7px; width: 2px; background: linear-gradient(180deg, var(--accent), var(--border)); border-radius: 1px; }
+.timeline-item { position: relative; margin-bottom: 32px; padding-bottom: 32px; border-bottom: 1px solid rgba(37, 45, 58, 0.4); }
+.timeline-item:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+.timeline-item::before { content: ''; position: absolute; left: -25px; top: 5px; width: 9px; height: 9px; background: var(--accent); border-radius: 50%; border: 2px solid var(--bg-primary); box-shadow: 0 0 0 3px var(--accent-glow); }
+.timeline-item.future::before { background: var(--border); box-shadow: 0 0 0 3px rgba(37, 45, 58, 0.3); }
+.timeline-phase { display: flex; align-items: center; gap: 9px; margin-bottom: 8px; }
+.timeline-phase .phase-name { font-family: var(--serif); font-size: 17px; font-weight: 700; }
+.timeline-phase .phase-duration { font-family: var(--mono); font-size: 11px; color: var(--text-muted); background: var(--bg-card); padding: 2px 9px; border-radius: 4px; border: 1px solid var(--border); }
+.timeline-tasks { display: flex; flex-direction: column; gap: 5px; }
+.timeline-task { display: flex; align-items: flex-start; gap: 7px; font-size: 13px; color: var(--text-secondary); }
+.timeline-task .check { color: var(--accent); font-size: 11px; margin-top: 3px; flex-shrink: 0; }
+.timeline-task .check.pending { color: var(--text-muted); }
+
+.scope-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 900px) { .scope-cols { grid-template-columns: 1fr; } }
+.scope-col { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 26px; }
+.scope-col h3 { font-size: 15px; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 7px; }
+.scope-col.included h3 { color: var(--success); }
+.scope-col.excluded h3 { color: var(--text-muted); }
+.scope-col ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.scope-col li { font-size: 13px; color: var(--text-secondary); padding-left: 20px; position: relative; line-height: 1.6; }
+.scope-col.included li::before { content: '✓'; position: absolute; left: 0; color: var(--success); font-weight: 700; }
+.scope-col.excluded li::before { content: '—'; position: absolute; left: 0; color: var(--text-muted); }
+
+.success-criteria { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+@media (max-width: 900px) { .success-criteria { grid-template-columns: 1fr; } }
+.criteria-item { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 22px; display: flex; gap: 12px; align-items: flex-start; }
+.criteria-item .criteria-icon { width: 34px; height: 34px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; background: var(--accent-glow); color: var(--accent); }
+.criteria-item h4 { font-size: 13.5px; font-weight: 600; margin-bottom: 3px; }
+.criteria-item p { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+
+.risk-item { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 18px 22px; margin-bottom: 14px; display: grid; grid-template-columns: 1fr auto auto; gap: 14px; align-items: start; }
+.risk-item .risk-title { font-weight: 600; font-size: 13.5px; margin-bottom: 3px; }
+.risk-item .risk-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.55; }
+.risk-item .risk-mitigation { font-size: 12px; color: var(--accent-light); line-height: 1.55; }
+
+.toc-section { padding: 50px 0 36px; }
+.toc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+@media (max-width: 900px) { .toc-grid { grid-template-columns: 1fr; } }
+.toc-item { display: flex; align-items: center; gap: 12px; padding: 14px 18px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); text-decoration: none; transition: all 0.2s ease; }
+.toc-item:hover { border-color: var(--accent-dim); background: var(--bg-card-hover); transform: translateX(4px); }
+.toc-item .toc-num { font-family: var(--mono); font-size: 11.5px; color: var(--accent); font-weight: 600; min-width: 26px; }
+.toc-item .toc-text { font-size: 13.5px; font-weight: 500; color: var(--text-primary); }
+
+.code-block { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 18px 22px; font-family: var(--mono); font-size: 12px; line-height: 1.7; overflow-x: auto; color: var(--text-secondary); margin: 14px 0; }
+.code-block .keyword { color: var(--accent); }
+.code-block .string { color: var(--success); }
+.code-block .comment { color: var(--text-muted); }
+.code-block .type { color: var(--info); }
+
+.footer { border-top: 1px solid var(--border); padding: 44px 0; text-align: center; }
+.footer p { font-size: 12px; color: var(--text-muted); line-height: 1.8; }
+.footer .footer-brand { font-family: var(--serif); font-weight: 700; color: var(--accent); }
+
+.animate-in { opacity: 0; transform: translateY(18px); transition: opacity 0.6s ease, transform 0.6s ease; }
+.animate-in.visible { opacity: 1; transform: translateY(0); }
+
+.schema-box { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 18px; margin-top: 10px; }
+.schema-box .schema-title { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; color: var(--accent); text-transform: uppercase; margin-bottom: 8px; }
+.schema-box pre { font-family: var(--mono); font-size: 11px; line-height: 1.6; color: var(--text-secondary); white-space: pre-wrap; word-break: break-all; }
+
+.match-demo { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+@media (max-width: 900px) { .match-demo { grid-template-columns: 1fr; } }
+.match-case { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px; }
+.match-case .match-label { font-size: 10.5px; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 8px; }
+.match-case .match-label.exact { color: var(--success); }
+.match-case .match-label.fuzzy { color: var(--warning); }
+.match-case .match-label.fail { color: var(--danger); }
+.match-case .match-input { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
+.match-case .match-result { font-size: 12px; font-weight: 600; }
+.match-case .match-result.exact { color: var(--success); }
+.match-case .match-result.fuzzy { color: var(--warning); }
+.match-case .match-result.fail { color: var(--danger); }
+
+.edit-flow { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+.edit-step { display: flex; gap: 12px; align-items: flex-start; }
+.edit-step .edit-marker { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; background: var(--accent-glow); color: var(--accent); font-weight: 700; font-family: var(--mono); }
+.edit-step .edit-marker.m2 { background: var(--accent2-dim); color: var(--accent2); }
+.edit-step .edit-marker.m3 { background: var(--success-dim); color: var(--success); }
+.edit-step h4 { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+.edit-step p { font-size: 12px; color: var(--text-secondary); line-height: 1.55; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <div class="nav-brand">智能制单<span>专项方案</span></div>
+    <div class="nav-links">
+      <a href="#overview">概述</a>
+      <a href="#core-flow">核心流程</a>
+      <a href="#input">输入层</a>
+      <a href="#parse">解析层</a>
+      <a href="#validate">校验层</a>
+      <a href="#display">展示层</a>
+      <a href="#edit">修正层</a>
+      <a href="#coze">Coze方案</a>
+      <a href="#scope">范围</a>
+      <a href="#plan">计划</a>
+      <a href="#risk">风险</a>
+      <a href="#success">标准</a>
+    </div>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <div class="hero-badge"><span class="dot"></span> MVP DEMO</div>
+    <h1>语音/自然语言<br><span class="accent">智能制单</span>方案</h1>
+    <p class="subtitle">通过语音或自然语言快速录入，AI八成匹配生成单据草稿，人工小调整达100%精确后保存——解决中小企业一线员工抵触手动填报的核心痛点</p>
+    <div class="hero-meta">
+      <div class="meta-item"><span class="meta-label">版本</span><span class="meta-value">v0.1.0-mvp</span></div>
+      <div class="meta-item"><span class="meta-label">日期</span><span class="meta-value">2026-05-11</span></div>
+      <div class="meta-item"><span class="meta-label">聚焦</span><span class="meta-value">单据录入</span></div>
+      <div class="meta-item"><span class="meta-label">平台</span><span class="meta-value">Coze</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="toc-section">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-number">NAVIGATION</span>
+      <h2 class="section-title">文档目录</h2>
+    </div>
+    <div class="toc-grid">
+      <a href="#overview" class="toc-item"><span class="toc-num">01</span><span class="toc-text">问题定义与核心价值</span></a>
+      <a href="#core-flow" class="toc-item"><span class="toc-num">02</span><span class="toc-text">核心流程总览</span></a>
+      <a href="#input" class="toc-item"><span class="toc-num">03</span><span class="toc-text">输入层：语音/文本采集</span></a>
+      <a href="#parse" class="toc-item"><span class="toc-num">04</span><span class="toc-text">解析层：AI结构化提取</span></a>
+      <a href="#validate" class="toc-item"><span class="toc-num">05</span><span class="toc-text">校验层：客户库/产品库匹配</span></a>
+      <a href="#display" class="toc-item"><span class="toc-num">06</span><span class="toc-text">展示层：单据草稿渲染</span></a>
+      <a href="#edit" class="toc-item"><span class="toc-num">07</span><span class="toc-text">修正层：交互式确认修改</span></a>
+      <a href="#coze" class="toc-item"><span class="toc-num">08</span><span class="toc-text">Coze平台实施方案</span></a>
+      <a href="#scope" class="toc-item"><span class="toc-num">09</span><span class="toc-text">MVP功能范围</span></a>
+      <a href="#plan" class="toc-item"><span class="toc-num">10</span><span class="toc-text">开发计划</span></a>
+      <a href="#risk" class="toc-item"><span class="toc-num">11</span><span class="toc-text">风险与应对</span></a>
+      <a href="#success" class="toc-item"><span class="toc-num">12</span><span class="toc-text">验收标准</span></a>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="overview">
+  <div class="container">
+    <div class="section-header animate-in">
+      <span class="section-number">01</span>
+      <h2 class="section-title">问题定义与核心价值</h2>
+      <p class="section-desc">中小企业一线员工普遍抵触手动填报结构化数据和制作格式化单据——这是数据值守体系落地的第一道门槛。本专项方案聚焦解决"数据怎么快速录进来"这个最紧迫问题。</p>
+    </div>
+
+    <div class="metric-row animate-in">
+      <div class="metric-card">
+        <div class="metric-value">80%</div>
+        <div class="metric-label">AI匹配准确率目标</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">3</div>
+        <div class="metric-label">首批支持单据类型</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">≤3步</div>
+        <div class="metric-label">人工修正操作步数</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">≤30s</div>
+        <div class="metric-label">端到端制单耗时</div>
+      </div>
+    </div>
+
+    <div class="card-grid card-grid-3 animate-in">
+      <div class="card">
+        <div class="card-icon accent">🎙️</div>
+        <h3>语音/自然语言录入</h3>
+        <p>用户只需"说"或"打字"描述业务信息，无需手动填写表格字段，AI自动完成结构化提取，将非结构化输入转化为结构化单据</p>
+      </div>
+      <div class="card">
+        <div class="card-icon accent2">✏️</div>
+        <h3>八成匹配 + 小调整</h3>
+        <p>AI生成80%准确率的单据草稿，用户只需对少量字段做微调即可达到100%精确，大幅降低录入工作量与心理门槛</p>
+      </div>
+      <div class="card">
+        <div class="card-icon success">✓</div>
+        <h3>核心字段精准校验</h3>
+        <p>客户名称、产品编号等必须精准的字段，通过企业已有客户库/产品库自动匹配校验，确保关键数据不出错</p>
+      </div>
+    </div>
+
+    <div class="callout accent animate-in" style="margin-top: 28px;">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        <h4>核心设计哲学</h4>
+        <p><strong>不追求AI一步到位</strong>，接受80%-95%的生成准确率，通过极简的确认修改交互补齐剩余5%-20%。核心逻辑是：<strong>AI干粗活，人做精修</strong>——让AI承担80%的重复性结构化工作，让人只做20%的关键判断与修正，形成"快速录入→八成匹配→小调整→精确保存"的完整闭环。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="core-flow">
+  <div class="container">
+    <div class="section-header animate-in">
+      <span class="section-number">02</span>
+      <h2 class="section-title">核心流程总览</h2>
+      <p class="section-desc">从用户输入到精确保存，完整闭环分为六步，每一步职责清晰、可独立优化。</p>
+    </div>
+
+    <div class="flow-steps animate-in">
+      <div class="flow-step">
+        <div class="step-num">STEP 1</div>
+        <h4>语音/文本输入</h4>
+        <p>用户通过语音录制或文本输入描述业务信息</p>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">STEP 2</div>
+        <h4>ASR转写 + 预处理</h4>
+        <p>语音转文本，清洗无效字符，标准化数字与关键词</p>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">STEP 3</div>
+        <h4>LLM结构化提取</h4>
+        <p>AI解析文本，按单据Schema提取所有字段，输出JSON</p>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">STEP 4</div>
+        <h4>字段校验匹配</h4>
+        <p>客户→客户库匹配；产品→产品库匹配；金额自动计算</p>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">STEP 5</div>
+        <h4>单据草稿展示</h4>
+        <p>按模板渲染格式化单据，高亮低置信度与待确认字段</p>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">STEP 6</div>
+        <h4>交互修正 → 保存</h4>
+        <p>用户一键确认或逐字段修改，修改后保存完成闭环</p>
+      </div>
+    </div>
+
+    <div class="callout info animate-in" style="margin-top: 28px;">
+      <div class="callout-icon">🔄</div>
+      <div class="callout-body">
+        <h4>闭环关键：Step 5→6 是核心体验</h4>
+        <p>AI生成草稿只是起点，真正决定用户体验的是"看到草稿后如何快速修正并保存"。本方案将80%的交互设计精力投入在Step 5-6，确保修正操作极简、直觉、零学习成本。</p>
+      </div>
+    </div>
+
+    <div style="margin-top: 36px;" class="animate-in">
+      <h3 style="font-family: var(--serif); font-size: 20px; font-weight: 700; margin-bottom: 18px;">完整交互演示</h3>
+      <div class="interaction-demo">
+        <div class="chat-bubble user">
+          <div class="bubble-label">用户语音输入</div>
+          给深圳华创科技发一份报价单，A3打印纸500箱单价85块，B5笔记本200箱单价42块，含税，付款方式月结30天
+        </div>
+        <div class="chat-bubble system">
+          <div class="bubble-label">AI 解析结果</div>
+          已识别为<strong>报价单</strong>，客户匹配：<strong>深圳华创科技有限公司</strong> ✓，产品匹配：A3打印纸 ✓ / B5笔记本 ✓
+        </div>
+        <div class="doc-preview">
+          <div class="doc-title">报 价 单</div>
+          <table>
+            <tr><th style="width:28%">客户名称</th><td>深圳华创科技有限公司</td><th style="width:18%">报价日期</th><td>2026-05-11</td></tr>
+            <tr><th>付款方式</th><td>月结30天</td><th>含税</th><td>是</td></tr>
+          </table>
+          <table style="margin-top:7px">
+            <tr><th>序号</th><th>产品名称</th><th>规格</th><th>数量</th><th>单位</th><th>单价</th><th>金额</th></tr>
+            <tr><td>1</td><td>A3打印纸</td><td>-</td><td>500</td><td>箱</td><td>¥85.00</td><td>¥42,500.00</td></tr>
+            <tr><td>2</td><td>B5笔记本</td><td>-</td><td>200</td><td>箱</td><td>¥42.00</td><td>¥8,400.00</td></tr>
+            <tr><td colspan="5" style="text-align:right;font-weight:600">合计</td><td colspan="2" style="font-weight:700">¥50,900.00</td></tr>
+          </table>
+          <div class="confirm-bar">
+            <button class="btn btn-secondary">逐项修改</button>
+            <button class="btn btn-primary">✓ 确认保存</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="input">
+  <div class="container">
+    <div class="section-header animate-in">
+      <span class="section-number">03</span>
+      <h2 class="section-title">输入层：语音/文本采集</h2>
+      <p class="section-desc">用户入口设计，支持语音和文本两种输入方式，覆盖不同场景和用户偏好。</p>
+    </div>
+
+    <div class="card-grid card-grid-2 animate-in">
+      <div class="card">
+        <div class="card-icon accent">🎙️</div>
+        <h3>语音输入</h3>
+        <p>用户点击录音按钮，口述业务信息。ASR自动转写为文本，转写结果实时展示供用户确认。适合移动场景、双手忙碌时使用。</p>
+        <div style="margin-top: 10px;">
+          <span class="tag tag-accent">Coze语音插件</span>
+          <span class="tag tag-info">实时转写</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-icon accent2">⌨️</div>
+        <h3>文本输入</h3>
+        <p>用户在输入框中直接打字描述业务信息，支持自然语言格式，无需按特定模板填写。适合办公场景、复杂描述时使用。</p>
+        <div style="margin-top: 10px;">
+          <span class="tag tag-accent2">自然语言</span>
+          <span class="tag tag-info">自由格式</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="feature-detail animate-in" style="margin-top: 24px;">
+      <div class="feature-header">
+        <span class="feature-num">→</span>
+        <h3>输入预处理规则</h3>
+      </div>
+      <div class="feature-body">
+        <div class="feature-col">
+          <h4>文本清洗</h4>
+          <ul>
+            <li>去除多余空格、标点符号标准化</li>
+            <li>口语化数字转标准格式："八十五块"→85.00</li>
+            <li>单位标准化："箱"→箱、"个"→个、"件"→件</li>
+            <li>识别单据类型关键词："报价单""订单""出库"等</li>
+          </ul>
+        </div>
+        <div class="feature-col">
+          <h4>ASR纠错策略</h4>
+          <ul>
+            <li>行业术语纠错：基于产品库/客户库的发音相似度修正</li>
+            <li>数字纠错：ASR常见数字识别错误自动修正</li>
+            <li>转写结果展示给用户确认，支持手动修改转写文本</li>
+            <li>保留原始音频，必要时可回听</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="parse">
+  <div class="container">
+    <div class="section-header animate-in">
+      <span class="section-number">04</span>
+      <h2 class="section-title">解析层：AI结构化提取</h2>
+      <p class="section-desc">核心AI能力层——将非结构化的自然语言文本转化为结构化的单据JSON数据。这是"八成匹配"的关键引擎。</p>
+    </div>
+
+    <div class="feature-detail animate-in">
+      <div class="feature-header">
+        <span class="feature-num">01</span>
+        <h3>LLM结构化提取</h3>
+      </div>
+      <div class="feature-body">
+        <div class="feature-col">
+          <h4>提取策略</h4>
+          <ul>
+            <li>按单据模板Schema定义字段清单</li>
+            <li>LLM按Schema逐字段提取，输出结构化JSON</li>
+            <li>无法确定的字段填null，不猜测</li>
+            <li>每个字段附带置信度评分（0-1）</li>
+            <li>置信度低于0.7的字段标记为"待确认"</li>
+          </ul>
+        </div>
+        <div class="feature-col">
+          <h4>多轮引导补全</h4>
+          <ul>
+            <li>必填字段缺失时，Bot主动追问</li>
+            <li>追问采用自然对话方式，非表单式</li>
+            <li>最多追问2轮，避免用户烦躁</li>
+            <li>2轮后仍缺失的必填字段标红提示</li>
+            <li>非必填字段缺失时静默跳过</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="prompt-box">
+你是一个单据信息提取助手。请从用户输入中提取以下信息，按JSON格式输出：
+
+{
+  "doc_type": "销售订单|报价单|出库单",
+  "customer_name": "提取的客户名称",
+  "products": [
+    { "name": "产品名称", "spec": "规格", "qty": 数量, "unit": "单位", "price": 单价 }
+  ],
+  "payment_term": "付款条件",
+  "tax_included": true|false,
+  "remark": "备注信息",
+  "confidence": {
+    "customer_name": 0.0-1.0,
+    "products": [0.0-1.0],
+    "payment_term": 0.0-1.0
+  }
+}
+
+对无法确定的字段填null。用户输入：{{input}}
+      </div>
+    </div>
+
+    <div class="feature-detail animate-in">
+      <div class="feature-header">
+        <span class="feature-num">02</span>
+        <h3>单据模板Schema定义</h3>
+      </div>
+      <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 16px;">首批支持的三类单据及其字段定义：</p>
+
+      <div class="card-grid card-grid-3">
+        <div class="card">
+          <div class="card-icon accent">📋</div>
+          <h3>销售订单</h3>
+          <div class="data-sample" style="margin-top: 8px;">
+            <div class="data-row"><span class="data-key">客户名称</span><span class="data-val">必填</span></div>
+            <div class="data-row"><span class="data-key">订单日期</span><span class="data-val">自动填充</span></div>
+            <div class="data-row"><span class="data-key">产品明细</span><span class="data-val">必填 ≥1</span></div>
+            <div class="data-row"><span class="data-key">付款方式</span><span class="data-val">可选</span></div>
+            <div class="data-row"><span class="data-key">交货日期</span><span class="data-val">可选</span></div>
+            <div class="data-row"><span class="data-key">是否含税</span><span class="data-val">可选</span></div>
+            <div class="data-row"><span class="data-key">备注</span><span class="data-val">可选</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-icon accent2">📄</div>
+          <h3>报价单</h3>
+          <div class="data-sample" style="margin-top: 8px;">
+            <div class="data-row"><span class="data-key">客户名称</span><span class="data-val">必填</span></div>
+            <div class="data-row"><span class="data-key">报价日期</span><span class="data-val">自动填充</span></div>
+            <div class="data-row"><span class="data-key">产品明细</span><span class="data-val">必填 ≥1</span></div>
+            <div class="data-row"><span class="data-key">付款方式</span><span class="data-val">可选</span></div>
+            <div class="data-row"><span class="data-key">报价有效期</span><span class="data-val">可选</span></div>
+            <div class="data-row"><span class="data-key">是否含税</span><span class="data-val">可选</span></div>
+            <div class="data-row"><span class="data-key">备注</span><span class="data-val">可选</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-icon success">📦</div>
+          <h3>出库单</h3>
+          <div class="data-sample" style="margin-top: 8px;">
+            <div class="data-row"><span class="data-key">客户名称</span><span class="data-val">必填</span></div>
+            <div class="data-row"><span class="data-key">出库日期</span><span class="data-val">自动填充</span></div>
+            <div class="data-row"><span class="data-key">产品明细</span><span class="data-val">必填 ≥1</span></div>
+            <div class="data-row"><span class="data-key">关联订单号</span><span class="data-val">可选</span></div>
+            <div class="data-row"><span class="data-key">收货地址</span><span class="data-val">可选</span></div>
+            <div class="data-row"><span class="data-key">物流方式</span><span class="data-val">可选</span></div>
+            <div class="data-row"><span class="data-key">备注</span><span class="data-val">可选</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="validate">
+  <div class="container">
+    <div class="section-header animate-in">
+      <span class="section-number">05</span>
+      <h2 class="section-title">校验层：客户库/产品库匹配</h2>
+      <p class="section-desc">核心字段必须精准——客户名称和产品信息通过企业已有数据库进行匹配校验，这是"八成匹配"提升到"可用"的关键一步。</p>
+    </div>
+
+    <div class="feature-detail animate-in">
+      <div class="feature-header">
+        <span class="feature-num">01</span>
+        <h3>三级匹配策略</h3>
+      </div>
+      <div class="feature-body">
+        <div class="feature-col">
+          <h4>匹配流程</h4>
+          <ul>
+            <li>第一级：精确匹配——输入与库中名称完全一致</li>
+            <li>第二级：模糊匹配——编辑距离+关键词相似度</li>
+            <li>第三级：别名匹配——客户/产品的常用别名映射</li>
+            <li>匹配结果分级：✓ 精确 / ⚠ 模糊（需确认） / ✗ 未匹配</li>
+            <li>匹配时优先编号，其次名称，最后别名</li>
+          </ul>
+        </div>
+        <div class="feature-col">
+          <h4>校验规则</h4>
+          <ul>
+            <li>客户名称：必须匹配到库中唯一客户，否则需用户手动选择</li>
+            <li>产品名称：必须匹配到库中唯一产品，否则需用户手动选择</li>
+            <li>单价校验：与产品库参考单价对比，偏差>20%标黄提示</li>
+            <li>金额自动计算：数量×单价=行金额，各行求和=合计</li>
+            <li>计算结果与LLM提取金额交叉校验，不一致时以计算为准</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="match-demo">
+        <div class="match-case">
+          <div class="match-label exact">✓ 精确匹配</div>
+          <div class="match-input">输入："深圳华创科技"</div>
+          <div class="match-result exact">→ 深圳华创科技有限公司 (CUST-001)</div>
+        </div>
+        <div class="match-case">
+          <div class="match-label fuzzy">⚠ 模糊匹配</div>
+          <div class="match-input">输入："华创"</div>
+          <div class="match-result fuzzy">→ 候选：深圳华创科技 / 广州华创电子，请确认</div>
+        </div>
+        <div class="match-case">
+          <div class="match-label exact">✓ 别名匹配</div>
+          <div class="match-input">输入："A3复印纸"</div>
+          <div class="match-result exact">→ A3打印纸 (PROD-A3-001) [别名: A3复印纸]</div>
+        </div>
+        <div class="match-case">
+          <div class="match-label fail">✗ 未匹配</div>
+          <div class="match-input">输入："新客户某某公司"</div>
+          <div class="match-result fail">→ 未找到匹配，请手动选择或新建客户</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="feature-detail animate-in">
+      <div class="feature-header">
+        <span class="feature-num">02</span>
+        <h3>Knowledge Base 设计</h3>
+      </div>
+      <div class="card-grid card-grid-2" style="margin-top: 12px;">
+        <div class="card">
+          <div class="card-icon info">👥</div>
+          <h3>客户库</h3>
+          <div class="data-sample" style="margin-top: 8px;">
+            <div class="data-row"><span class="data-key">客户编号</span><span class="data-val">CUST-001</span></div>
+            <div class="data-row"><span class="data-key">客户名称</span><span class="data-val">深圳华创科技有限公司</span></div>
+            <div class="data-row"><span class="data-key">别名</span><span class="data-val">华创科技, 华创</span></div>
+            <div class="data-row"><span class="data-key">联系人</span><span class="data-val">张经理</span></div>
+            <div class="data-row"><span class="data-key">地址</span><span class="data-val">深圳市南山区...</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-icon warning">📦</div>
+          <h3>产品库</h3>
+          <div class="data-sample" style="margin-top: 8px;">
+            <div class="data-row"><span class="data-key">产品编号</span><span class="data-val">PROD-A3-001</span></div>
+            <div class="data-row"><span class="data-key">产品名称</span><span class="data-val">A3打印纸</span></div>
+            <div class="data-row"><span class="data-key">别名</span><span class="data-val">A3复印纸, A3纸</span></div>
+            <div class="data-row"><span class="data-key">规格</span><span class="data-val">70g / 500张</span></div>
+            <div class="data-row"><span class="data-key">参考单价</span><span class="data-val">¥85.00</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="callout info" style="margin-top: 14px;">
+        <div class="callout-icon">📥</div>
+        <div class="callout-body">
+          <h4>MVP阶段数据导入方式</h4>
+          <p>支持Excel/CSV导入客户库和产品库。导入字段：客户（名称、联系人、地址、别名）；产品（名称、编号、规格、参考单价、别名）。未匹配项确认后可一键加入库中。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="display">
+  <div class="container">
+    <div class="section-header animate-in">
+      <span class="section-number">06</span>
+      <h2 class="section-title">展示层：单据草稿渲染</h2>
+      <p class="section-desc">AI生成草稿后如何展示给用户，直接影响修正效率。核心原则：一眼看清哪些字段需要关注，哪些可以直接确认。</p>
+    </div>
+
+    <div class="feature-detail animate-in">
+      <div class="feature-header">
+        <span class="feature-num">01</span>
+        <h3>字段状态分级展示</h3>
+      </div>
+      <div class="feature-body">
+        <div class="feature-col">
+          <h4>三种字段状态</h4>
+          <ul>
+            <li style="color: var(--success);">✓ 已确认（绿色）——精确匹配或高置信度，可直接通过</li>
+            <li style="color: var(--warning);">⚠ 待确认（黄色）——模糊匹配或中置信度，需用户确认</li>
+            <li style="color: var(--danger);">✗ 需补充（红色）——未匹配或低置信度，必须用户处理</li>
+          </ul>
+        </div>
+        <div class="feature-col">
+          <h4>视觉设计</h4>
+          <ul>
+            <li>已确认字段：正常显示，无特殊标记</li>
+            <li>待确认字段：黄色高亮背景 + "⚠" 标记</li>
+            <li>需补充字段：红色边框 + "✗" 标记 + 占位提示</li>
+            <li>页面顶部汇总：X个待确认 / Y个需补充</li>
+            <li>全部确认后，汇总条变绿，一键保存按钮高亮</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="feature-detail animate-in">
+      <div class="feature-header">
+        <span class="feature-num">02</span>
+        <h3>草稿预览示例</h3>
+      </div>
+      <div class="interaction-demo">
+        <div class="chat-bubble user">
+          <div class="bubble-label">用户语音输入</div>
+          给华创发一份报价单，打印纸500箱85块，笔记本200箱42块，月结30天
+        </div>
+        <div class="doc-preview">
+          <div class="doc-title">报 价 单</div>
+          <table>
+            <tr><th style="width:28%">客户名称</th><td style="background:#fff3cd">深圳华创科技有限公司 ⚠</td><th style="width:18%">报价日期</th><td>2026-05-11</td></tr>
+            <tr><th>付款方式</th><td>月结30天</td><th>含税</th><td style="background:#fff3cd">未提及 ⚠</td></tr>
+          </table>
+          <table style="margin-top:7px">
+            <tr><th>序号</th><th>产品名称</th><th>规格</th><th>数量</th><th>单位</th><th>单价</th><th>金额</th></tr>
+            <tr><td>1</td><td style="background:#fff3cd">打印纸 ⚠</td><td style="background:#ffcccc">需补充 ✗</td><td>500</td><td>箱</td><td>¥85.00</td><td>¥42,500.00</td></tr>
+            <tr><td>2</td><td style="background:#fff3cd">笔记本 ⚠</td><td style="background:#ffcccc">需补充 ✗</td><td>200</td><td>箱</td><td>¥42.00</td><td>¥8,400.00</td></tr>
+            <tr><td colspan="5" style="text-align:right;font-weight:600">合计</td><td colspan="2" style="font-weight:700">¥50,900.00</td></tr>
+          </table>
+          <div style="margin-top:8px;font-size:10px;color:#856404;background:#fff3cd;padding:4px 8px;border-radius:3px;">⚠ 2个待确认 / 2个需补充 — 请检查高亮字段</div>
+          <div class="confirm-bar">
+            <button class="btn btn-secondary">逐项修改</button>
+            <button class="btn btn-primary" style="opacity:0.5">✓ 确认保存</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="edit">
+  <div class="container">
+    <div class="section-header animate-in">
+      <span class="section-number">07</span>
+      <h2 class="section-title">修正层：交互式确认修改</h2>
+      <p class="section-desc">这是"八成匹配→百分精确"的关键环节。设计目标：修正操作≤3步，零学习成本，直觉式交互。</p>
+    </div>
+
+    <div class="feature-detail animate-in">
+      <div class="feature-header">
+        <span class="feature-num">01</span>
+        <h3>两种修正模式</h3>
+      </div>
+      <div class="card-grid card-grid-2" style="margin-top: 12px;">
+        <div class="card">
+          <div class="card-icon success">⚡</div>
+          <h3>一键确认模式</h3>
+          <p>所有字段状态为"✓已确认"时，用户直接点击"确认保存"按钮，一步完成。适用于AI生成准确、无需修改的场景。</p>
+          <div style="margin-top: 10px;">
+            <span class="tag tag-success">1步完成</span>
+            <span class="tag tag-info">最佳体验</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-icon accent2">✏️</div>
+          <h3>逐字段修正模式</h3>
+          <p>点击任意字段进入编辑状态：文本字段直接修改；匹配字段弹出候选列表选择；下拉字段弹出选项。修改完点击其他区域自动保存。</p>
+          <div style="margin-top: 10px;">
+            <span class="tag tag-accent2">≤3步</span>
+            <span class="tag tag-warning">精准修正</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="feature-detail animate-in">
+      <div class="feature-header">
+        <span class="feature-num">02</span>
+        <h3>修正交互详细设计</h3>
+      </div>
+      <div class="edit-flow">
+        <div class="edit-step">
+          <div class="edit-marker">1</div>
+          <div>
+            <h4>点击待修改字段</h4>
+            <p>点击单据中任意字段（黄色⚠或红色✗优先），进入编辑状态。已确认字段也可点击修改。</p>
+          </div>
+        </div>
+        <div class="edit-step">
+          <div class="edit-marker m2">2</div>
+          <div>
+            <h4>选择修改方式</h4>
+            <p><strong>文本字段</strong>（日期、备注等）：直接编辑文本<br><strong>匹配字段</strong>（客户、产品）：弹出候选列表，支持搜索筛选<br><strong>数值字段</strong>（数量、单价）：数字输入框，自动计算金额<br><strong>下拉字段</strong>（付款方式、含税等）：弹出预设选项</p>
+          </div>
+        </div>
+        <div class="edit-step">
+          <div class="edit-marker m3">3</div>
+          <div>
+            <h4>自动保存 + 状态更新</h4>
+            <p>修改完成后点击其他区域或按回车，自动保存修改。字段状态实时更新：修正后变为✓已确认。全部字段确认后，"确认保存"按钮高亮可点击。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="feature-detail animate-in">
+      <div class="feature-header">
+        <span class="feature-num">03</span>
+        <h3>智能辅助修正</h3>
+      </div>
+      <div class="feature-body">
+        <div class="feature-col">
+          <h4>候选列表智能排序</h4>
+          <ul>
+            <li>匹配字段弹出候选列表时，按相关度排序</li>
+            <li>最近使用过的客户/产品优先展示</li>
+            <li>支持输入关键词实时搜索筛选</li>
+            <li>列表最多展示5个候选，避免信息过载</li>
+          </ul>
+        </div>
+        <div class="feature-col">
+          <h4>联动自动计算</h4>
+          <ul>
+            <li>修改数量或单价→自动重算行金额与合计</li>
+            <li>选择产品→自动填充规格、参考单价</li>
+            <li>选择客户→自动填充联系人、地址</li>
+            <li>修改任一字段→相关联字段自动更新</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout success animate-in">
+      <div class="callout-icon">🎯</div>
+      <div class="callout-body">
+        <h4>交互设计核心原则</h4>
+        <p><strong>零学习成本</strong>：点击即编辑，无需培训。<strong>最少操作</strong>：确认≤1步，修正≤3步。<strong>即时反馈</strong>：每次修改立即看到结果，状态实时更新。<strong>容错</strong>：任何修改都可撤销，保存前可反复调整。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="coze">
+  <div class="container">
+    <div class="section-header animate-in">
+      <span class="section-number">08</span>
+      <h2 class="section-title">Coze平台实施方案</h2>
+      <p class="section-desc">基于Coze的Bot + Workflow + Knowledge Base能力，详细设计智能制单的技术实现路径。</p>
+    </div>
+
+    <div class="arch-diagram animate-in">
+      <div class="arch-layer">
+        <div class="arch-layer-label">用户交互层</div>
+        <div class="arch-nodes">
+          <div class="arch-node"><div class="node-icon">🎙️</div><div class="node-name">语音输入</div><div class="node-desc">Coze 语音插件</div></div>
+          <div class="arch-node"><div class="node-icon">⌨️</div><div class="node-name">文本输入</div><div class="node-desc">Coze 对话界面</div></div>
+          <div class="arch-node"><div class="node-icon">📱</div><div class="node-name">移动端</div><div class="node-desc">Coze 小程序/H5</div></div>
+        </div>
+      </div>
+      <div class="arch-arrow">⬇</div>
+      <div class="arch-layer">
+        <div class="arch-layer-label">AI 处理层</div>
+        <div class="arch-nodes">
+          <div class="arch-node" style="border-color: var(--accent-dim);"><div class="node-icon">🤖</div><div class="node-name">制单 Bot</div><div class="node-desc">自然语言 → 结构化单据</div></div>
+        </div>
+      </div>
+      <div class="arch-arrow">⬇</div>
+      <div class="arch-layer">
+        <div class="arch-layer-label">工作流层 (Coze Workflow)</div>
+        <div class="arch-nodes">
+          <div class="arch-node"><div class="node-icon">🔄</div><div class="node-name">单据解析流</div><div class="node-desc">提取→校验→生成</div></div>
+          <div class="arch-node"><div class="node-icon">🔍</div><div class="node-name">字段校验流</div><div class="node-desc">客户库/产品库匹配</div></div>
+        </div>
+      </div>
+      <div class="arch-arrow">⬇</div>
+      <div class="arch-layer">
+        <div class="arch-layer-label">数据层</div>
+        <div class="arch-nodes">
+          <div class="arch-node"><div class="node-icon">📚</div><div class="node-name">Knowledge Base</div><div class="node-desc">客户库 / 产品库</div></div>
+          <div class="arch-node"><div class="node-icon">📋</div><div class="node-name">单据模板</div><div class="node-desc">订单/报价/出库</div></div>
+          <div class="arch-node"><div class="node-icon">💾</div><div class="node-name">单据记录</div><div class="node-desc">已保存的单据数据</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top: 36px;" class="animate-in">
+      <h3 style="font-family: var(--serif); font-size: 20px; font-weight: 700; margin-bottom: 18px;">制单 Bot 设计</h3>
+      <div class="card" style="margin-bottom: 18px;">
+        <div class="card-icon accent">🤖</div>
+        <h3>制单 Bot 职责</h3>
+        <p>接收用户语音/文本输入，调用单据解析Workflow，返回结构化单据草稿。内置Prompt引导用户补充缺失信息，管理多轮对话上下文。识别用户意图（新建单据/修改已有单据），路由到对应Workflow。</p>
+        <div style="margin-top: 10px;">
+          <span class="tag tag-accent">对话式交互</span>
+          <span class="tag tag-info">多轮引导</span>
+          <span class="tag tag-accent2">意图识别</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top: 36px;" class="animate-in">
+      <h3 style="font-family: var(--serif); font-size: 20px; font-weight: 700; margin-bottom: 18px;">单据解析 Workflow 详细设计</h3>
+      <div class="coze-flow">
+        <div class="coze-step">
+          <div class="step-marker m-accent">1</div>
+          <div class="step-content">
+            <h4>输入预处理节点</h4>
+            <p>接收用户原始文本，清洗无效字符，标准化数字格式（如"85块"→85.00），识别单据类型关键词</p>
+          </div>
+        </div>
+        <div class="coze-step">
+          <div class="step-marker m-accent">2</div>
+          <div class="step-content">
+            <h4>LLM结构化提取节点</h4>
+            <p>调用LLM，按单据模板Schema提取字段，输出JSON结构（含置信度评分）</p>
+          </div>
+        </div>
+        <div class="coze-step">
+          <div class="step-marker m-info">3</div>
+          <div class="step-content">
+            <h4>客户库匹配节点</h4>
+            <p>将提取的客户名称与Knowledge Base中客户库进行匹配：精确匹配→模糊匹配→返回候选列表</p>
+          </div>
+        </div>
+        <div class="coze-step">
+          <div class="step-marker m-info">4</div>
+          <div class="step-content">
+            <h4>产品库匹配节点</h4>
+            <p>逐条匹配产品名称与产品库，补充产品编号、规格等缺失字段，校验单价合理性</p>
+          </div>
+        </div>
+        <div class="coze-step">
+          <div class="step-marker m-success">5</div>
+          <div class="step-content">
+            <h4>金额计算与校验节点</h4>
+            <p>根据匹配后的产品明细自动计算行金额与合计金额，与LLM提取的金额交叉校验</p>
+          </div>
+        </div>
+        <div class="coze-step">
+          <div class="step-marker m-accent2">6</div>
+          <div class="step-content">
+            <h4>单据生成与状态标记节点</h4>
+            <p>按对应单据模板填充所有字段，根据置信度和匹配结果标记字段状态（✓/⚠/✗），输出格式化单据草稿</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top: 36px;" class="animate-in">
+      <h3 style="font-family: var(--serif); font-size: 20px; font-weight: 700; margin-bottom: 18px;">技术选型</h3>
+      <div class="table-wrapper">
+        <table class="spec-table">
+          <thead><tr><th>模块</th><th>技术选型</th><th>选型理由</th></tr></thead>
+          <tbody>
+            <tr><td>AI平台</td><td>字节 Coze</td><td>低代码Bot/Workflow搭建，内置LLM，Prompt调试便捷</td></tr>
+            <tr><td>LLM</td><td>Coze 内置 (豆包系列)</td><td>无需自建模型服务，中文理解能力强</td></tr>
+            <tr><td>语音识别</td><td>Coze 语音插件</td><td>平台内置ASR能力，无需额外对接</td></tr>
+            <tr><td>知识库</td><td>Coze Knowledge Base</td><td>支持结构化数据存储与检索</td></tr>
+            <tr><td>工作流引擎</td><td>Coze Workflow</td><td>可视化编排，支持条件分支、循环</td></tr>
+            <tr><td>数据存储</td><td>Coze 数据库</td><td>MVP阶段优先使用Coze内置存储</td></tr>
+            <tr><td>前端展示</td><td>Coze 对话界面 / 自定义H5</td><td>MVP优先Coze自带界面</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="scope">
+  <div class="container">
+    <div class="section-header animate-in">
+      <span class="section-number">09</span>
+      <h2 class="section-title">MVP功能范围</h2>
+      <p class="section-desc">聚焦"语音/自然语言→单据创建→交互修正→保存"这一条核心链路，避免范围蔓延。</p>
+    </div>
+
+    <div class="scope-cols animate-in">
+      <div class="scope-col included">
+        <h3>✓ MVP 包含</h3>
+        <ul>
+          <li>语音录制输入 + ASR转写</li>
+          <li>自然语言文本输入</li>
+          <li>AI结构化提取（含置信度评分）</li>
+          <li>多轮对话引导补全缺失字段</li>
+          <li>客户库Excel导入与三级匹配</li>
+          <li>产品库Excel导入与三级匹配</li>
+          <li>金额自动计算与交叉校验</li>
+          <li>单据草稿格式化展示（字段状态分级）</li>
+          <li>一键确认保存</li>
+          <li>逐字段点击修改（文本/候选/数值/下拉）</li>
+          <li>修改后自动保存与状态更新</li>
+          <li>销售订单、报价单、出库单三类模板</li>
+        </ul>
+      </div>
+      <div class="scope-col excluded">
+        <h3>— MVP 不包含</h3>
+        <ul>
+          <li>更多单据类型（采购单、入库单等）</li>
+          <li>ERP/财务系统自动对接</li>
+          <li>单据审批流程</li>
+          <li>打印与导出PDF</li>
+          <li>历史单据查询与管理</li>
+          <li>用户权限与角色管理</li>
+          <li>多企业/多租户支持</li>
+          <li>指标区间计算与值守预警</li>
+          <li>数据可视化看板</li>
+          <li>移动端原生App</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="plan">
+  <div class="container">
+    <div class="section-header animate-in">
+      <span class="section-number">10</span>
+      <h2 class="section-title">开发计划</h2>
+      <p class="section-desc">MVP开发分为3个阶段，总计约4周，采用敏捷迭代方式推进。</p>
+    </div>
+
+    <div class="timeline animate-in">
+      <div class="timeline-item">
+        <div class="timeline-phase">
+          <span class="phase-name">Phase 1：基础搭建</span>
+          <span class="phase-duration">Week 1</span>
+        </div>
+        <div class="timeline-tasks">
+          <div class="timeline-task"><span class="check">✓</span>Coze项目创建与制单Bot基础配置</div>
+          <div class="timeline-task"><span class="check">✓</span>客户库/产品库Knowledge Base搭建与Excel导入</div>
+          <div class="timeline-task"><span class="check">✓</span>三类单据模板Schema定义</div>
+          <div class="timeline-task"><span class="check">✓</span>开发环境与测试数据准备</div>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-phase">
+          <span class="phase-name">Phase 2：核心流程开发</span>
+          <span class="phase-duration">Week 2-3</span>
+        </div>
+        <div class="timeline-tasks">
+          <div class="timeline-task"><span class="check">✓</span>单据解析Workflow开发（LLM提取→字段校验→单据生成）</div>
+          <div class="timeline-task"><span class="check">✓</span>客户库/产品库匹配节点开发与调试</div>
+          <div class="timeline-task"><span class="check">✓</span>制单Bot Prompt设计与多轮对话调试</div>
+          <div class="timeline-task"><span class="check">✓</span>语音输入接入与ASR转写测试</div>
+          <div class="timeline-task"><span class="check">✓</span>单据草稿展示与字段状态标记</div>
+          <div class="timeline-task"><span class="check">✓</span>确认/修改交互流程实现</div>
+        </div>
+      </div>
+      <div class="timeline-item future">
+        <div class="timeline-phase">
+          <span class="phase-name">Phase 3：测试与优化</span>
+          <span class="phase-duration">Week 4</span>
+        </div>
+        <div class="timeline-tasks">
+          <div class="timeline-task"><span class="check pending">○</span>端到端流程测试（语音制单全流程）</div>
+          <div class="timeline-task"><span class="check pending">○</span>Prompt调优与准确率评估</div>
+          <div class="timeline-task"><span class="check pending">○</span>边界场景处理（模糊输入、缺失字段、异常数据）</div>
+          <div class="timeline-task"><span class="check pending">○</span>交互体验优化与Bug修复</div>
+          <div class="timeline-task"><span class="check pending">○</span>Demo演示环境部署与文档编写</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout success animate-in" style="margin-top: 22px;">
+      <div class="callout-icon">🎯</div>
+      <div class="callout-body">
+        <h4>里程碑定义</h4>
+        <p><strong>M1（Week 1末）</strong>：客户库/产品库可导入检索，单据模板定义完成<br><strong>M2（Week 3末）</strong>：语音制单全流程可跑通，准确率≥75%<br><strong>M3（Week 4末）</strong>：MVP Demo完整可演示，制单准确率≥80%，修正交互流畅</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="risk">
+  <div class="container">
+    <div class="section-header animate-in">
+      <span class="section-number">11</span>
+      <h2 class="section-title">风险与应对</h2>
+      <p class="section-desc">识别智能制单MVP的主要风险点，提前制定应对策略。</p>
+    </div>
+
+    <div class="animate-in">
+      <div class="risk-item">
+        <div>
+          <div class="risk-title">LLM提取准确率不达标</div>
+          <div class="risk-desc">复杂业务描述、口语化表达、多产品混合描述可能导致字段提取错误或遗漏</div>
+        </div>
+        <div><span class="tag tag-warning">中概率</span><span class="tag tag-danger">高影响</span></div>
+        <div class="risk-mitigation">多轮Prompt迭代优化；增加few-shot示例；低置信度字段强制确认；用户反馈闭环持续优化</div>
+      </div>
+      <div class="risk-item">
+        <div>
+          <div class="risk-title">客户/产品模糊匹配误判</div>
+          <div class="risk-desc">相似名称客户或产品可能被错误匹配，导致单据关联错误</div>
+        </div>
+        <div><span class="tag tag-warning">中概率</span><span class="tag tag-warning">中影响</span></div>
+        <div class="risk-mitigation">模糊匹配结果必须用户确认；匹配置信度分级展示；优先精确匹配；支持手动选择</div>
+      </div>
+      <div class="risk-item">
+        <div>
+          <div class="risk-title">语音识别准确率不足</div>
+          <div class="risk-desc">行业术语、方言口音、噪声环境可能导致ASR转写错误</div>
+        </div>
+        <div><span class="tag tag-info">低概率</span><span class="tag tag-warning">中影响</span></div>
+        <div class="risk-mitigation">ASR转写结果展示给用户确认；支持文本直接输入备选；行业术语自定义词库</div>
+      </div>
+      <div class="risk-item">
+        <div>
+          <div class="risk-title">Coze平台交互能力限制</div>
+          <div class="risk-desc">Coze对话界面可能无法实现理想的单据编辑交互（如点击字段修改、候选列表等）</div>
+        </div>
+        <div><span class="tag tag-warning">中概率</span><span class="tag tag-warning">中影响</span></div>
+        <div class="risk-mitigation">MVP先用Coze对话式交互（Bot引导逐字段确认）；必要时开发轻量H5前端实现富交互</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="success">
+  <div class="container">
+    <div class="section-header animate-in">
+      <span class="section-number">12</span>
+      <h2 class="section-title">验收标准</h2>
+      <p class="section-desc">MVP Demo需满足以下核心验收标准，方可认为智能制单功能验证成功。</p>
+    </div>
+
+    <div class="success-criteria animate-in">
+      <div class="criteria-item">
+        <div class="criteria-icon">🎯</div>
+        <div>
+          <h4>制单准确率 ≥ 80%</h4>
+          <p>对标准业务描述的语音/文本输入，AI生成单据的字段准确率不低于80%，核心字段（客户、产品、金额）准确率不低于90%</p>
+        </div>
+      </div>
+      <div class="criteria-item">
+        <div class="criteria-icon">⚡</div>
+        <div>
+          <h4>端到端制单 ≤ 30秒</h4>
+          <p>从用户完成语音/文本输入到生成单据草稿，端到端响应时间不超过30秒（不含用户确认时间）</p>
+        </div>
+      </div>
+      <div class="criteria-item">
+        <div class="criteria-icon">✅</div>
+        <div>
+          <h4>修正闭环 ≤ 3步</h4>
+          <p>用户从看到单据草稿到完成确认/修改保存，操作步数不超过3步（查看→修改→确认）</p>
+        </div>
+      </div>
+      <div class="criteria-item">
+        <div class="criteria-icon">🔗</div>
+        <div>
+          <h4>客户/产品库匹配可用</h4>
+          <p>导入客户库/产品库后，单据生成时能自动匹配核心字段，精确匹配率≥85%，模糊匹配需用户确认</p>
+        </div>
+      </div>
+      <div class="criteria-item">
+        <div class="criteria-icon">📋</div>
+        <div>
+          <h4>3类单据全流程可演示</h4>
+          <p>销售订单、报价单、出库单三类单据的语音/文本输入→解析→校验→展示→修正→保存全流程可完整演示</p>
+        </div>
+      </div>
+      <div class="criteria-item">
+        <div class="criteria-icon">🔄</div>
+        <div>
+          <h4>修正后100%精确保存</h4>
+          <p>经用户确认/修改后保存的单据，所有字段数据100%准确，无残留错误</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout success animate-in" style="margin-top: 28px;">
+      <div class="callout-icon">🚀</div>
+      <div class="callout-body">
+        <h4>MVP之后的演进方向</h4>
+        <p>MVP验证成功后，可按以下方向迭代：<br>
+        <strong>v0.2</strong>：更多单据类型、单据审批流程、打印导出PDF<br>
+        <strong>v0.3</strong>：ERP系统对接、历史单据管理、自定义模板<br>
+        <strong>v1.0</strong>：多租户SaaS化、移动端原生App、高级分析报表</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<footer class="footer">
+  <div class="container">
+    <p><span class="footer-brand">智能制单</span> — 语音/自然语言智能制单 MVP Demo 方案</p>
+    <p>专项方案 · v0.1.0 · 2026-05-11</p>
+    <p style="margin-top: 6px; font-size: 10.5px; color: var(--text-muted);">本文档基于 Coze 平台技术栈设计 · 从《数据值守 MVP Demo 技术与开发方案》中独立拆分</p>
+  </div>
+</footer>
+
+<script>
+const navLinks = document.querySelectorAll('nav .nav-links a');
+const sections = document.querySelectorAll('section[id]');
+function updateActiveNav() {
+  let current = '';
+  sections.forEach(section => { const sectionTop = section.offsetTop - 100; if (window.scrollY >= sectionTop) { current = section.getAttribute('id'); } });
+  navLinks.forEach(link => { link.classList.remove('active'); if (link.getAttribute('href') === '#' + current) { link.classList.add('active'); } });
+}
+window.addEventListener('scroll', updateActiveNav);
+updateActiveNav();
+
+const animateElements = document.querySelectorAll('.animate-in');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('visible'); observer.unobserve(entry.target); } });
+}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+animateElements.forEach(el => observer.observe(el));
+
+let lastScroll = 0;
+const nav = document.querySelector('nav');
+window.addEventListener('scroll', () => {
+  const currentScroll = window.scrollY;
+  if (currentScroll > lastScroll && currentScroll > 200) { nav.style.transform = 'translateY(-100%)'; }
+  else { nav.style.transform = 'translateY(0)'; }
+  lastScroll = currentScroll;
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI智能制单系统 - 使用说明书与常见问题</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: #f0f2f5;
+    color: #1f2937;
+    line-height: 1.7;
+    font-size: 15px;
+  }
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+
+  .header {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: #fff;
+    padding: 48px 0 40px;
+    text-align: center;
+  }
+  .header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+  }
+  .header .subtitle {
+    font-size: 15px;
+    opacity: 0.85;
+  }
+
+  .toc-wrap {
+    background: #fff;
+    border-radius: 10px;
+    padding: 28px 32px;
+    margin: -20px auto 32px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+  .toc-wrap h2 {
+    font-size: 18px;
+    color: #2563eb;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e5e7eb;
+  }
+  .toc-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 24px;
+  }
+  .toc-grid a {
+    color: #374151;
+    text-decoration: none;
+    padding: 5px 0;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: color 0.15s;
+  }
+  .toc-grid a:hover { color: #2563eb; }
+  .toc-grid a .toc-dot {
+    width: 6px; height: 6px;
+    background: #2563eb;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .toc-part { margin-top: 12px; font-weight: 600; color: #1f2937; font-size: 14px; padding: 4px 0; }
+
+  .section {
+    background: #fff;
+    border-radius: 10px;
+    padding: 32px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+  }
+  .section h2 {
+    font-size: 22px;
+    color: #2563eb;
+    margin-bottom: 24px;
+    padding-bottom: 10px;
+    border-bottom: 3px solid #2563eb;
+  }
+  .section h3 {
+    font-size: 17px;
+    color: #1e40af;
+    margin: 28px 0 14px;
+    padding-left: 12px;
+    border-left: 4px solid #2563eb;
+  }
+  .section h4 {
+    font-size: 15px;
+    color: #374151;
+    margin: 20px 0 10px;
+    font-weight: 600;
+  }
+
+  .step-list { list-style: none; padding: 0; }
+  .step-list li {
+    padding: 8px 0 8px 28px;
+    position: relative;
+  }
+  .step-list li::before {
+    content: "";
+    position: absolute;
+    left: 4px;
+    top: 15px;
+    width: 8px;
+    height: 8px;
+    background: #2563eb;
+    border-radius: 50%;
+  }
+  .step-list li::after {
+    content: "";
+    position: absolute;
+    left: 7px;
+    top: 26px;
+    width: 2px;
+    height: calc(100% - 12px);
+    background: #dbeafe;
+  }
+  .step-list li:last-child::after { display: none; }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    vertical-align: middle;
+  }
+  .badge-green { background: #dcfce7; color: #16a34a; }
+  .badge-yellow { background: #fef3c7; color: #d97706; }
+  .badge-red { background: #fee2e2; color: #ef4444; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    font-size: 14px;
+  }
+  th, td {
+    border: 1px solid #e5e7eb;
+    padding: 10px 14px;
+    text-align: left;
+  }
+  th {
+    background: #eff6ff;
+    color: #1e40af;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  tr:nth-child(even) td { background: #f9fafb; }
+
+  pre {
+    background: #1e293b;
+    color: #e2e8f0;
+    padding: 16px 20px;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.6;
+    margin: 12px 0;
+  }
+  code { font-family: "SF Mono", "Fira Code", Consolas, monospace; }
+  .inline-code {
+    background: #eff6ff;
+    color: #1e40af;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+
+  .qa-item {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    margin: 14px 0;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .qa-item:hover { border-color: #93c5fd; }
+  .qa-q {
+    padding: 14px 18px;
+    font-weight: 600;
+    color: #1e40af;
+    background: #f8faff;
+    cursor: pointer;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    user-select: none;
+  }
+  .qa-q .qa-icon {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    background: #2563eb;
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    margin-top: 1px;
+  }
+  .qa-a {
+    padding: 14px 18px 14px 48px;
+    color: #374151;
+    border-top: 1px solid #e5e7eb;
+  }
+  .qa-a ol, .qa-a ul { padding-left: 20px; margin: 6px 0; }
+  .qa-a li { margin: 4px 0; }
+
+  .tip-box {
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 14px 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 14px;
+  }
+  .tip-box .tip-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .tip-info { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+  .tip-success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #16a34a; }
+  .tip-warning { background: #fffbeb; border: 1px solid #fde68a; color: #b45309; }
+  .tip-error { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; }
+
+  .core-value {
+    background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
+    border: 2px solid #2563eb;
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin: 20px 0;
+  }
+  .core-value h4 {
+    color: #2563eb;
+    font-size: 16px;
+    margin: 0 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .core-value ul {
+    list-style: none;
+    padding: 0;
+  }
+  .core-value ul li {
+    padding: 6px 0 6px 24px;
+    position: relative;
+    color: #374151;
+  }
+  .core-value ul li::before {
+    content: "✦";
+    position: absolute;
+    left: 0;
+    color: #2563eb;
+    font-size: 14px;
+  }
+
+  .scenario-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 14px 0;
+  }
+  .scenario-card {
+    background: #f8faff;
+    border: 1px solid #dbeafe;
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+  .scenario-card .sc-label {
+    font-weight: 600;
+    color: #2563eb;
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+  .scenario-card .sc-example {
+    font-size: 13px;
+    color: #6b7280;
+  }
+  .scenario-card .sc-arrow {
+    color: #16a34a;
+    font-weight: 600;
+    font-size: 13px;
+    margin: 4px 0;
+  }
+  .scenario-card .sc-result {
+    font-size: 13px;
+    color: #16a34a;
+    font-weight: 600;
+  }
+
+  .channel-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin: 14px 0;
+  }
+  .channel-card {
+    background: #f8faff;
+    border: 1px solid #dbeafe;
+    border-radius: 8px;
+    padding: 16px 12px;
+    text-align: center;
+  }
+  .channel-card .ch-icon { font-size: 28px; margin-bottom: 6px; }
+  .channel-card .ch-name { font-weight: 600; color: #1e40af; font-size: 14px; }
+  .channel-card .ch-desc { font-size: 12px; color: #6b7280; margin-top: 4px; }
+
+  .divider {
+    text-align: center;
+    margin: 40px 0 32px;
+    position: relative;
+  }
+  .divider::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #d1d5db;
+  }
+  .divider span {
+    position: relative;
+    background: #f0f2f5;
+    padding: 0 20px;
+    color: #6b7280;
+    font-size: 14px;
+  }
+
+  .footer {
+    text-align: center;
+    padding: 32px 0;
+    color: #9ca3af;
+    font-size: 13px;
+  }
+
+  @media (max-width: 640px) {
+    .header h1 { font-size: 22px; }
+    .section { padding: 20px 16px; }
+    .toc-wrap { padding: 20px 16px; }
+    .toc-grid { grid-template-columns: 1fr; }
+    .scenario-grid { grid-template-columns: 1fr; }
+    .channel-grid { grid-template-columns: 1fr 1fr; }
+    table { font-size: 13px; }
+    th, td { padding: 8px 10px; }
+  }
+
+  html { scroll-behavior: smooth; }
+  h2[id], h3[id] { scroll-margin-top: 20px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="container">
+    <h1>AI智能制单系统</h1>
+    <div class="subtitle">使用说明书与常见问题</div>
+  </div>
+</div>
+
+<div class="container">
+
+<div class="toc-wrap">
+  <h2>📑 目录导航</h2>
+  <div class="toc-part">第一部分：使用说明书</div>
+  <div class="toc-grid">
+    <a href="#s1"><span class="toc-dot"></span>一、系统概述</a>
+    <a href="#s2"><span class="toc-dot"></span>二、系统准备</a>
+    <a href="#s2-1"><span class="toc-dot"></span>2.1 打开拼音数据管理工具</a>
+    <a href="#s2-2"><span class="toc-dot"></span>2.2 全量同步数据</a>
+    <a href="#s2-3"><span class="toc-dot"></span>2.3 日常增量同步</a>
+    <a href="#s3"><span class="toc-dot"></span>三、多渠道订单输入</a>
+    <a href="#s3-1"><span class="toc-dot"></span>3.1 Coze智能体对话（推荐）</a>
+    <a href="#s3-2"><span class="toc-dot"></span>3.2 剪贴板粘贴</a>
+    <a href="#s3-3"><span class="toc-dot"></span>3.3 手动添加</a>
+    <a href="#s4"><span class="toc-dot"></span>四、订单匹配与确认</a>
+    <a href="#s4-1"><span class="toc-dot"></span>4.1 自动匹配流程</a>
+    <a href="#s4-2"><span class="toc-dot"></span>4.2 理解匹配状态</a>
+    <a href="#s4-3"><span class="toc-dot"></span>4.3 拼音匹配的典型场景</a>
+    <a href="#s4-4"><span class="toc-dot"></span>4.4 确认客户</a>
+    <a href="#s4-5"><span class="toc-dot"></span>4.5 确认产品</a>
+    <a href="#s4-6"><span class="toc-dot"></span>4.6 批量操作</a>
+    <a href="#s5"><span class="toc-dot"></span>五、订单生成</a>
+    <a href="#s6"><span class="toc-dot"></span>六、字段说明</a>
+    <a href="#s6-1"><span class="toc-dot"></span>6.1 客户信息区</a>
+    <a href="#s6-2"><span class="toc-dot"></span>6.2 产品明细区</a>
+    <a href="#s7"><span class="toc-dot"></span>七、支持的JSON格式</a>
+  </div>
+  <div class="toc-part" style="margin-top:16px;">第二部分：常见问题（QA）</div>
+  <div class="toc-grid">
+    <a href="#q1"><span class="toc-dot"></span>Q1：拼音数据未就绪</a>
+    <a href="#q2"><span class="toc-dot"></span>Q2：客户匹配不准确</a>
+    <a href="#q3"><span class="toc-dot"></span>Q3：产品"待确认"黄色状态</a>
+    <a href="#q4"><span class="toc-dot"></span>Q4：同名产品怎么区分</a>
+    <a href="#q5"><span class="toc-dot"></span>Q5：错别字能匹配吗</a>
+    <a href="#q6"><span class="toc-dot"></span>Q6：同音不同字的客户名</a>
+    <a href="#q7"><span class="toc-dot"></span>Q7：剪贴板监听不生效</a>
+    <a href="#q8"><span class="toc-dot"></span>Q8：Coze连接失败</a>
+    <a href="#q9"><span class="toc-dot"></span>Q9：不用Coze直接输入</a>
+    <a href="#q10"><span class="toc-dot"></span>Q10：微信文字订单处理</a>
+    <a href="#q11"><span class="toc-dot"></span>Q11：单价和小计显示"-"</a>
+    <a href="#q12"><span class="toc-dot"></span>Q12：小计没有更新</a>
+    <a href="#q13"><span class="toc-dot"></span>Q13：同步后匹配无变化</a>
+    <a href="#q14"><span class="toc-dot"></span>Q14：JSON中缺少的产品</a>
+    <a href="#q15"><span class="toc-dot"></span>Q15：增量与全量同步区别</a>
+    <a href="#q16"><span class="toc-dot"></span>Q16：匹配得分计算方式</a>
+    <a href="#q17"><span class="toc-dot"></span>Q17：联系人/地址不显示</a>
+    <a href="#q18"><span class="toc-dot"></span>Q18：Coze中发送图片</a>
+    <a href="#q19"><span class="toc-dot"></span>Q19：删除产品能恢复吗</a>
+    <a href="#q20"><span class="toc-dot"></span>Q20：浏览器兼容性</a>
+  </div>
+</div>
+
+<div class="section">
+  <h2 id="part1">📖 第一部分：使用说明书</h2>
+
+  <h3 id="s1">一、系统概述</h3>
+  <p>AI智能制单系统是一个<strong>智能制单工作台</strong>，帮助你快速将各种渠道的订单需求转化为标准制单。</p>
+
+  <div class="core-value">
+    <h4>🎯 核心价值：异构数据同构化</h4>
+    <ul>
+      <li>无论订单来自<strong>微信文字、Excel文件、截图、电话语音</strong>，系统都能自动识别并匹配</li>
+      <li>将杂乱、格式不一的订单需求，自动转换为业务系统要求的标准订单格式</li>
+      <li>核心能力：<strong>拼音模糊匹配</strong>——同音不同字、错别字、生僻名称都能自动匹配</li>
+    </ul>
+  </div>
+
+  <p style="margin: 14px 0; font-weight: 600; color: #1e40af;">支持多渠道订单来源：</p>
+  <div class="channel-grid">
+    <div class="channel-card">
+      <div class="ch-icon">💬</div>
+      <div class="ch-name">微信文字</div>
+      <div class="ch-desc">聊天记录中的订单信息</div>
+    </div>
+    <div class="channel-card">
+      <div class="ch-icon">📊</div>
+      <div class="ch-name">Excel文件</div>
+      <div class="ch-desc">表格形式的订单数据</div>
+    </div>
+    <div class="channel-card">
+      <div class="ch-icon">🖼️</div>
+      <div class="ch-name">截图/图片</div>
+      <div class="ch-desc">订单截图或照片</div>
+    </div>
+    <div class="channel-card">
+      <div class="ch-icon">📞</div>
+      <div class="ch-name">电话语音</div>
+      <div class="ch-desc">语音转文字后的订单</div>
+    </div>
+  </div>
+
+  <div class="tip-box tip-warning">
+    <span class="tip-icon">⚠️</span>
+    <span>本系统是帮助销售人员快速做单录入的<strong>智能工作台</strong>，不是简单的语音录入工具，也不是边沟通边下单的工具。</span>
+  </div>
+</div>
+
+<div class="section">
+  <h3 id="s2">二、系统准备</h3>
+
+  <h4 id="s2-1">2.1 打开拼音数据管理工具</h4>
+  <ul class="step-list">
+    <li><strong>操作：</strong>在制单页面点击"打开拼音工具"按钮</li>
+    <li><strong>目的：</strong>从业务系统同步客户和产品数据，生成拼音索引</li>
+  </ul>
+  <div class="tip-box tip-warning">
+    <span class="tip-icon">⚠️</span>
+    <span>首次使用必须先执行此步骤，否则无法进行客户和产品匹配。</span>
+  </div>
+
+  <h4 id="s2-2">2.2 全量同步数据</h4>
+  <ul class="step-list">
+    <li>点击<strong>"全量获取"</strong>按钮</li>
+    <li>等待客户数据和产品数据依次获取完成</li>
+    <li>点击<strong>"生成拼音"</strong>按钮，等待进度条完成</li>
+    <li>同步时间显示为<span class="badge badge-green">绿色</span>表示数据就绪</li>
+  </ul>
+
+  <h4 id="s2-3">2.3 日常增量同步</h4>
+  <ul class="step-list">
+    <li>每天上班后点击<strong>"增量获取"</strong>按钮</li>
+    <li>系统自动拉取上次同步后新增/修改的数据</li>
+    <li>拼音索引自动更新</li>
+  </ul>
+  <div class="tip-box tip-info">
+    <span class="tip-icon">💡</span>
+    <span>增量同步比全量同步快很多，日常使用推荐增量同步即可。</span>
+  </div>
+</div>
+
+<div class="section">
+  <h3 id="s3">三、多渠道订单输入</h3>
+
+  <h4 id="s3-1">3.1 方式一：Coze智能体对话（推荐）</h4>
+  <ul class="step-list">
+    <li>在"Coze智能体"面板中确认 <span class="inline-code">Bot ID</span> 和 <span class="inline-code">Token</span> 已填写</li>
+    <li>点击<strong>"启动Coze"</strong>按钮，等待状态显示<span class="badge badge-green">已连接 ✅</span></li>
+    <li>右侧弹出智能体对话窗口</li>
+    <li>用<strong>自然语言</strong>描述订单需求</li>
+    <li>智能体返回结构化订单JSON后，复制JSON内容</li>
+  </ul>
+  <div class="tip-box tip-info">
+    <span class="tip-icon">💬</span>
+    <span>示例："我要给深圳研能科技下单，主板四核工控研能5块，排线PM1200 20米3根"</span>
+  </div>
+
+  <h4 id="s3-2">3.2 方式二：剪贴板粘贴</h4>
+  <ul class="step-list">
+    <li>直接将订单JSON复制到剪贴板</li>
+    <li>系统自动检测剪贴板中的订单数据</li>
+    <li>无需手动操作，复制即处理</li>
+  </ul>
+
+  <h4 id="s3-3">3.3 方式三：手动添加</h4>
+  <ul class="step-list">
+    <li>点击<strong>"添加产品"</strong>按钮手动录入产品信息</li>
+    <li>适合少量补充或修改的场景</li>
+  </ul>
+</div>
+
+<div class="section">
+  <h3 id="s4">四、订单匹配与确认</h3>
+
+  <h4 id="s4-1">4.1 自动匹配流程</h4>
+  <ul class="step-list">
+    <li>系统自动进行客户匹配和产品匹配</li>
+    <li>匹配结果展示在"单据草稿"区域</li>
+  </ul>
+
+  <h4 id="s4-2">4.2 理解匹配状态</h4>
+  <table>
+    <thead>
+      <tr><th>状态</th><th>颜色</th><th>含义</th><th>操作</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>🟢 已确认</td>
+        <td><span class="badge badge-green">绿色</span></td>
+        <td>系统高置信度匹配</td>
+        <td>可直接使用，无需操作</td>
+      </tr>
+      <tr>
+        <td>🟡 待确认</td>
+        <td><span class="badge badge-yellow">黄色</span></td>
+        <td>找到候选但不确定</td>
+        <td>需要人工确认</td>
+      </tr>
+      <tr>
+        <td>🔴 未匹配</td>
+        <td><span class="badge badge-red">红色</span></td>
+        <td>未找到匹配项</td>
+        <td>需手动选择或新建</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h4 id="s4-3">4.3 拼音匹配的典型场景</h4>
+  <div class="scenario-grid">
+    <div class="scenario-card">
+      <div class="sc-label">同音不同字</div>
+      <div class="sc-example">你说"华美"</div>
+      <div class="sc-arrow">→ 系统匹配 →</div>
+      <div class="sc-result">"华梅"</div>
+    </div>
+    <div class="scenario-card">
+      <div class="sc-label">错别字纠正</div>
+      <div class="sc-example">输入"工空研能"</div>
+      <div class="sc-arrow">→ 系统匹配 →</div>
+      <div class="sc-result">"工控研能"</div>
+    </div>
+    <div class="scenario-card">
+      <div class="sc-label">简称识别</div>
+      <div class="sc-example">输入"晨光A4"</div>
+      <div class="sc-arrow">→ 系统匹配 →</div>
+      <div class="sc-result">"晨光文具A4复印纸"</div>
+    </div>
+    <div class="scenario-card">
+      <div class="sc-label">生僻型号</div>
+      <div class="sc-example">输入"ZSP4"</div>
+      <div class="sc-arrow">→ 系统匹配 →</div>
+      <div class="sc-result">对应产品</div>
+    </div>
+  </div>
+
+  <h4 id="s4-4">4.4 确认客户</h4>
+  <ul class="step-list">
+    <li><span class="badge badge-green">绿色"已确认"</span>：无需操作</li>
+    <li><span class="badge badge-yellow">黄色"待确认"</span>：点击客户卡片查看候选列表，选择正确的客户</li>
+    <li>未匹配：点击<strong>"搜索其他"</strong>手动查找</li>
+  </ul>
+
+  <h4 id="s4-5">4.5 确认产品</h4>
+  <ul class="step-list">
+    <li><strong>待确认产品：</strong>点击"确认"按钮确认，或点击"重新匹配"查看其他候选</li>
+    <li><strong>未匹配产品：</strong>点击"重新匹配"搜索，或点击"新建产品"录入</li>
+    <li><strong>可行内编辑：</strong>点击数量、单价、备注字段即可直接编辑</li>
+  </ul>
+
+  <h4 id="s4-6">4.6 批量操作</h4>
+  <ul class="step-list">
+    <li>勾选多个产品后可<strong>批量确认</strong>或<strong>批量删除</strong></li>
+    <li><strong>"全部确认"</strong>按钮一键确认所有非错误产品</li>
+  </ul>
+</div>
+
+<div class="section">
+  <h3 id="s5">五、订单生成</h3>
+  <ul class="step-list">
+    <li>确认所有客户和产品后，点击<strong>"生成订单"</strong>按钮</li>
+    <li>系统显示订单摘要（客户、产品数量、订单总额）</li>
+    <li>点击<strong>"新建单据"</strong>可清空当前草稿，开始下一单</li>
+  </ul>
+  <div class="tip-box tip-success">
+    <span class="tip-icon">✅</span>
+    <span>生成订单前请仔细核对客户信息和产品明细，确认无误后再提交。</span>
+  </div>
+</div>
+
+<div class="section">
+  <h3 id="s6">六、字段说明</h3>
+
+  <h4 id="s6-1">6.1 客户信息区</h4>
+  <table>
+    <thead>
+      <tr><th>字段</th><th>说明</th><th>来源</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>客户名称</td><td>匹配后的客户名</td><td>JSON中 customer_name → 拼音匹配</td></tr>
+      <tr><td>联系人</td><td>收件人姓名</td><td>JSON中 recv 字段，直接提取</td></tr>
+      <tr><td>收货地址</td><td>详细收货地址</td><td>JSON中 addr 字段，直接提取</td></tr>
+    </tbody>
+  </table>
+
+  <h4 id="s6-2">6.2 产品明细区</h4>
+  <table>
+    <thead>
+      <tr><th>字段</th><th>说明</th><th>可编辑</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>产品名称</td><td>匹配后的标准品名</td><td>否</td></tr>
+      <tr><td>型号/SKU</td><td>产品型号编码</td><td>否</td></tr>
+      <tr><td>规格</td><td>产品规格描述</td><td>否</td></tr>
+      <tr><td>数量</td><td>订购数量（含单位）</td><td><span class="badge badge-green">是</span></td></tr>
+      <tr><td>单价</td><td>单价（¥格式）</td><td><span class="badge badge-green">是</span></td></tr>
+      <tr><td>小计</td><td>自动计算</td><td>否</td></tr>
+      <tr><td>备注</td><td>补充说明</td><td><span class="badge badge-green">是</span></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="section">
+  <h3 id="s7">七、支持的JSON格式</h3>
+  <p style="margin-bottom:14px;">系统自动识别以下4种格式的订单JSON：</p>
+
+  <p style="font-weight:600;margin:16px 0 6px;">格式一（推荐）</p>
+  <pre><code>{
+  "customer_name": "客户名",
+  "recv": "联系人",
+  "addr": "地址",
+  "products": [
+    {
+      "name": "品名",
+      "model": "型号",
+      "quantity": 10,
+      "unit": "箱",
+      "unit_price": 100,
+      "specification": "规格"
+    }
+  ]
+}</code></pre>
+
+  <p style="font-weight:600;margin:16px 0 6px;">格式二（驼峰）</p>
+  <pre><code>{
+  "customerName": "客户名",
+  "items": [
+    {
+      "name": "品名",
+      "model": "型号",
+      "quantity": 10
+    }
+  ]
+}</code></pre>
+
+  <p style="font-weight:600;margin:16px 0 6px;">格式三（中文键）</p>
+  <pre><code>{
+  "客户": "客户名",
+  "产品": [
+    {
+      "品名": "品名",
+      "型号": "型号",
+      "数量": 10
+    }
+  ]
+}</code></pre>
+
+  <p style="font-weight:600;margin:16px 0 6px;">格式四（简写）</p>
+  <pre><code>{
+  "customer": "客户名",
+  "products": [
+    {
+      "name": "品名",
+      "model": "型号"
+    }
+  ]
+}</code></pre>
+</div>
+
+<div class="divider"><span>以下为常见问题部分</span></div>
+
+<div class="section">
+  <h2 id="part2">❓ 第二部分：常见问题（QA）</h2>
+
+  <div class="qa-item" id="q1">
+    <div class="qa-q">
+      <span class="qa-icon">Q</span>
+      <span>打开制单页面后显示"拼音数据未就绪"怎么办？</span>
+    </div>
+    <div class="qa-a">
+      <p>需要先打开拼音工具页面，执行全量数据同步和拼音生成。步骤：</p>
+      <ol>
+        <li>点击"打开拼音工具"</li>
+        <li>点击"全量获取"</li>
+        <li>等待获取完成后点击"生成拼音"</li>
+        <li>返回制单页面，点击刷新按钮</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="qa-item" id="q2">
+    <div class="qa-q">
+      <span class="qa-icon">Q</span>
+      <span>客户匹配不准确怎么办？</span>
+    </div>
+    <div class="qa-a">
+      <ul>
+        <li>点击客户卡片，在弹出的候选列表中选择正确的客户</li>
+        <li>如果候选列表中没有，点击<strong>"搜索其他"</strong>手动输入搜索</li>
+        <li>搜索支持拼音首字母和中文输入</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="qa-item" id="q3">
+    <div class="qa-q">
+      <span class="qa-icon">Q</span>
+      <span>产品显示"待确认"黄色状态是什么意思？</span>
+    </div>
+    <div class="qa-a">
+      <p>系统找到了候选产品但置信度不够高，需要你确认是否正确。点击<strong>"确认"</strong>按钮确认，或点击<strong>"重新匹配"</strong>查看其他候选。</p>
+    </div>
+  </div>
+
+  <div class="qa-item" id="q4">
+    <div class="qa-q">
+      <span class="qa-icon">Q</span>
+      <span>同名产品怎么区分？</span>
+    </div>
+    <div class="qa-a">
+      <p>系统会自动根据型号和规格进行二次筛选：</p>
+      <ul>
+        <li>型号完全匹配 → 自动确认</li>
+        <li>型号部分匹配 + 规格匹配 → 自动确认</li>
+        <li>无法通过型号和规格唯一确定 → 标记待确认，需人工选择</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="qa-item" id="q5">
+    <div class="qa-q">
+      <span class="qa-icon">Q</span>
+      <span>输入有错别字，系统能匹配到吗？</span>
+    </div>
+    <div class="qa-a">
+      <p>可以。系统使用拼音模糊匹配，即使输入有错别字（如"工空"匹配"工控"），只要拼音相近就能匹配。但如果错别字太多导致拼音差异过大，可能需要手动搜索。</p>
+    </div>
+  </div>
+
+  <div class="qa-item" id="q6">
+    <div class="qa-q">
+      <span class="qa-icon">Q</span>
+      <span>同音不同字的客户名怎么匹配？</span>
+    </div>
+    <div class="qa-a">
+      <p>系统基于拼音匹配，"华美"和"华梅"的拼音完全相同，系统会自动关联。如果存在多个同音客户，会标记为待确认，由你选择正确的那个。</p>
+    </div>
+  </div>
+
+  <div class="qa-item" id="q7">
+    <div class="qa-q">
+      <span class="qa-icon">Q</span>
+      <span>剪贴板监听不生效怎么办？</span>
+    </div>
+    <div class="qa-a">
+      <ul>
+        <li>确保浏览器已授权剪贴板读取权限</li>
+        <li>确保页面有焦点（点击一下页面）</li>
+        <li>尝试手动粘贴到结果区域</li>
+        <li>检查复制的文本是否包含 <span class="inline-code">customer_name</span>、<span class="inline-code">products</span> 或 <span class="inline-code">doc_type</span> 关键字</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="qa-item" id="q8">
+    <div class="qa-q">
+      <span class="qa-icon">Q</span>
+      <span>Coze智能体连接失败怎么办？</span>
+    </div>
+    <div class="qa-a">
+      <ul>
+        <li>检查 <span class="inline-code">Bot ID</span> 和 <span class="inline-code">Token</span> 是否正确</li>
+        <li>刷新页面重试</li>
+        <li>检查网络连接</li>
+        <li>如果持续失败，可跳过Coze，直接复制JSON到剪贴板</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="qa-item" id="q9">
+    <div class="qa-q">
+      <span class="qa-icon">Q</span>
+      <span>如何不使用Coze，直接输入订单？</span>
+    </div>
+    <div class="qa-a">
+      <p>可以跳过Coze智能体，直接将订单JSON复制到剪贴板，系统会自动检测并匹配。也可以手动添加产品：点击<strong>"添加产品"</strong> → 填写产品信息。</p>
+    </div>
+  </div>
+
+  <div class="qa-item" id="q10">
+    <div class="qa-q">
+      <span class="qa-icon">Q</span>
+      <span>微信收到的文字订单怎么处理？</span>
+    </div>
+    <div class="qa-a">
+      <p>将微信中的订单信息通过Coze智能体转换为JSON格式，或手动整理为JSON后复制到剪贴板。系统会自动识别并匹配。</p>
+    </div>
+  </div>
+
+  <div class="qa-item" id="q11">
+    <div class="qa-q">
+      <span class="qa-icon">Q</span>
+      <span>单价和小计显示"-"怎么办？</span>
+    </div>
+    <div class="qa-a">
+      <p>说明JSON中没有提供价格信息。可以点击单价字段手动输入，小计会自动计算。</p>
+    </div>
+  </div>
+
+  <div class="qa-item" id="q12">
+    <div class="qa-q">
+      <span class="qa-icon">Q</span>
+      <span>修改数量或单价后小计没有更新？</span>
+    </div>
+    <div class="qa-a">
+      <p>小计会在输入框失焦或按 <span class="inline-code">Enter</span> 后自动更新。如果仍不更新，请刷新页面。</p>
+    </div>
+  </div>
+
+  <div class="qa-item" id="q13">
+    <div class="qa-q">
+      <span class="qa-icon">Q</span>
+      <span>数据同步后匹配结果没有变化？</span>
+    </div>
+    <div class="qa-a">
+      <p>制单页面会在窗口获得焦点时自动刷新拼音数据状态。如果没有自动刷新，请点击拼音数据面板的刷新按钮。</p>
+    </div>
+  </div>
+
+  <div class="qa-item" id="q14">
+    <div class="qa-q">
+      <span class="qa-icon">Q</span>
+      <span>如何处理JSON中缺少的产品？</span>
+    </div>
+    <div class="qa-a">
+      <ol>
+        <li>点击<strong>"重新匹配"</strong>搜索产品库</li>
+        <li>如果产品库中确实没有，点击<strong>"新建产品"</strong></li>
+        <li>填写产品名称、编号等信息，保存后自动关联</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="qa-item" id="q15">
+    <div class="qa-q">
+      <span class="qa-icon">Q</span>
+      <span>增量同步和全量同步有什么区别？</span>
+    </div>
+    <div class="qa-a">
+      <ul>
+        <li><strong>全量同步：</strong>拉取所有客户和产品数据，首次使用或数据异常时使用</li>
+        <li><strong>增量同步：</strong>仅拉取上次同步后新增/修改的数据，日常使用更快速</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="qa-item" id="q16">
+    <div class="qa-q">
+      <span class="qa-icon">Q</span>
+      <span>匹配得分是怎么计算的？</span>
+    </div>
+    <div class="qa-a">
+      <p>系统使用四维评分算法：</p>
+      <table>
+        <thead>
+          <tr><th>维度</th><th>权重</th><th>说明</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>全拼相似度</td><td>35%</td><td>完整拼音的相似程度</td></tr>
+          <tr><td>首字母相似度</td><td>25%</td><td>拼音首字母的匹配程度</td></tr>
+          <tr><td>词袋余弦相似度</td><td>30%</td><td>关键词的覆盖程度</td></tr>
+          <tr><td>长度相似度</td><td>10%</td><td>名称长度的接近程度</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:10px;">判定标准：</p>
+      <ul>
+        <li>得分 ≥ 90% → <span class="badge badge-green">自动确认</span></li>
+        <li>得分 70% ~ 90% → <span class="badge badge-yellow">待确认</span></li>
+        <li>得分 &lt; 70% → <span class="badge badge-red">未匹配</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="qa-item" id="q17">
+    <div class="qa-q">
+      <span class="qa-icon">Q</span>
+      <span>联系人/收货地址字段不显示？</span>
+    </div>
+    <div class="qa-a">
+      <p>这两个字段来自JSON中的 <span class="inline-code">recv</span> 和 <span class="inline-code">addr</span> 字段。如果JSON中没有这两个字段，则不会显示。请确认智能体输出的JSON格式是否包含这些字段。</p>
+    </div>
+  </div>
+
+  <div class="qa-item" id="q18">
+    <div class="qa-q">
+      <span class="qa-icon">Q</span>
+      <span>如何在Coze对话中发送图片？</span>
+    </div>
+    <div class="qa-a">
+      <p>在Coze对话窗口中直接 <span class="inline-code">Ctrl+V</span> 粘贴图片即可。系统会自动将剪贴板中的图片注入到Coze的上传区域。</p>
+    </div>
+  </div>
+
+  <div class="qa-item" id="q19">
+    <div class="qa-q">
+      <span class="qa-icon">Q</span>
+      <span>删除产品后能恢复吗？</span>
+    </div>
+    <div class="qa-a">
+      <p>不能。删除操作需二次确认，请确认后再操作。如果误删，可以点击<strong>"添加产品"</strong>重新添加。</p>
+    </div>
+  </div>
+
+  <div class="qa-item" id="q20">
+    <div class="qa-q">
+      <span class="qa-icon">Q</span>
+      <span>浏览器兼容性要求？</span>
+    </div>
+    <div class="qa-a">
+      <ul>
+        <li>推荐使用 <strong>Chrome 90+</strong> 或 <strong>Edge 90+</strong></li>
+        <li>需要支持 Clipboard API（剪贴板读取）</li>
+        <li>需要支持 localStorage</li>
+        <li>不支持 IE 浏览器</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <p>AI智能制单系统 · 使用说明书与常见问题</p>
+</div>
+
+</div>
+</body>
+</html>

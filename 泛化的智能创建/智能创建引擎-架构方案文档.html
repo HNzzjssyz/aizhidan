@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智能创建引擎 - 架构方案文档</title>
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-deep: #0c0e14;
+  --bg-surface: #13151d;
+  --bg-card: #1a1d28;
+  --bg-elevated: #222636;
+  --border-subtle: rgba(255,255,255,0.06);
+  --text-primary: #e8ecf4;
+  --text-secondary: #8b93a8;
+  --text-muted: #565e74;
+  --accent-blue: #6391ff;
+  --accent-blue-dim: rgba(99,145,255,0.12);
+  --accent-green: #34d399;
+  --accent-green-dim: rgba(52,211,153,0.12);
+  --accent-amber: #fbbf24;
+  --accent-amber-dim: rgba(251,191,36,0.12);
+  --accent-rose: #f472b6;
+  --accent-rose-dim: rgba(244,114,182,0.12);
+  --accent-violet: #a78bfa;
+  --accent-violet-dim: rgba(167,139,250,0.12);
+  --radius-md: 12px;
+  --radius-lg: 16px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'DM Sans', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  line-height: 1.7;
+}
+
+.doc-container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 48px 32px 80px;
+}
+
+/* 文档头 */
+.doc-hero {
+  text-align: center;
+  padding: 60px 0 48px;
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: 48px;
+}
+
+.doc-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--accent-blue-dim);
+  color: var(--accent-blue);
+  margin-bottom: 20px;
+  letter-spacing: 0.5px;
+}
+
+.doc-hero h1 {
+  font-size: 36px;
+  font-weight: 900;
+  letter-spacing: -1px;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, var(--accent-blue), var(--accent-violet));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.doc-hero p {
+  font-size: 16px;
+  color: var(--text-secondary);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.doc-meta {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 24px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.doc-meta span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* 目录 */
+.toc {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 24px 28px;
+  margin-bottom: 48px;
+}
+
+.toc-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toc-list {
+  list-style: none;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 24px;
+}
+
+.toc-list a {
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  padding: 4px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: color 0.2s;
+}
+
+.toc-list a:hover { color: var(--accent-blue); }
+
+.toc-list a .toc-num {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  width: 20px;
+  flex-shrink: 0;
+}
+
+/* 章节 */
+.section {
+  margin-bottom: 56px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.section-num {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.section-num.blue { background: var(--accent-blue-dim); color: var(--accent-blue); }
+.section-num.green { background: var(--accent-green-dim); color: var(--accent-green); }
+.section-num.amber { background: var(--accent-amber-dim); color: var(--accent-amber); }
+.section-num.rose { background: var(--accent-rose-dim); color: var(--accent-rose); }
+.section-num.violet { background: var(--accent-violet-dim); color: var(--accent-violet); }
+
+.section-title {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.section p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  line-height: 1.8;
+}
+
+/* 卡片 */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  margin-bottom: 16px;
+}
+
+.card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-title i { font-size: 16px; }
+
+.card p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.8;
+  margin-bottom: 0;
+}
+
+/* 表格 */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+}
+
+.data-table th {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--bg-elevated);
+}
+
+.data-table th:first-child { border-radius: 8px 0 0 0; }
+.data-table th:last-child { border-radius: 0 8px 0 0; }
+
+.data-table td {
+  font-size: 13px;
+  color: var(--text-secondary);
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  vertical-align: top;
+}
+
+.data-table tr:last-child td { border-bottom: none; }
+
+.data-table .tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.tag-blue { background: var(--accent-blue-dim); color: var(--accent-blue); }
+.tag-green { background: var(--accent-green-dim); color: var(--accent-green); }
+.tag-amber { background: var(--accent-amber-dim); color: var(--accent-amber); }
+.tag-rose { background: var(--accent-rose-dim); color: var(--accent-rose); }
+.tag-violet { background: var(--accent-violet-dim); color: var(--accent-violet); }
+.tag-gray { background: rgba(255,255,255,0.05); color: var(--text-muted); }
+
+/* 架构图 */
+.arch-diagram {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  margin: 16px 0;
+  text-align: center;
+}
+
+.arch-layer {
+  margin-bottom: 20px;
+}
+
+.arch-layer:last-child { margin-bottom: 0; }
+
+.arch-layer-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+
+.arch-nodes {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.arch-node {
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.arch-node.blue { background: var(--accent-blue-dim); border-color: rgba(99,145,255,0.3); color: var(--accent-blue); }
+.arch-node.green { background: var(--accent-green-dim); border-color: rgba(52,211,153,0.3); color: var(--accent-green); }
+.arch-node.amber { background: var(--accent-amber-dim); border-color: rgba(251,191,36,0.3); color: var(--accent-amber); }
+.arch-node.rose { background: var(--accent-rose-dim); border-color: rgba(244,114,182,0.3); color: var(--accent-rose); }
+.arch-node.violet { background: var(--accent-violet-dim); border-color: rgba(167,139,250,0.3); color: var(--accent-violet); }
+.arch-node.gray { background: var(--bg-elevated); border-color: var(--border-subtle); color: var(--text-secondary); }
+
+.arch-arrow {
+  font-size: 20px;
+  color: var(--text-muted);
+  margin: 8px 0;
+}
+
+/* 列表 */
+.feature-list {
+  list-style: none;
+  margin: 12px 0;
+}
+
+.feature-list li {
+  font-size: 13px;
+  color: var(--text-secondary);
+  padding: 8px 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  line-height: 1.7;
+}
+
+.feature-list li i {
+  font-size: 14px;
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.feature-list li i.ri-check-line { color: var(--accent-green); }
+.feature-list li i.ri-arrow-right-s-line { color: var(--accent-blue); }
+.feature-list li i.ri-close-line { color: #f87171; }
+
+/* 步骤 */
+.step-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.step-item {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.step-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+  background: var(--accent-blue-dim);
+  color: var(--accent-blue);
+}
+
+.step-content {
+  flex: 1;
+}
+
+.step-content h5 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.step-content p {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 0;
+}
+
+/* 对比框 */
+.compare-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.compare-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 20px;
+}
+
+.compare-card h5 {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.compare-card p {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.7;
+  margin-bottom: 0;
+}
+
+/* 代码块 */
+.code-block {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  margin: 12px 0;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.8;
+  overflow-x: auto;
+}
+
+.code-block .keyword { color: var(--accent-violet); }
+.code-block .string { color: var(--accent-green); }
+.code-block .comment { color: var(--text-muted); }
+.code-block .type { color: var(--accent-blue); }
+.code-block .prop { color: var(--accent-amber); }
+
+/* 路线图 */
+.roadmap {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 16px 0;
+}
+
+.roadmap-phase {
+  display: flex;
+  gap: 16px;
+  padding: 20px 0;
+  border-left: 2px solid var(--border-subtle);
+  padding-left: 24px;
+  position: relative;
+}
+
+.roadmap-phase::before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: 24px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid;
+}
+
+.roadmap-phase.done::before { background: var(--accent-green); border-color: var(--accent-green); }
+.roadmap-phase.current::before { background: var(--accent-blue); border-color: var(--accent-blue); }
+.roadmap-phase.planned::before { background: transparent; border-color: var(--text-muted); }
+
+.roadmap-phase h5 {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.roadmap-phase p {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 0;
+}
+
+.roadmap-phase .phase-tag {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 6px;
+  display: inline-block;
+  margin-bottom: 6px;
+}
+</style>
+</head>
+<body>
+
+<div class="doc-container">
+
+  <div class="doc-hero">
+    <div class="doc-hero-badge"><i class="ri-magic-line"></i> 架构方案 v1.0</div>
+    <h1>智能创建引擎</h1>
+    <p>统一交互框架 + 单表单专属智能体 —— 将智能制单逻辑泛化为通用的智能创建各类业务数据模型的可扩展架构</p>
+    <div class="doc-meta">
+      <span><i class="ri-calendar-line"></i> 2026-05-13</span>
+      <span><i class="ri-user-line"></i> 数据值守团队</span>
+      <span><i class="ri-git-branch-line"></i> main</span>
+    </div>
+  </div>
+
+  <div class="toc">
+    <div class="toc-title"><i class="ri-list-ordered"></i> 目录</div>
+    <ul class="toc-list">
+      <li><a href="#s1"><span class="toc-num">01</span> 背景与目标</a></li>
+      <li><a href="#s2"><span class="toc-num">02</span> 核心架构设计</a></li>
+      <li><a href="#s3"><span class="toc-num">03</span> 覆盖范围与场景定义</a></li>
+      <li><a href="#s4"><span class="toc-num">04</span> 统一交互逻辑</a></li>
+      <li><a href="#s5"><span class="toc-num">05</span> 专属智能体设计</a></li>
+      <li><a href="#s6"><span class="toc-num">06</span> 业务接口对接</a></li>
+      <li><a href="#s7"><span class="toc-num">07</span> 扩展新场景流程</a></li>
+      <li><a href="#s8"><span class="toc-num">08</span> 实施路线图</a></li>
+    </ul>
+  </div>
+
+  <!-- 01 背景与目标 -->
+  <div class="section" id="s1">
+    <div class="section-header">
+      <div class="section-num blue">01</div>
+      <h2 class="section-title">背景与目标</h2>
+    </div>
+    <p>当前已落地智能制单功能，核心边界为基于客户和产品信息识别生成销售订单。该功能验证了"自然语言输入 → 智能体识别 → 拼音匹配 → 表单草稿填充 → 人工确认提交"的完整链路。现需将这套逻辑泛化，推广到更多业务数据创建场景。</p>
+
+    <div class="card">
+      <div class="card-title"><i class="ri-focus-3-line"></i> 核心目标</div>
+      <ul class="feature-list">
+        <li><i class="ri-check-line"></i> <strong>抽象统一框架</strong>：将制单的交互逻辑、匹配引擎、表单填充机制抽象为通用引擎，支持多种业务场景</li>
+        <li><i class="ri-check-line"></i> <strong>专属智能体隔离</strong>：每个业务场景对应独立智能体，独立打磨识别精准度，互不干扰</li>
+        <li><i class="ri-check-line"></i> <strong>可插拔扩展</strong>：新增业务场景只需配置智能体 + 定义表单模板 + 对接业务API，无需改动框架</li>
+        <li><i class="ri-check-line"></i> <strong>统一用户体验</strong>：所有场景共享一致的交互范式，降低用户学习成本</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="ri-close-line" style="color:#f87171;"></i> 明确排除</div>
+      <ul class="feature-list">
+        <li><i class="ri-close-line"></i> 带库存校验执行逻辑的单据（如发货单），暂不在本引擎覆盖范围</li>
+        <li><i class="ri-close-line"></i> 审批流、工作流等流程性逻辑，本引擎仅负责"创建"环节</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 02 核心架构设计 -->
+  <div class="section" id="s2">
+    <div class="section-header">
+      <div class="section-num green">02</div>
+      <h2 class="section-title">核心架构设计</h2>
+    </div>
+    <p>采用"统一交互框架 + 单表单专属智能体"的分层架构。框架层负责交互、路由、表单渲染；智能体层负责业务识别与匹配。两层通过标准化接口解耦。</p>
+
+    <div class="arch-diagram">
+      <div class="arch-layer">
+        <div class="arch-layer-label">交互层 · Unified Interaction Framework</div>
+        <div class="arch-nodes">
+          <div class="arch-node gray"><i class="ri-mic-line"></i> 语音输入</div>
+          <div class="arch-node gray"><i class="ri-keyboard-line"></i> 文本输入</div>
+          <div class="arch-node gray"><i class="ri-image-line"></i> 图片/文件</div>
+          <div class="arch-node gray"><i class="ri-clipboard-line"></i> 剪贴板</div>
+        </div>
+      </div>
+      <div class="arch-arrow"><i class="ri-arrow-down-line"></i></div>
+      <div class="arch-layer">
+        <div class="arch-layer-label">路由层 · Agent Router</div>
+        <div class="arch-nodes">
+          <div class="arch-node blue"><i class="ri-route-line"></i> 智能体路由器</div>
+          <div class="arch-node blue"><i class="ri-flow-chart"></i> 会话管理器</div>
+        </div>
+      </div>
+      <div class="arch-arrow"><i class="ri-arrow-down-line"></i></div>
+      <div class="arch-layer">
+        <div class="arch-layer-label">智能体层 · Specialized Agents</div>
+        <div class="arch-nodes">
+          <div class="arch-node blue"><i class="ri-file-list-3-line"></i> 制单智能体</div>
+          <div class="arch-node green"><i class="ri-shopping-cart-2-line"></i> 采购智能体</div>
+          <div class="arch-node amber"><i class="ri-price-tag-3-line"></i> 报价智能体</div>
+          <div class="arch-node rose"><i class="ri-user-star-line"></i> 客户建档智能体</div>
+          <div class="arch-node violet"><i class="ri-funds-line"></i> 销售机会智能体</div>
+        </div>
+      </div>
+      <div class="arch-arrow"><i class="ri-arrow-down-line"></i></div>
+      <div class="arch-layer">
+        <div class="arch-layer-label">引擎层 · Matching & Fill Engine</div>
+        <div class="arch-nodes">
+          <div class="arch-node gray"><i class="ri-search-line"></i> 拼音匹配引擎</div>
+          <div class="arch-node gray"><i class="ri-database-2-line"></i> 知识库检索</div>
+          <div class="arch-node gray"><i class="ri-edit-line"></i> 表单填充器</div>
+        </div>
+      </div>
+      <div class="arch-arrow"><i class="ri-arrow-down-line"></i></div>
+      <div class="arch-layer">
+        <div class="arch-layer-label">业务层 · Business API</div>
+        <div class="arch-nodes">
+          <div class="arch-node gray"><i class="ri-server-line"></i> ERP/CRM API</div>
+          <div class="arch-node gray"><i class="ri-shield-check-line"></i> 数据校验</div>
+          <div class="arch-node gray"><i class="ri-save-line"></i> 提交创建</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="ri-puzzle-line"></i> 关键设计决策</div>
+      <ul class="feature-list">
+        <li><i class="ri-arrow-right-s-line"></i> <strong>为何不使用单一通用智能体？</strong> 不同业务单据的字段结构、匹配逻辑、校验规则差异大，单一智能体难以兼顾精准度。专属智能体可独立优化Prompt和知识库</li>
+        <li><i class="ri-arrow-right-s-line"></i> <strong>为何框架层统一？</strong> 交互范式（输入→识别→填充→确认）高度一致，统一框架避免重复开发，且用户体验一致</li>
+        <li><i class="ri-arrow-right-s-line"></i> <strong>拼音匹配引擎为何共享？</strong> 客户名、产品名、供应商名等实体匹配逻辑相同，拼音索引是通用能力</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 03 覆盖范围与场景定义 -->
+  <div class="section" id="s3">
+    <div class="section-header">
+      <div class="section-num amber">03</div>
+      <h2 class="section-title">覆盖范围与场景定义</h2>
+    </div>
+    <p>引擎覆盖两类业务对象：输入型业务单据和基础业务主体。首批聚焦销售订单、采购单、报价单三个单据场景。</p>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>场景</th>
+          <th>类型</th>
+          <th>输入实体</th>
+          <th>输出对象</th>
+          <th>优先级</th>
+          <th>状态</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>智能制单</strong></td>
+          <td><span class="tag tag-blue">业务单据</span></td>
+          <td>客户 + 产品</td>
+          <td>销售订单</td>
+          <td>P0</td>
+          <td><span class="tag tag-green">已上线</span></td>
+        </tr>
+        <tr>
+          <td><strong>智能采购单</strong></td>
+          <td><span class="tag tag-blue">业务单据</span></td>
+          <td>供应商 + 物料</td>
+          <td>采购订单</td>
+          <td>P0</td>
+          <td><span class="tag tag-amber">Beta</span></td>
+        </tr>
+        <tr>
+          <td><strong>智能报价单</strong></td>
+          <td><span class="tag tag-blue">业务单据</span></td>
+          <td>客户 + 产品</td>
+          <td>报价方案</td>
+          <td>P0</td>
+          <td><span class="tag tag-amber">Beta</span></td>
+        </tr>
+        <tr>
+          <td><strong>智能客户建档</strong></td>
+          <td><span class="tag tag-rose">业务主体</span></td>
+          <td>自然语言描述</td>
+          <td>客户档案</td>
+          <td>P1</td>
+          <td><span class="tag tag-gray">规划中</span></td>
+        </tr>
+        <tr>
+          <td><strong>智能销售机会</strong></td>
+          <td><span class="tag tag-rose">业务主体</span></td>
+          <td>线索描述</td>
+          <td>销售机会</td>
+          <td>P1</td>
+          <td><span class="tag tag-gray">规划中</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="compare-grid">
+      <div class="compare-card">
+        <h5><i class="ri-file-list-3-line" style="color:var(--accent-blue);"></i> 业务单据特征</h5>
+        <p>包含主实体（客户/供应商）+ 明细行（产品/物料），字段结构化程度高，匹配逻辑以实体检索为主，输出为多行明细表格</p>
+      </div>
+      <div class="compare-card">
+        <h5><i class="ri-user-star-line" style="color:var(--accent-rose);"></i> 业务主体特征</h5>
+        <p>单一对象，字段以属性为主（名称、联系方式、地址、分类等），匹配逻辑以查重+补全为主，输出为扁平字段表单</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 04 统一交互逻辑 -->
+  <div class="section" id="s4">
+    <div class="section-header">
+      <div class="section-num rose">04</div>
+      <h2 class="section-title">统一交互逻辑</h2>
+    </div>
+    <p>所有业务场景共享同一套交互流程，用户无需为不同场景学习不同操作方式。框架通过智能体路由器自动将用户输入分发到对应专属智能体。</p>
+
+    <div class="card">
+      <div class="card-title"><i class="ri-flow-chart"></i> 统一交互流程</div>
+      <div class="step-flow">
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h5>选择场景 / 自动识别</h5>
+            <p>用户通过左侧导航切换智能体，或系统根据输入内容自动路由到对应智能体</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h5>多模态输入</h5>
+            <p>支持语音、文本、图片、文件、剪贴板等多种输入方式，与智能体对话</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h5>智能体识别</h5>
+            <p>专属智能体解析输入，提取业务实体（客户名、产品名、数量等），输出结构化数据</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <h5>实体匹配</h5>
+            <p>拼音匹配引擎将识别结果与系统已有数据匹配，返回候选列表供用户确认</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">5</div>
+          <div class="step-content">
+            <h5>表单草稿填充</h5>
+            <p>匹配结果自动填充到对应场景的表单草稿，用户可逐字段确认或修改</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">6</div>
+          <div class="step-content">
+            <h5>人工确认提交</h5>
+            <p>用户确认表单内容无误后，提交创建，调用业务API完成数据写入</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="ri-layout-line"></i> 页面布局规范</div>
+      <p>统一采用三栏布局：左侧智能体导航 → 中间表单草稿区 → 右侧智能体对话区。移动端自适应为单栏 + 底部对话抽屉。</p>
+      <div class="code-block">
+<span class="comment">// 布局结构定义</span>
+<span class="keyword">interface</span> <span class="type">LayoutConfig</span> {
+  <span class="prop">sidebar</span>: { <span class="prop">width</span>: <span class="type">260px</span>, <span class="prop">items</span>: <span class="type">AgentItem[]</span> }
+  <span class="prop">draft</span>:    { <span class="prop">role</span>: <span class="string">'form-renderer'</span>, <span class="prop">template</span>: <span class="type">FormTemplate</span> }
+  <span class="prop">chat</span>:     { <span class="prop">role</span>: <span class="string">'agent-chat'</span>, <span class="prop">width</span>: <span class="type">380px</span> }
+}
+      </div>
+    </div>
+  </div>
+
+  <!-- 05 专属智能体设计 -->
+  <div class="section" id="s5">
+    <div class="section-header">
+      <div class="section-num violet">05</div>
+      <h2 class="section-title">专属智能体设计</h2>
+    </div>
+    <p>每个业务场景对应一个专属智能体，独立部署在扣子(Coze)平台，拥有独立的Prompt、知识库和对话策略。智能体通过标准化输出协议与框架对接。</p>
+
+    <div class="card">
+      <div class="card-title"><i class="ri-plug-line"></i> 智能体标准化输出协议</div>
+      <div class="code-block">
+<span class="comment">// 智能体输出结构（所有智能体必须遵循）</span>
+<span class="keyword">interface</span> <span class="type">AgentOutput</span> {
+  <span class="prop">agent_type</span>:   <span class="string">'order'</span> | <span class="string">'purchase'</span> | <span class="string">'quote'</span> | <span class="string">'customer'</span> | <span class="string">'opportunity'</span>
+  <span class="prop">entities</span>:     <span class="type">ExtractedEntity[]</span>     <span class="comment">// 识别出的实体列表</span>
+  <span class="prop">raw_text</span>:     <span class="type">string</span>                 <span class="comment">// 原始输入文本</span>
+  <span class="prop">pinyin_map</span>:   <span class="type">Record&lt;string, string&gt;</span>  <span class="comment">// 实体→拼音映射</span>
+  <span class="prop">confidence</span>:   <span class="type">number</span>                 <span class="comment">// 整体置信度 0-1</span>
+  <span class="prop">suggestions</span>:  <span class="type">string[]</span>               <span class="comment">// 追问建议</span>
+}
+
+<span class="keyword">interface</span> <span class="type">ExtractedEntity</span> {
+  <span class="prop">role</span>:     <span class="string">'subject'</span> | <span class="string">'detail'</span> | <span class="string">'meta'</span>  <span class="comment">// 主体/明细/元数据</span>
+  <span class="prop">type</span>:     <span class="type">string</span>    <span class="comment">// customer | product | supplier | material | ...</span>
+  <span class="prop">name</span>:     <span class="type">string</span>    <span class="comment">// 实体原始名称</span>
+  <span class="prop">pinyin</span>:   <span class="type">string</span>    <span class="comment">// 拼音（用于匹配）</span>
+  <span class="prop">attrs</span>:    <span class="type">Record&lt;string, any&gt;</span>  <span class="comment">// 实体属性（数量、规格等）</span>
+}
+      </div>
+    </div>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>智能体</th>
+          <th>核心Prompt职责</th>
+          <th>知识库内容</th>
+          <th>输出实体</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>制单智能体</strong></td>
+          <td>从自然语言中提取客户名、产品名、数量、规格</td>
+          <td>产品目录、客户简称映射</td>
+          <td>customer + products[]</td>
+        </tr>
+        <tr>
+          <td><strong>采购智能体</strong></td>
+          <td>从自然语言中提取供应商名、物料名、数量、规格</td>
+          <td>物料目录、供应商简称映射</td>
+          <td>supplier + materials[]</td>
+        </tr>
+        <tr>
+          <td><strong>报价智能体</strong></td>
+          <td>从自然语言中提取客户名、产品名、数量、价格偏好</td>
+          <td>产品目录、价格策略</td>
+          <td>customer + products[] + pricing</td>
+        </tr>
+        <tr>
+          <td><strong>客户建档智能体</strong></td>
+          <td>从自然语言中提取客户名称、联系方式、地址、行业</td>
+          <td>行业分类、区域编码</td>
+          <td>customer_profile</td>
+        </tr>
+        <tr>
+          <td><strong>销售机会智能体</strong></td>
+          <td>从线索描述中提取客户、预算、阶段、时间线</td>
+          <td>阶段定义、客户映射</td>
+          <td>opportunity</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 06 业务接口对接 -->
+  <div class="section" id="s6">
+    <div class="section-header">
+      <div class="section-num blue">06</div>
+      <h2 class="section-title">业务接口对接</h2>
+    </div>
+    <p>框架通过适配器模式与各业务系统API对接。每个智能体对应一组业务API（查询匹配 + 提交创建），通过统一的适配器接口隔离差异。</p>
+
+    <div class="card">
+      <div class="card-title"><i class="ri-api-line"></i> 适配器接口定义</div>
+      <div class="code-block">
+<span class="comment">// 业务适配器（每个场景实现一个）</span>
+<span class="keyword">interface</span> <span class="type">BusinessAdapter</span> {
+  <span class="prop">agentType</span>: <span class="type">string</span>
+
+  <span class="comment">// 实体匹配：拼音 → 系统数据</span>
+  <span class="prop">matchEntities</span>(entities: <span class="type">ExtractedEntity[]</span>): <span class="type">Promise&lt;MatchResult[]&gt;</span>
+
+  <span class="comment">// 表单模板：定义草稿区渲染结构</span>
+  <span class="prop">getFormTemplate</span>(): <span class="type">FormTemplate</span>
+
+  <span class="comment">// 数据校验：提交前校验</span>
+  <span class="prop">validateDraft</span>(data: <span class="type">DraftData</span>): <span class="type">ValidationResult</span>
+
+  <span class="comment">// 提交创建：调用业务API</span>
+  <span class="prop">submitDraft</span>(data: <span class="type">DraftData</span>): <span class="type">Promise&lt;SubmitResult&gt;</span>
+}
+      </div>
+    </div>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>智能体</th>
+          <th>匹配API</th>
+          <th>提交API</th>
+          <th>校验规则</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>制单智能体</td>
+          <td>客户拼音查询 + 产品拼音查询</td>
+          <td>POST /sales/orders</td>
+          <td>客户必填 + 至少1行产品</td>
+        </tr>
+        <tr>
+          <td>采购智能体</td>
+          <td>供应商拼音查询 + 物料拼音查询</td>
+          <td>POST /purchase/orders</td>
+          <td>供应商必填 + 至少1行物料</td>
+        </tr>
+        <tr>
+          <td>报价智能体</td>
+          <td>客户拼音查询 + 产品拼音查询</td>
+          <td>POST /sales/quotes</td>
+          <td>客户必填 + 至少1行产品 + 价格必填</td>
+        </tr>
+        <tr>
+          <td>客户建档智能体</td>
+          <td>客户查重（名称+电话）</td>
+          <td>POST /crm/customers</td>
+          <td>名称必填 + 查重通过</td>
+        </tr>
+        <tr>
+          <td>销售机会智能体</td>
+          <td>客户拼音查询</td>
+          <td>POST /crm/opportunities</td>
+          <td>客户必填 + 预估金额必填</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 07 扩展新场景流程 -->
+  <div class="section" id="s7">
+    <div class="section-header">
+      <div class="section-num green">07</div>
+      <h2 class="section-title">扩展新场景流程</h2>
+    </div>
+    <p>新增一个业务场景只需4步，无需改动框架核心代码。整个流程以配置为主，开发为辅。</p>
+
+    <div class="card">
+      <div class="step-flow">
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h5>创建专属智能体</h5>
+            <p>在扣子平台创建新智能体，编写Prompt定义实体提取规则，配置知识库，发布获取botId</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h5>定义表单模板</h5>
+            <p>在框架中注册新场景的表单模板（JSON Schema），定义字段、布局、校验规则</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h5>实现业务适配器</h5>
+            <p>实现 BusinessAdapter 接口，包括实体匹配、数据校验、提交创建三个方法</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <h5>注册到路由器</h5>
+            <p>在智能体路由器中注册新场景的配置项（名称、图标、颜色、botId、适配器），左侧导航自动出现新入口</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="ri-code-s-slash-line"></i> 注册配置示例</div>
+      <div class="code-block">
+<span class="comment">// 在 agentConfig 中新增一项即可</span>
+<span class="keyword">const</span> agentConfig = {
+  <span class="comment">// ... 已有智能体</span>
+  <span class="prop">newScenario</span>: {
+    <span class="prop">name</span>: <span class="string">'智能XXX'</span>,
+    <span class="prop">desc</span>: <span class="string">'场景描述'</span>,
+    <span class="prop">chatName</span>: <span class="string">'XXX智能体'</span>,
+    <span class="prop">icon</span>: <span class="string">'ri-xxx-line'</span>,
+    <span class="prop">color</span>: <span class="string">'blue'</span>,
+    <span class="prop">botId</span>: <span class="string">'73428668****'</span>,
+    <span class="prop">quickActions</span>: [<span class="string">'示例输入1'</span>, <span class="string">'示例输入2'</span>],
+    <span class="prop">formTemplate</span>: () => <span class="string">'表单HTML模板'</span>,
+    <span class="prop">adapter</span>: <span class="keyword">new</span> <span class="type">NewScenarioAdapter</span>()
+  }
+}
+      </div>
+    </div>
+  </div>
+
+  <!-- 08 实施路线图 -->
+  <div class="section" id="s8">
+    <div class="section-header">
+      <div class="section-num amber">08</div>
+      <h2 class="section-title">实施路线图</h2>
+    </div>
+
+    <div class="roadmap">
+      <div class="roadmap-phase done">
+        <div>
+          <span class="phase-tag" style="background:var(--accent-green-dim);color:var(--accent-green);">已完成</span>
+          <h5>Phase 0 · 智能制单MVP</h5>
+          <p>验证语音/文本输入 → 扣子智能体识别 → 拼音匹配 → 表单填充 → 确认提交的完整链路</p>
+        </div>
+      </div>
+      <div class="roadmap-phase current">
+        <div>
+          <span class="phase-tag" style="background:var(--accent-blue-dim);color:var(--accent-blue);">进行中</span>
+          <h5>Phase 1 · 框架抽象 + 首批泛化</h5>
+          <p>抽象统一交互框架，开发框架性原型页面；落地采购单、报价单两个专属智能体；输出架构方案文档</p>
+        </div>
+      </div>
+      <div class="roadmap-phase planned">
+        <div>
+          <span class="phase-tag" style="background:rgba(255,255,255,0.05);color:var(--text-muted);">规划中</span>
+          <h5>Phase 2 · 业务主体扩展</h5>
+          <p>落地智能客户建档、智能销售机会两个基础业务主体场景；完善拼音匹配引擎的通用化</p>
+        </div>
+      </div>
+      <div class="roadmap-phase planned">
+        <div>
+          <span class="phase-tag" style="background:rgba(255,255,255,0.05);color:var(--text-muted);">规划中</span>
+          <h5>Phase 3 · 生产对接与优化</h5>
+          <p>对接真实ERP/CRM业务API；优化智能体识别精准度；增加自动路由（根据输入内容智能切换智能体）</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

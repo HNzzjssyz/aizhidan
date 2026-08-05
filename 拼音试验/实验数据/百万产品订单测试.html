@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>百万产品订单测试</title>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; background: #f0f2f5; padding: 20px; }
+.screenshot-container { max-width: 800px; margin: 0 auto; }
+h2 { color: #333; margin-bottom: 16px; }
+.order-card { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 24px; overflow: hidden; }
+.order-header { background: #1890ff; color: #fff; padding: 12px 20px; font-size: 16px; font-weight: 600; display: flex; justify-content: space-between; }
+.order-header .order-no { font-size: 13px; opacity: 0.9; }
+.order-body { padding: 16px 20px; }
+.info-row { display: flex; margin-bottom: 8px; font-size: 14px; line-height: 1.8; }
+.info-label { color: #999; width: 80px; flex-shrink: 0; }
+.info-value { color: #333; font-weight: 500; }
+.product-table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13px; }
+.product-table th { background: #fafafa; padding: 8px 12px; text-align: left; border: 1px solid #e8e8e8; color: #666; font-weight: 500; }
+.product-table td { padding: 8px 12px; border: 1px solid #e8e8e8; color: #333; }
+.product-table .amount { text-align: right; font-weight: 600; color: #f5222d; }
+.order-footer { padding: 12px 20px; background: #fafafa; border-top: 1px solid #e8e8e8; display: flex; justify-content: space-between; font-size: 13px; color: #666; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-left: 8px; }
+.badge-urgent { background: #fff1f0; color: #f5222d; border: 1px solid #ffa39e; }
+.badge-normal { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
+.badge-invoice { background: #e6f7ff; color: #1890ff; border: 1px solid #91d5ff; }
+</style>
+</head>
+<body>
+<div class="screenshot-container">
+<h2>百万产品订单测试数据（化学试剂订单）</h2>
+
+<div class="order-card">
+  <div class="order-header">
+    <span>销售订单<span class="badge badge-normal">常规</span></span>
+    <span class="order-no">ORD20260520001</span>
+  </div>
+  <div class="order-body">
+    <div class="info-row"><span class="info-label">客户名称</span><span class="info-value">邵逸夫医院心内科</span></div>
+    <div class="info-row"><span class="info-label">联系人</span><span class="info-value">王主任</span></div>
+    <div class="info-row"><span class="info-label">收货地址</span><span class="info-value">杭州市庆春东路3号</span></div>
+    <table class="product-table">
+      <tr><th>产品名称</th><th>型号</th><th>规格</th><th>数量</th><th>单价</th><th>金额</th></tr>
+      <tr><td>4,5二胺基邻苯二氰</td><td>D845828-250mg</td><td>0.96 250mg</td><td>2瓶</td><td>¥128.50</td><td class="amount">¥257.00</td></tr>
+      <tr><td>(R)-吡咯烷-3-甲酸甲酯盐酸盐</td><td>R845829-50mg</td><td>0.97 50mg</td><td>5瓶</td><td>¥85.00</td><td class="amount">¥425.00</td></tr>
+      <tr><td>3-氨基-5-氯苯酚</td><td>A845830-250mg</td><td>0.97 250mg</td><td>3瓶</td><td>¥96.00</td><td class="amount">¥288.00</td></tr>
+      <tr><td>4-(三氟甲氧基)-2-(三氟甲基)苯胺盐酸盐</td><td>T845831-50mg</td><td>0.95 50mg</td><td>1瓶</td><td>¥245.00</td><td class="amount">¥245.00</td></tr>
+      <tr><td>4-碘-1H-吡唑-5-羧酸</td><td>I845832-50mg</td><td>0.95 50mg</td><td>4瓶</td><td>¥178.00</td><td class="amount">¥712.00</td></tr>
+    </table>
+  </div>
+  <div class="order-footer">
+    <span>下单日期：2026-05-20</span>
+    <span>合计：¥1,927.00</span>
+  </div>
+</div>
+
+<div class="order-card">
+  <div class="order-header">
+    <span>销售订单<span class="badge badge-invoice">需开票</span></span>
+    <span class="order-no">ORD20260520002</span>
+  </div>
+  <div class="order-body">
+    <div class="info-row"><span class="info-label">客户名称</span><span class="info-value">杭州医学院夏海玲组</span></div>
+    <div class="info-row"><span class="info-label">联系人</span><span class="info-value">夏海玲</span></div>
+    <div class="info-row"><span class="info-label">收货地址</span><span class="info-value">杭州市临安区环城北路88号</span></div>
+    <table class="product-table">
+      <tr><th>产品名称</th><th>型号</th><th>规格</th><th>数量</th><th>单价</th><th>金额</th></tr>
+      <tr><td>2-羟基-5-三氟甲基苯腈</td><td>H845833-250mg</td><td>0.95 250mg</td><td>3瓶</td><td>¥156.00</td><td class="amount">¥468.00</td></tr>
+      <tr><td>2-羟基-5-三氟甲基苯腈</td><td>H845833-1g</td><td>0.95 1g</td><td>1瓶</td><td>¥420.00</td><td class="amount">¥420.00</td></tr>
+      <tr><td>3-甲基-5-硝基苯甲酸</td><td>M845834-250mg</td><td>0.98 250mg</td><td>2瓶</td><td>¥88.00</td><td class="amount">¥176.00</td></tr>
+      <tr><td>3-甲基-5-硝基苯甲酸</td><td>M845834-1g</td><td>0.98 1g</td><td>2瓶</td><td>¥235.00</td><td class="amount">¥470.00</td></tr>
+      <tr><td>4-苄基-2-吗琳羧酸盐酸盐</td><td>B845835-250mg</td><td>0.96 250mg</td><td>1瓶</td><td>¥198.00</td><td class="amount">¥198.00</td></tr>
+      <tr><td>4-苄基-2-吗琳羧酸盐酸盐</td><td>B845835-1g</td><td>0.96 1g</td><td>1瓶</td><td>¥530.00</td><td class="amount">¥530.00</td></tr>
+      <tr><td>5-氯-4-硝基噻吩-2-羧酸乙酯</td><td>E845836-250mg</td><td>0.95 250mg</td><td>4瓶</td><td>¥142.00</td><td class="amount">¥568.00</td></tr>
+      <tr><td>5-氯-4-硝基噻吩-2-羧酸乙酯</td><td>E845836-1g</td><td>0.95 1g</td><td>2瓶</td><td>¥380.00</td><td class="amount">¥760.00</td></tr>
+      <tr><td>(4-苄基哌嗪-1-基)哌啶-4-甲酮双盐酸盐</td><td>B845837-250mg</td><td>0.95 250mg</td><td>3瓶</td><td>¥268.00</td><td class="amount">¥804.00</td></tr>
+      <tr><td>(4-苄基哌嗪-1-基)哌啶-4-甲酮双盐酸盐</td><td>B845837-1g</td><td>0.95 1g</td><td>1瓶</td><td>¥680.00</td><td class="amount">¥680.00</td></tr>
+      <tr><td>(4-苯基哌嗪)哌啶-4-甲酮双盐酸盐</td><td>P845838-250mg</td><td>0.95 250mg</td><td>2瓶</td><td>¥225.00</td><td class="amount">¥450.00</td></tr>
+      <tr><td>(4-苯基哌嗪)哌啶-4-甲酮双盐酸盐</td><td>P845838-1g</td><td>0.95 1g</td><td>1瓶</td><td>¥590.00</td><td class="amount">¥590.00</td></tr>
+      <tr><td>1-(2-羟甲基苯基)哌啶-4-醇盐酸盐</td><td>H845839-250mg</td><td>0.95 250mg</td><td>5瓶</td><td>¥175.00</td><td class="amount">¥875.00</td></tr>
+      <tr><td>1-(2-羟甲基苯基)哌啶-4-醇盐酸盐</td><td>H845839-1g</td><td>0.95 1g</td><td>2瓶</td><td>¥460.00</td><td class="amount">¥920.00</td></tr>
+      <tr><td>1，2，4-三唑并[4，3-a]吡嗪-3-羧酸乙酯</td><td>E845840-250mg</td><td>0.95 250mg</td><td>1瓶</td><td>¥312.00</td><td class="amount">¥312.00</td></tr>
+    </table>
+  </div>
+  <div class="order-footer">
+    <span>下单日期：2026-05-20</span>
+    <span>合计：¥8,221.00</span>
+  </div>
+</div>
+
+<div class="order-card">
+  <div class="order-header">
+    <span>销售订单<span class="badge badge-urgent">加急</span></span>
+    <span class="order-no">ORD20260520003</span>
+  </div>
+  <div class="order-body">
+    <div class="info-row"><span class="info-label">客户名称</span><span class="info-value">浙师大陈正豪组</span></div>
+    <div class="info-row"><span class="info-label">联系人</span><span class="info-value">陈正豪</span></div>
+    <div class="info-row"><span class="info-label">收货地址</span><span class="info-value">金华市迎宾大道688号</span></div>
+    <table class="product-table">
+      <tr><th>产品名称</th><th>型号</th><th>规格</th><th>数量</th><th>单价</th><th>金额</th></tr>
+      <tr><td>1，2，4-三唑并[4，3-a]吡嗪-3-羧酸乙酯</td><td>E845840-1g</td><td>0.95 1g</td><td>2瓶</td><td>¥780.00</td><td class="amount">¥1,560.00</td></tr>
+      <tr><td>4-氯-3-羟基苯甲醛</td><td>C845841-250mg</td><td>0.98 250mg</td><td>3瓶</td><td>¥108.00</td><td class="amount">¥324.00</td></tr>
+      <tr><td>4-氯-3-羟基苯甲醛</td><td>C845841-1g</td><td>0.98 1g</td><td>2瓶</td><td>¥285.00</td><td class="amount">¥570.00</td></tr>
+      <tr><td>1-(3-溴苯基)哌啶</td><td>B845843-250mg</td><td>0.98 250mg</td><td>4瓶</td><td>¥165.00</td><td class="amount">¥660.00</td></tr>
+      <tr><td>1-(3-溴苯基)哌啶</td><td>B845843-1g</td><td>0.98 1g</td><td>1瓶</td><td>¥430.00</td><td class="amount">¥430.00</td></tr>
+      <tr><td>4,5二胺基邻苯二氰</td><td>D845828-250mg</td><td>0.96 250mg</td><td>6瓶</td><td>¥128.50</td><td class="amount">¥771.00</td></tr>
+      <tr><td>(R)-吡咯烷-3-甲酸甲酯盐酸盐</td><td>R845829-250mg</td><td>0.97 250mg</td><td>3瓶</td><td>¥320.00</td><td class="amount">¥960.00</td></tr>
+      <tr><td>3-氨基-5-氯苯酚</td><td>A845830-50mg</td><td>0.97 50mg</td><td>8瓶</td><td>¥45.00</td><td class="amount">¥360.00</td></tr>
+      <tr><td>4-(三氟甲氧基)-2-(三氟甲基)苯胺盐酸盐</td><td>T845831-250mg</td><td>0.95 250mg</td><td>2瓶</td><td>¥580.00</td><td class="amount">¥1,160.00</td></tr>
+      <tr><td>4-碘-1H-吡唑-5-羧酸</td><td>I845832-250mg</td><td>0.95 250mg</td><td>3瓶</td><td>¥395.00</td><td class="amount">¥1,185.00</td></tr>
+      <tr><td>2-羟基-5-三氟甲基苯腈</td><td>H845833-250mg</td><td>0.95 250mg</td><td>5瓶</td><td>¥156.00</td><td class="amount">¥780.00</td></tr>
+      <tr><td>3-甲基-5-硝基苯甲酸</td><td>M845834-250mg</td><td>0.98 250mg</td><td>4瓶</td><td>¥88.00</td><td class="amount">¥352.00</td></tr>
+      <tr><td>4-苄基-2-吗琳羧酸盐酸盐</td><td>B845835-250mg</td><td>0.96 250mg</td><td>2瓶</td><td>¥198.00</td><td class="amount">¥396.00</td></tr>
+      <tr><td>5-氯-4-硝基噻吩-2-羧酸乙酯</td><td>E845836-250mg</td><td>0.95 250mg</td><td>3瓶</td><td>¥142.00</td><td class="amount">¥426.00</td></tr>
+      <tr><td>(4-苄基哌嗪-1-基)哌啶-4-甲酮双盐酸盐</td><td>B845837-250mg</td><td>0.95 250mg</td><td>2瓶</td><td>¥268.00</td><td class="amount">¥536.00</td></tr>
+      <tr><td>(4-苯基哌基哌嗪)哌啶-4-甲酮双盐酸盐</td><td>P845838-1g</td><td>0.95 1g</td><td>3瓶</td><td>¥590.00</td><td class="amount">¥1,770.00</td></tr>
+      <tr><td>1-(2-羟甲基苯基)哌啶-4-醇盐酸盐</td><td>H845839-250mg</td><td>0.95 250mg</td><td>6瓶</td><td>¥175.00</td><td class="amount">¥1,050.00</td></tr>
+      <tr><td>1，2，4-三唑并[4，3-a]吡嗪-3-羧酸乙酯</td><td>E845840-250mg</td><td>0.95 250mg</td><td>2瓶</td><td>¥312.00</td><td class="amount">¥624.00</td></tr>
+      <tr><td>4-氯-3-羟基苯甲醛</td><td>C845841-250mg</td><td>0.98 250mg</td><td>5瓶</td><td>¥108.00</td><td class="amount">¥540.00</td></tr>
+      <tr><td>1-(3-溴苯基)哌啶</td><td>B845843-250mg</td><td>0.98 250mg</td><td>4瓶</td><td>¥165.00</td><td class="amount">¥660.00</td></tr>
+      <tr><td>4,5二胺基邻苯二氰</td><td>D845828-250mg</td><td>0.96 250mg</td><td>2瓶</td><td>¥128.50</td><td class="amount">¥257.00</td></tr>
+      <tr><td>3-氨基-5-氯苯酚</td><td>A845830-250mg</td><td>0.97 250mg</td><td>3瓶</td><td>¥96.00</td><td class="amount">¥288.00</td></tr>
+      <tr><td>4-(三氟甲氧基)-2-(三氟甲基)苯胺盐酸盐</td><td>T845831-50mg</td><td>0.95 50mg</td><td>1瓶</td><td>¥245.00</td><td class="amount">¥245.00</td></tr>
+      <tr><td>4-碘-1H-吡唑-5-羧酸</td><td>I845832-50mg</td><td>0.95 50mg</td><td>2瓶</td><td>¥178.00</td><td class="amount">¥356.00</td></tr>
+      <tr><td>2-羟基-5-三氟甲基苯腈</td><td>H845833-1g</td><td>0.95 1g</td><td>1瓶</td><td>¥420.00</td><td class="amount">¥420.00</td></tr>
+    </table>
+  </div>
+  <div class="order-footer">
+    <span>下单日期：2026-05-20</span>
+    <span>合计：¥14,670.50</span>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

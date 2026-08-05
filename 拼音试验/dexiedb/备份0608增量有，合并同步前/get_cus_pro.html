@@ -1,0 +1,1876 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>超兔-拼音库生成</title>
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/pinyin-pro@3.25.0/dist/index.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dexie@3.2.7/dist/dexie.min.js"></script>
+<script src="pinyin_match.js"></script>
+<style>
+:root {
+  --bg: #f5f7fa;
+  --card: #ffffff;
+  --border: #e5e9ef;
+  --text: #1f2937;
+  --text2: #6b7280;
+  --text3: #9ca3af;
+  --primary: #3b82f6;
+  --primary-light: #eff6ff;
+  --primary-border: #bfdbfe;
+  --green: #10b981;
+  --green-light: #ecfdf5;
+  --green-border: #a7f3d0;
+  --amber: #f59e0b;
+  --amber-light: #fffbeb;
+  --amber-border: #fde68a;
+  --red: #ef4444;
+  --red-light: #fef2f2;
+  --red-border: #fecaca;
+  --purple: #8b5cf6;
+  --purple-light: #f5f3ff;
+  --purple-border: #ddd6fe;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+.topbar {
+  background: white;
+  border-bottom: 1px solid var(--border);
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.topbar-left i {
+  font-size: 22px;
+  color: var(--primary);
+}
+.topbar-left h1 {
+  font-size: 17px;
+  font-weight: 700;
+}
+.topbar-left .badge {
+  padding: 2px 10px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--amber-light);
+  color: #92400e;
+  border: 1px solid var(--amber-border);
+}
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--text2);
+}
+.topbar-right .storage-bar {
+  width: 80px;
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.topbar-right .storage-bar .fill {
+  height: 100%;
+  background: var(--green);
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+
+.main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .main { grid-template-columns: 1fr; }
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: sticky;
+  top: 72px;
+}
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.card-header {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-header i { color: var(--primary); font-size: 16px; }
+.card-body { padding: 16px 18px; }
+
+.api-group { margin-bottom: 14px; }
+.api-group:last-child { margin-bottom: 0; }
+.api-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text2);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.api-label .method {
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: monospace;
+}
+.api-label .method.get { background: var(--green-light); color: #065f46; border: 1px solid var(--green-border); }
+.api-label .method.post { background: var(--primary-light); color: #1e40af; border: 1px solid var(--primary-border); }
+.api-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 12px;
+  font-family: monospace;
+  background: #f8fafc;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.api-input:focus { border-color: var(--primary); background: white; }
+.api-input::placeholder { color: var(--text3); }
+
+.btn {
+  padding: 9px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:hover:not(:disabled) { background: #2563eb; }
+.btn-green { background: var(--green); color: white; }
+.btn-green:hover:not(:disabled) { background: #059669; }
+.btn-amber { background: var(--amber); color: white; }
+.btn-amber:hover:not(:disabled) { background: #d97706; }
+.btn-outline { background: white; color: var(--text2); border: 1px solid var(--border); }
+.btn-outline:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+.btn-red { background: white; color: var(--red); border: 1px solid var(--red-border); }
+.btn-red:hover:not(:disabled) { background: var(--red-light); }
+.btn-block { width: 100%; justify-content: center; }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+
+.btn-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 13px;
+}
+.status-row:last-child { border-bottom: none; }
+.status-row .label { color: var(--text2); }
+.status-row .value { font-weight: 600; color: var(--text); }
+.status-row .value.green { color: var(--green); }
+.status-row .value.amber { color: var(--amber); }
+.status-row .value.red { color: var(--red); }
+
+.content-area {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 4px;
+}
+.tab {
+  flex: 1;
+  padding: 9px 16px;
+  border: none;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text2);
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.tab.active {
+  background: var(--primary);
+  color: white;
+  box-shadow: 0 2px 8px rgba(59,130,246,0.3);
+}
+.tab:hover:not(.active) { background: #f3f4f6; }
+
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+.search-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.search-input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.search-input:focus { border-color: var(--primary); }
+.search-mode {
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  background: white;
+  cursor: pointer;
+  outline: none;
+  color: var(--text);
+}
+
+.result-stats {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 14px;
+  font-size: 12px;
+  color: var(--text2);
+}
+.result-stats strong { color: var(--primary); }
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.data-table th, .data-table td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid #f3f4f6;
+}
+.data-table th {
+  background: #f8fafc;
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text2);
+  position: sticky;
+  top: 0;
+}
+.data-table td { color: var(--text); }
+.data-table tr:hover td { background: #f8fafc; }
+.data-table .pinyin { color: var(--primary); font-family: monospace; font-size: 12px; word-break: break-all; white-space: normal; }
+.data-table .abbr { color: var(--purple); font-family: monospace; font-size: 12px; word-break: break-all; white-space: normal; }
+.data-table .match-highlight { background: #fef08a; padding: 1px 3px; border-radius: 2px; }
+
+.table-wrapper {
+  max-height: 520px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.table-wrapper::-webkit-scrollbar { width: 5px; }
+.table-wrapper::-webkit-scrollbar-track { background: transparent; }
+.table-wrapper::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+
+.progress-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.4);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.progress-overlay.active { display: flex; }
+.progress-card {
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  width: 420px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+.progress-card h3 {
+  font-size: 16px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.progress-bar-outer {
+  width: 100%;
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.progress-bar-inner {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--green));
+  border-radius: 4px;
+  transition: width 0.3s;
+  width: 0%;
+}
+.progress-text {
+  font-size: 13px;
+  color: var(--text2);
+  margin-bottom: 8px;
+}
+.progress-detail {
+  font-size: 12px;
+  color: var(--text3);
+}
+
+.toast {
+  position: fixed;
+  top: 72px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  z-index: 2000;
+  opacity: 0;
+  transition: all 0.3s;
+  pointer-events: none;
+}
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.toast.success { background: var(--green); color: white; }
+.toast.error { background: var(--red); color: white; }
+.toast.info { background: var(--primary); color: white; }
+
+.empty-state {
+  text-align: center;
+  padding: 48px 20px;
+  color: var(--text3);
+}
+.empty-state i { font-size: 40px; margin-bottom: 12px; display: block; opacity: 0.4; }
+.empty-state p { font-size: 14px; line-height: 1.8; }
+
+.log-area {
+  background: #1e293b;
+  color: #94a3b8;
+  padding: 14px 16px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  line-height: 1.7;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.log-area::-webkit-scrollbar { width: 4px; }
+.log-area::-webkit-scrollbar-thumb { background: #475569; border-radius: 2px; }
+.log-area .log-time { color: #64748b; }
+.log-area .log-ok { color: #34d399; }
+.log-area .log-err { color: #f87171; }
+.log-area .log-info { color: #60a5fa; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+.log-toggle-btn {
+  position: fixed;
+  bottom: 12px;
+  left: 12px;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: white;
+  color: var(--text2);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  opacity: 0.1;
+  transition: opacity 0.2s;
+  z-index: 999;
+}
+.log-toggle-btn:hover { opacity: 0.9; }
+
+.log-card-hidden { display: none; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <i class="ri-translate-2"></i>
+    <h1>超兔-拼音库生成</h1>
+    <span class="badge">ver 1.0</span>
+  </div>
+  <div class="topbar-right">
+    <span>IndexedDB</span>
+    <div class="storage-bar"><div class="fill" id="storageFill" style="width:0%"></div></div>
+    <span id="storageText">0 KB</span>
+  </div>
+</div>
+
+<div class="main">
+  <div class="sidebar">
+
+    <div class="card">
+      <div class="card-header"><i class="ri-plug-line"></i> 获取数据</div>
+      <div class="card-body">
+        <div class="btn-row">
+          <button class="btn btn-primary btn-block" onclick="(async()=>{await syncData()})()"><i class="ri-refresh-line"></i> 同步数据</button>
+        </div>
+        <div style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border:2px solid #93c5fd;border-radius:10px;padding:14px 16px;margin-top:14px;font-size:12px;line-height:1.8;color:#1e3a8a;">
+          <div style="font-weight:700;font-size:13px;margin-bottom:6px;display:flex;align-items:center;gap:6px;"><i class="ri-magic-line" style="font-size:16px;color:#3b82f6;"></i> 智能增量同步</div>
+          <div>① <strong>单按钮自动判断</strong>：首次全量、后续按差异率自动选增量/全量</div>
+          <div>② <strong>差异率 ≤ 20%</strong> 走增量，> 20% 自动切全量（无需手动选）</div>
+          <div>③ <strong>客户表</strong>物理删除 → 二分法检测；<strong>产品表</strong>dflag 软删除 → 服务器全局条件自动过滤</div>
+          <div>④ <strong>异常降级</strong>：差异检测/增量失败时自动降级为全量分片</div>
+          <div>⑤ 分片保护：客户/产品超过 50,000 条时自动截断</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><i class="ri-database-2-line"></i> 数据状态</div>
+      <div class="card-body">
+        <div class="status-row">
+          <span class="label">客户数据</span>
+          <span class="value" id="customerCount">0 条</span>
+        </div>
+        <div class="status-row">
+          <span class="label">客户拼音</span>
+          <span class="value" id="customerPinyinCount">0 条</span>
+        </div>
+        <div class="status-row">
+          <span class="label">产品数据</span>
+          <span class="value" id="productCount">0 条</span>
+        </div>
+        <div class="status-row">
+          <span class="label">产品拼音</span>
+          <span class="value" id="productPinyinCount">0 条</span>
+        </div>
+        <div class="status-row">
+          <span class="label">最后同步</span>
+          <span class="value" id="lastSync">-</span>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-red btn-sm" onclick="(async()=>{await clearAllData()})()" style="flex:1"><i class="ri-delete-bin-line"></i> 清空数据</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card log-card-hidden" id="logCard">
+      <div class="card-header"><i class="ri-terminal-box-line"></i> 操作日志</div>
+      <div class="card-body" style="padding:0;">
+        <div class="log-area" id="logArea"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="content-area">
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('customer')"><i class="ri-building-line"></i> 客户拼音</button>
+      <button class="tab" onclick="switchTab('product')"><i class="ri-shopping-bag-line"></i> 产品拼音</button>
+      <button class="tab" onclick="switchTab('query')"><i class="ri-search-line"></i> 拼音+分词查询</button>
+    </div>
+
+    <div class="tab-content active" id="tab-customer">
+      <div class="search-bar">
+        <input type="text" class="search-input" id="customerSearch" placeholder="搜索客户名称或拼音..." oninput="PinyinMatch.debounce(filterCustomerTable, 250)()">
+        <select class="search-mode" id="customerSearchMode" onchange="filterCustomerTable()">
+          <option value="all">全部</option>
+          <option value="generated">已生成</option>
+          <option value="pending">未生成</option>
+        </select>
+      </div>
+      <div class="result-stats" id="customerStats"></div>
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width:60px;">ID</th>
+              <th>客户名称</th>
+              <th>全拼</th>
+              <th>首字母</th>
+              <th style="width:80px;">状态</th>
+            </tr>
+          </thead>
+          <tbody id="customerTableBody">
+            <tr><td colspan="5"><div class="empty-state"><i class="ri-database-line"></i><p>暂无客户数据<br>请先通过接口获取或导入JSON</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-product">
+      <div class="search-bar">
+        <input type="text" class="search-input" id="productSearch" placeholder="搜索产品名称、规格或拼音..." oninput="PinyinMatch.debounce(filterProductTable, 250)()">
+        <select class="search-mode" id="productSearchMode" onchange="filterProductTable()">
+          <option value="all">全部</option>
+          <option value="generated">已生成</option>
+          <option value="pending">未生成</option>
+        </select>
+      </div>
+      <div class="result-stats" id="productStats"></div>
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width:60px;">ID</th>
+              <th>产品名称</th>
+              <th>型号</th>
+              <th>规格</th>
+              <th>合并全拼</th>
+              <th>合并首字母</th>
+              <th style="width:80px;">状态</th>
+            </tr>
+          </thead>
+          <tbody id="productTableBody">
+            <tr><td colspan="7"><div class="empty-state"><i class="ri-database-line"></i><p>暂无产品数据<br>请先通过接口获取或导入JSON</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-query">
+      <div class="search-bar">
+        <input type="text" class="search-input" id="queryInput" placeholder="输入拼音或中文搜索客户和产品..." oninput="PinyinMatch.debounce(doQuery, 250)()">
+        <select class="search-mode" id="queryType">
+          <option value="all">客户+产品</option>
+          <option value="customer">仅客户</option>
+          <option value="product">仅产品</option>
+        </select>
+      </div>
+      <div id="queryResults">
+        <div class="empty-state"><i class="ri-search-line"></i><p>输入拼音或中文进行匹配查询<br>支持全拼、首字母、中文混合搜索</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="progress-overlay" id="progressOverlay">
+  <div class="progress-card">
+    <h3><i class="ri-loader-4-line" style="animation:spin 1s linear infinite;"></i> <span id="progressTitle">处理中...</span></h3>
+    <div class="progress-bar-outer"><div class="progress-bar-inner" id="progressBar"></div></div>
+    <div class="progress-text" id="progressText">0 / 0</div>
+    <div class="progress-detail" id="progressDetail"></div>
+    <button id="progressCancelBtn" onclick="cancelProgress()" style="margin-top:12px;padding:6px 20px;border-radius:8px;border:1px solid #d1d5db;background:white;color:#6b7280;cursor:pointer;font-size:12px;display:none;"><i class="ri-close-circle-line"></i> 退出</button>
+  </div>
+</div>
+
+<input type="file" id="importFileInput" accept=".json" style="display:none;" onchange="handleImportFile(event)">
+
+<button class="log-toggle-btn" id="logToggleBtn" onclick="toggleLogCard()" title="显示/隐藏日志"><i class="ri-terminal-box-line"></i></button>
+
+<script>
+
+var _progressCancelled = false;
+
+function cancelProgress() {
+  if (confirm('确定退出当前操作？已处理的数据会保留。')) {
+    _progressCancelled = true;
+  }
+}
+
+function showCancelButton(visible) {
+  var btn = document.getElementById('progressCancelBtn');
+  if (btn) btn.style.display = visible ? 'inline-flex' : 'none';
+}
+
+async function getCustomers() { return await PinyinMatch.getCustomersAsync(); }
+async function getProducts() { return await PinyinMatch.getProductsAsync(); }
+async function getCustomerPinyin() { return await PinyinMatch.getCustomerPinyinAsync(); }
+async function getProductPinyin() { return await PinyinMatch.getProductPinyinAsync(); }
+
+function log(msg, type) {
+  var area = document.getElementById('logArea');
+  var now = new Date();
+  var time = now.toTimeString().substring(0, 8);
+  var cls = type === 'ok' ? 'log-ok' : type === 'err' ? 'log-err' : type === 'info' ? 'log-info' : '';
+  var div = document.createElement('div');
+  var timeSpan = document.createElement('span');
+  timeSpan.className = 'log-time';
+  timeSpan.textContent = '[' + time + '] ';
+  var msgSpan = document.createElement('span');
+  msgSpan.className = cls;
+  msgSpan.textContent = msg;
+  div.appendChild(timeSpan);
+  div.appendChild(msgSpan);
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+}
+
+function toggleLogCard() {
+  var card = document.getElementById('logCard');
+  card.classList.toggle('log-card-hidden');
+}
+
+function showToast(msg, type) {
+  var t = document.createElement('div');
+  t.className = 'toast ' + (type || 'info');
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(function() { t.classList.add('show'); }, 10);
+  setTimeout(function() { t.classList.remove('show'); setTimeout(function() { t.remove(); }, 300); }, 2500);
+}
+
+async function updateStatus() {
+  var customers = await getCustomers();
+  var products = await getProducts();
+  var cp = await getCustomerPinyin();
+  var pp = await getProductPinyin();
+
+  var cpCount = Object.keys(cp).length;
+  var ppCount = Object.keys(pp).length;
+
+  document.getElementById('customerCount').textContent = customers.length + ' 条';
+  document.getElementById('customerPinyinCount').textContent = cpCount + ' 条';
+  document.getElementById('customerPinyinCount').className = 'value' + (cpCount === customers.length && customers.length > 0 ? ' green' : cpCount > 0 ? ' amber' : '');
+  document.getElementById('productCount').textContent = products.length + ' 条';
+  document.getElementById('productPinyinCount').textContent = ppCount + ' 条';
+  document.getElementById('productPinyinCount').className = 'value' + (ppCount === products.length && products.length > 0 ? ' green' : ppCount > 0 ? ' amber' : '');
+
+  var syncTime = await PinyinMatch.getSyncStatusAsync('sync_time');
+  document.getElementById('lastSync').textContent = syncTime || '-';
+
+  var totalSize = (JSON.stringify(customers).length + JSON.stringify(products).length + JSON.stringify(cp).length + JSON.stringify(pp).length) * 2;
+  var kb = (totalSize / 1024).toFixed(1);
+  var mb = (totalSize / (1024 * 1024)).toFixed(2);
+  document.getElementById('storageFill').style.width = Math.min((totalSize / (500 * 1024 * 1024)) * 100, 100) + '%';
+  document.getElementById('storageFill').style.background = 'var(--green)';
+  document.getElementById('storageText').textContent = kb > 1024 ? mb + ' MB' : kb + ' KB';
+}
+
+function showProgress(title, current, total, detail) {
+  document.getElementById('progressTitle').textContent = title;
+  var pct = total > 0 ? (current / total * 100) : 0;
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressText').textContent = current + ' / ' + total;
+  document.getElementById('progressDetail').textContent = detail || '';
+}
+
+function sendLoadData(params) {
+  var headers = { 'Content-Type': 'application/json' };
+  return fetch('/system/api.xt', {
+    method: 'POST',
+    headers: headers,
+    body: JSON.stringify(params)
+  }).then(function(r) { return r.json(); });
+}
+
+function parseLoadDataResponse(data) {
+  if (data.ok === 1 && data.data) return data.data;
+  if (Array.isArray(data)) return data;
+  if (data.data && Array.isArray(data.data)) return data.data;
+  return [];
+}
+
+async function getTotalCount(dtname) {
+  var params = { cmd: 'load_data', dtname: dtname, field: 'count(1) cnt', flag: 1 };
+  var data = await sendLoadData(params);
+  if (data.ok === 1 && data.data && data.data[0]) {
+    return parseInt(data.data[0].cnt, 10);
+  }
+  return 0;
+}
+
+var CUSTOMER_BATCH_SIZE = 10000;
+var PRODUCT_BATCH_SIZE = 20000;
+var CUSTOMER_LIMIT = 50000;
+var PRODUCT_LIMIT = 50000;
+var PINYIN_BATCH_SIZE = 200;
+var INCREMENTAL_THRESHOLD = 5000;
+
+// ===== 智能增量同步方案（v1.2）=====
+// 差异率阈值：> 该比例自动切全量
+var DIFF_RATE_THRESHOLD = 0.2;
+// 远端 ID 拉取分页大小
+var ID_FETCH_PAGE_SIZE = 5000;
+// 远端 ID 列表太小（< 该值）时跳过差异检测，强制全量
+var MIN_IDS_FOR_DIFF_CHECK = 1000;
+// 同步并发锁
+var _syncing = false;
+
+function showConfirmDialog(message, confirmText, cancelText) {
+  return new Promise(function(resolve) {
+    var overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center;';
+    var dialog = document.createElement('div');
+    dialog.style.cssText = 'background:white;border-radius:12px;padding:24px 28px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);';
+    dialog.innerHTML = '<div style="font-size:14px;line-height:1.8;color:#1f2937;margin-bottom:20px;white-space:pre-line;">' + message + '</div>' +
+      '<div style="display:flex;gap:10px;justify-content:flex-end;">' +
+        '<button id="confirmCancel" style="padding:8px 20px;border-radius:8px;border:1px solid #d1d5db;background:white;color:#6b7280;cursor:pointer;font-size:13px;">' + cancelText + '</button>' +
+        '<button id="confirmOk" style="padding:8px 20px;border-radius:8px;border:none;background:#3b82f6;color:white;cursor:pointer;font-size:13px;font-weight:600;">' + confirmText + '</button>' +
+      '</div>';
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+    document.getElementById('confirmOk').onclick = function() { document.body.removeChild(overlay); resolve(true); };
+    document.getElementById('confirmCancel').onclick = function() { document.body.removeChild(overlay); resolve(false); };
+  });
+}
+
+async function checkDataBounds(customerTotal, productTotal) {
+  var warnings = [];
+  if (customerTotal > CUSTOMER_LIMIT) {
+    warnings.push('客户数据 ' + customerTotal.toLocaleString() + ' 条，超出上限 ' + CUSTOMER_LIMIT.toLocaleString() + ' 条，只取前 ' + CUSTOMER_LIMIT.toLocaleString() + ' 条');
+  }
+  if (productTotal > PRODUCT_LIMIT) {
+    warnings.push('产品数据 ' + productTotal.toLocaleString() + ' 条，超出上限 ' + PRODUCT_LIMIT.toLocaleString() + ' 条，只取前 ' + PRODUCT_LIMIT.toLocaleString() + ' 条');
+  }
+  if (warnings.length > 0) {
+    var msg = '总量超界，只取5万数据';
+    showToast(msg, 'error');
+    warnings.forEach(function(w) { log(w, 'info'); });
+    log(msg, 'info');
+  }
+  return true;
+}
+
+async function generatePinyinForType(type, items) {
+  var pinyinMap = {};
+  var total = items.length;
+
+  for (var idx = 0; idx < total; idx += PINYIN_BATCH_SIZE) {
+    if (_progressCancelled) {
+      log((type === 'customer' ? '客户' : '产品') + '拼音生成已取消，已处理 ' + Object.keys(pinyinMap).length + ' 条', 'info');
+      break;
+    }
+
+    var end = Math.min(idx + PINYIN_BATCH_SIZE, total);
+
+    for (var i = idx; i < end; i++) {
+      var item = items[i];
+      var text = type === 'customer'
+        ? item.name
+        : [item.name, item.model, item.spec]
+            .filter(function(s) { return !PinyinMatch.isPlaceholder(s); })
+            .join(' ');
+
+      var py = PinyinMatch.generatePinyinForText(text);
+      pinyinMap[item.id] = {
+        id: item.id,
+        name: item.name,
+        pinyin: py.full,
+        pinyin_abbr: py.abbr
+      };
+      if (type === 'product') {
+        pinyinMap[item.id].model = item.model || '';
+        pinyinMap[item.id].spec = item.spec || '';
+      }
+    }
+
+    showProgress(
+      '生成' + (type === 'customer' ? '客户' : '产品') + '拼音...',
+      end, total,
+      '已完成 ' + Math.round(end / total * 100) + '%'
+    );
+
+    if (idx + PINYIN_BATCH_SIZE < total) {
+      await new Promise(function(r) { setTimeout(r, 50); });
+    }
+  }
+
+  if (Object.keys(pinyinMap).length > 0) {
+    if (type === 'customer') {
+      await PinyinMatch.setCustomerPinyinAsync(pinyinMap);
+    } else {
+      await PinyinMatch.setProductPinyinAsync(pinyinMap);
+    }
+  }
+  log((type === 'customer' ? '客户' : '产品') + '拼音生成完成：' + Object.keys(pinyinMap).length + ' 条', 'ok');
+}
+
+async function fetchFullData() {
+  _progressCancelled = false;
+  document.getElementById('progressOverlay').classList.add('active');
+  showCancelButton(true);
+
+  showProgress('正在统计记录数...', 0, 1, '查询客户表...');
+  var customerTotal = await getTotalCount('customer');
+  showProgress('正在统计记录数...', 0, 1, '查询产品表...');
+  var productTotal = await getTotalCount('product');
+
+  var customerFetchTotal = Math.min(customerTotal, CUSTOMER_LIMIT);
+  var productFetchTotal = Math.min(productTotal, PRODUCT_LIMIT);
+  var customerBatches = Math.ceil(customerFetchTotal / CUSTOMER_BATCH_SIZE) || 1;
+  var productBatches = Math.ceil(productFetchTotal / PRODUCT_BATCH_SIZE) || 1;
+  var totalBatches = customerBatches + productBatches;
+  var completedBatches = 0;
+
+  log('记录统计：客户 ' + customerTotal + ' 条（取 ' + customerFetchTotal + ' 条，' + customerBatches + ' 批），产品 ' + productTotal + ' 条（取 ' + productFetchTotal + ' 条，' + productBatches + ' 批）', 'info');
+
+  var boundsOk = await checkDataBounds(customerTotal, productTotal);
+  if (!boundsOk) return;
+
+  try {
+    var allCustomers = [];
+    for (var ci = 0; ci < customerBatches; ci++) {
+      if (_progressCancelled) break;
+      var start = ci * CUSTOMER_BATCH_SIZE;
+      showProgress(
+        '读取客户数据...',
+        completedBatches, totalBatches,
+        '第 ' + (ci + 1) + '/' + customerBatches + ' 批（start=' + start + ', limit=' + CUSTOMER_BATCH_SIZE + '）'
+      );
+
+      var params = {
+        cmd: 'load_data',
+        dtname: 'customer',
+        field: 'id,cu_name,amstamp',
+        flag: 1,
+        limit: CUSTOMER_BATCH_SIZE,
+        start: start
+      };
+      var data = await sendLoadData(params);
+      var list = parseLoadDataResponse(data);
+      var normalized = list.map(function(item) {
+        return { id: item.id, name: item.cu_name || item.name || '' };
+      });
+      allCustomers = allCustomers.concat(normalized);
+
+      completedBatches++;
+      await new Promise(function(r) { setTimeout(r, 100); });
+    }
+
+    if (allCustomers.length > 0) {
+      if (allCustomers.length > CUSTOMER_LIMIT) {
+        log('客户数据 ' + allCustomers.length.toLocaleString() + ' 条超限，截断为 ' + CUSTOMER_LIMIT.toLocaleString() + ' 条', 'info');
+        allCustomers = allCustomers.slice(0, CUSTOMER_LIMIT);
+      }
+      await PinyinMatch.setCustomersAsync(allCustomers);
+      log('客户全量获取成功：' + allCustomers.length + ' 条', 'ok');
+      if (!_progressCancelled) {
+        await generatePinyinForType('customer', allCustomers);
+      }
+    }
+
+    if (!_progressCancelled) {
+      var allProducts = [];
+      for (var pi = 0; pi < productBatches; pi++) {
+        if (_progressCancelled) break;
+        var start = pi * PRODUCT_BATCH_SIZE;
+        showProgress(
+          '读取产品数据...',
+          completedBatches, totalBatches,
+          '第 ' + (pi + 1) + '/' + productBatches + ' 批（start=' + start + ', limit=' + PRODUCT_BATCH_SIZE + '）'
+        );
+
+        var params = {
+          cmd: 'load_data',
+          dtname: 'product',
+          field: 'id,pro_name,model,spec,modstm',
+          flag: 1,
+          limit: PRODUCT_BATCH_SIZE,
+          start: start
+        };
+        var data = await sendLoadData(params);
+        var list = parseLoadDataResponse(data);
+        var normalized = list.map(function(item) {
+          return { id: item.id, name: item.pro_name || item.name || '', model: item.model || '', spec: item.spec || '' };
+        });
+        allProducts = allProducts.concat(normalized);
+
+        completedBatches++;
+        await new Promise(function(r) { setTimeout(r, 100); });
+      }
+
+      if (allProducts.length > 0) {
+        if (allProducts.length > PRODUCT_LIMIT) {
+          log('产品数据 ' + allProducts.length.toLocaleString() + ' 条超限，截断为 ' + PRODUCT_LIMIT.toLocaleString() + ' 条', 'info');
+          allProducts = allProducts.slice(0, PRODUCT_LIMIT);
+        }
+        await PinyinMatch.setProductsAsync(allProducts);
+        log('产品全量获取成功：' + allProducts.length + ' 条', 'ok');
+        if (!_progressCancelled) {
+          await generatePinyinForType('product', allProducts);
+        }
+      }
+    }
+
+    if (!_progressCancelled) {
+      var now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+      await PinyinMatch.setSyncStatusAsync('sync_time', now);
+      await PinyinMatch.setSyncStatusAsync('incremental_time', now);
+      showProgress('数据获取完成', totalBatches, totalBatches, '客户 ' + allCustomers.length + ' 条（' + customerBatches + ' 批），产品 ' + (allProducts ? allProducts.length : 0) + ' 条（' + productBatches + ' 批）');
+    } else {
+      log('操作已取消，已处理的数据已保留', 'info');
+      showProgress('操作已取消', 0, 1, '已处理的数据已保留');
+    }
+  } catch (e) {
+    log('全量获取失败：' + e.message, 'err');
+  }
+
+  showCancelButton(false);
+  document.getElementById('progressOverlay').classList.remove('active');
+  await updateStatus();
+  await renderCurrentTab();
+  showToast(_progressCancelled ? '操作已取消' : '数据获取完成', _progressCancelled ? 'warning' : 'success');
+}
+
+async function fetchIncrementalData() {
+  var lastTime = await PinyinMatch.getSyncStatusAsync('incremental_time');
+  if (!lastTime) {
+    showToast('尚未进行过全量获取，请先全量获取', 'warning');
+    return;
+  }
+
+  var customerWhere = "amstamp > '" + lastTime + "'";
+  var productWhere = "modstm > '" + lastTime + "'";
+
+  var cCountParams = { cmd: 'load_data', dtname: 'customer', field: 'count(1) cnt', where: customerWhere, flag: 1 };
+  var pCountParams = { cmd: 'load_data', dtname: 'product', field: 'count(1) cnt', where: productWhere, flag: 1 };
+
+  try {
+    var cData = await sendLoadData(cCountParams);
+    var pData = await sendLoadData(pCountParams);
+    var cCount = (cData.ok === 1 && cData.data && cData.data[0]) ? parseInt(cData.data[0].cnt, 10) : 0;
+    var pCount = (pData.ok === 1 && pData.data && pData.data[0]) ? parseInt(pData.data[0].cnt, 10) : 0;
+
+    if (cCount + pCount > INCREMENTAL_THRESHOLD) {
+      log('增量数据量 ' + (cCount + pCount) + ' 条，超过阈值 ' + INCREMENTAL_THRESHOLD + '，切换为全量分片获取', 'info');
+      await fetchFullData();
+      return;
+    }
+
+    log('增量数据量 ' + (cCount + pCount) + ' 条，在安全范围内，执行增量获取', 'info');
+  } catch (e) {
+    log('增量计数查询失败：' + e.message + '，继续执行增量获取', 'err');
+  }
+
+  document.getElementById('progressOverlay').classList.add('active');
+  showProgress('正在获取增量数据...', 0, 3, '请求接口中...');
+
+  var customerParams = { cmd: 'load_data', dtname: 'customer', field: 'id,cu_name,amstamp', where: customerWhere, flag: 1 };
+  var productParams = { cmd: 'load_data', dtname: 'product', field: 'id,pro_name,model,spec,modstm', where: productWhere, flag: 1 };
+
+  var newCustomerIds = [];
+  var newProductIds = [];
+
+  try {
+    var data = await sendLoadData(customerParams);
+    var list = parseLoadDataResponse(data);
+    var normalized = list.map(function(item) {
+      return { id: item.id, name: item.cu_name || item.name || '' };
+    });
+    newCustomerIds = normalized.map(function(c) { return c.id; });
+    var existing = await getCustomers();
+    var existingMap = {};
+    existing.forEach(function(c) { existingMap[c.id] = c; });
+    normalized.forEach(function(c) {
+      if (existingMap[c.id]) {
+        existingMap[c.id].name = c.name;
+      } else {
+        existingMap[c.id] = c;
+      }
+    });
+    var merged = Object.values(existingMap);
+    if (merged.length > CUSTOMER_LIMIT) {
+      log('客户合并后 ' + merged.length.toLocaleString() + ' 条超限，截断为 ' + CUSTOMER_LIMIT.toLocaleString() + ' 条', 'info');
+      showToast('客户总量超界，只取5万数据', 'error');
+      merged = merged.slice(0, CUSTOMER_LIMIT);
+    }
+    await PinyinMatch.setCustomersAsync(merged);
+    log('客户增量：新增/更新 ' + normalized.length + ' 条，合并后共 ' + merged.length + ' 条', 'ok');
+    showProgress('正在获取增量数据...', 1, 3, '客户完成，获取产品中...');
+
+    data = await sendLoadData(productParams);
+    list = parseLoadDataResponse(data);
+    normalized = list.map(function(item) {
+      return { id: item.id, name: item.pro_name || item.name || '', model: item.model || '', spec: item.spec || '' };
+    });
+    newProductIds = normalized.map(function(p) { return p.id; });
+    var existingProds = await getProducts();
+    var existingProdMap = {};
+    existingProds.forEach(function(p) { existingProdMap[p.id] = p; });
+    normalized.forEach(function(p) {
+      if (existingProdMap[p.id]) {
+        existingProdMap[p.id].name = p.name;
+        existingProdMap[p.id].model = p.model;
+        existingProdMap[p.id].spec = p.spec;
+      } else {
+        existingProdMap[p.id] = p;
+      }
+    });
+    merged = Object.values(existingProdMap);
+    if (merged.length > PRODUCT_LIMIT) {
+      log('产品合并后 ' + merged.length.toLocaleString() + ' 条超限，截断为 ' + PRODUCT_LIMIT.toLocaleString() + ' 条', 'info');
+      showToast('产品总量超界，只取5万数据', 'error');
+      merged = merged.slice(0, PRODUCT_LIMIT);
+    }
+    await PinyinMatch.setProductsAsync(merged);
+    log('产品增量：新增/更新 ' + normalized.length + ' 条，合并后共 ' + merged.length + ' 条', 'ok');
+    showProgress('正在获取增量数据...', 2, 3, '数据合并完成，生成拼音中...');
+
+    await generateIncrementalPinyin(newCustomerIds, newProductIds);
+
+    var now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+    await PinyinMatch.setSyncStatusAsync('sync_time', now);
+    await PinyinMatch.setSyncStatusAsync('incremental_time', now);
+    showProgress('正在获取增量数据...', 3, 3, '完成');
+  } catch (e) {
+    log('增量获取失败：' + e.message, 'err');
+  }
+
+  document.getElementById('progressOverlay').classList.remove('active');
+  await updateStatus();
+  await renderCurrentTab();
+  showToast('增量数据获取完成', 'success');
+}
+
+// ============================================================================
+// 智能增量同步方案（v1.2）— 整合"全量 + 增量"为单按钮入口
+// 客户表：物理删除 → 二分法检测
+// 产品表：dflag 软删除 → 服务器全局条件自动过滤
+// ============================================================================
+
+/**
+ * 拉取远端表的所有 ID（轻量字段，分页）
+ * @param {string} dtname 表名（'customer' | 'product'）
+ * @param {string} [whereClause] 可选的 where 条件
+ * @returns {Promise<number[]>} 升序 ID 列表
+ */
+async function fetchServerIds(dtname, whereClause) {
+  var allIds = [];
+  var page = 1;
+  while (true) {
+    var params = {
+      cmd: 'load_data',
+      dtname: dtname,
+      field: 'id',
+      flag: 1,
+      page: page,
+      pageSize: ID_FETCH_PAGE_SIZE
+    };
+    if (whereClause) params.where = whereClause;
+    var data = await sendLoadData(params);
+    var list = parseLoadDataResponse(data);
+    if (!list || list.length === 0) break;
+    list.forEach(function(item) { allIds.push(parseInt(item.id, 10)); });
+    if (list.length < ID_FETCH_PAGE_SIZE) break;
+    page++;
+  }
+  // 升序
+  allIds.sort(function(a, b) { return a - b; });
+  return allIds;
+}
+
+/**
+ * 二分法定位"远端有但本地无"的 ID 段
+ * @param {number[]} serverIds 远端 ID 列表（升序）
+ * @param {Set<string>} localIds 本地 ID 集合（String 形式）
+ * @param {number} [lo] 起始索引
+ * @param {number} [hi] 结束索引
+ * @returns {number[]} 缺失的 ID 列表
+ */
+function findMissingIds(serverIds, localIds, lo, hi) {
+  if (lo === undefined) lo = 0;
+  if (hi === undefined) hi = serverIds.length - 1;
+  var missing = [];
+
+  // 终止条件：区间足够小时逐个对比
+  if (lo > hi || hi - lo < 10) {
+    for (var i = lo; i <= hi; i++) {
+      var id = serverIds[i];
+      if (id !== undefined && !localIds.has(String(id))) {
+        missing.push(id);
+      }
+    }
+    return missing;
+  }
+
+  var mid = Math.floor((lo + hi) / 2);
+  var midId = serverIds[mid];
+  var midExists = localIds.has(String(midId));
+
+  if (midExists) {
+    // mid 存在：左半段大概率都存在，重点查右半段
+    missing = missing.concat(findMissingIds(serverIds, localIds, mid + 1, hi));
+    if (lo < mid) {
+      missing = missing.concat(findMissingIds(serverIds, localIds, lo, mid - 1));
+    }
+  } else {
+    // mid 不存在：整段都可能有问题
+    missing.push(midId);
+    missing = missing.concat(findMissingIds(serverIds, localIds, lo, mid - 1));
+    missing = missing.concat(findMissingIds(serverIds, localIds, mid + 1, hi));
+  }
+
+  return missing;
+}
+
+/**
+ * 差异检测：拉远端 ID 列表 vs 本地 ID 集合，计算差异率
+ * @returns {Promise<{strategy: 'full'|'incremental', diffRate: number,
+ *                    customerServerIds: number[], productServerIds: number[],
+ *                    missingOnLocal: number[], extraOnLocal: number[],
+ *                    extraOnLocalProducts: number[]}>}
+ */
+async function detectSyncStrategy() {
+  // 1. 拉远端 ID 列表（customer + product 各一份）
+  log('开始差异检测：拉取远端 ID 列表...', 'info');
+  var customerServerIds = await fetchServerIds('customer');
+  var productServerIds = await fetchServerIds('product');
+
+  // 2. 远端总数 < 阈值：跳过差异检测，强制全量
+  if (customerServerIds.length < MIN_IDS_FOR_DIFF_CHECK &&
+      productServerIds.length < MIN_IDS_FOR_DIFF_CHECK) {
+    log('远端数据量过小（客户 ' + customerServerIds.length + ' / 产品 ' +
+        productServerIds.length + '），跳过差异检测，强制全量', 'info');
+    return { strategy: 'full', diffRate: 1, customerServerIds: customerServerIds,
+             productServerIds: productServerIds,
+             missingOnLocal: [], extraOnLocal: [], extraOnLocalProducts: [] };
+  }
+
+  // 3. 本地 ID 集合（IndexedDB 存为 String，统一用 String 比较）
+  var localCustomers = await getCustomers();
+  var localProducts = await getProducts();
+  var customerLocalIds = new Set();
+  localCustomers.forEach(function(c) {
+    customerLocalIds.add(String(c.id));
+  });
+  var productLocalIds = new Set();
+  localProducts.forEach(function(p) {
+    productLocalIds.add(String(p.id));
+  });
+
+  // 4. 计算差异（以数量较大的表为主）
+  var customerServerCount = customerServerIds.length;
+  var productServerCount = productServerIds.length;
+  var useCustomer = customerServerCount >= productServerCount;
+  var serverIds = useCustomer ? customerServerIds : productServerIds;
+  var localIds = useCustomer ? customerLocalIds : productLocalIds;
+
+  var serverIdSet = new Set(serverIds.map(function(id) { return String(id); }));
+  var missingOnLocal = serverIds.filter(function(id) {
+    return !localIds.has(String(id));
+  });
+  var extraOnLocal = Array.from(localIds).filter(function(id) {
+    return !serverIdSet.has(id);
+  });
+
+  // 5. 客户/产品各自的缺失与多余 ID
+  var customerServerIdSet = new Set(customerServerIds.map(function(id) { return String(id); }));
+  var productServerIdSet = new Set(productServerIds.map(function(id) { return String(id); }));
+  var missingOnLocalCustomers = customerServerIds.filter(function(id) {
+    return !customerLocalIds.has(String(id));
+  });
+  var extraOnLocalCustomers = Array.from(customerLocalIds).filter(function(id) {
+    return !customerServerIdSet.has(id);
+  });
+  var missingOnLocalProducts = productServerIds.filter(function(id) {
+    return !productLocalIds.has(String(id));
+  });
+  var extraOnLocalProducts = Array.from(productLocalIds).filter(function(id) {
+    return !productServerIdSet.has(id);
+  });
+
+  var diffTotal = missingOnLocal.length + extraOnLocal.length;
+  var diffRate = serverIds.length > 0 ? diffTotal / serverIds.length : 0;
+
+  log('差异检测完成：远端 ' + serverIds.length + ' 条，差异 ' + diffTotal +
+      ' 条，差异率 ' + (diffRate * 100).toFixed(2) + '%', 'info');
+  log('客户：远端 ' + customerServerCount + ' / 本地 ' + customerLocalIds.size +
+      '；产品：远端 ' + productServerCount + ' / 本地 ' + productLocalIds.size, 'info');
+
+  if (diffRate > DIFF_RATE_THRESHOLD) {
+    return { strategy: 'full', diffRate: diffRate,
+             customerServerIds: customerServerIds, productServerIds: productServerIds,
+             missingOnLocal: missingOnLocalCustomers, extraOnLocal: extraOnLocalCustomers,
+             extraOnLocalProducts: extraOnLocalProducts };
+  }
+
+  return { strategy: 'incremental', diffRate: diffRate,
+           customerServerIds: customerServerIds, productServerIds: productServerIds,
+           missingOnLocal: missingOnLocalCustomers, extraOnLocal: extraOnLocalCustomers,
+           extraOnLocalProducts: extraOnLocalProducts };
+}
+
+/**
+ * 拉取时间戳范围内的修改/新增数据
+ * @param {string} dtname 'customer' | 'product'
+ * @param {string} field 拉取的字段
+ * @param {string} where where 条件（不含 dflag，由服务器全局条件处理）
+ * @returns {Promise<Array>}
+ */
+async function fetchModifiedByTime(dtname, field, where) {
+  var params = {
+    cmd: 'load_data', dtname: dtname, field: field, where: where, flag: 1
+  };
+  var data = await sendLoadData(params);
+  return parseLoadDataResponse(data);
+}
+
+/**
+ * 拉取指定 ID 范围的完整数据
+ * @param {string} dtname 'customer' | 'product'
+ * @param {string} field 字段列表
+ * @param {string} where 条件（如 "id > 1000"）
+ * @returns {Promise<Array>}
+ */
+async function fetchByWhere(dtname, field, where) {
+  var params = {
+    cmd: 'load_data', dtname: dtname, field: field, where: where, flag: 1
+  };
+  var data = await sendLoadData(params);
+  return parseLoadDataResponse(data);
+}
+
+/**
+ * 增量同步主流程（差异率 ≤ 20% 时调用）
+ * @param {Object} decision detectSyncStrategy 返回的决策对象
+ */
+async function incrementalSync(decision) {
+  var lastTime = await PinyinMatch.getSyncStatusAsync('incremental_time');
+
+  // ----- 客户：拉 amstamp > lastTime 的修改数据 + 缺失 ID 的新增数据 -----
+  log('增量同步：拉取客户变化数据...', 'info');
+  var customerModified = [];
+  if (lastTime) {
+    var list = await fetchModifiedByTime('customer', 'id,cu_name,amstamp',
+      "amstamp > '" + lastTime + "'");
+    list.forEach(function(item) {
+      customerModified.push({
+        id: item.id, name: item.cu_name || item.name || '', amstamp: item.amstamp
+      });
+    });
+    log('客户按时间戳拉取：' + customerModified.length + ' 条', 'info');
+  }
+  if (decision.missingOnLocal && decision.missingOnLocal.length > 0) {
+    log('客户按 ID 范围补拉：' + decision.missingOnLocal.length + ' 条', 'info');
+  }
+
+  // ----- 产品：拉 modstm > lastTime 的修改数据（服务器 dflag 全局条件已过滤） -----
+  log('增量同步：拉取产品变化数据...', 'info');
+  var productModified = [];
+  if (lastTime) {
+    var list = await fetchModifiedByTime('product', 'id,pro_name,model,spec,modstm',
+      "modstm > '" + lastTime + "'");
+    list.forEach(function(item) {
+      productModified.push({
+        id: item.id, name: item.pro_name || item.name || '',
+        model: item.model || '', spec: item.spec || '', modstm: item.modstm
+      });
+    });
+    log('产品按时间戳拉取：' + productModified.length + ' 条（服务器 dflag 全局条件已过滤）', 'info');
+  }
+
+  showProgress('增量同步中...', 1, 3, '客户合并...');
+
+  // ----- 客户合并（物理删除）-----
+  // key 统一用 String（与 IndexedDB 存储一致）
+  var existingCustomers = await getCustomers();
+  var customerMap = {};
+  existingCustomers.forEach(function(c) { customerMap[String(c.id)] = c; });
+  customerModified.forEach(function(c) { customerMap[String(c.id)] = c; });
+  // 删除：extraOnLocal（远端物理删除的客户）
+  var deletedCustomerCount = 0;
+  if (decision.extraOnLocal && decision.extraOnLocal.length > 0) {
+    decision.extraOnLocal.forEach(function(id) {
+      var key = String(id);
+      if (customerMap[key] !== undefined) { delete customerMap[key]; deletedCustomerCount++; }
+    });
+    log('客户删除清理：' + deletedCustomerCount + ' 条（远端物理删除）', 'info');
+  }
+  var mergedCustomers = Object.values(customerMap);
+  if (mergedCustomers.length > CUSTOMER_LIMIT) {
+    log('客户合并后 ' + mergedCustomers.length.toLocaleString() + ' 条超限，截断为 ' + CUSTOMER_LIMIT.toLocaleString() + ' 条', 'info');
+    mergedCustomers = mergedCustomers.slice(0, CUSTOMER_LIMIT);
+  }
+  await PinyinMatch.setCustomersAsync(mergedCustomers);
+  log('客户合并：新增/更新 ' + customerModified.length + ' 条，删除 ' + deletedCustomerCount + ' 条，合计 ' + mergedCustomers.length + ' 条', 'ok');
+
+  showProgress('增量同步中...', 2, 3, '产品合并...');
+
+  // ----- 产品合并（软删除）-----
+  // 拉取字段不含 dflag，where 不含 dflag（服务器全局条件自动处理）
+  var existingProducts = await getProducts();
+  var productMap = {};
+  existingProducts.forEach(function(p) { productMap[String(p.id)] = p; });
+  productModified.forEach(function(p) { productMap[String(p.id)] = p; });
+  // 删除：extraOnLocalProducts（远端未返回 = dflag=1）
+  var deletedProductCount = 0;
+  if (decision.extraOnLocalProducts && decision.extraOnLocalProducts.length > 0) {
+    decision.extraOnLocalProducts.forEach(function(id) {
+      var key = String(id);
+      if (productMap[key] !== undefined) { delete productMap[key]; deletedProductCount++; }
+    });
+    log('产品删除清理：' + deletedProductCount + ' 条（远端 dflag=1）', 'info');
+  }
+  var mergedProducts = Object.values(productMap);
+  if (mergedProducts.length > PRODUCT_LIMIT) {
+    log('产品合并后 ' + mergedProducts.length.toLocaleString() + ' 条超限，截断为 ' + PRODUCT_LIMIT.toLocaleString() + ' 条', 'info');
+    mergedProducts = mergedProducts.slice(0, PRODUCT_LIMIT);
+  }
+  await PinyinMatch.setProductsAsync(mergedProducts);
+  log('产品合并：新增/更新 ' + productModified.length + ' 条，删除 ' + deletedProductCount + ' 条，合计 ' + mergedProducts.length + ' 条', 'ok');
+
+  showProgress('增量同步中...', 3, 3, '拼音生成...');
+
+  // ----- 拼音生成（仅对变化项）-----
+  var changedCustomerIds = customerModified.map(function(c) { return c.id; });
+  var changedProductIds = productModified.map(function(p) { return p.id; });
+  var deletedCustomerIds = (decision.extraOnLocal || []).map(function(id) { return String(id); });
+  var deletedProductIds = (decision.extraOnLocalProducts || []).map(function(id) { return String(id); });
+  await generateIncrementalPinyin(changedCustomerIds, changedProductIds,
+                                  deletedCustomerIds, deletedProductIds);
+
+  // ----- 更新同步时间 -----
+  var now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+  await PinyinMatch.setSyncStatusAsync('sync_time', now);
+  await PinyinMatch.setSyncStatusAsync('incremental_time', now);
+}
+
+/**
+ * 单按钮入口：自动判断使用增量还是全量
+ */
+async function syncData() {
+  if (_syncing) {
+    showToast('同步进行中，请勿重复点击', 'warning');
+    return;
+  }
+  _syncing = true;
+
+  _progressCancelled = false;
+  document.getElementById('progressOverlay').classList.add('active');
+  showCancelButton(true);
+
+  try {
+    // 首次同步：强制全量
+    var lastTime = await PinyinMatch.getSyncStatusAsync('incremental_time');
+    if (!lastTime) {
+      log('首次同步：执行全量获取', 'info');
+      await fetchFullData();
+      return;
+    }
+
+    // 差异检测
+    showProgress('智能同步中...', 0, 5, '差异检测...');
+    var decision;
+    try {
+      decision = await detectSyncStrategy();
+    } catch (e) {
+      log('差异检测失败，降级为全量：' + e.message, 'err');
+      showProgress('智能同步中...', 1, 5, '差异检测失败，降级为全量...');
+      await fetchFullData();
+      return;
+    }
+
+    if (decision.strategy === 'full') {
+      log('差异率 ' + (decision.diffRate * 100).toFixed(2) + '%，自动切全量', 'info');
+      showProgress('智能同步中...', 1, 5, '差异率过高，自动全量...');
+      await fetchFullData();
+    } else {
+      log('差异率 ' + (decision.diffRate * 100).toFixed(2) + '%，执行增量同步', 'info');
+      try {
+        await incrementalSync(decision);
+        showProgress('智能同步中...', 5, 5, '完成');
+      } catch (e) {
+        // 增量失败 → 降级为全量
+        log('增量同步失败，降级为全量：' + e.message, 'err');
+        showProgress('智能同步中...', 2, 5, '增量失败，降级全量...');
+        await fetchFullData();
+      }
+    }
+  } catch (e) {
+    log('同步异常：' + e.message, 'err');
+    showProgress('同步失败', 0, 1, e.message);
+  } finally {
+    showCancelButton(false);
+    document.getElementById('progressOverlay').classList.remove('active');
+    _syncing = false;
+    await updateStatus();
+    await renderCurrentTab();
+  }
+}
+
+async function generateIncrementalPinyin(customerIds, productIds, deletedCustomerIds, deletedProductIds) {
+  var cp = await getCustomerPinyin();
+  var pp = await getProductPinyin();
+  var customers = await getCustomers();
+  var products = await getProducts();
+
+  // 1. 清理已删除的拼音（v1.2 增量同步方案）
+  var deletedCCount = 0, deletedPCount = 0;
+  if (deletedCustomerIds && deletedCustomerIds.length > 0) {
+    deletedCustomerIds.forEach(function(id) {
+      var key = String(id);
+      if (cp[key] !== undefined) { delete cp[key]; deletedCCount++; }
+    });
+  }
+  if (deletedProductIds && deletedProductIds.length > 0) {
+    deletedProductIds.forEach(function(id) {
+      var key = String(id);
+      if (pp[key] !== undefined) { delete pp[key]; deletedPCount++; }
+    });
+  }
+  if (deletedCCount > 0 || deletedPCount > 0) {
+    log('拼音清理：客户 ' + deletedCCount + ' 条，产品 ' + deletedPCount + ' 条（远端已删）', 'info');
+  }
+
+  var customerMap = {};
+  customers.forEach(function(c) { customerMap[String(c.id)] = c; });
+  var productMap = {};
+  products.forEach(function(p) { productMap[String(p.id)] = p; });
+
+  var newCount = 0;
+  var updateCount = 0;
+  var skippedCount = 0;
+
+  customerIds.forEach(function(id) {
+    var c = customerMap[String(id)];
+    if (!c) return;
+    // 跳过名字未变的项（v1.2 优化：减少 pinyinPro 调用）
+    var existing = cp[String(id)];
+    if (existing && existing.name === c.name) {
+      skippedCount++;
+      return;
+    }
+    var py = PinyinMatch.generatePinyinForText(c.name);
+    var isNew = !existing;
+    if (isNew) newCount++; else updateCount++;
+    cp[String(id)] = { id: c.id, name: c.name, pinyin: py.full, pinyin_abbr: py.abbr };
+  });
+
+  productIds.forEach(function(id) {
+    var p = productMap[String(id)];
+    if (!p) return;
+    // 跳过未变化项
+    var existing = pp[String(id)];
+    if (existing && existing.name === p.name && existing.model === (p.model || '') &&
+        existing.spec === (p.spec || '')) {
+      skippedCount++;
+      return;
+    }
+    var combined = [p.name, p.model, p.spec].filter(function(s) { return !PinyinMatch.isPlaceholder(s); }).join(' ');
+    var py = PinyinMatch.generatePinyinForText(combined);
+    var isNew = !existing;
+    if (isNew) newCount++; else updateCount++;
+    pp[String(id)] = { id: p.id, name: p.name, model: p.model || '', spec: p.spec || '', pinyin: py.full, pinyin_abbr: py.abbr };
+  });
+
+  // 仅在有变化时写库
+  if (newCount + updateCount + deletedCCount + deletedPCount > 0) {
+    await PinyinMatch.setCustomerPinyinAsync(cp);
+    await PinyinMatch.setProductPinyinAsync(pp);
+  }
+
+  var totalChanged = customerIds.length + productIds.length;
+  if (totalChanged > 0) {
+    log('增量拼音生成：新增 ' + newCount + ' 条，更新 ' + updateCount + ' 条，跳过 ' + skippedCount + ' 条（未变）', 'ok');
+  } else {
+    log('增量拼音生成：无新增或更新', 'ok');
+  }
+
+  await updateStatus();
+  await renderCurrentTab();
+}
+
+async function exportJSON(type) {
+  var data, filename;
+  if (type === 'customer') {
+    data = { customers: await getCustomers(), pinyin: await getCustomerPinyin(), exportedAt: new Date().toISOString() };
+    filename = 'customer_pinyin_' + new Date().toISOString().slice(0, 10) + '.json';
+  } else {
+    data = { products: await getProducts(), pinyin: await getProductPinyin(), exportedAt: new Date().toISOString() };
+    filename = 'product_pinyin_' + new Date().toISOString().slice(0, 10) + '.json';
+  }
+
+  var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  log('已导出 ' + filename, 'ok');
+  showToast('导出成功', 'success');
+}
+
+function importJSON() {
+  document.getElementById('importFileInput').click();
+}
+
+function handleImportFile(event) {
+  var file = event.target.files[0];
+  if (!file) return;
+
+  var reader = new FileReader();
+  reader.onload = async function(e) {
+    try {
+      var data = JSON.parse(e.target.result);
+      if (data.customers) {
+        await PinyinMatch.setCustomersAsync(data.customers);
+        log('导入客户数据：' + data.customers.length + ' 条', 'ok');
+      }
+      if (data.products) {
+        await PinyinMatch.setProductsAsync(data.products);
+        log('导入产品数据：' + data.products.length + ' 条', 'ok');
+      }
+      if (data.pinyin) {
+        var convertedPinyin = {};
+        for (var pid in data.pinyin) {
+          var pv = data.pinyin[pid];
+          convertedPinyin[pid] = {
+            pinyin: pv.pinyin || pv.full || '',
+            pinyin_abbr: pv.pinyin_abbr || pv.abbr || ''
+          };
+        }
+        if (data.customers) await PinyinMatch.setCustomerPinyinAsync(convertedPinyin);
+        if (data.products) await PinyinMatch.setProductPinyinAsync(convertedPinyin);
+        log('导入拼音数据：' + Object.keys(convertedPinyin).length + ' 条', 'ok');
+      }
+      await updateStatus();
+      await renderCurrentTab();
+      showToast('导入成功', 'success');
+    } catch (err) {
+      log('导入失败：' + err.message, 'err');
+      showToast('JSON 格式错误', 'error');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+async function clearAllData() {
+  if (!confirm('确定清空所有本地数据？此操作不可恢复。')) return;
+  try {
+    await PinyinMatch.clearAllDataAsync();
+    log('所有本地数据已清空（数据库已删除重建）', 'ok');
+  } catch (e) {
+    log('清空数据失败：' + e.message, 'err');
+    showToast('清空失败：' + e.message, 'error');
+    return;
+  }
+  await updateStatus();
+  await renderCurrentTab();
+  showToast('数据已清空', 'info');
+}
+
+var currentTab = 'customer';
+
+async function switchTab(tab) {
+  currentTab = tab;
+  _customerPageEnd = TABLE_PAGE_SIZE;
+  _productPageEnd = TABLE_PAGE_SIZE;
+  document.querySelectorAll('.tab').forEach(function(t, i) {
+    var tabs = ['customer', 'product', 'query'];
+    t.classList.toggle('active', tabs[i] === tab);
+  });
+  document.querySelectorAll('.tab-content').forEach(function(tc) {
+    tc.classList.toggle('active', tc.id === 'tab-' + tab);
+  });
+  await renderCurrentTab();
+}
+
+async function renderCurrentTab() {
+  if (currentTab === 'customer') await renderCustomerTable();
+  else if (currentTab === 'product') await renderProductTable();
+}
+
+var TABLE_PAGE_SIZE = 500;
+var _customerPageEnd = TABLE_PAGE_SIZE;
+var _productPageEnd = TABLE_PAGE_SIZE;
+
+async function renderCustomerTable() {
+  var customers = await getCustomers();
+  var cp = await getCustomerPinyin();
+  var tbody = document.getElementById('customerTableBody');
+  var search = document.getElementById('customerSearch').value.trim().toLowerCase();
+  var mode = document.getElementById('customerSearchMode').value;
+
+  var filtered = customers.filter(function(c) {
+    var py = cp[c.id];
+    if (mode === 'generated' && !py) return false;
+    if (mode === 'pending' && py) return false;
+    if (search) {
+      var name = (c.name || '').toLowerCase();
+      var pinyin = py ? py.pinyin.toLowerCase() : '';
+      var pinyinNoSep = pinyin.replace(/[_()（）\s]+/g, '');
+      var abbr = py ? py.pinyin_abbr.toLowerCase() : '';
+      if (name.indexOf(search) !== -1) return true;
+      if (pinyin.indexOf(search) !== -1) return true;
+      if (pinyinNoSep.indexOf(search) !== -1) return true;
+      if (abbr.indexOf(search) !== -1) return true;
+      return false;
+    }
+    return true;
+  });
+
+  var generated = customers.filter(function(c) { return cp[c.id]; }).length;
+  document.getElementById('customerStats').innerHTML =
+    '共 <strong>' + customers.length + '</strong> 条 | 已生成 <strong>' + generated + '</strong> 条 | 待生成 <strong>' + (customers.length - generated) + '</strong> 条';
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><i class="ri-inbox-line"></i><p>暂无匹配数据</p></div></td></tr>';
+    return;
+  }
+
+  var display = filtered.slice(0, _customerPageEnd);
+  var html = '';
+  display.forEach(function(c) {
+    var py = cp[c.id];
+    html += '<tr>' +
+      '<td>' + c.id + '</td>' +
+      '<td>' + (PinyinMatch.escapeHtml(c.name) || '-') + '</td>' +
+      '<td class="pinyin">' + (py ? PinyinMatch.escapeHtml(py.pinyin) : '-') + '</td>' +
+      '<td class="abbr">' + (py ? PinyinMatch.escapeHtml(py.pinyin_abbr) : '-') + '</td>' +
+      '<td>' + (py ? '<span style="color:var(--green);font-weight:600;">已生成</span>' : '<span style="color:var(--text3);">待生成</span>') + '</td>' +
+    '</tr>';
+  });
+
+  if (_customerPageEnd < filtered.length) {
+    html += '<tr><td colspan="5" style="text-align:center;padding:12px;">' +
+      '<span style="color:var(--text3);font-size:12px;">已显示 ' + display.length + ' / ' + filtered.length + ' 条</span> ' +
+      '<button onclick="loadMoreCustomers()" style="margin-left:8px;padding:4px 14px;border-radius:6px;border:1px solid var(--primary);background:white;color:var(--primary);cursor:pointer;font-size:12px;">加载更多</button>' +
+    '</td></tr>';
+  }
+
+  tbody.innerHTML = html;
+}
+
+function loadMoreCustomers() {
+  _customerPageEnd += TABLE_PAGE_SIZE;
+  renderCustomerTable();
+}
+
+async function filterCustomerTable() { _customerPageEnd = TABLE_PAGE_SIZE; await renderCustomerTable(); }
+
+async function renderProductTable() {
+  var products = await getProducts();
+  var pp = await getProductPinyin();
+  var tbody = document.getElementById('productTableBody');
+  var search = document.getElementById('productSearch').value.trim().toLowerCase();
+  var mode = document.getElementById('productSearchMode').value;
+
+  var filtered = products.filter(function(p) {
+    var py = pp[p.id];
+    if (mode === 'generated' && !py) return false;
+    if (mode === 'pending' && py) return false;
+    if (search) {
+      var name = (p.name || '').toLowerCase();
+      var model = (p.model || '').toLowerCase();
+      var spec = (p.spec || '').toLowerCase();
+      var pinyin = py ? py.pinyin.toLowerCase() : '';
+      var abbr = py ? py.pinyin_abbr.toLowerCase() : '';
+      return name.indexOf(search) !== -1 || model.indexOf(search) !== -1 || spec.indexOf(search) !== -1 || pinyin.indexOf(search) !== -1 || abbr.indexOf(search) !== -1;
+    }
+    return true;
+  });
+
+  var generated = products.filter(function(p) { return pp[p.id]; }).length;
+  document.getElementById('productStats').innerHTML =
+    '共 <strong>' + products.length + '</strong> 条 | 已生成 <strong>' + generated + '</strong> 条 | 待生成 <strong>' + (products.length - generated) + '</strong> 条';
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><i class="ri-inbox-line"></i><p>暂无匹配数据</p></div></td></tr>';
+    return;
+  }
+
+  var display = filtered.slice(0, _productPageEnd);
+  var html = '';
+  display.forEach(function(p) {
+    var py = pp[p.id];
+    html += '<tr>' +
+      '<td>' + p.id + '</td>' +
+      '<td>' + (PinyinMatch.escapeHtml(p.name) || '-') + '</td>' +
+      '<td>' + (PinyinMatch.escapeHtml(p.model) || '-') + '</td>' +
+      '<td>' + (PinyinMatch.escapeHtml(p.spec) || '-') + '</td>' +
+      '<td class="pinyin">' + (py ? PinyinMatch.escapeHtml(py.pinyin) : '-') + '</td>' +
+      '<td class="abbr">' + (py ? PinyinMatch.escapeHtml(py.pinyin_abbr) : '-') + '</td>' +
+      '<td>' + (py ? '<span style="color:var(--green);font-weight:600;">已生成</span>' : '<span style="color:var(--text3);">待生成</span>') + '</td>' +
+    '</tr>';
+  });
+
+  if (_productPageEnd < filtered.length) {
+    html += '<tr><td colspan="7" style="text-align:center;padding:12px;">' +
+      '<span style="color:var(--text3);font-size:12px;">已显示 ' + display.length + ' / ' + filtered.length + ' 条</span> ' +
+      '<button onclick="loadMoreProducts()" style="margin-left:8px;padding:4px 14px;border-radius:6px;border:1px solid var(--primary);background:white;color:var(--primary);cursor:pointer;font-size:12px;">加载更多</button>' +
+    '</td></tr>';
+  }
+
+  tbody.innerHTML = html;
+}
+
+function loadMoreProducts() {
+  _productPageEnd += TABLE_PAGE_SIZE;
+  renderProductTable();
+}
+
+async function filterProductTable() { _productPageEnd = TABLE_PAGE_SIZE; await renderProductTable(); }
+
+async function doQuery() {
+  var keyword = document.getElementById('queryInput').value.trim();
+  var type = document.getElementById('queryType').value;
+  var container = document.getElementById('queryResults');
+
+  if (!keyword) {
+    container.innerHTML = '<div class="empty-state"><i class="ri-search-line"></i><p>输入拼音或中文进行匹配查询</p></div>';
+    return;
+  }
+
+  var results = [];
+
+  if (type === 'all' || type === 'customer') {
+    var customers = await getCustomers();
+    var cp = await getCustomerPinyin();
+    var indexDb = customers.filter(function(c) { return cp[c.id]; }).map(function(c) {
+      var py = cp[c.id];
+      return { id: c.id, name: c.name, pinyin: py.pinyin, pinyin_abbr: py.pinyin_abbr };
+    });
+    var asrPy = PinyinMatch.generatePinyinForText(keyword);
+    var queryTokens = PinyinMatch.tokenizePinyin(asrPy.full);
+    var minOverlap = PinyinMatch.getMinOverlap(queryTokens.length);
+    var cInvertedIndex = await PinyinMatch.getCustomerTokenInvertedIndexCached();
+    var candidateIndices = PinyinMatch.getCandidatesByTokenOverlap(queryTokens, cInvertedIndex, minOverlap);
+    var matches = PinyinMatch.pinyinMatchWithCandidates(keyword, indexDb, candidateIndices, { threshold: 0.45 });
+    if (matches.length === 0) {
+      var fallbackIndices = PinyinMatch.getCandidatesByTokenOverlap(queryTokens, cInvertedIndex, 1);
+      matches = PinyinMatch.pinyinMatchWithCandidates(keyword, indexDb, fallbackIndices, { threshold: 0.45 });
+    }
+    matches.forEach(function(m) {
+      var strategy = m.score >= 0.9 ? '自动确认' : m.score >= 0.7 ? '候选推荐' : '模糊提示';
+      results.push({
+        type: 'customer', id: m.id, name: m.name, pinyin: (cp[m.id] || {}).pinyin || '',
+        abbr: (cp[m.id] || {}).pinyin_abbr || '', score: Math.round(m.score * 100),
+        matchType: strategy, details: m.details
+      });
+    });
+  }
+
+  if (type === 'all' || type === 'product') {
+    var products = await getProducts();
+    var pp = await getProductPinyin();
+    var indexDb = products.filter(function(p) { return pp[p.id]; }).map(function(p) {
+      var py = pp[p.id];
+      return { id: p.id, name: p.name, model: p.model || '', spec: p.spec || '', pinyin: py.pinyin, pinyin_abbr: py.pinyin_abbr };
+    });
+    var asrPy = PinyinMatch.generatePinyinForText(keyword);
+    var queryTokens = PinyinMatch.tokenizePinyin(asrPy.full);
+    var minOverlap = PinyinMatch.getMinOverlap(queryTokens.length);
+    var invertedIndex = await PinyinMatch.getTokenInvertedIndexCached();
+    var candidateIndices = PinyinMatch.getCandidatesByTokenOverlap(queryTokens, invertedIndex, minOverlap);
+    var matches = PinyinMatch.pinyinMatchWithCandidates(keyword, indexDb, candidateIndices, { threshold: 0.45 });
+    if (matches.length === 0) {
+      var fallbackIndices = PinyinMatch.getCandidatesByTokenOverlap(queryTokens, invertedIndex, 1);
+      matches = PinyinMatch.pinyinMatchWithCandidates(keyword, indexDb, fallbackIndices, { threshold: 0.45 });
+    }
+    matches.forEach(function(m) {
+      var strategy = m.score >= 0.9 ? '自动确认' : m.score >= 0.7 ? '候选推荐' : '模糊提示';
+      results.push({
+        type: 'product', id: m.id, name: m.name, model: m.model || '', spec: m.spec || '',
+        pinyin: (pp[m.id] || {}).pinyin || '', abbr: (pp[m.id] || {}).pinyin_abbr || '',
+        score: Math.round(m.score * 100), matchType: strategy, details: m.details
+      });
+    });
+  }
+
+  results.sort(function(a, b) { return b.score - a.score; });
+
+  if (results.length === 0) {
+    container.innerHTML = '<div class="empty-state"><i class="ri-search-line"></i><p>未找到匹配结果</p></div>';
+    return;
+  }
+
+  var html = '<div class="result-stats">找到 <strong>' + results.length + '</strong> 条匹配结果</div>';
+  html += '<div class="table-wrapper"><table class="data-table"><thead><tr>';
+  html += '<th style="width:60px;">类型</th><th>ID</th><th>名称</th><th>全拼</th><th>首字母</th><th>匹配策略</th><th style="width:60px;">得分</th><th style="width:200px;">评分详情</th>';
+  html += '</tr></thead><tbody>';
+
+  results.forEach(function(r) {
+    var typeLabel = r.type === 'customer' ? '<span style="color:var(--primary);"><i class="ri-building-line"></i> 客户</span>' : '<span style="color:var(--green);"><i class="ri-shopping-bag-line"></i> 产品</span>';
+    var strategyStyle = r.score >= 90 ? 'background:#dcfce7;color:#166534;' : r.score >= 70 ? 'background:#fef3c7;color:#92400e;' : 'background:#f3f4f6;color:#6b7280;';
+    var detailHtml = '';
+    if (r.details) {
+      detailHtml = '<span style="font-size:10px;color:var(--text3);">' +
+        '拼音:' + Math.round(r.details.pinyin * 100) + '% ' +
+        '首字母:' + Math.round(r.details.abbr * 100) + '% ' +
+        '词袋:' + Math.round(r.details.wordBag * 100) + '% ' +
+        '长度:' + Math.round(r.details.length * 100) + '%</span>';
+    }
+    html += '<tr>';
+    html += '<td>' + typeLabel + '</td>';
+    html += '<td>' + r.id + '</td>';
+    html += '<td>' + PinyinMatch.escapeHtml(r.name) + (r.model ? '<br><span style="color:var(--purple);font-size:11px;">型号: ' + PinyinMatch.escapeHtml(r.model) + '</span>' : '') + (r.spec ? '<br><span style="color:var(--text3);font-size:11px;">规格: ' + PinyinMatch.escapeHtml(r.spec) + '</span>' : '') + '</td>';
+    html += '<td class="pinyin">' + PinyinMatch.escapeHtml(r.pinyin) + '</td>';
+    html += '<td class="abbr">' + PinyinMatch.escapeHtml(r.abbr) + '</td>';
+    html += '<td><span style="padding:2px 8px;border-radius:4px;font-size:11px;' + strategyStyle + '">' + r.matchType + '</span></td>';
+    html += '<td style="font-weight:600;color:' + (r.score >= 90 ? 'var(--green)' : r.score >= 70 ? 'var(--amber)' : 'var(--text3)') + ';">' + r.score + '</td>';
+    html += '<td>' + detailHtml + '</td>';
+    html += '</tr>';
+  });
+
+  html += '</tbody></table></div>';
+  container.innerHTML = html;
+}
+
+(async function() {
+  await PinyinMatch.initDB();
+  await updateStatus();
+  await renderCurrentTab();
+  log('拼音字段调试工具已就绪', 'info');
+  log('pinyin-pro 库状态：' + (typeof pinyinPro !== 'undefined' ? '已加载' : '未加载'), typeof pinyinPro !== 'undefined' ? 'ok' : 'err');
+  log('接口地址：/system/api.xt（服务器自带身份验证，无需配置Token）', 'info');
+})();
+</script>
+<div style="text-align:center;padding:16px 24px 20px;color:#6b7280;font-size:12px;letter-spacing:0.5px;">
+  <span style="margin:0 12px;"><i class="ri-phone-line" style="vertical-align:-1px;"></i> 热线: 400-000-9186</span>
+  <span style="margin:0 12px;"><i class="ri-global-line" style="vertical-align:-1px;"></i> 网站: www.xtools.cn</span>
+  <div style="margin-top:6px;color:#9ca3af;">
+    <span>北京沃力森信息技术有限公司</span>
+    <span style="margin:0 8px;color:#d1d5db;">|</span>
+    <span>Beijing Volitation Information Technology Co.,ltd</span>
+  </div>
+</div>
+</body>
+</html>

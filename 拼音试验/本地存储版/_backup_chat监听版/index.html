@@ -1,0 +1,2493 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI制单 - Coze消息轮询版</title>
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+<script src="https://lf-cdn.coze.cn/obj/unpkg/flow-platform/chat-app-sdk/1.2.0-beta.19/libs/cn/index.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pinyin-pro"></script>
+<script src="pinyin_match.js"></script>
+<style>
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: #f0f2f5;
+  min-height: 100vh;
+  padding: 10px 20px;
+}
+.container {
+  max-width: calc(100vw - 750px);
+  margin: 0;
+  padding-left: 24px;
+}
+.header {
+  text-align: center;
+  color: #1f2937;
+  margin-bottom: 10px;
+}
+.header h1 { font-size: 22px; }
+
+.main-layout {
+  display: block;
+}
+
+.result-section {
+  background: white;
+  border-radius: 16px;
+  padding: 16px 20px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+  min-height: calc(100vh - 80px);
+  display: flex;
+  flex-direction: column;
+}
+.result-section.active { display: flex; }
+
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f0f0f0;
+  flex-shrink: 0;
+}
+.result-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.result-stats {
+  display: flex;
+  gap: 16px;
+  font-size: 13px;
+}
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.stat-value {
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+.stat-value.confirmed {
+  background: #dcfce7;
+  color: #166534;
+}
+.stat-value.pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+/* 空状态 */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #999;
+  flex: 1;
+}
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+.empty-icon i {
+  font-size: 48px;
+}
+.empty-text {
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+/* 客户识别区域 */
+.customer-section {
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+.field-label {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 8px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.customer-card {
+  background: #f8f9fa;
+  border: 2px solid #e8e8e8;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.customer-card:hover {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+.customer-card.confirmed {
+  border-color: #4ade80;
+  background: #f0fdf4;
+}
+.customer-card.pending {
+  border-color: #fbbf24;
+  background: #fffbeb;
+}
+.customer-avatar {
+  width: 36px;
+  height: 36px;
+  background: #3b82f6;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: white;
+}
+.customer-info { flex: 1; }
+.customer-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 2px;
+}
+.customer-meta {
+  font-size: 11px;
+  color: #888;
+}
+.customer-status {
+  padding: 5px 10px;
+  border-radius: 16px;
+  font-size: 11px;
+  font-weight: 500;
+}
+.customer-status.confirmed {
+  background: #dcfce7;
+  color: #166534;
+}
+.customer-status.pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+/* 产品区域 */
+.product-section {
+  margin-bottom: 12px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+}
+.product-actions {
+  display: flex;
+  gap: 8px;
+}
+.action-btn {
+  padding: 6px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  background: white;
+  font-size: 12px;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.action-btn:hover {
+  border-color: #3b82f6;
+  color: #3b82f6;
+  background: #eff6ff;
+}
+.action-btn.primary {
+  background: #3b82f6;
+  color: white;
+  border-color: transparent;
+}
+.action-btn.primary:hover {
+  opacity: 0.9;
+}
+
+/* 产品列表 */
+.product-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: none;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  padding-right: 4px;
+}
+.product-list::-webkit-scrollbar {
+  width: 4px;
+}
+.product-list::-webkit-scrollbar-track {
+  background: #f0f0f0;
+  border-radius: 2px;
+}
+.product-list::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 2px;
+}
+
+/* 产品项 */
+.product-item {
+  background: #fafbfc;
+  border: 2px solid #e8e8e8;
+  border-radius: 8px;
+  padding: 8px 10px;
+  transition: all 0.2s;
+  position: relative;
+}
+.product-item:hover {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+}
+.product-item.confirmed {
+  border-color: #4ade80;
+  background: #f0fdf4;
+}
+.product-item.pending {
+  border-color: #fbbf24;
+  background: #fffbeb;
+}
+.product-item.error {
+  border-color: #f87171;
+  background: #fef2f2;
+}
+.product-item.new {
+  border-color: #60a5fa;
+  background: #eff6ff;
+}
+
+.product-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 0;
+}
+.product-index {
+  width: 22px;
+  height: 22px;
+  background: #e8e8e8;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #666;
+  flex-shrink: 0;
+}
+.product-item.confirmed .product-index {
+  background: #4ade80;
+  color: white;
+}
+.product-item.pending .product-index {
+  background: #fbbf24;
+  color: white;
+}
+.product-item.error .product-index {
+  background: #f87171;
+  color: white;
+}
+.product-item.new .product-index {
+  background: #60a5fa;
+  color: white;
+}
+.product-main { flex: 1; min-width: 0; }
+.product-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 0;
+}
+.product-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.product-match-type {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+.product-match-type.sku { background: #dbeafe; color: #1e40af; }
+.product-match-type.manual { background: #e0e7ff; color: #3730a3; }
+.product-match-type.code { background: #dcfce7; color: #166534; }
+.product-match-type.name { background: #fef3c7; color: #92400e; }
+.product-match-type.exact { background: #dcfce7; color: #166534; }
+.product-match-type.auto { background: #d1fae5; color: #065f46; }
+.product-match-type.candidate { background: #fef3c7; color: #92400e; }
+.product-match-type.fuzzy { background: #ffedd5; color: #9a3412; }
+.product-match-type.none { background: #fee2e2; color: #991b1b; }
+.product-match-type.new { background: #dbeafe; color: #1e40af; }
+
+.product-code {
+  font-size: 11px;
+  color: #888;
+}
+.product-status {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.product-status.confirmed {
+  background: #dcfce7;
+  color: #166534;
+}
+.product-status.pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+.product-status.error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+.product-status.new {
+  background: #dbeafe;
+  color: #1e40af;
+}
+.product-status:hover {
+  opacity: 0.8;
+}
+
+.product-details {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-shrink: 0;
+  margin-left: auto;
+  padding-left: 12px;
+}
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  align-items: center;
+}
+.detail-label {
+  font-size: 9px;
+  color: #999;
+  line-height: 1;
+}
+.detail-value {
+  font-size: 12px;
+  color: #333;
+  font-weight: 500;
+  line-height: 1.4;
+}
+.detail-value.editable {
+  cursor: pointer;
+  border-bottom: 1px dashed #d1d5db;
+  transition: all 0.2s;
+  min-width: 40px;
+  display: inline-block;
+}
+.detail-value.editable:hover {
+  border-bottom-color: #3b82f6;
+  color: #3b82f6;
+  background: #eff6ff;
+  border-radius: 2px;
+}
+.detail-value.editing {
+  border-bottom: none;
+  padding: 0;
+}
+.detail-value.editing input {
+  width: 100%;
+  padding: 2px 6px;
+  border: 1px solid #3b82f6;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #333;
+  background: #fafbff;
+  outline: none;
+}
+.detail-value .edit-hint {
+  font-size: 9px;
+  color: #9ca3af;
+  margin-left: 2px;
+}
+.detail-value.modified {
+  position: relative;
+}
+.detail-value.modified::after {
+  content: '已改';
+  font-size: 9px;
+  color: #f59e0b;
+  margin-left: 4px;
+  font-weight: 400;
+}
+
+.product-actions-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed #e0e0e0;
+}
+.product-action-btn {
+  padding: 2px 8px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  background: white;
+  font-size: 10px;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.product-action-btn:hover {
+  border-color: #3b82f6;
+  color: #3b82f6;
+}
+.product-action-btn.new {
+  background: #dbeafe;
+  border-color: #60a5fa;
+  color: #1e40af;
+}
+.product-action-btn.new:hover {
+  background: #60a5fa;
+  color: white;
+}
+.product-action-btn.delete:hover {
+  border-color: #f87171;
+  color: #f87171;
+}
+
+/* 批量操作栏 */
+.batch-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+.batch-info {
+  font-size: 12px;
+  color: #666;
+}
+.batch-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* 添加产品按钮 */
+.add-product-btn {
+  width: 100%;
+  padding: 12px;
+  border: 2px dashed #bfdbfe;
+  border-radius: 10px;
+  background: #fafbfc;
+  font-size: 13px;
+  color: #3b82f6;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 10px;
+}
+.add-product-btn:hover {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+/* 操作按钮 */
+.action-bar {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #f0f0f0;
+  flex-shrink: 0;
+}
+.btn {
+  flex: 1;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+.btn-secondary {
+  background: #f0f0f0;
+  color: #666;
+}
+.btn-secondary:hover { background: #e0e0e0; }
+.btn-primary {
+  background: #3b82f6;
+  color: white;
+}
+.btn-primary:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+.btn-success {
+  background: #16a34a;
+  color: white;
+}
+.btn-success:hover {
+  opacity: 0.9;
+}
+
+/* 候选弹窗 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: white;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 80vh;
+  overflow: hidden;
+  animation: modalIn 0.3s ease;
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.95) translateY(20px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.modal-header {
+  padding: 18px 22px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.modal-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 4px;
+}
+.modal-subtitle {
+  font-size: 12px;
+  color: #999;
+}
+.modal-body {
+  padding: 14px 22px;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+.candidate-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.candidate-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 2px solid #f0f0f0;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.candidate-item:hover {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+.candidate-item.selected {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+.candidate-rank {
+  width: 26px;
+  height: 26px;
+  background: #f0f0f0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #666;
+}
+.candidate-item:hover .candidate-rank,
+.candidate-item.selected .candidate-rank {
+  background: #3b82f6;
+  color: white;
+}
+.candidate-info { flex: 1; }
+.candidate-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 2px;
+}
+.candidate-meta {
+  font-size: 11px;
+  color: #999;
+}
+.candidate-similarity {
+  padding: 3px 10px;
+  background: #dcfce7;
+  color: #166534;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+}
+.modal-footer {
+  padding: 14px 22px;
+  border-top: 1px solid #f0f0f0;
+  display: flex;
+  gap: 10px;
+}
+
+/* 新建产品弹窗样式 */
+.create-product-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.form-label {
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+}
+.form-label .required {
+  color: #f87171;
+  margin-left: 2px;
+}
+.form-input, .form-select {
+  padding: 10px 14px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+.form-input:focus, .form-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: #fafbff;
+}
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.form-hint {
+  font-size: 11px;
+  color: #999;
+  margin-top: 2px;
+}
+.original-info-box {
+  background: #eff6ff;
+  border-left: 3px solid #3b82f6;
+  padding: 12px 14px;
+  border-radius: 0 8px 8px 0;
+  margin-bottom: 16px;
+}
+.original-info-box .label {
+  font-size: 11px;
+  color: #3b82f6;
+  margin-bottom: 4px;
+}
+.original-info-box .value {
+  font-size: 13px;
+  color: #333;
+  font-weight: 500;
+}
+
+.customer-avatar i,
+.recognition-icon i {
+  font-size: inherit;
+  line-height: 1;
+}
+
+/* Toast动画 */
+@keyframes slideDown {
+  from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+@keyframes slideUp {
+  from { opacity: 1; transform: translateX(-50%) translateY(0); }
+  to { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+}
+
+
+.paste-btn:hover { background:#059669; }
+.search-input-wrapper { position:relative; margin-bottom:12px; }
+.search-input-wrapper i { position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#9ca3af; }
+.search-input-wrapper input { padding-left:36px; }
+.order-success-icon { width:56px;height:56px;background:#dcfce7;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px; }
+.order-detail-row { display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f0f0;font-size:13px; }
+.order-detail-row:last-child { border-bottom:none; }
+.order-detail-label { color:#6b7280; }
+.order-detail-value { color:#1f2937;font-weight:500; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1><i class="ri-robot-2-line"></i> AI制单</h1>
+  </div>
+
+  <div id="cozeConfigPanel" style="background:white;border-radius:12px;padding:14px 18px;box-shadow:0 2px 12px rgba(0,0,0,0.08);margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+    <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+      <i class="ri-robot-2-line" style="color:#3b82f6;font-size:18px;"></i>
+      <span style="font-size:13px;font-weight:600;color:#333;">Coze 智能体</span>
+    </div>
+    <input type="text" id="botIdInput" value="7638933573109792777" placeholder="Bot ID" style="flex:1;min-width:120px;padding:8px 10px;border:1px solid #e0e0e0;border-radius:6px;font-size:12px;font-family:monospace;background:white;">
+    <input type="password" id="tokenInput" value="pat_zwWR14W4YEjLnqpD2BhItuhzKhC4VYH52oWfwYoeiB2Y9JuKBR1g1TfRzFDTbWQe" placeholder="PAT Token" style="flex:2;min-width:160px;padding:8px 10px;border:1px solid #e0e0e0;border-radius:6px;font-size:12px;font-family:monospace;background:white;">
+    <button id="connectCozeBtn" onclick="initCozeSDK()" style="padding:8px 16px;background:linear-gradient(135deg,#3b82f6,#2563eb);color:white;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;">
+      <i class="ri-play-line" style="font-size:14px;"></i>
+      <span>启动 Coze</span>
+    </button>
+    <span id="apiStatus" style="font-size:11px;color:#9ca3af;"></span>
+    <div id="pollStatus" style="display:none;font-size:11px;color:#6b7280;display:flex;align-items:center;gap:6px;">
+      <span id="pollDot" style="width:8px;height:8px;border-radius:50%;background:#f59e0b;display:inline-block;"></span>
+      <span id="pollText">消息监听中</span>
+    </div>
+  </div>
+
+  <div id="pinyinDataPanel" style="background:white;border-radius:12px;padding:14px 18px;box-shadow:0 2px 12px rgba(0,0,0,0.08);margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+    <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+      <i class="ri-database-2-line" style="color:#8b5cf6;font-size:18px;"></i>
+      <span style="font-size:13px;font-weight:600;color:#333;">拼音数据</span>
+    </div>
+    <span id="pinyinDataStatus" style="font-size:12px;color:#9ca3af;flex:1;"></span>
+    <button onclick="window.open('get_cus_pro.html','_blank')" style="padding:6px 14px;background:#8b5cf6;color:white;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px;white-space:nowrap;">
+      <i class="ri-external-link-line" style="font-size:13px;"></i>
+      <span>打开拼音工具</span>
+    </button>
+    <button onclick="refreshPinyinStatus()" style="padding:6px 10px;background:white;color:#8b5cf6;border:1px solid #ddd6fe;border-radius:6px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:4px;">
+      <i class="ri-refresh-line" style="font-size:13px;"></i>
+    </button>
+  </div>
+
+  <div class="main-layout">
+    <!-- 左侧：单据草稿区 -->
+    <div class="result-section" id="resultSection">
+      <!-- 结果头部 -->
+      <div class="result-header">
+        <div class="result-title"><i class="ri-list-check"></i> 单据草稿</div>
+        <div class="result-stats">
+          <div class="stat-item">
+            <span>已确认</span>
+            <span class="stat-value confirmed" id="confirmedCount">0/0</span>
+          </div>
+          <div class="stat-item">
+            <span>待确认</span>
+            <span class="stat-value pending" id="pendingCount">0/0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 空状态 -->
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon"><i class="ri-chat-voice-line" style="font-size:48px;"></i></div>
+        <div class="empty-text">请在智能体对话中发送需求<br>复制 JSON 后匹配结果将在此展示</div>
+      </div>
+
+      <!-- 客户识别 -->
+      <div class="customer-section" id="customerSection" style="display:none;">
+        <div class="field-label"><i class="ri-user-line"></i> 客户信息</div>
+        <div class="customer-card" id="customerCard" onclick="showCustomerModal()">
+          <div class="customer-avatar"><i class="ri-building-line"></i></div>
+          <div class="customer-info">
+            <div class="customer-name" id="customerName">-</div>
+            <div class="customer-meta" id="customerMeta">-</div>
+          </div>
+          <div class="customer-status" id="customerStatus">待识别</div>
+        </div>
+      </div>
+
+      <!-- 产品明细 -->
+      <div class="product-section" id="productSection" style="display:none;">
+        <div class="section-header">
+          <div class="field-label"><i class="ri-shopping-bag-line"></i> 产品明细 <span id="productCount" style="color: #999; font-weight: normal;">(0个)</span></div>
+          <div class="product-actions">
+            <button class="action-btn" onclick="confirmAllProducts()"><i class="ri-check-line"></i> 全部确认</button>
+            <button class="action-btn primary" onclick="addProduct()"><i class="ri-add-line"></i> 添加产品</button>
+          </div>
+        </div>
+
+        <!-- 批量操作栏 -->
+        <div class="batch-bar" id="batchBar" style="display: none;">
+          <div class="batch-info">
+            <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+            <label for="selectAll">全选</label>
+          </div>
+          <div class="batch-actions">
+            <button class="action-btn" onclick="batchConfirm()">批量确认</button>
+            <button class="action-btn delete" onclick="batchDelete()">批量删除</button>
+          </div>
+        </div>
+
+        <!-- 产品列表 -->
+        <div class="product-list" id="productList">
+        </div>
+      </div>
+
+      <!-- 操作按钮 -->
+      <div class="action-bar" id="actionBar" style="display:none;">
+        <button class="btn btn-secondary" onclick="resetForm()">重新录入</button>
+        <button class="btn btn-primary" id="generateBtn" onclick="generateOrder()">生成销售订单</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- 客户候选弹窗 -->
+<div class="modal-overlay" id="customerModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title"><i class="ri-user-line"></i> 选择客户</div>
+      <div class="modal-subtitle">识别到多个相似客户，请点击选择</div>
+    </div>
+    <div class="modal-body">
+      <div class="candidate-list" id="customerCandidateList"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('customerModal')">取消</button>
+      <button class="btn btn-primary" onclick="searchCustomer()"><i class="ri-search-line"></i> 搜索其他</button>
+    </div>
+  </div>
+</div>
+
+<!-- 产品候选弹窗 -->
+<div class="modal-overlay" id="productModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title"><i class="ri-shopping-bag-line"></i> 选择产品</div>
+      <div class="modal-subtitle" id="productModalSubtitle">请选择正确的产品</div>
+    </div>
+    <div class="modal-body">
+      <div class="candidate-list" id="productCandidateList"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('productModal')">取消</button>
+      <button class="btn btn-success" onclick="createNewProductFromModal()"><i class="ri-add-line"></i> 新建产品</button>
+      <button class="btn btn-primary" onclick="searchProduct()"><i class="ri-search-line"></i> 搜索其他</button>
+    </div>
+  </div>
+</div>
+
+<!-- 新建产品弹窗 -->
+<div class="modal-overlay" id="createProductModal">
+  <div class="modal" style="max-width: 480px;">
+    <div class="modal-header">
+      <div class="modal-title"><i class="ri-add-line"></i> 新建产品</div>
+      <div class="modal-subtitle">将未匹配的产品添加到产品库</div>
+    </div>
+    <div class="modal-body">
+      <div class="original-info-box">
+        <div class="label"><i class="ri-chat-voice-line"></i> 智能体识别的原始信息</div>
+        <div class="value" id="originalProductInfo">-</div>
+      </div>
+
+      <div class="create-product-form">
+        <div class="form-group">
+          <label class="form-label">产品名称 <span class="required">*</span></label>
+          <input type="text" class="form-input" id="newProductName" placeholder="请输入产品名称">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">产品编号 <span class="required">*</span></label>
+            <input type="text" class="form-input" id="newProductCode" placeholder="如: PRD-XXX-001">
+            <div class="form-hint">系统自动生成，可修改</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">SKU编码</label>
+            <input type="text" class="form-input" id="newProductSku" placeholder="如: SKU-XXX">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">规格型号</label>
+          <input type="text" class="form-input" id="newProductSpec" placeholder="如: 70g 500张/包">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">单位</label>
+            <select class="form-select" id="newProductUnit">
+              <option value="个">个</option>
+              <option value="箱">箱</option>
+              <option value="盒">盒</option>
+              <option value="包">包</option>
+              <option value="本">本</option>
+              <option value="套">套</option>
+              <option value="件">件</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">产品分类</label>
+            <select class="form-select" id="newProductCategory">
+              <option value="办公用纸">办公用纸</option>
+              <option value="文具">文具</option>
+              <option value="数码配件">数码配件</option>
+              <option value="耗材">耗材</option>
+              <option value="其他">其他</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">备注</label>
+          <input type="text" class="form-input" id="newProductNote" placeholder="可选填">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('createProductModal')">取消</button>
+      <button class="btn btn-primary" onclick="saveNewProduct()"><i class="ri-save-line"></i> 保存并确认</button>
+    </div>
+  </div>
+</div>
+
+<!-- 客户搜索弹窗 -->
+<div class="modal-overlay" id="customerSearchModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title"><i class="ri-search-line"></i> 搜索客户</div>
+      <div class="modal-subtitle">输入客户名称或关键字搜索</div>
+    </div>
+    <div class="modal-body">
+      <div class="search-input-wrapper">
+        <i class="ri-search-line"></i>
+        <input type="text" id="customerSearchInput" class="form-input" placeholder="输入客户名称搜索..." oninput="PinyinMatch.debounce(searchCustomerByInput, 250)()" style="width:100%;">
+      </div>
+      <div class="candidate-list" id="customerSearchResults"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('customerSearchModal')">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- 订单成功弹窗 -->
+<div class="modal-overlay" id="orderSuccessModal">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-header" style="text-align:center;border-bottom:none;padding-bottom:0;">
+      <div class="order-success-icon"><i class="ri-check-line" style="font-size:28px;color:#16a34a;"></i></div>
+      <div class="modal-title" style="color:#16a34a;">订单生成成功</div>
+    </div>
+    <div class="modal-body" id="orderSuccessBody" style="text-align:center;"></div>
+    <div class="modal-footer" style="justify-content:center;">
+      <button class="btn btn-secondary" onclick="closeModal('orderSuccessModal')">关闭</button>
+      <button class="btn btn-primary" onclick="closeModal('orderSuccessModal');resetForm();">完成并重置</button>
+    </div>
+  </div>
+</div>
+
+<!-- 确认弹窗 -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-header" style="border-bottom:none;padding-bottom:0;">
+      <div class="modal-title"><i class="ri-error-warning-line" style="color:#f59e0b;"></i> 确认操作</div>
+    </div>
+    <div class="modal-body" id="confirmModalBody" style="font-size:14px;color:#4b5563;"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('confirmModal')">取消</button>
+      <button class="btn btn-primary" id="confirmModalOkBtn" style="background:#ef4444;">确定</button>
+    </div>
+  </div>
+</div>
+
+<script>
+
+var currentCustomer = null;
+var currentProducts = [];
+var selectedCustomerId = null;
+var editingProductIndex = null;
+var creatingProductIndex = null;
+var nextProductId = 100;
+
+// ===== Coze SDK 初始化 =====
+
+var cozeClient = null;
+var lastDetectedJSON = '';
+
+function initCozeSDK() {
+  var botId = document.getElementById('botIdInput').value.trim();
+  var token = document.getElementById('tokenInput').value.trim();
+
+  if (!botId || !token) {
+    document.getElementById('apiStatus').textContent = '请输入 Bot ID 和 Token';
+    return;
+  }
+
+  var btn = document.getElementById('connectCozeBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="ri-loader-4-line" style="font-size:16px;animation:spin 1s linear infinite;"></i><span>初始化中...</span>';
+  document.getElementById('apiStatus').textContent = '正在初始化...';
+
+  try {
+    if (typeof CozeWebSDK === 'undefined') {
+      throw new Error('Coze SDK 未加载，请刷新页面');
+    }
+
+    if (cozeClient && typeof cozeClient.destroy === 'function') {
+      cozeClient.destroy();
+    }
+
+    cozeClient = new CozeWebSDK.WebChatClient({
+      config: {
+        bot_id: botId,
+      },
+      auth: {
+        type: 'token',
+        token: token,
+        onRefreshToken: function () {
+          return token;
+        }
+      },
+      ui: {
+        base: {
+          lang: 'zh-CN',
+          zIndex: 50
+        },
+        asstBtn: {
+          isNeed: true
+        },
+        chatBot: {
+          title: '智能制单助手',
+          uploadable: true,
+          width: 700,
+        },
+        header: {
+          isShow: true,
+          isNeedClose: false
+        }
+      }
+    });
+
+    setTimeout(function() {
+      if (cozeClient && typeof cozeClient.showChatBot === 'function') {
+        cozeClient.showChatBot();
+      }
+    }, 500);
+
+    document.getElementById('apiStatus').textContent = '已连接 ✅';
+    document.getElementById('apiStatus').style.color = '#16a34a';
+
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ri-check-line" style="font-size:14px;"></i><span>已连接</span>';
+    btn.style.background = '#16a34a';
+
+    startCozePolling();
+
+    showToast('Coze 智能体初始化成功！消息轮询已启动');
+
+  } catch (e) {
+    console.error('Coze SDK 初始化失败:', e);
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ri-play-line" style="font-size:16px;"></i><span>初始化 Coze</span>';
+    document.getElementById('apiStatus').textContent = '初始化失败';
+    document.getElementById('apiStatus').style.color = '#e5484d';
+    showToast('初始化失败: ' + e.message);
+  }
+}
+
+// ===== Coze消息轮询模块 =====
+
+var cozePollTimer = null;
+var cozeLastMsgIds = {};
+var cozePollConversationId = null;
+var initialMessageIds = {}; // 初始加载时已有的消息ID
+var isPollingInitialized = false;
+
+function getCozeToken() {
+  return document.getElementById('tokenInput').value.trim();
+}
+
+function getCozeBotId() {
+  return document.getElementById('botIdInput').value.trim();
+}
+
+function cozeApiGet(path) {
+  return new Promise(function(resolve, reject) {
+    var token = getCozeToken();
+    if (!token) { reject(new Error('未配置Token')); return; }
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', 'https://api.coze.cn' + path);
+    xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.onload = function() {
+      if (xhr.status === 200) {
+        try { resolve(JSON.parse(xhr.responseText)); }
+        catch (e) { reject(e); }
+      } else if (xhr.status === 0) {
+        reject(new Error('CORS'));
+      } else {
+        var errMsg = 'API ' + xhr.status;
+        try {
+          var errBody = JSON.parse(xhr.responseText);
+          if (errBody.msg) errMsg += ': ' + errBody.msg;
+          if (errBody.code) errMsg += ' (code=' + errBody.code + ')';
+        } catch (e2) {}
+        console.error('[Coze API GET]', path, xhr.status, xhr.responseText.substring(0, 300));
+        reject(new Error(errMsg));
+      }
+    };
+    xhr.onerror = function() { reject(new Error('CORS')); };
+    xhr.send();
+  });
+}
+
+function cozeApiPost(path, body) {
+  return new Promise(function(resolve, reject) {
+    var token = getCozeToken();
+    if (!token) { reject(new Error('未配置Token')); return; }
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', 'https://api.coze.cn' + path);
+    xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.onload = function() {
+      if (xhr.status === 200) {
+        try { resolve(JSON.parse(xhr.responseText)); }
+        catch (e) { reject(e); }
+      } else if (xhr.status === 0) {
+        reject(new Error('CORS'));
+      } else {
+        var errMsg = 'API ' + xhr.status;
+        try {
+          var errBody = JSON.parse(xhr.responseText);
+          if (errBody.msg) errMsg += ': ' + errBody.msg;
+          if (errBody.code) errMsg += ' (code=' + errBody.code + ')';
+        } catch (e2) {}
+        console.error('[Coze API POST]', path, xhr.status, xhr.responseText.substring(0, 300));
+        reject(new Error(errMsg));
+      }
+    };
+    xhr.onerror = function() { reject(new Error('CORS')); };
+    xhr.send(body ? JSON.stringify(body) : '{}');
+  });
+}
+
+var cozeProxyAvailable = true;
+
+function cozeApiGetWithProxy(path) {
+  if (!cozeProxyAvailable) {
+    return Promise.reject(new Error('代理不可用'));
+  }
+  return cozeApiGet(path).catch(handleCorsError);
+}
+
+function cozeApiPostWithProxy(path, body) {
+  if (!cozeProxyAvailable) {
+    return Promise.reject(new Error('代理不可用'));
+  }
+  return cozeApiPost(path, body).catch(handleCorsError);
+}
+
+function handleCorsError(e) {
+  if (e.message === 'CORS') {
+    cozeProxyAvailable = false;
+    console.warn('Coze API CORS受限，消息轮询已暂停。请使用剪贴板方式，或配置后端代理。');
+    stopCozePolling();
+    var pollEl = document.getElementById('pollStatus');
+    if (pollEl) {
+      pollEl.style.display = 'flex';
+      document.getElementById('pollDot').style.background = '#ef4444';
+      document.getElementById('pollText').textContent = 'CORS受限，请手动复制';
+    }
+    showToast('Coze API跨域受限，消息轮询不可用。请继续使用剪贴板方式。', 'warning');
+  }
+  throw e;
+}
+
+function fetchLatestConversation() {
+  return cozeApiGetWithProxy('/v1/conversations?bot_id=' + getCozeBotId() + '&connector_id=999&page_size=1&sort_order=desc')
+    .then(function(res) {
+      if (res.code === 0 && res.data && res.data.conversations && res.data.conversations.length > 0) {
+        return res.data.conversations[0];
+      }
+      return null;
+    });
+}
+
+function fetchConversationMessages(conversationId) {
+  return cozeApiPostWithProxy('/v1/conversation/message/list?conversation_id=' + conversationId, {
+    order: 'desc',
+    limit: 10
+  })
+    .then(function(res) {
+      if (res.code === 0 && res.data) {
+        return res.data;
+      }
+      return [];
+    });
+}
+
+function startCozePolling() {
+  if (cozePollTimer) clearInterval(cozePollTimer);
+  var pollEl = document.getElementById('pollStatus');
+  if (pollEl) pollEl.style.display = 'flex';
+  updatePollUI('listening');
+  
+  if (!isPollingInitialized) {
+    updatePollUI('checking');
+    fetchLatestConversation().then(function(conv) {
+      if (conv) {
+        return fetchConversationMessages(conv.id).then(function(messages) {
+          var answerMsgs = messages.filter(function(m) {
+            return m.role === 'assistant' && m.type === 'answer';
+          });
+          answerMsgs.forEach(function(m) {
+            initialMessageIds[conv.id + '_' + m.id] = true;
+          });
+        });
+      }
+    }).catch(function() {
+    }).then(function() {
+      isPollingInitialized = true;
+      updatePollUI('listening');
+      cozePollTimer = setInterval(pollCozeMessages, 3000);
+      setTimeout(pollCozeMessages, 1000);
+    });
+  } else {
+    cozePollTimer = setInterval(pollCozeMessages, 3000);
+    setTimeout(pollCozeMessages, 1000);
+  }
+}
+
+function stopCozePolling() {
+  if (cozePollTimer) { clearInterval(cozePollTimer); cozePollTimer = null; }
+  var pollEl = document.getElementById('pollStatus');
+  if (pollEl) pollEl.style.display = 'none';
+}
+
+function updatePollUI(state, extra) {
+  var dot = document.getElementById('pollDot');
+  var text = document.getElementById('pollText');
+  if (!dot || !text) return;
+  if (state === 'listening') {
+    dot.style.background = '#10b981';
+    text.textContent = '消息监听中';
+  } else if (state === 'checking') {
+    dot.style.background = '#3b82f6';
+    text.textContent = '检测新消息...';
+  } else if (state === 'found') {
+    dot.style.background = '#f59e0b';
+    text.textContent = '发现JSON，解析中...';
+  } else if (state === 'matched') {
+    dot.style.background = '#16a34a';
+    text.textContent = '已自动匹配 ✅';
+  } else if (state === 'error') {
+    dot.style.background = '#ef4444';
+    text.textContent = extra || '轮询出错';
+  }
+}
+
+var pollRetryCount = 0;
+
+function pollCozeMessages() {
+  if (!getCozeToken() || !getCozeBotId()) return;
+  if (!isPollingInitialized) {
+    updatePollUI('listening');
+    return;
+  }
+
+  updatePollUI('checking');
+
+  fetchLatestConversation().then(function(conv) {
+    if (!conv) { updatePollUI('listening'); return; }
+
+    return fetchConversationMessages(conv.id).then(function(messages) {
+      var answerMsgs = messages.filter(function(m) {
+        return m.role === 'assistant' && m.type === 'answer';
+      });
+
+      if (answerMsgs.length > 0) {
+        var latestAnswer = answerMsgs[0];
+        var msgKey = conv.id + '_' + latestAnswer.id;
+        
+        // 检查是否是已有消息（初始加载时的消息，或已处理过的消息）
+        if (initialMessageIds[msgKey] || cozeLastMsgIds[msgKey]) {
+          updatePollUI('listening');
+        } else {
+          var jsonStr = PinyinMatch.extractOrderJSON(latestAnswer.content);
+          
+          if (jsonStr) {
+            updatePollUI('found');
+
+            try {
+              var normalized = PinyinMatch.normalizeOrderJSON(jsonStr);
+              var orderDraft = {
+                source: 'coze_poll',
+                customer: {
+                  originalName: normalized.customer.originalName,
+                  matchType: 'none',
+                  status: 'pending'
+                },
+                products: PinyinMatch.matchProductsFromRawList(normalized.products)
+              };
+
+              showMatchProgress(orderDraft);
+              cozeLastMsgIds[msgKey] = true;
+              lastDetectedJSON = jsonStr;
+              updatePollUI('matched');
+              showToast('Coze对话中检测到订单数据，已自动匹配', 'success');
+            } catch (e) {
+              updatePollUI('listening');
+            }
+          } else {
+            updatePollUI('listening');
+          }
+        }
+      } else {
+        updatePollUI('listening');
+      }
+
+      pollRetryCount = 0;
+    });
+  }).catch(function(e) {
+    pollRetryCount++;
+    if (pollRetryCount >= 5) {
+      updatePollUI('error', '轮询失败: ' + e.message);
+      pollRetryCount = 0;
+    } else {
+      updatePollUI('listening');
+    }
+  });
+}
+
+// ===== 剪贴板监听逻辑 =====
+
+var lastClipboardContent = '';
+
+function isOrderJSON(text) {
+  if (!text || text.length < 10) return false;
+  if (text.indexOf('{') === -1) return false;
+  return text.indexOf('"customer_name"') !== -1 ||
+         text.indexOf('"products"') !== -1 ||
+         text.indexOf('"doc_type"') !== -1;
+}
+
+function tryReadClipboard() {
+  if (!document.hasFocus()) return;
+  if (!navigator.clipboard || !navigator.clipboard.readText) return;
+  navigator.clipboard.readText().then(function(text) {
+    if (text !== lastClipboardContent && text !== lastDetectedJSON && isOrderJSON(text)) {
+      lastClipboardContent = text;
+      handleClipboardText(text);
+    }
+  }).catch(function() {});
+}
+
+function isInCozeSDKArea(el) {
+  while (el) {
+    if (el.className && typeof el.className === 'string') {
+      if (el.className.indexOf('coze-chat-sdk') !== -1 || el.className.indexOf('coz-') !== -1) {
+        return true;
+      }
+    }
+    el = el.parentElement;
+  }
+  return false;
+}
+
+function injectImageToCozeSDK(e) {
+  try {
+    var items = e.clipboardData && e.clipboardData.items;
+    if (!items) return;
+
+    var hasImage = false;
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        hasImage = true;
+        break;
+      }
+    }
+    if (!hasImage) return;
+
+    if (!isInCozeSDKArea(e.target)) return;
+
+    var fileInput = document.querySelector('input.coze-chat-sdk-semi-upload-hidden-input');
+    if (!fileInput) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    var files = [];
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        var file = items[i].getAsFile();
+        if (file) files.push(file);
+      }
+    }
+    if (files.length === 0) return;
+
+    var dataTransfer = new DataTransfer();
+    files.forEach(function(f) { dataTransfer.items.add(f); });
+    fileInput.files = dataTransfer.files;
+    fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+  } catch (e) {
+    console.warn('injectImageToCozeSDK error:', e);
+  }
+}
+
+document.addEventListener('paste', injectImageToCozeSDK, true);
+
+var resultArea = document.getElementById('resultSection');
+if (resultArea) {
+  resultArea.addEventListener('paste', function(e) {
+    var text = (e.clipboardData || window.clipboardData).getData('text');
+    if (text && isOrderJSON(text)) {
+      lastClipboardContent = text;
+      handleClipboardText(text);
+    }
+  });
+}
+
+window.addEventListener('focus', function() {
+  setTimeout(tryReadClipboard, 200);
+  setTimeout(tryReadClipboard, 800);
+  setTimeout(tryReadClipboard, 1500);
+});
+
+document.addEventListener('visibilitychange', function() {
+  if (!document.hidden) {
+    setTimeout(tryReadClipboard, 300);
+    if (!clipboardPollTimer) clipboardPollTimer = setInterval(tryReadClipboard, 3000);
+  } else {
+    if (clipboardPollTimer) { clearInterval(clipboardPollTimer); clipboardPollTimer = null; }
+  }
+});
+
+var clipboardPollTimer = setInterval(tryReadClipboard, 3000);
+
+function handleClipboardText(text) {
+  var jsonStr = PinyinMatch.extractOrderJSON(text);
+  if (!jsonStr) return;
+
+  if (text === lastDetectedJSON) return;
+  lastDetectedJSON = text;
+
+  var normalized = PinyinMatch.normalizeOrderJSON(jsonStr);
+  var orderDraft = {
+    source: 'clipboard',
+    customer: {
+      originalName: normalized.customer.originalName,
+      matchType: 'none',
+      status: 'pending'
+    },
+    products: PinyinMatch.matchProductsFromRawList(normalized.products)
+  };
+
+  showMatchProgress(orderDraft);
+  showToast('已捕获 JSON，正在填充表单...');
+}
+
+function getLSCustomers() { return PinyinMatch.getStore('pinyin_tool_customers', []); }
+function getLSProducts() { return PinyinMatch.getStore('pinyin_tool_products', []); }
+function getLSCustomerPinyin() { return PinyinMatch.getStore('pinyin_tool_customer_pinyin', {}); }
+function getLSProductPinyin() { return PinyinMatch.getStore('pinyin_tool_product_pinyin', {}); }
+
+function hasPinyinData() {
+  return getLSCustomers().length > 0 || getLSProducts().length > 0;
+}
+
+function getPinyinDataStats() {
+  var c = getLSCustomers().length;
+  var p = getLSProducts().length;
+  var cp = Object.keys(getLSCustomerPinyin()).length;
+  var pp = Object.keys(getLSProductPinyin()).length;
+  return { customers: c, products: p, customerPinyin: cp, productPinyin: pp };
+}
+
+function showMatchProgress(data) {
+  var emptyState = document.getElementById('emptyState');
+  emptyState.style.display = 'none';
+
+  var progressDiv = document.getElementById('matchProgress');
+  if (!progressDiv) {
+    progressDiv = document.createElement('div');
+    progressDiv.id = 'matchProgress';
+    progressDiv.style.cssText = 'background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; padding:14px 16px; margin-bottom:12px;';
+    var resultSection = document.getElementById('resultSection');
+    resultSection.insertBefore(progressDiv, resultSection.firstChild);
+  }
+
+  progressDiv.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><i class="ri-search-line" style="color:#3b82f6;font-size:16px;"></i><span style="font-size:13px;font-weight:600;color:#3b82f6;">匹配中...</span></div>' +
+    '<div style="font-size:12px;color:#6b7280;">正在查询客户和产品拼音索引</div>';
+
+  document.getElementById('customerSection').style.display = 'none';
+  document.getElementById('productSection').style.display = 'none';
+  document.getElementById('actionBar').style.display = 'none';
+  document.getElementById('resultSection').classList.add('active');
+
+  setTimeout(function() {
+    identifyCustomer(data.customer.originalName);
+
+    var customerMatchType = 'none';
+    var customerEl = document.getElementById('customerStatus');
+    if (customerEl) {
+      if (customerEl.classList.contains('confirmed')) customerMatchType = 'exact';
+      else if (customerEl.classList.contains('pending')) customerMatchType = 'fuzzy';
+    }
+
+    var confirmedCount = data.products.filter(function(p) { return p.status === 'confirmed'; }).length;
+    var pendingCount = data.products.filter(function(p) { return p.status === 'pending'; }).length;
+    var errorCount = data.products.filter(function(p) { return p.status === 'error'; }).length;
+
+    var matchHtml = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;"><i class="ri-check-double-line" style="color:#16a34a;font-size:16px;"></i><span style="font-size:13px;font-weight:600;color:#16a34a;">匹配完成</span></div>';
+
+    matchHtml += '<div style="font-size:12px;margin-bottom:6px;"><strong>客户：</strong>' + data.customer.originalName + ' → ';
+    if (customerMatchType === 'exact') {
+      matchHtml += '<span style="color:#16a34a;">' + document.getElementById('customerName').textContent + '</span>（精确匹配）';
+    } else if (customerMatchType === 'fuzzy') {
+      matchHtml += '<span style="color:#f59e0b;">' + document.getElementById('customerName').textContent + '</span>（模糊匹配）';
+    } else {
+      matchHtml += '<span style="color:#ef4444;">未匹配</span>';
+    }
+    matchHtml += '</div>';
+
+    matchHtml += '<div style="font-size:12px;margin-bottom:4px;"><strong>产品：</strong>';
+    matchHtml += '<span style="color:#16a34a;">' + confirmedCount + '个确认</span>';
+    if (pendingCount > 0) matchHtml += ' · <span style="color:#f59e0b;">' + pendingCount + '个待确认</span>';
+    if (errorCount > 0) matchHtml += ' · <span style="color:#ef4444;">' + errorCount + '个未匹配</span>';
+    matchHtml += '</div>';
+
+    matchHtml += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin-top:4px;">';
+    data.products.forEach(function(p, i) {
+      var icon = p.status === 'confirmed' ? '✓' : p.status === 'error' ? '✗' : '○';
+      var color = p.status === 'confirmed' ? '#16a34a' : p.status === 'error' ? '#ef4444' : '#f59e0b';
+      matchHtml += '<div style="font-size:12px;color:#374151;line-height:1.6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + icon + ' <span style="color:#6b7280;background:#f3f4f6;border:1px solid #e5e7eb;padding:1px 6px;border-radius:4px;font-size:11px;">原始: <strong>' + p.originalName + '</strong></span>';
+      if (p.matchedName && p.matchedName !== p.originalName) {
+        matchHtml += ' → <span style="color:' + color + ';font-weight:500;">' + p.matchedName + '</span>';
+      }
+      matchHtml += '</div>';
+    });
+    matchHtml += '</div>';
+
+    progressDiv.innerHTML = matchHtml;
+
+    fillOrderDraft(data);
+  }, 50);
+}
+
+function fillOrderDraft(data) {
+  document.getElementById('customerSection').style.display = 'block';
+  document.getElementById('productSection').style.display = 'block';
+  document.getElementById('actionBar').style.display = 'flex';
+
+  currentProducts = data.products.map(function(p, i) {
+    var item = Object.assign({}, p, {
+      index: i + 1,
+      id: p.matchedId,
+      selected: false
+    });
+    if (item.status === 'confirmed') {
+      fillProductStandardData(item);
+    }
+    return item;
+  });
+  renderProductList();
+  updateStats();
+}
+
+// ===== 单据草稿区逻辑 =====
+
+function identifyCustomer(customerName) {
+  var customers = getLSCustomers();
+  var cp = getLSCustomerPinyin();
+  if (customers.length === 0) {
+    currentCustomer = null;
+    document.getElementById('customerName').textContent = '未识别到客户';
+    document.getElementById('customerMeta').textContent = '拼音数据未就绪';
+    document.getElementById('customerStatus').textContent = '待确认';
+    document.getElementById('customerStatus').className = 'customer-status pending';
+    document.getElementById('customerCard').className = 'customer-card pending';
+    updateCustomerMatchInfo(customerName, null, 'none');
+    return;
+  }
+  var indexDb = customers.filter(function(c) { return cp[c.id]; }).map(function(c) {
+    var py = cp[c.id];
+    return { id: c.id, name: c.name, pinyin: py.pinyin, pinyin_abbr: py.pinyin_abbr };
+  });
+
+  var matches = PinyinMatch.pinyinMatch(customerName, indexDb, { threshold: 0.45 });
+
+  if (matches.length === 0) {
+    currentCustomer = null;
+    document.getElementById('customerName').textContent = '未识别到客户';
+    document.getElementById('customerMeta').textContent = '点击手动搜索或新建';
+    document.getElementById('customerStatus').textContent = '待确认';
+    document.getElementById('customerStatus').className = 'customer-status pending';
+    document.getElementById('customerCard').className = 'customer-card pending';
+    updateCustomerMatchInfo(customerName, null, 'none');
+    return;
+  }
+
+  currentCustomer = matches.map(function(m) {
+    var lsC = null;
+    for (var k = 0; k < customers.length; k++) { if (String(customers[k].id) === String(m.id)) { lsC = customers[k]; break; } }
+    return { id: m.id, name: m.name, similarity: Math.round(m.score * 100), address: lsC ? (lsC.address || '') : '', contact: lsC ? (lsC.contact || '') : '' };
+  });
+
+  var best = matches[0];
+  if (best.score >= 0.9) {
+    selectCustomer({ id: best.id, name: best.name });
+    updateCustomerMatchInfo(customerName, { id: best.id, name: best.name }, 'exact');
+  } else if (matches.length === 1 && best.score >= 0.8) {
+    selectCustomer({ id: best.id, name: best.name });
+    updateCustomerMatchInfo(customerName, { id: best.id, name: best.name }, 'exact');
+  } else {
+    showCustomerCard(currentCustomer[0], 'pending');
+    updateCustomerMatchInfo(customerName, currentCustomer[0], 'fuzzy');
+  }
+}
+
+function updateCustomerMatchInfo(originalName, matchedCustomer, matchType) {
+  var matchInfoEl = document.getElementById('customerMatchInfo');
+  if (!matchInfoEl) {
+    matchInfoEl = document.createElement('div');
+    matchInfoEl.id = 'customerMatchInfo';
+    matchInfoEl.style.cssText = 'font-size:11px;color:#6b7280;margin-top:4px;';
+    var customerInfo = document.querySelector('.customer-info');
+    if (customerInfo) customerInfo.appendChild(matchInfoEl);
+  }
+
+  if (matchType === 'exact') {
+    matchInfoEl.innerHTML = '<i class="ri-check-line" style="color:#16a34a;"></i> <span style="color:#16a34a;">精确匹配</span> · <span style="color:#6b7280;background:#f3f4f6;border:1px solid #e5e7eb;padding:1px 6px;border-radius:4px;font-size:11px;"><i class="ri-voice-recognition-line" style="font-size:10px;color:#8b5cf6;"></i> 原始: <strong>' + PinyinMatch.escapeHtml(originalName) + '</strong></span>';
+  } else if (matchType === 'fuzzy') {
+    matchInfoEl.innerHTML = '<i class="ri-question-line" style="color:#f59e0b;"></i> <span style="color:#f59e0b;">模糊匹配</span> · <span style="color:#6b7280;background:#f3f4f6;border:1px solid #e5e7eb;padding:1px 6px;border-radius:4px;font-size:11px;"><i class="ri-voice-recognition-line" style="font-size:10px;color:#8b5cf6;"></i> 原始: <strong>' + PinyinMatch.escapeHtml(originalName) + '</strong></span> → ' + (matchedCustomer ? PinyinMatch.escapeHtml(matchedCustomer.name) : '');
+  } else {
+    matchInfoEl.innerHTML = '<i class="ri-close-line" style="color:#ef4444;"></i> <span style="color:#ef4444;">未匹配</span> · <span style="color:#6b7280;background:#f3f4f6;border:1px solid #e5e7eb;padding:1px 6px;border-radius:4px;font-size:11px;"><i class="ri-voice-recognition-line" style="font-size:10px;color:#8b5cf6;"></i> 原始: <strong>' + PinyinMatch.escapeHtml(originalName) + '</strong></span>';
+  }
+}
+
+function showCustomerCard(customer, status) {
+  document.getElementById('customerName').textContent = customer.name;
+  var metaParts = [];
+  if (customer.address) metaParts.push(customer.address);
+  if (customer.contact) metaParts.push(customer.contact);
+  document.getElementById('customerMeta').textContent = metaParts.length > 0 ? metaParts.join(' | ') : '点击查看候选或手动搜索';
+
+  var statusEl = document.getElementById('customerStatus');
+  var cardEl = document.getElementById('customerCard');
+
+  if (status === 'confirmed') {
+    statusEl.textContent = '已确认';
+    statusEl.className = 'customer-status confirmed';
+    cardEl.className = 'customer-card confirmed';
+  } else {
+    statusEl.textContent = '多候选';
+    statusEl.className = 'customer-status pending';
+    cardEl.className = 'customer-card pending';
+  }
+}
+
+function selectCustomer(customer) {
+  selectedCustomerId = customer.id;
+  var lsCustomers = getLSCustomers();
+  var standardCustomer = null;
+  for (var i = 0; i < lsCustomers.length; i++) {
+    if (String(lsCustomers[i].id) === String(customer.id)) {
+      standardCustomer = { id: lsCustomers[i].id, name: lsCustomers[i].name, address: lsCustomers[i].address || '', contact: lsCustomers[i].contact || '' };
+      break;
+    }
+  }
+  showCustomerCard(standardCustomer || customer, 'confirmed');
+}
+
+function showCustomerModal() {
+  if (!currentCustomer || currentCustomer.length === 0) {
+    searchCustomer();
+    return;
+  }
+
+  var container = document.getElementById('customerCandidateList');
+  container.innerHTML = currentCustomer.map(function(c, i) {
+    return '<div class="candidate-item ' + (String(selectedCustomerId) === String(c.id) ? 'selected' : '') + '" onclick="selectCustomerFromModal(\'' + PinyinMatch.escapeHtml(c.id) + '\')">' +
+      '<div class="candidate-rank">' + (i + 1) + '</div>' +
+      '<div class="candidate-info">' +
+        '<div class="candidate-name">' + PinyinMatch.escapeHtml(c.name) + '</div>' +
+        '<div class="candidate-meta">' + PinyinMatch.escapeHtml(c.address || '') + (c.contact ? ' | ' + PinyinMatch.escapeHtml(c.contact) : '') + '</div>' +
+      '</div>' +
+      '<div class="candidate-similarity">' + c.similarity + '%</div>' +
+    '</div>';
+  }).join('');
+
+  document.getElementById('customerModal').classList.add('active');
+}
+
+function selectCustomerFromModal(id) {
+  var customer = null;
+  var customers = getLSCustomers();
+  for (var i = 0; i < customers.length; i++) {
+    if (String(customers[i].id) === String(id)) { customer = { id: customers[i].id, name: customers[i].name, address: customers[i].address || '', contact: customers[i].contact || '' }; break; }
+  }
+  if (customer) {
+    currentCustomer = currentCustomer || [];
+    for (var j = 0; j < currentCustomer.length; j++) {
+      if (String(currentCustomer[j].id) === String(id)) {
+        currentCustomer[j].address = customer.address;
+        currentCustomer[j].contact = customer.contact;
+        break;
+      }
+    }
+    selectCustomer(customer);
+    closeModal('customerModal');
+  }
+}
+
+function renderProductList() {
+  var container = document.getElementById('productList');
+  document.getElementById('productCount').textContent = '(' + currentProducts.length + '个)';
+
+  var batchBar = document.getElementById('batchBar');
+  if (currentProducts.length > 1) {
+    batchBar.style.display = 'flex';
+  } else {
+    batchBar.style.display = 'none';
+  }
+
+  if (currentProducts.length === 0) {
+    container.innerHTML =
+      '<div class="empty-state">' +
+        '<div class="empty-icon"><i class="ri-inbox-line" style="font-size:48px;"></i></div>' +
+        '<div class="empty-text">暂无产品，请通过对话添加</div>' +
+      '</div>';
+    return;
+  }
+
+  var allLsProducts = getLSProducts();
+
+  container.innerHTML = currentProducts.map(function(product, idx) {
+    var productInfo = null;
+    var lookupId = product.matchedId || product.id;
+    if (lookupId) {
+      for (var i = 0; i < allLsProducts.length; i++) {
+        if (String(allLsProducts[i].id) === String(lookupId)) {
+          productInfo = { id: allLsProducts[i].id, name: allLsProducts[i].name, code: 'PRD-' + allLsProducts[i].id, sku: allLsProducts[i].model || '-', spec: allLsProducts[i].spec || '', category: '' };
+          break;
+        }
+      }
+    }
+    productInfo = productInfo || {};
+    var statusClass = product.status;
+    var statusText = product.status === 'confirmed' ? '已确认' :
+                      product.status === 'error' ? '未匹配' :
+                      product.status === 'new' ? '新建' : '待确认';
+    var matchTypeClass = product.matchType || 'none';
+    var matchTypeText = {
+      'sku': 'SKU匹配',
+      'manual': '手动选择',
+      'code': '编号匹配',
+      'name': '品名匹配',
+      'exact': '精确匹配',
+      'auto': '自动匹配',
+      'candidate': '候选推荐',
+      'fuzzy': '模糊匹配',
+      'none': '未匹配',
+      'new': '新建产品'
+    }[product.matchType] || '待匹配';
+
+    var displayName = productInfo.name || product.matchedName || product.originalName;
+    var displaySpec = productInfo.spec || product.matchedSpec || product.originalSpec || '';
+    var nameChanged = product.originalName && product.matchedName && product.originalName !== product.matchedName;
+
+    var actionButtons = product.status === 'error'
+      ? '<button class="product-action-btn new" onclick="showCreateProductModal(' + idx + ')"><i class="ri-add-line"></i> 新建产品</button>' +
+        '<button class="product-action-btn" onclick="showProductModalForEdit(' + idx + ')"><i class="ri-refresh-line"></i> 重新匹配</button>' +
+        '<button class="product-action-btn delete" onclick="deleteProduct(' + idx + ')"><i class="ri-delete-bin-line"></i> 删除</button>'
+      : (product.status === 'confirmed' || product.status === 'new'
+        ? '<button class="product-action-btn" onclick="unconfirmProduct(' + idx + ')"><i class="ri-close-line"></i> 取消确认</button>' +
+          '<button class="product-action-btn" onclick="showProductModalForEdit(' + idx + ')"><i class="ri-refresh-line"></i> 重新匹配</button>' +
+          '<button class="product-action-btn delete" onclick="deleteProduct(' + idx + ')"><i class="ri-delete-bin-line"></i> 删除</button>'
+        : '<button class="product-action-btn new" onclick="confirmProduct(' + idx + ')"><i class="ri-check-line"></i> 确认</button>' +
+          '<button class="product-action-btn" onclick="showProductModalForEdit(' + idx + ')"><i class="ri-refresh-line"></i> 重新匹配</button>' +
+          '<button class="product-action-btn delete" onclick="deleteProduct(' + idx + ')"><i class="ri-delete-bin-line"></i> 删除</button>'
+      );
+
+    return '<div class="product-item ' + statusClass + '" data-index="' + idx + '">' +
+      '<div class="product-header">' +
+        '<input type="checkbox" ' + (product.selected ? 'checked' : '') + ' onchange="toggleProductSelect(' + idx + ')" style="margin-right:2px;flex-shrink:0;cursor:pointer;">' +
+        '<div class="product-index">' + product.index + '</div>' +
+        '<div class="product-main">' +
+          '<div class="product-name-row">' +
+            '<div class="product-name">' + PinyinMatch.escapeHtml(displayName) + ' ' + PinyinMatch.escapeHtml(displaySpec) + '</div>' +
+            '<span class="product-match-type ' + matchTypeClass + '">' + matchTypeText + '</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="product-details">' +
+          '<div class="detail-item"><div class="detail-label">数量</div><div class="detail-value editable ' + (!product.qty ? 'empty' : '') + (product._qtyModified ? ' modified' : '') + '" onclick="editField(this,' + idx + ',\'qty\')">' + (product.qty || '-') + '</div></div>' +
+          '<div class="detail-item"><div class="detail-label">单价</div><div class="detail-value editable ' + (!product.price ? 'empty' : '') + (product._priceModified ? ' modified' : '') + '" onclick="editField(this,' + idx + ',\'price\')">' + (product.price || '待询价') + '</div></div>' +
+          '<div class="detail-item"><div class="detail-label">小计</div><div class="detail-value">' + calculateSubtotal(product.qty, product.price) + '</div></div>' +
+          '<div class="detail-item"><div class="detail-label">备注</div><div class="detail-value editable ' + (!product.note ? 'empty' : '') + (product._noteModified ? ' modified' : '') + '" onclick="editField(this,' + idx + ',\'note\')">' + (product.note || '-') + '</div></div>' +
+        '</div>' +
+        '<div class="product-status ' + statusClass + '" onclick="' + (product.status === 'error' ? 'showCreateProductModal(' + idx + ')' : 'showProductModalForEdit(' + idx + ')') + '">' + statusText + '</div>' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;gap:8px;margin-top:2px;padding-left:32px;">' +
+        '<span class="product-code">' + PinyinMatch.escapeHtml(productInfo.code || product.matchedCode || product.newCode || '未识别编号') + ' | SKU: ' + PinyinMatch.escapeHtml(productInfo.sku || product.matchedSku || product.newSku || '-') + '</span>' +
+      '</div>' +
+      '<div class="product-actions-row">' + actionButtons + (product.originalName ? '<span style="color:#d1d5db;margin:0 2px;">|</span><span style="font-size:10px;color:#6b7280;background:#f8f9fb;border:1px solid #e5e7eb;padding:1px 5px;border-radius:3px;"><i class="ri-voice-recognition-line" style="font-size:9px;color:#8b5cf6;"></i> 原始: <strong>' + PinyinMatch.escapeHtml(product.originalName) + '</strong></span>' : '') + '</div>' +
+    '</div>';
+  }).join('');
+
+  updateStats();
+}
+
+function calculateSubtotal(qty, price) {
+  if (!qty || !price) return '-';
+  var qtyNum = parseFloat(qty.replace(/[^0-9.]/g, ''));
+  var priceNum = parseFloat(price.replace(/[^0-9.]/g, ''));
+  if (isNaN(qtyNum) || isNaN(priceNum)) return '-';
+  return '¥' + Math.round(qtyNum * priceNum).toLocaleString();
+}
+
+function editField(el, productIndex, fieldName) {
+  if (el.classList.contains('editing')) return;
+
+  var product = currentProducts[productIndex];
+  var currentValue = fieldName === 'price'
+    ? (product.price ? product.price.replace('元', '') : '')
+    : fieldName === 'qty'
+    ? (product.qty || '')
+    : (product.note || '');
+
+  var input = document.createElement('input');
+  input.type = 'text';
+  input.value = currentValue;
+  input.placeholder = fieldName === 'price' ? '输入单价' : fieldName === 'qty' ? '输入数量' : '输入备注';
+
+  el.classList.add('editing');
+  el.classList.remove('editable');
+  el.innerHTML = '';
+  el.appendChild(input);
+  input.focus();
+  input.select();
+
+  function finishEdit() {
+    var newValue = input.value.trim();
+
+    if (fieldName === 'price') {
+      var originalPrice = product.originalPrice || product.price || '';
+      if (newValue) {
+        product.price = newValue + '元';
+        product._priceModified = (newValue + '元') !== originalPrice;
+      } else {
+        product.price = '';
+        product._priceModified = !!originalPrice;
+      }
+    } else if (fieldName === 'qty') {
+      var originalQty = product.originalQty || product.qty || '';
+      product.qty = newValue;
+      product._qtyModified = newValue !== originalQty;
+    } else if (fieldName === 'note') {
+      var originalNote = product.originalSpec || product.note || '';
+      product.note = newValue;
+      product._noteModified = newValue !== originalNote;
+    }
+
+    renderProductList();
+  }
+
+  input.addEventListener('blur', finishEdit);
+  input.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      input.blur();
+    } else if (e.key === 'Escape') {
+      input.removeEventListener('blur', finishEdit);
+      renderProductList();
+    }
+  });
+}
+
+function updateStats() {
+  var confirmed = currentProducts.filter(function(p) { return p.status === 'confirmed' || p.status === 'new'; }).length;
+  var pending = currentProducts.filter(function(p) { return p.status === 'pending' || p.status === 'error'; }).length;
+  var total = currentProducts.length;
+
+  document.getElementById('confirmedCount').textContent = confirmed + '/' + total;
+  document.getElementById('pendingCount').textContent = pending + '/' + total;
+
+  var generateBtn = document.getElementById('generateBtn');
+  var customerConfirmed = selectedCustomerId && document.getElementById('customerCard').classList.contains('confirmed');
+  if (pending > 0 || total === 0) {
+    generateBtn.disabled = true;
+    generateBtn.textContent = '还有' + pending + '个产品待确认';
+  } else if (!customerConfirmed) {
+    generateBtn.disabled = true;
+    generateBtn.textContent = '请先确认客户';
+  } else {
+    generateBtn.disabled = false;
+    generateBtn.textContent = '生成销售订单';
+  }
+}
+
+function showProductModalForEdit(index) {
+  editingProductIndex = index;
+  creatingProductIndex = index;
+  var product = currentProducts[index];
+
+  var searchName = product.searchName || product.originalName || product.matchedName;
+  var searchModel = product.model || '';
+  var candidates = fuzzyMatchProducts(searchName, 5, searchModel);
+
+  var container = document.getElementById('productCandidateList');
+  document.getElementById('productModalSubtitle').innerHTML = '重新匹配: <strong>' + PinyinMatch.escapeHtml(product.originalName || product.matchedName) + '</strong>';
+
+  if (candidates.length === 0) {
+    container.innerHTML = '<div style="text-align:center;padding:32px;color:#999;"><i class="ri-search-line" style="font-size:32px;display:block;margin-bottom:8px;opacity:0.4;"></i>未找到相似产品<br><span style="font-size:11px;">请点击下方"新建产品"创建</span></div>';
+  } else {
+    container.innerHTML = candidates.map(function(p, i) {
+      var isSelected = String(product.matchedId || product.id) === String(p.id);
+      var isAutoConfirmed = p.status === 'confirmed';
+      var statusBadge = isAutoConfirmed
+        ? '<span style="background:#dcfce7;color:#16a34a;font-size:10px;padding:1px 6px;border-radius:8px;white-space:nowrap;">已确认</span>'
+        : '<span style="background:#fef3c7;color:#d97706;font-size:10px;padding:1px 6px;border-radius:8px;white-space:nowrap;">待确认</span>';
+      var autoHint = isAutoConfirmed ? ' <span style="color:#16a34a;font-size:10px;">✓ 自动确认</span>' : '';
+      var confirmIcon = isAutoConfirmed ? ' <i class="ri-check-line" style="color:#16a34a;"></i>' : '';
+      return '<div class="candidate-item ' + (isSelected ? 'selected' : '') + '" onclick="selectProductForEdit(\'' + PinyinMatch.escapeHtml(p.id) + '\')">' +
+        '<div class="candidate-rank">' + (i + 1) + confirmIcon + '</div>' +
+        '<div class="candidate-info">' +
+          '<div class="candidate-name">' + PinyinMatch.escapeHtml(p.name) + ' ' + PinyinMatch.escapeHtml(p.spec) + statusBadge + '</div>' +
+          '<div class="candidate-meta">' + PinyinMatch.escapeHtml(p.code) + ' | SKU: ' + PinyinMatch.escapeHtml(p.sku) + autoHint + '</div>' +
+        '</div>' +
+        '<div class="candidate-similarity">' + p.matchScore + '%</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  document.getElementById('productModal').classList.add('active');
+}
+
+function fuzzyMatchProducts(name, limit, modelValue) {
+  if (!name) return [];
+  var products = PinyinMatch.getStore('pinyin_tool_products', []);
+  var pp = PinyinMatch.getStore('pinyin_tool_product_pinyin', {});
+  if (products.length === 0) return [];
+  var indexDb = products.filter(function(p) { return pp[p.id]; }).map(function(p) {
+    var py = pp[p.id];
+    return { id: p.id, name: p.name, model: p.model || '', spec: p.spec || '', pinyin: py.pinyin, pinyin_abbr: py.pinyin_abbr };
+  });
+  var matches = PinyinMatch.pinyinMatch(name, indexDb, { threshold: 0.45 });
+  var outerMatch = PinyinMatch.findProductFuzzyMatchFromLS(name, false, '', modelValue || '');
+  var confirmedId = outerMatch.status === 'confirmed' ? outerMatch.matchId : null;
+  return matches.slice(0, limit || 5).map(function(m) {
+    var isConfirmed = String(m.id) === String(confirmedId);
+    return {
+      id: m.id, name: m.name, spec: m.spec || '', model: m.model || '',
+      code: 'PRD-' + m.id, sku: m.model || '-', category: '',
+      matchScore: Math.round(m.score * 100), score: m.score,
+      status: isConfirmed ? 'confirmed' : 'pending',
+      matchType: isConfirmed ? (outerMatch.matchType || 'auto') : (m.score >= 0.7 ? 'candidate' : 'fuzzy')
+    };
+  });
+}
+
+function createNewProductFromModal() {
+  closeModal('productModal');
+  if (creatingProductIndex !== null) {
+    showCreateProductModal(creatingProductIndex);
+  }
+}
+
+function showCreateProductModal(index) {
+  creatingProductIndex = index;
+  var product = currentProducts[index];
+
+  var originalInfo = (product.originalName + ' ' + product.qty + ' ' + product.price + ' ' + (product.note || '')).trim();
+  document.getElementById('originalProductInfo').textContent = originalInfo || '无原始识别信息';
+
+  document.getElementById('newProductName').value = product.originalName || product.matchedName || '';
+  document.getElementById('newProductCode').value = generateProductCode();
+  document.getElementById('newProductSku').value = '';
+  document.getElementById('newProductSpec').value = '';
+  document.getElementById('newProductUnit').value = extractUnit(product.qty) || '个';
+  document.getElementById('newProductCategory').value = '其他';
+  document.getElementById('newProductNote').value = product.note || '';
+
+  document.getElementById('createProductModal').classList.add('active');
+}
+
+function generateProductCode() {
+  var prefix = 'PRD-NEW';
+  var suffix = String(nextProductId).padStart(3, '0');
+  nextProductId++;
+  return prefix + '-' + suffix;
+}
+
+function extractUnit(qty) {
+  if (!qty) return '个';
+  var units = ['箱', '盒', '包', '本', '个', '套', '件'];
+  for (var i = 0; i < units.length; i++) {
+    if (qty.includes(units[i])) return units[i];
+  }
+  return '个';
+}
+
+function saveNewProduct() {
+  var name = document.getElementById('newProductName').value.trim();
+  var code = document.getElementById('newProductCode').value.trim();
+
+  if (!name || !code) {
+    showToast('请填写必填项：产品名称和产品编号');
+    return;
+  }
+
+  if (creatingProductIndex !== null) {
+    var product = currentProducts[creatingProductIndex];
+
+    product.matchedName = name;
+    product.originalName = product.originalName || name;
+    product.newCode = code;
+    product.newSku = document.getElementById('newProductSku').value.trim();
+    product.spec = document.getElementById('newProductSpec').value.trim();
+    product.unit = document.getElementById('newProductUnit').value;
+    product.category = document.getElementById('newProductCategory').value;
+    product.note = document.getElementById('newProductNote').value.trim();
+    product.status = 'new';
+    product.matchType = 'new';
+    product.id = nextProductId - 1;
+
+    renderProductList();
+    closeModal('createProductModal');
+    creatingProductIndex = null;
+
+    showToast('产品新建成功并已确认');
+  }
+}
+
+function showToast(message, type) {
+  var bgColor = type === 'warning' ? '#f59e0b' : type === 'error' ? '#ef4444' : '#16a34a';
+  var toast = document.createElement('div');
+  toast.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:' + bgColor + ';color:white;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:500;z-index:9999;animation:slideDown 0.3s ease;';
+  toast.textContent = message;
+  document.body.appendChild(toast);
+
+  setTimeout(function() {
+    toast.style.animation = 'slideUp 0.3s ease';
+    setTimeout(function() { toast.remove(); }, 300);
+  }, 2000);
+}
+
+function showConfirm(message, onConfirm) {
+  document.getElementById('confirmModalBody').textContent = message;
+  var okBtn = document.getElementById('confirmModalOkBtn');
+  var newBtn = okBtn.cloneNode(true);
+  okBtn.parentNode.replaceChild(newBtn, okBtn);
+  newBtn.addEventListener('click', function() {
+    closeModal('confirmModal');
+    if (onConfirm) onConfirm();
+  });
+  document.getElementById('confirmModal').classList.add('active');
+}
+
+function selectProductForEdit(productId) {
+  if (editingProductIndex !== null) {
+    var matchedProduct = null;
+    var products = getLSProducts();
+    for (var i = 0; i < products.length; i++) {
+      if (String(products[i].id) === String(productId)) {
+        matchedProduct = { id: products[i].id, name: products[i].name, code: 'PRD-' + products[i].id, sku: products[i].model || '-', spec: products[i].spec || '' };
+        break;
+      }
+    }
+    currentProducts[editingProductIndex].id = productId;
+    currentProducts[editingProductIndex].matchedId = productId;
+    currentProducts[editingProductIndex].matchedName = matchedProduct ? matchedProduct.name : '';
+    currentProducts[editingProductIndex].matchedCode = matchedProduct ? matchedProduct.code : '';
+    currentProducts[editingProductIndex].matchedSku = matchedProduct ? matchedProduct.sku : '';
+    currentProducts[editingProductIndex].matchedSpec = matchedProduct ? matchedProduct.spec : '';
+    currentProducts[editingProductIndex].status = 'confirmed';
+    currentProducts[editingProductIndex].matchType = 'manual';
+    renderProductList();
+    closeModal('productModal');
+    editingProductIndex = null;
+    creatingProductIndex = null;
+  }
+}
+
+function confirmAllProducts() {
+  var confirmed = 0, skipped = 0;
+  currentProducts.forEach(function(p) {
+    if (p.status !== 'error') { p.status = 'confirmed'; fillProductStandardData(p); confirmed++; }
+    else { skipped++; }
+  });
+  renderProductList();
+  if (skipped > 0) {
+    showToast('已确认 ' + confirmed + ' 个产品，' + skipped + ' 个未匹配产品需手动处理', 'warning');
+  } else {
+    showToast('全部 ' + confirmed + ' 个产品已确认', 'success');
+  }
+}
+
+function addProduct() {
+  var newIndex = currentProducts.length + 1;
+  currentProducts.push({
+    index: newIndex,
+    originalName: '新产品',
+    matchedName: '',
+    matchedCode: '',
+    matchedSku: '',
+    matchedSpec: '',
+    qty: '',
+    price: '',
+    note: '',
+    status: 'error',
+    matchType: 'none',
+    id: null
+  });
+  renderProductList();
+
+  setTimeout(function() {
+    var list = document.getElementById('productList');
+    list.scrollTop = list.scrollHeight;
+  }, 100);
+}
+
+function fillProductStandardData(product) {
+  var lookupId = product.matchedId || product.id;
+  if (!lookupId) return;
+  var lsProducts = getLSProducts();
+  for (var i = 0; i < lsProducts.length; i++) {
+    if (String(lsProducts[i].id) === String(lookupId)) {
+      product.matchedName = lsProducts[i].name || product.matchedName;
+      product.matchedCode = 'PRD-' + lsProducts[i].id;
+      product.matchedSku = lsProducts[i].model || '-';
+      product.matchedSpec = lsProducts[i].spec || '';
+      break;
+    }
+  }
+}
+
+function confirmProduct(index) {
+  var product = currentProducts[index];
+  product.status = 'confirmed';
+  fillProductStandardData(product);
+  renderProductList();
+}
+
+function unconfirmProduct(index) {
+  currentProducts[index].status = 'pending';
+  renderProductList();
+}
+
+function deleteProduct(index) {
+  showConfirm('确定删除此产品吗？', function() {
+    currentProducts.splice(index, 1);
+    currentProducts.forEach(function(p, i) { p.index = i + 1; });
+    renderProductList();
+  });
+}
+
+function closeModal(modalId) {
+  document.getElementById(modalId).classList.remove('active');
+}
+
+function searchCustomer() {
+  closeModal('customerModal');
+  var originalName = document.getElementById('customerName').textContent;
+  if (originalName === '未识别到客户' || originalName === '-') originalName = '';
+  var matchInfoEl = document.getElementById('customerMatchInfo');
+  if (matchInfoEl && !originalName) {
+    var text = matchInfoEl.textContent || '';
+    var m = text.match(/原始:\s*(.+)/);
+    if (m) originalName = m[1].trim();
+  }
+  var searchInput = document.getElementById('customerSearchInput');
+  searchInput.value = originalName;
+  document.getElementById('customerSearchResults').innerHTML = '';
+  document.getElementById('customerSearchModal').classList.add('active');
+  setTimeout(function() {
+    searchInput.focus();
+    if (originalName.trim()) searchCustomerByInput();
+  }, 100);
+}
+
+function searchCustomerByInput() {
+  var keyword = document.getElementById('customerSearchInput').value.trim();
+  var container = document.getElementById('customerSearchResults');
+  if (!keyword) {
+    container.innerHTML = '<div style="text-align:center;padding:20px;color:#999;font-size:13px;">请输入关键字搜索</div>';
+    return;
+  }
+
+  var results = [];
+  var customers = getLSCustomers();
+  var cp = getLSCustomerPinyin();
+  if (customers.length === 0) {
+    container.innerHTML = '<div style="text-align:center;padding:20px;color:#f59e0b;font-size:13px;"><i class="ri-alert-line"></i> 拼音数据未就绪，请先打开拼音工具获取数据</div>';
+    return;
+  }
+  var indexDb = customers.filter(function(c) { return cp[c.id]; }).map(function(c) {
+    var py = cp[c.id];
+    return { id: c.id, name: c.name, pinyin: py.pinyin, pinyin_abbr: py.pinyin_abbr };
+  });
+  var matches = PinyinMatch.pinyinMatch(keyword, indexDb, { threshold: 0.45 });
+  results = matches.map(function(m) {
+    return { id: m.id, name: m.name, address: '', contact: '', similarity: Math.round(m.score * 100) };
+  });
+
+  if (results.length === 0) {
+    container.innerHTML = '<div style="text-align:center;padding:20px;color:#999;font-size:13px;">未找到匹配客户</div>';
+    return;
+  }
+  results.sort(function(a, b) { return (b.similarity || 0) - (a.similarity || 0); });
+  container.innerHTML = results.map(function(c, i) {
+    return '<div class="candidate-item" onclick="selectCustomerFromSearch(\'' + PinyinMatch.escapeHtml(c.id) + '\')">' +
+      '<div class="candidate-rank">' + (i + 1) + '</div>' +
+      '<div class="candidate-info">' +
+        '<div class="candidate-name">' + PinyinMatch.escapeHtml(c.name) + '</div>' +
+        '<div class="candidate-meta">' + PinyinMatch.escapeHtml(c.address || '') + (c.contact ? ' | ' + PinyinMatch.escapeHtml(c.contact) : '') + '</div>' +
+      '</div>' +
+      '<div class="candidate-similarity">' + (c.similarity || '-') + (c.similarity >= 90 ? '%' : '') + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function selectCustomerFromSearch(id) {
+  var customer = null;
+  var customers = getLSCustomers();
+  for (var i = 0; i < customers.length; i++) {
+    if (String(customers[i].id) === String(id)) { customer = { id: customers[i].id, name: customers[i].name, address: customers[i].address || '', contact: customers[i].contact || '' }; break; }
+  }
+  if (customer) {
+    currentCustomer = [{ id: customer.id, name: customer.name, similarity: 100, address: customer.address, contact: customer.contact }];
+    selectCustomer(customer);
+    closeModal('customerSearchModal');
+  }
+}
+
+function searchProduct() {
+  var currentName = '';
+  if (editingProductIndex !== null && currentProducts[editingProductIndex]) {
+    currentName = currentProducts[editingProductIndex].originalName || currentProducts[editingProductIndex].matchedName || '';
+  }
+  var container = document.getElementById('productCandidateList');
+  container.innerHTML =
+    '<div style="margin-bottom:8px;"><button class="action-btn" onclick="backToProductCandidates()" style="font-size:11px;padding:4px 10px;"><i class="ri-arrow-left-line"></i> 返回候选列表</button></div>' +
+    '<div class="search-input-wrapper">' +
+      '<i class="ri-search-line"></i>' +
+      '<input type="text" id="productSearchInput" class="form-input" placeholder="输入产品名称、拼音或首字母搜索..." oninput="PinyinMatch.debounce(searchProductByInput, 250)()" style="width:100%;" value="' + currentName.replace(/"/g, '&quot;') + '">' +
+    '</div>' +
+    '<div id="productSearchResults"></div>';
+  document.getElementById('productModalSubtitle').textContent = '搜索产品';
+  setTimeout(function() {
+    var input = document.getElementById('productSearchInput');
+    if (input) {
+      input.focus();
+      if (input.value.trim()) searchProductByInput();
+    }
+  }, 100);
+}
+
+function backToProductCandidates() {
+  if (editingProductIndex !== null) {
+    showProductModalForEdit(editingProductIndex);
+  }
+}
+
+function searchProductByInput() {
+  var keyword = (document.getElementById('productSearchInput') || {}).value || '';
+  var trimmed = keyword.trim();
+  var resultsContainer = document.getElementById('productSearchResults');
+  if (!resultsContainer) return;
+  if (!trimmed) {
+    resultsContainer.innerHTML = '';
+    return;
+  }
+  var results = fuzzyMatchProducts(trimmed, 10);
+  if (results.length === 0) {
+    resultsContainer.innerHTML = '<div style="text-align:center;padding:20px;color:#999;font-size:13px;">未找到匹配产品</div>';
+    return;
+  }
+  resultsContainer.innerHTML = results.map(function(p, i) {
+    var nameDisplay = PinyinMatch.escapeHtml(p.name);
+    if (p.model) nameDisplay += ' <span style="color:#8b5cf6;font-size:11px;">' + PinyinMatch.escapeHtml(p.model) + '</span>';
+    if (p.spec) nameDisplay += ' <span style="color:#9ca3af;font-size:11px;">' + PinyinMatch.escapeHtml(p.spec) + '</span>';
+    var matchLabel = p.matchType === 'auto' ? '<span style="color:#16a34a;font-size:10px;">自动确认</span>' : p.matchType === 'candidate' ? '<span style="color:#d97706;font-size:10px;">候选推荐</span>' : '<span style="color:#9ca3af;font-size:10px;">模糊匹配</span>';
+    return '<div class="candidate-item" onclick="selectProductForEdit(\'' + PinyinMatch.escapeHtml(p.id) + '\')">' +
+      '<div class="candidate-rank">' + (i + 1) + '</div>' +
+      '<div class="candidate-info">' +
+        '<div class="candidate-name">' + nameDisplay + '</div>' +
+        '<div class="candidate-meta">' + PinyinMatch.escapeHtml(p.code) + ' | SKU: ' + PinyinMatch.escapeHtml(p.sku) + ' ' + matchLabel + '</div>' +
+      '</div>' +
+      '<div class="candidate-similarity">' + p.matchScore + '%</div>' +
+    '</div>';
+  }).join('');
+}
+
+function toggleProductSelect(index) {
+  currentProducts[index].selected = !currentProducts[index].selected;
+  var allChecked = currentProducts.every(function(p) { return p.selected; });
+  var selectAllEl = document.getElementById('selectAll');
+  if (selectAllEl) selectAllEl.checked = allChecked;
+}
+
+function toggleSelectAll() {
+  var checked = document.getElementById('selectAll').checked;
+  currentProducts.forEach(function(p) { p.selected = checked; });
+  renderProductList();
+}
+
+function batchConfirm() {
+  var selectedCount = currentProducts.filter(function(p) { return p.selected; }).length;
+  if (selectedCount === 0) {
+    showToast('请先选择产品', 'warning');
+    return;
+  }
+  var confirmed = 0, skipped = 0;
+  currentProducts.forEach(function(p) {
+    if (p.selected && p.status !== 'error') { p.status = 'confirmed'; fillProductStandardData(p); confirmed++; }
+    else if (p.selected && p.status === 'error') { skipped++; }
+  });
+  renderProductList();
+  if (skipped > 0) {
+    showToast('已确认 ' + confirmed + ' 个，' + skipped + ' 个未匹配产品需手动处理', 'warning');
+  } else {
+    showToast('已确认 ' + confirmed + ' 个产品', 'success');
+  }
+}
+
+function batchDelete() {
+  var toDelete = currentProducts.filter(function(p) { return p.selected; });
+  if (toDelete.length === 0) return;
+  showConfirm('确定删除选中的' + toDelete.length + '个产品吗？', function() {
+    currentProducts = currentProducts.filter(function(p) { return !p.selected; });
+    currentProducts.forEach(function(p, i) { p.index = i + 1; });
+    renderProductList();
+  });
+}
+
+function resetForm() {
+  document.getElementById('emptyState').style.display = 'block';
+  document.getElementById('customerSection').style.display = 'none';
+  document.getElementById('productSection').style.display = 'none';
+  document.getElementById('actionBar').style.display = 'none';
+  currentProducts = [];
+  currentCustomer = null;
+  selectedCustomerId = null;
+  editingProductIndex = null;
+  creatingProductIndex = null;
+  lastDetectedJSON = '';
+  cozeLastMsgIds = {};
+  initialMessageIds = {};
+  isPollingInitialized = false;
+  updatePollUI('listening');
+  var progressDiv = document.getElementById('matchProgress');
+  if (progressDiv) progressDiv.remove();
+  if (navigator.clipboard && navigator.clipboard.readText) {
+    navigator.clipboard.readText().then(function(text) {
+      lastClipboardContent = text || '';
+    }).catch(function() {
+      lastClipboardContent = '';
+    });
+  } else {
+    lastClipboardContent = '';
+  }
+  
+  // 重新初始化轮询，记录新的已有消息基准
+  startCozePolling();
+}
+
+function generateOrder() {
+  var confirmed = currentProducts.filter(function(p) { return p.status === 'confirmed' || p.status === 'new'; }).length;
+  var totalAmount = currentProducts.reduce(function(sum, p) {
+    var subtotal = calculateSubtotal(p.qty, p.price);
+    if (subtotal !== '-') {
+      return sum + parseInt(subtotal.replace(/[^0-9]/g, ''));
+    }
+    return sum;
+  }, 0);
+
+  var newProducts = currentProducts.filter(function(p) { return p.status === 'new'; }).length;
+
+  var body = document.getElementById('orderSuccessBody');
+  body.innerHTML =
+    '<div class="order-detail-row"><span class="order-detail-label">客户</span><span class="order-detail-value">' + document.getElementById('customerName').textContent + '</span></div>' +
+    '<div class="order-detail-row"><span class="order-detail-label">产品数量</span><span class="order-detail-value">' + confirmed + '个</span></div>' +
+    (newProducts > 0 ? '<div class="order-detail-row"><span class="order-detail-label">新建产品</span><span class="order-detail-value">' + newProducts + '个</span></div>' : '') +
+    '<div class="order-detail-row"><span class="order-detail-label">订单总额</span><span class="order-detail-value" style="color:#16a34a;font-size:16px;">¥' + totalAmount.toLocaleString() + '</span></div>';
+
+  document.getElementById('orderSuccessModal').classList.add('active');
+}
+
+window.onclick = function(event) {
+  if (event.target.classList.contains('modal-overlay')) {
+    event.target.classList.remove('active');
+  }
+};
+
+function refreshPinyinStatus() {
+  var el = document.getElementById('pinyinDataStatus');
+  if (!el) return;
+  if (hasPinyinData()) {
+    var stats = getPinyinDataStats();
+    el.innerHTML = '<span style="color:#16a34a;"><i class="ri-check-line"></i> 已就绪</span> · 客户 <strong>' + stats.customers + '</strong> 条（拼音 ' + stats.customerPinyin + '） · 产品 <strong>' + stats.products + '</strong> 条（拼音 ' + stats.productPinyin + '）';
+  } else {
+    el.innerHTML = '<span style="color:#f59e0b;"><i class="ri-alert-line"></i> 未就绪</span> · 请先打开拼音工具获取数据并生成拼音';
+  }
+}
+
+refreshPinyinStatus();
+
+window.addEventListener('storage', function(e) {
+  if (e.key && e.key.indexOf('pinyin_tool_') === 0) {
+    refreshPinyinStatus();
+  }
+});
+
+window.addEventListener('focus', function() {
+  refreshPinyinStatus();
+});
+</script>
+</body>
+</html>

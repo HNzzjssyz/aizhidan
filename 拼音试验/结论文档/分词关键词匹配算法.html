@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>分词关键词匹配算法 — 技术设计文档</title>
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+<style>
+:root {
+  --bg: #f8f9fb;
+  --card: #ffffff;
+  --border: #e8ecf0;
+  --text: #1f2937;
+  --text-secondary: #6b7280;
+  --primary: #3b82f6;
+  --primary-light: #eff6ff;
+  --primary-border: #bfdbfe;
+  --green: #10b981;
+  --green-light: #ecfdf5;
+  --green-border: #a7f3d0;
+  --amber: #f59e0b;
+  --amber-light: #fffbeb;
+  --amber-border: #fde68a;
+  --red: #ef4444;
+  --red-light: #fef2f2;
+  --red-border: #fecaca;
+  --purple: #8b5cf6;
+  --purple-light: #f5f3ff;
+  --purple-border: #ddd6fe;
+  --cyan: #06b6d4;
+  --cyan-light: #ecfeff;
+  --cyan-border: #a5f3fc;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  padding: 32px 20px;
+}
+.container { max-width: 960px; margin: 0 auto; }
+
+.doc-header {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px 48px;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+}
+.doc-header::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6, #10b981);
+}
+.doc-header h1 {
+  font-size: 28px; font-weight: 700; color: var(--text);
+  margin-bottom: 8px; display: flex; align-items: center; gap: 12px;
+}
+.doc-header h1 i { color: var(--primary); font-size: 28px; }
+.doc-header .subtitle { font-size: 15px; color: var(--text-secondary); margin-bottom: 20px; }
+.doc-meta { display: flex; gap: 24px; flex-wrap: wrap; }
+.doc-meta-item { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-secondary); }
+.doc-meta-item i { font-size: 14px; color: var(--primary); }
+.doc-meta-item strong { color: var(--text); font-weight: 600; }
+
+.section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 32px 36px;
+  margin-bottom: 20px;
+}
+.section-title {
+  font-size: 18px; font-weight: 700; color: var(--text);
+  margin-bottom: 20px; display: flex; align-items: center; gap: 10px;
+  padding-bottom: 14px; border-bottom: 1px solid var(--border);
+}
+.section-title i {
+  width: 32px; height: 32px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; color: white; flex-shrink: 0;
+}
+.icon-blue { background: var(--primary); }
+.icon-green { background: var(--green); }
+.icon-amber { background: var(--amber); }
+.icon-red { background: var(--red); }
+.icon-purple { background: var(--purple); }
+.icon-cyan { background: var(--cyan); }
+
+p { font-size: 14px; color: var(--text); margin-bottom: 12px; line-height: 1.8; }
+p:last-child { margin-bottom: 0; }
+
+.highlight-box {
+  border-radius: 10px; padding: 16px 20px; margin-bottom: 16px;
+  font-size: 14px; line-height: 1.8;
+}
+.highlight-box.blue { background: var(--primary-light); border: 1px solid var(--primary-border); color: #1e40af; }
+.highlight-box.green { background: var(--green-light); border: 1px solid var(--green-border); color: #065f46; }
+.highlight-box.amber { background: var(--amber-light); border: 1px solid var(--amber-border); color: #92400e; }
+.highlight-box.red { background: var(--red-light); border: 1px solid var(--red-border); color: #991b1b; }
+.highlight-box.purple { background: var(--purple-light); border: 1px solid var(--purple-border); color: #5b21b6; }
+.highlight-box.cyan { background: var(--cyan-light); border: 1px solid var(--cyan-border); color: #155e75; }
+.highlight-box i { margin-right: 6px; }
+
+pre {
+  background: #1e293b; color: #e2e8f0; border-radius: 10px;
+  padding: 20px 24px; margin-bottom: 16px; overflow-x: auto;
+  font-size: 13px; line-height: 1.7; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+}
+pre .comment { color: #64748b; }
+pre .keyword { color: #c084fc; }
+pre .string { color: #34d399; }
+pre .key { color: #60a5fa; }
+pre .func { color: #fbbf24; }
+pre .num { color: #fb923c; }
+
+table {
+  width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 13px;
+}
+th, td {
+  padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border);
+}
+th { background: #f8f9fb; font-weight: 600; color: var(--text-secondary); font-size: 12px; }
+td { color: var(--text); }
+tr:last-child td { border-bottom: none; }
+
+.tag {
+  display: inline-block; padding: 2px 10px; border-radius: 6px;
+  font-size: 11px; font-weight: 600; margin-right: 4px;
+}
+.tag-blue { background: var(--primary-light); color: #1e40af; border: 1px solid var(--primary-border); }
+.tag-green { background: var(--green-light); color: #065f46; border: 1px solid var(--green-border); }
+.tag-amber { background: var(--amber-light); color: #92400e; border: 1px solid var(--amber-border); }
+.tag-red { background: var(--red-light); color: #991b1b; border: 1px solid var(--red-border); }
+.tag-purple { background: var(--purple-light); color: #5b21b6; border: 1px solid var(--purple-border); }
+.tag-cyan { background: var(--cyan-light); color: #155e75; border: 1px solid var(--cyan-border); }
+
+.formula-box {
+  background: #f8f9fb;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 16px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: 0.5px;
+}
+.formula-box .op { color: var(--primary); margin: 0 4px; }
+.formula-box .dim { color: var(--purple); }
+.formula-box .weight { color: var(--amber); font-size: 13px; }
+
+.compare-table { margin-bottom: 16px; }
+.compare-table td:first-child { font-weight: 600; white-space: nowrap; }
+.compare-table .good { color: var(--green); font-weight: 700; }
+.compare-table .bad { color: var(--red); font-weight: 700; }
+.compare-table .ok { color: var(--amber); font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="doc-header">
+  <h1><i class="ri-key-2-line"></i> 分词关键词匹配算法</h1>
+  <div class="subtitle">中文分词 · 关键词倒排索引 · 质量加权评分 · 拼音+关键词双路融合</div>
+  <div class="doc-meta">
+    <div class="doc-meta-item"><i class="ri-calendar-line"></i> 创建：<strong>2026-05-23</strong></div>
+    <div class="doc-meta-item"><i class="ri-file-code-line"></i> 实现：<strong>pinyin_match.js</strong></div>
+    <div class="doc-meta-item"><i class="ri-settings-3-line"></i> 融合权重：<strong>拼音55% + 关键词45%</strong></div>
+    <div class="doc-meta-item"><i class="ri-refresh-line"></i> 更新：<strong>2026-05-24</strong>（三种匹配模式拆分 + 关键字高亮）</div>
+    <div class="doc-meta-item"><i class="ri-refresh-line"></i> 关联文档：<strong>拼音匹配阈值算法和处理规则</strong></div>
+  </div>
+</div>
+
+<!-- 第1章：背景与动机 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-blue ri-question-line"></i> 1. 背景与动机
+  </div>
+  <p>原有拼音匹配算法在"品名精确匹配"场景下表现优秀，但在<strong>参数描述型输入</strong>场景下存在结构性缺陷：</p>
+
+  <div class="highlight-box red">
+    <i class="ri-close-circle-line"></i> <strong>典型失败场景</strong><br>
+    输入：<code>护目镜 防冲击、防喷溅、防粉尘、防紫外线 聚碳酸酯 透明</code><br>
+    目标：<code>3M 1621AF PC 防雾/透明/防化/防冲击/护目镜（眼罩）</code><br>
+    拼音匹配得分：<strong>0.32</strong>（低于0.45阈值，无法匹配）
+  </div>
+
+  <p>三个根因：</p>
+  <table>
+    <tr><th>缺陷</th><th>原因</th><th>影响</th></tr>
+    <tr>
+      <td><span class="tag tag-red">有序串 vs 无序集</span></td>
+      <td>Levenshtein/首字母匹配依赖顺序一致性</td>
+      <td>参数顺序不同导致得分暴降</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-red">子集 vs 全集</span></td>
+      <td>输入是核心参数，产品名含品牌/型号等额外信息</td>
+      <td>长度差异是固有特征，无法消除</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-red">拼音粒度过细</span></td>
+      <td>单字拼音token导致跨词误匹配，品牌/型号稀释余弦分母</td>
+      <td>wordBag维度也受影响</td>
+    </tr>
+  </table>
+
+  <div class="highlight-box green">
+    <i class="ri-check-line"></i> <strong>解决方案</strong>：在拼音匹配基础上，新增<strong>中文分词关键词匹配</strong>作为并行查询路径，两者加权融合输出最终得分。关键词匹配天然支持无序集合运算和子集匹配语义。
+  </div>
+</div>
+
+<!-- 第2章：整体架构 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-cyan ri-stack-line"></i> 2. 整体架构
+  </div>
+
+  <pre>
+输入文本
+  │
+  ├──→ 拼音匹配路径（原有）
+  │     生成拼音 → 拼音倒排索引 → 候选集 → 四维评分 → pinyinScore
+  │
+  ├──→ 关键词匹配路径（新增）
+  │     中文分词 → 关键词倒排索引 → 候选集 → 质量加权评分 → kwScore
+  │
+  └──→ 双路融合
+        fusedScore = pinyinScore × 0.55 + kwScore × 0.45
+        按融合得分排序，沿用原有阈值分级策略
+  </pre>
+
+  <div class="formula-box">
+    <span class="dim">fusedScore</span> <span class="op">=</span>
+    <span class="dim">pinyinScore</span> <span class="op">×</span> <span class="weight">55%</span>
+    <span class="op">+</span>
+    <span class="dim">kwScore</span> <span class="op">×</span> <span class="weight">45%</span>
+  </div>
+
+  <div class="highlight-box cyan">
+    <i class="ri-information-line"></i> <strong>权重设计理由</strong>：拼音匹配在品名精确匹配场景下仍然是最可靠的路径，因此保持略高权重。关键词匹配在参数描述型场景下优势明显，45%权重足以将原本0.32的拼音得分拉升至0.48以上（超过0.45阈值）。
+  </div>
+</div>
+
+<!-- 第3章：三种匹配模式 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-green ri-toggle-line"></i> 3. 三种匹配模式
+  </div>
+
+  <p>原混合匹配模式（拼音+关键词双路融合）已拆分为三种独立可选模式，用户可在产品选择界面通过切换开关实时切换：</p>
+
+  <table>
+    <tr><th>模式</th><th>匹配路径</th><th>适用场景</th><th>默认</th></tr>
+    <tr>
+      <td><span class="tag tag-blue">分词 (keyword)</span></td>
+      <td>中文分词 → 关键词倒排索引 → keywordMatchScore评分</td>
+      <td>参数描述型输入、多关键字组合查询</td>
+      <td><span class="tag tag-green">默认</span></td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-purple">拼音 (pinyin)</span></td>
+      <td>拼音生成 → 拼音倒排索引 → 四维评分</td>
+      <td>精确品名匹配、语音输入同音字纠错</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-amber">混合 (mixed)</span></td>
+      <td>拼音+关键词候选合并 → 拼音评分+关键词评分 → 55%+45%融合</td>
+      <td>通用场景，兼顾全面性</td>
+      <td>—</td>
+    </tr>
+  </table>
+
+  <div class="section-title" style="font-size:15px; border-bottom:none; padding-bottom:0; margin-bottom:12px;">
+    <i class="icon-blue ri-code-s-slash-line"></i> 3.1 调度逻辑
+  </div>
+  <pre>
+<span class="keyword">var</span> _matchMode = <span class="string">'keyword'</span>;  <span class="comment">// 默认分词模式</span>
+
+<span class="keyword">async function</span> <span class="func">fuzzyMatchProducts</span>(name, limit, modelValue) {
+  <span class="keyword">if</span> (_matchMode === <span class="string">'pinyin'</span>)  <span class="keyword">return await</span> <span class="func">fuzzyMatchByPinyin</span>(name, limit);
+  <span class="keyword">if</span> (_matchMode === <span class="string">'keyword'</span>)  <span class="keyword">return await</span> <span class="func">fuzzyMatchByKeyword</span>(name, limit);
+  <span class="keyword">return await</span> <span class="func">fuzzyMatchByMixed</span>(name, limit);
+}
+  </pre>
+
+  <div class="section-title" style="font-size:15px; border-bottom:none; padding-bottom:0; margin-bottom:12px;">
+    <i class="icon-green ri-toggle-line"></i> 3.2 UI切换控件
+  </div>
+  <p>产品选择浮窗（重新匹配/搜索产品）顶部显示匹配模式切换按钮组，分词模式下搜索框下方额外显示"可用空格分词"提示。切换模式后自动触发重新搜索。</p>
+
+  <div class="highlight-box green">
+    <i class="ri-lightbulb-line"></i> <strong>默认分词模式的设计理由</strong>：实际业务中，AI生成的订单产品名多为参数描述型（如"护目镜 防冲击 防喷溅"），分词匹配在此场景下命中率最高。用户遇到分词匹配不理想时，可一键切换到拼音或混合模式。
+  </div>
+
+  <div class="section-title" style="font-size:15px; border-bottom:none; padding-bottom:0; margin-bottom:12px;">
+    <i class="icon-amber ri-markup-line"></i> 3.3 关键字高亮
+  </div>
+  <p>在分词/混合模式下，产品候选列表中的产品名会<strong>高亮显示匹配的分词关键字</strong>，帮助用户快速定位匹配依据：</p>
+  <pre>
+<span class="comment">// 高亮函数：在已转义HTML中，按关键词（长词优先）正则替换</span>
+<span class="keyword">function</span> <span class="func">highlightKeywords</span>(html, tokens) {
+  <span class="keyword">var</span> sorted = tokens.slice().sort(<span class="keyword">function</span>(a, b) { <span class="keyword">return</span> b.length - a.length; });
+  <span class="keyword">for</span> (<span class="keyword">var</span> ti = 0; ti < sorted.length; ti++) {
+    <span class="keyword">var</span> escaped = sorted[ti].replace(/[.*+?^${}()|[\]\\]/g, <span class="string">'\\$&'</span>);
+    html = html.replace(<span class="keyword">new</span> RegExp(escaped, <span class="string">'gi'</span>), <span class="string">'&lt;span class="kw-highlight"&gt;$&amp;&lt;/span&gt;'</span>);
+  }
+  <span class="keyword">return</span> html;
+}
+  </pre>
+  <p>高亮样式：<code>.kw-highlight { background:#fef08a; color:#92400e; border-radius:2px; }</code>，黄色背景+深棕色文字，醒目但不干扰阅读。拼音模式下不高亮。</p>
+</div>
+
+<!-- 第4章：中文分词 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-purple ri-scissors-cut-line"></i> 4. 中文分词策略
+  </div>
+
+  <p>分词是关键词匹配的基础，采用<strong>空格/标点分割 + 长词智能拆分</strong>两阶段策略：</p>
+
+  <div class="section-title" style="font-size:15px; border-bottom:none; padding-bottom:0; margin-bottom:12px;">
+    <i class="icon-blue ri-text"></i> 4.1 第一阶段：空格/标点分割
+  </div>
+  <p>按标点符号（<code>、，,；;：:（）()/\｜·—–</code>）和空格分割，过滤量词和纯数字。</p>
+  <table>
+    <tr><th>输入</th><th>分词结果</th></tr>
+    <tr><td><code>护目镜 防冲击、防喷溅、防粉尘、防紫外线 聚碳酸酯 透明</code></td><td><code>["护目镜","防冲击","防喷溅","防粉尘","防紫外线","聚碳酸酯","透明"]</code></td></tr>
+    <tr><td><code>线手套 分指 棉纱 原白色</code></td><td><code>["线手套","分指","棉纱","原白色"]</code></td></tr>
+  </table>
+
+  <div class="section-title" style="font-size:15px; border-bottom:none; padding-bottom:0; margin-bottom:12px;">
+    <i class="icon-purple ri-split-cells-horizontal"></i> 4.2 第二阶段：长词智能拆分
+  </div>
+  <p>当无空格输入（如语音识别结果）导致出现超长中文token（>4字）时，使用<strong>贪心最长匹配</strong>策略拆分：</p>
+
+  <div class="highlight-box purple">
+    <i class="ri-lightbulb-line"></i> <strong>贪心最长匹配算法</strong><br>
+    1. 维护劳保行业常见词词典（手套、雨衣、防冲击、防紫外线等），按词长降序排列<br>
+    2. 在长词中找最长匹配词，拆出前后部分递归处理<br>
+    3. 无词典匹配时退化为2字切分
+  </div>
+
+  <table>
+    <tr><th>输入（无空格）</th><th>拆分结果</th></tr>
+    <tr><td><code>线手套分指棉纱原白色</code></td><td><code>["手套","分指棉纱","原白色"]</code>（"分指棉纱"通过charOverlap补偿）</td></tr>
+    <tr><td><code>护目镜防冲击防喷溅防粉尘防紫外线聚碳酸酯透明</code></td><td><code>["护目镜","防冲击","防喷溅","防粉尘","防紫外线","聚碳酸酯","透明"]</code></td></tr>
+    <tr><td><code>雨衣防水牛津面料长款连体雨衣银灰色反光条</code></td><td><code>["雨衣防水","牛津面料","长款","连体雨衣","银灰色","反光条"]</code></td></tr>
+  </table>
+
+  <div class="highlight-box amber">
+    <i class="ri-alert-line"></i> <strong>分词标签拼接修复</strong>：重新匹配窗口中，分词标签的 <code>join('')</code> 会吃掉空格，导致有空格输入被降级为无空格。已修复为 <code>join(' ')</code>，保留空格分隔。
+  </div>
+</div>
+
+<!-- 第5章：关键词倒排索引 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-green ri-database-2-line"></i> 5. 关键词倒排索引
+  </div>
+
+  <p>为加速候选检索，构建关键词倒排索引（内存缓存，首次匹配时自动构建）：</p>
+
+  <pre>
+索引结构：keyword → [productIndex1, productIndex2, ...]
+
+示例：
+  "手套" → [0, 3, 5, 7, 12, ...]
+  "防冲击" → [0, 1, 5, ...]
+  "透明" → [0, 2, ...]
+  </pre>
+
+  <p><strong>候选检索策略</strong>：</p>
+  <table>
+    <tr><th>匹配类型</th><th>规则</th><th>示例</th></tr>
+    <tr>
+      <td><span class="tag tag-green">精确匹配</span></td>
+      <td>查询token === 索引key</td>
+      <td>"防冲击" ↔ "防冲击"</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-blue">子串匹配</span></td>
+      <td>索引key包含查询token，或反之</td>
+      <td>"防化" ↔ "防化服"、"手套" ↔ "线手套"</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-purple">字符重叠</span></td>
+      <td>纯中文token间字符重叠率≥60%</td>
+      <td>"长款连体雨衣" ↔ "长雨衣"</td>
+    </tr>
+  </table>
+
+  <p>查询token命中任意产品的次数 ≥ minOverlap 时，该产品进入候选集。minOverlap = <code>queryTokens.length ≤ 2 ? 1 : ceil(length × 0.3)</code></p>
+</div>
+
+<!-- 第6章：质量加权评分 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-amber ri-scales-3-line"></i> 6. 质量加权评分（keywordMatchScore）
+  </div>
+
+  <p>关键词匹配得分采用<strong>质量加权</strong>而非简单的hit/miss计数。每个查询token独立计算匹配质量，再按权重汇总：</p>
+
+  <div class="formula-box">
+    <span class="dim">kwScore</span> <span class="op">=</span>
+    Σ(<span class="dim">quality<sub>i</sub></span> × <span class="dim">weight<sub>i</sub></span>)
+    <span class="op">/</span>
+    Σ(<span class="dim">weight<sub>i</sub></span>)
+  </div>
+
+  <div class="section-title" style="font-size:15px; border-bottom:none; padding-bottom:0; margin-bottom:12px;">
+    <i class="icon-blue ri-weight-line"></i> 6.1 Token权重
+  </div>
+  <table>
+    <tr><th>Token类型</th><th>条件</th><th>权重</th><th>设计理由</th></tr>
+    <tr>
+      <td>纯中文长词</td>
+      <td>纯中文且≥3字</td>
+      <td><strong>1.5</strong></td>
+      <td>"耐酸碱"是核心区分词，权重最高</td>
+    </tr>
+    <tr>
+      <td>纯中文短词</td>
+      <td>纯中文且2字</td>
+      <td><strong>1.0</strong></td>
+      <td>"手套"是通用词，权重适中</td>
+    </tr>
+    <tr>
+      <td>非纯中文</td>
+      <td>含数字/字母</td>
+      <td><strong>0.5</strong></td>
+      <td>"长350mm"、"103g"匹配意义低</td>
+    </tr>
+  </table>
+
+  <div class="section-title" style="font-size:15px; border-bottom:none; padding-bottom:0; margin-bottom:12px;">
+    <i class="icon-green ri-speed-line"></i> 6.2 匹配质量计算
+  </div>
+  <table>
+    <tr><th>匹配类型</th><th>质量公式</th><th>示例</th><th>quality</th></tr>
+    <tr>
+      <td><span class="tag tag-green">精确匹配</span></td>
+      <td><code>1.0</code></td>
+      <td>"耐酸碱" = "耐酸碱"</td>
+      <td class="good">1.0</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-blue">查询⊂目标</span></td>
+      <td><code>qt.length / rk.length</code></td>
+      <td>"乳胶" ⊂ "乳胶9寸6.2g"</td>
+      <td class="ok">0.29</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-blue">目标⊂查询</span></td>
+      <td><code>rk.length / qt.length</code></td>
+      <td>"m" ⊂ "长350mm"</td>
+      <td class="bad">0.17</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-purple">字符重叠</span></td>
+      <td><code>overlapRatio × minLen/maxLen</code></td>
+      <td>"长款连体雨衣" ↔ "长雨衣"</td>
+      <td class="ok">0.50</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-red">不匹配</span></td>
+      <td><code>0</code></td>
+      <td>"耐酸碱" ↔ "医用检查"</td>
+      <td class="bad">0</td>
+    </tr>
+  </table>
+
+  <div class="section-title" style="font-size:15px; border-bottom:none; padding-bottom:0; margin-bottom:12px;">
+    <i class="icon-red ri-shield-check-line"></i> 6.3 关键防护机制
+  </div>
+
+  <div class="highlight-box red">
+    <i class="ri-close-circle-line"></i> <strong>字符重叠仅对纯中文token生效</strong><br>
+    数字/字母的字符重叠无语义意义。例如"103g"与"100只"共享字符{1,0}，重叠率0.67，但这是无意义匹配。<br>
+    <strong>修复</strong>：charOverlapRatio仅在两端都是纯中文时才启用。
+  </div>
+
+  <div class="highlight-box red">
+    <i class="ri-close-circle-line"></i> <strong>否定词检测</strong><br>
+    "银灰色反光条"与"无反光条"虽然字符重叠75%，但"无"是否定前缀，语义相反。<br>
+    <strong>修复</strong>：检测否定前缀（无/非/不/未），两端否定状态不同时charOverlapRatio直接返回0。
+  </div>
+
+  <div class="highlight-box red">
+    <i class="ri-close-circle-line"></i> <strong>子串匹配按长度比折扣</strong><br>
+    旧算法中"m"匹配"长350mm"算一次完整hit（1.0），质量极低。<br>
+    <strong>修复</strong>：子串匹配质量 = 短词长度 / 长词长度，"m"匹配"长350mm"质量仅0.17。
+  </div>
+</div>
+
+<!-- 第7章：用例验证 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-green ri-check-double-line"></i> 7. 用例验证
+  </div>
+
+  <div class="section-title" style="font-size:15px; border-bottom:none; padding-bottom:0; margin-bottom:12px;">
+    <i class="icon-blue ri-eye-line"></i> 7.1 护目镜（参数描述型输入）
+  </div>
+  <p>输入：<code>护目镜 防冲击、防喷溅、防粉尘、防紫外线 聚碳酸酯 透明</code></p>
+  <table class="compare-table">
+    <tr><th>产品</th><th>拼音得分</th><th>关键词得分</th><th>融合得分</th><th>是否命中</th></tr>
+    <tr><td>3M 1621AF 护目镜</td><td>0.32</td><td class="good">0.73</td><td class="good">0.50</td><td class="good">✓</td></tr>
+    <tr><td>代尔塔 101104 护目镜</td><td>0.28</td><td class="good">0.73</td><td class="good">0.48</td><td class="good">✓</td></tr>
+    <tr><td>某品牌防尘口罩</td><td>0.05</td><td class="bad">0.00</td><td class="bad">0.03</td><td class="bad">✗</td></tr>
+  </table>
+
+  <div class="section-title" style="font-size:15px; border-bottom:none; padding-bottom:0; margin-bottom:12px;">
+    <i class="icon-purple ri-rainy-line"></i> 7.2 雨衣（长词与短词匹配）
+  </div>
+  <p>输入：<code>雨衣 防水牛津面料 长款连体雨衣 银灰色反光条</code></p>
+  <table class="compare-table">
+    <tr><th>产品</th><th>关键词得分</th><th>融合得分</th><th>是否命中</th></tr>
+    <tr><td>海王 长雨衣 灰反光条</td><td class="good">0.90</td><td class="good">0.63</td><td class="good">✓</td></tr>
+    <tr><td>河北 长雨衣 反光条</td><td class="good">0.90</td><td class="good">0.55</td><td class="good">✓</td></tr>
+    <tr><td>山东 长雨衣 无反光条</td><td class="ok">0.60</td><td class="ok">0.35</td><td class="bad">✗（缺反光条）</td></tr>
+    <tr><td>3M 活性炭过滤棉</td><td class="bad">0.30</td><td class="bad">0.21</td><td class="bad">✗</td></tr>
+  </table>
+
+  <div class="section-title" style="font-size:15px; border-bottom:none; padding-bottom:0; margin-bottom:12px;">
+    <i class="icon-amber ri-hand-heart-line"></i> 7.3 耐酸碱手套（质量加权区分）
+  </div>
+  <p>输入：<code>耐酸碱手套 长350MM 80-103g 乳胶</code></p>
+  <table class="compare-table">
+    <tr><th>产品</th><th>旧kwScore</th><th>新kwScore</th><th>新融合</th><th>正确？</th></tr>
+    <tr><td>英科 医用检查手套</td><td class="bad">1.00</td><td class="good">0.30</td><td class="bad">0.38</td><td class="good">✗正确排除</td></tr>
+    <tr><td>暖牛 家用乳胶手套</td><td class="bad">1.00</td><td class="good">0.35</td><td class="bad">0.41</td><td class="good">✗正确排除</td></tr>
+    <tr><td>威蝶 耐酸碱手套</td><td class="bad">1.00</td><td class="good">0.64</td><td class="good">0.54</td><td class="good">✓正确命中</td></tr>
+    <tr><td>康宝 耐酸碱手套</td><td class="bad">1.00</td><td class="good">0.67</td><td class="good">0.55</td><td class="good">✓正确命中</td></tr>
+  </table>
+</div>
+
+<!-- 第8章：缓存与性能 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-cyan ri-speed-up-line"></i> 8. 缓存与性能
+  </div>
+
+  <p>关键词匹配相关缓存均为内存缓存，首次匹配时自动构建，产品数据变更时自动失效：</p>
+  <table>
+    <tr><th>缓存变量</th><th>内容</th><th>构建时机</th><th>失效时机</th></tr>
+    <tr><td><code>_productKeywordCache</code></td><td>所有产品的关键词列表</td><td>首次调用getProductKeywordCache</td><td>invalidateCache / invalidateProductCache</td></tr>
+    <tr><td><code>_keywordInvertedIndex</code></td><td>关键词→产品索引的倒排表</td><td>首次调用getKeywordInvertedIndexCached</td><td>invalidateCache / invalidateProductCache</td></tr>
+  </table>
+
+  <div class="highlight-box cyan">
+    <i class="ri-information-line"></i> <strong>性能影响</strong>：关键词匹配为纯内存计算，无IndexedDB读写，构建索引约10-30ms（取决于产品数量）。每次匹配额外开销约5-15ms，整体性能约为原拼音匹配的1.5-2倍，在可接受范围内。
+  </div>
+
+  <div class="highlight-box amber">
+    <i class="ri-alert-line"></i> <strong>无需预存储</strong>：与拼音方案不同，关键词分词直接从产品的name/model/spec字段实时计算，不需要在get_cus_pro页面额外"生成分词"或存储到IndexedDB。
+  </div>
+</div>
+
+<!-- 第9章：适用场景对比 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-purple ri-contrast-2-line"></i> 9. 拼音 vs 关键词 vs 混合：适用场景对比
+  </div>
+
+  <table>
+    <tr><th>场景</th><th>拼音匹配</th><th>关键词匹配</th><th>混合匹配</th><th>推荐模式</th></tr>
+    <tr>
+      <td>精确品名匹配</td>
+      <td><span class="tag tag-green">强项</span></td>
+      <td><span class="tag tag-green">强项</span></td>
+      <td><span class="tag tag-green">强项</span></td>
+      <td>拼音/混合</td>
+    </tr>
+    <tr>
+      <td>参数子集匹配</td>
+      <td><span class="tag tag-red">弱项</span></td>
+      <td><span class="tag tag-green">强项</span></td>
+      <td><span class="tag tag-green">强项</span></td>
+      <td>分词/混合</td>
+    </tr>
+    <tr>
+      <td>语音输入同音字错误</td>
+      <td><span class="tag tag-green">强项</span></td>
+      <td><span class="tag tag-red">弱项</span></td>
+      <td><span class="tag tag-green">强项</span></td>
+      <td>拼音/混合</td>
+    </tr>
+    <tr>
+      <td>品牌名模糊搜索</td>
+      <td><span class="tag tag-green">可以</span></td>
+      <td><span class="tag tag-amber">部分</span></td>
+      <td><span class="tag tag-green">可以</span></td>
+      <td>拼音/混合</td>
+    </tr>
+    <tr>
+      <td>无空格连续输入</td>
+      <td><span class="tag tag-amber">部分</span></td>
+      <td><span class="tag tag-green">智能拆分</span></td>
+      <td><span class="tag tag-green">智能拆分</span></td>
+      <td>分词/混合</td>
+    </tr>
+    <tr>
+      <td>否定语义区分</td>
+      <td><span class="tag tag-red">无法区分</span></td>
+      <td><span class="tag tag-green">否定词检测</span></td>
+      <td><span class="tag tag-green">否定词检测</span></td>
+      <td>分词/混合</td>
+    </tr>
+  </table>
+
+  <div class="highlight-box green">
+    <i class="ri-lightbulb-line"></i> <strong>核心设计原则</strong>：三种模式不是替代关系，而是互补关系。默认使用分词模式（命中率最高），用户可一键切换到拼音或混合模式应对特殊场景。混合模式兼顾全面性但计算量最大，分词/拼音模式更轻量。
+  </div>
+</div>
+
+</div>
+</body>
+</html>

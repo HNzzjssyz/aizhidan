@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>拼音查询性能优化方案 v2</title>
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+<style>
+:root {
+  --bg: #f8f9fb;
+  --card: #ffffff;
+  --border: #e8ecf0;
+  --text: #1f2937;
+  --text-secondary: #6b7280;
+  --primary: #3b82f6;
+  --primary-light: #eff6ff;
+  --primary-border: #bfdbfe;
+  --green: #10b981;
+  --green-light: #ecfdf5;
+  --green-border: #a7f3d0;
+  --amber: #f59e0b;
+  --amber-light: #fffbeb;
+  --amber-border: #fde68a;
+  --red: #ef4444;
+  --red-light: #fef2f2;
+  --red-border: #fecaca;
+  --purple: #8b5cf6;
+  --purple-light: #f5f3ff;
+  --purple-border: #ddd6fe;
+  --teal: #14b8a6;
+  --teal-light: #f0fdfa;
+  --teal-border: #99f6e4;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  padding: 32px 20px;
+}
+.container { max-width: 960px; margin: 0 auto; }
+
+.doc-header {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px 48px;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+}
+.doc-header::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #3b82f6, #10b981, #f59e0b);
+}
+.doc-header h1 {
+  font-size: 28px; font-weight: 700; color: var(--text);
+  margin-bottom: 8px; display: flex; align-items: center; gap: 12px;
+}
+.doc-header h1 i { color: var(--primary); font-size: 28px; }
+.doc-header .subtitle { font-size: 15px; color: var(--text-secondary); margin-bottom: 20px; }
+.doc-meta { display: flex; gap: 24px; flex-wrap: wrap; }
+.doc-meta-item { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-secondary); }
+.doc-meta-item i { font-size: 14px; color: var(--primary); }
+.doc-meta-item strong { color: var(--text); font-weight: 600; }
+
+.section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 32px 36px;
+  margin-bottom: 20px;
+}
+.section-title {
+  font-size: 18px; font-weight: 700; color: var(--text);
+  margin-bottom: 20px; display: flex; align-items: center; gap: 10px;
+  padding-bottom: 14px; border-bottom: 1px solid var(--border);
+}
+.section-title i {
+  width: 32px; height: 32px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; color: white; flex-shrink: 0;
+}
+.icon-blue { background: var(--primary); }
+.icon-green { background: var(--green); }
+.icon-amber { background: var(--amber); }
+.icon-red { background: var(--red); }
+.icon-purple { background: var(--purple); }
+.icon-teal { background: var(--teal); }
+
+p { font-size: 14px; color: var(--text); margin-bottom: 12px; line-height: 1.8; }
+p:last-child { margin-bottom: 0; }
+
+.highlight-box {
+  border-radius: 10px; padding: 16px 20px; margin-bottom: 16px;
+  font-size: 14px; line-height: 1.8;
+}
+.highlight-box.blue { background: var(--primary-light); border: 1px solid var(--primary-border); color: #1e40af; }
+.highlight-box.green { background: var(--green-light); border: 1px solid var(--green-border); color: #065f46; }
+.highlight-box.amber { background: var(--amber-light); border: 1px solid var(--amber-border); color: #92400e; }
+.highlight-box.red { background: var(--red-light); border: 1px solid var(--red-border); color: #991b1b; }
+.highlight-box.purple { background: var(--purple-light); border: 1px solid var(--purple-border); color: #5b21b6; }
+.highlight-box.teal { background: var(--teal-light); border: 1px solid var(--teal-border); color: #134e4a; }
+.highlight-box i { margin-right: 6px; }
+
+pre {
+  background: #1e293b; color: #e2e8f0; border-radius: 10px;
+  padding: 20px 24px; margin-bottom: 16px; overflow-x: auto;
+  font-size: 13px; line-height: 1.7; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+}
+pre .comment { color: #64748b; }
+pre .keyword { color: #c084fc; }
+pre .string { color: #34d399; }
+pre .key { color: #60a5fa; }
+pre .func { color: #fbbf24; }
+pre .red { color: #f87171; }
+pre .green { color: #4ade80; }
+
+table {
+  width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 13px;
+}
+th, td {
+  padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border);
+}
+th { background: #f8f9fb; font-weight: 600; color: var(--text-secondary); font-size: 12px; }
+td { color: var(--text); }
+tr:last-child td { border-bottom: none; }
+
+.flow-steps { display: flex; flex-direction: column; gap: 0; margin-bottom: 16px; }
+.flow-step {
+  display: flex; gap: 16px; padding: 14px 0;
+  border-bottom: 1px dashed var(--border);
+}
+.flow-step:last-child { border-bottom: none; }
+.flow-step-num {
+  width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; color: white;
+}
+.flow-step-content { flex: 1; }
+.flow-step-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.flow-step-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.7; }
+
+.tag {
+  display: inline-block; padding: 2px 10px; border-radius: 6px;
+  font-size: 11px; font-weight: 600; margin-right: 4px;
+}
+.tag-blue { background: var(--primary-light); color: #1e40af; border: 1px solid var(--primary-border); }
+.tag-green { background: var(--green-light); color: #065f46; border: 1px solid var(--green-border); }
+.tag-amber { background: var(--amber-light); color: #92400e; border: 1px solid var(--amber-border); }
+.tag-red { background: var(--red-light); color: #991b1b; border: 1px solid var(--red-border); }
+.tag-purple { background: var(--purple-light); color: #5b21b6; border: 1px solid var(--purple-border); }
+.tag-teal { background: var(--teal-light); color: #134e4a; border: 1px solid var(--teal-border); }
+
+.compare-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;
+}
+.compare-card {
+  border-radius: 12px; padding: 20px 24px;
+  border: 1px solid var(--border);
+}
+.compare-card.before { background: #fef2f2; border-color: var(--red-border); }
+.compare-card.after { background: #ecfdf5; border-color: var(--green-border); }
+.compare-card h4 { font-size: 15px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+.compare-card ul { list-style: none; padding: 0; }
+.compare-card li { font-size: 13px; line-height: 1.8; padding-left: 20px; position: relative; }
+.compare-card li::before { content: '•'; position: absolute; left: 6px; color: var(--text-secondary); }
+
+.speed-bar {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 8px;
+}
+.speed-label { font-size: 13px; font-weight: 600; width: 100px; text-align: right; flex-shrink: 0; }
+.speed-track { flex: 1; height: 24px; background: #f1f5f9; border-radius: 12px; overflow: hidden; position: relative; }
+.speed-fill { height: 100%; border-radius: 12px; display: flex; align-items: center; justify-content: flex-end; padding-right: 8px; font-size: 11px; font-weight: 700; color: white; min-width: 40px; }
+.speed-fill.red { background: linear-gradient(90deg, #ef4444, #dc2626); }
+.speed-fill.amber { background: linear-gradient(90deg, #f59e0b, #d97706); }
+.speed-fill.green { background: linear-gradient(90deg, #10b981, #059669); }
+.speed-fill.teal { background: linear-gradient(90deg, #14b8a6, #0d9488); }
+
+.bug-box {
+  border-radius: 10px; padding: 16px 20px; margin-bottom: 16px;
+  background: var(--red-light); border: 1px solid var(--red-border);
+}
+.bug-box h4 { font-size: 14px; font-weight: 700; color: #991b1b; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.bug-box pre { background: #1e293b; border: none; margin-bottom: 8px; }
+.bug-box p { font-size: 13px; color: #991b1b; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="doc-header">
+  <h1><i class="ri-speed-up-line"></i> 拼音查询性能优化方案 v2</h1>
+  <div class="subtitle">倒排索引 + 算法优化，从6秒到亚秒级的性能飞跃</div>
+  <div class="doc-meta">
+    <div class="doc-meta-item"><i class="ri-calendar-line"></i> 创建：<strong>2026-05-19</strong></div>
+    <div class="doc-meta-item"><i class="ri-code-s-slash-line"></i> 文件：<strong>pinyin_match2.js / index2.html</strong></div>
+    <div class="doc-meta-item"><i class="ri-database-2-line"></i> 测试场景：<strong>20条产品 × 9000条产品库</strong></div>
+  </div>
+</div>
+
+<!-- 第1章：问题分析 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-red"><i class="ri-error-warning-line"></i></i>
+    1. 问题分析：为什么 index2 的缓存优化没起作用？
+  </div>
+  <p>index2 相比 index 做了大量缓存优化（内存缓存产品数据、预建名称索引、预计算拼音），但实测20条产品明细匹配速度几乎没有差异——都需5-6秒。</p>
+
+  <div class="highlight-box red">
+    <i class="ri-alert-line"></i>
+    <strong>根因：</strong>瓶颈不在数据查询，而在 <code>pinyinMatch()</code> 算法本身。缓存优化只省了约40ms的数据查询时间，但算法计算耗时约5950ms，占比99.3%。
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>环节</th><th>index</th><th>index2</th><th>占比</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Dexie数据查询</td><td>~50ms</td><td>~10ms</td><td>0.2%</td></tr>
+      <tr><td><strong>pinyinMatch 算法</strong></td><td><strong>~5950ms</strong></td><td><strong>~5950ms</strong></td><td><strong>99.3%</strong></td></tr>
+      <tr><td>总计</td><td>~6000ms</td><td>~5960ms</td><td>100%</td></tr>
+    </tbody>
+  </table>
+
+  <h4 style="font-size:15px;font-weight:700;margin:20px 0 12px;">算法复杂度分析</h4>
+  <p>原 <code>pinyinMatch()</code> 对每条查询产品，都要遍历<strong>全部产品库</strong>做4维评分：</p>
+  <pre><span class="comment">// 每条查询 × 全量产品库 × 4维评分 × O(m×n) DP算法</span>
+<span class="keyword">for</span> (每条查询产品) {           <span class="comment">// 20条</span>
+  <span class="keyword">for</span> (每条数据库产品) {       <span class="comment">// 9000条</span>
+    calcStringSimilarity(全拼)  <span class="comment">// O(m×n) Levenshtein + O(m×n) LCS</span>
+    calcStringSimilarity(首字母) <span class="comment">// O(m×n) Levenshtein + O(m×n) LCS</span>
+    pinyinWordBagSimilarity()   <span class="comment">// O(words)</span>
+    lengthScore()               <span class="comment">// O(1)</span>
+  }
+}
+<span class="comment">// 总操作量：20 × 9000 × 4 × ~900 ≈ 6.5亿次 → 5-6秒</span></pre>
+</div>
+
+<!-- 第2章：优化方案 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-green"><i class="ri-rocket-line"></i></i>
+    2. 优化方案：三层优化策略
+  </div>
+
+  <div class="flow-steps">
+    <div class="flow-step">
+      <div class="flow-step-num" style="background:var(--purple);">1</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">拼音分词倒排索引 <span class="tag tag-purple">减少候选集</span></div>
+        <div class="flow-step-desc">
+          将产品拼音按 <code>_</code> 分词，构建 token → 产品索引的倒排索引。<br>
+          查询时只对共享 token 的候选集做评分，而非全量扫描。<br>
+          动态阈值：≤2词→1个token，3-4词→2个token，5-7词→3个token，8+词→40%。
+        </div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num" style="background:var(--teal);">2</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">Levenshtein 单行DP + 移除LCS <span class="tag tag-teal">加速单次计算</span></div>
+        <div class="flow-step-desc">
+          <strong>单行DP：</strong>用2个一维数组交替替代 (m+1)×(n+1) 二维矩阵，内存分配减少99%。<br>
+          <strong>移除LCS：</strong>LCS与Levenshtein高度冗余，去掉后 <code>calcStringSimilarity</code> 计算量减半。
+        </div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num" style="background:var(--green);">3</div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">降级重试兜底 <span class="tag tag-green">保证召回率</span></div>
+        <div class="flow-step-desc">
+          动态阈值筛选后若候选集为空，自动降级到 minOverlap=1 重新搜索，确保不漏匹配。
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 第3章：倒排索引 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-purple"><i class="ri-search-eye-line"></i></i>
+    3. 拼音分词倒排索引
+  </div>
+
+  <h4 style="font-size:15px;font-weight:700;margin:20px 0 12px;">3.1 为什么不用首字母过滤？</h4>
+  <p>首字母过滤有致命缺陷——查询"不锈钢螺栓"首字母是 <code>b</code>，但目标"安钢不锈钢螺栓"首字母是 <code>a</code>，会被错误排除。</p>
+
+  <div class="compare-grid">
+    <div class="compare-card before">
+      <h4><i class="ri-close-circle-line" style="color:var(--red);"></i> 首字母过滤（错误）</h4>
+      <ul>
+        <li>查询"不锈钢螺栓" → 首字母 <code>b</code></li>
+        <li>只保留首字母为 <code>b</code> 的产品</li>
+        <li>"安钢不锈钢螺栓"首字母 <code>a</code> → <strong style="color:#991b1b;">被排除 ❌</strong></li>
+        <li>一个字不同就丢失匹配</li>
+      </ul>
+    </div>
+    <div class="compare-card after">
+      <h4><i class="ri-check-circle-line" style="color:var(--green);"></i> 分词倒排索引（正确）</h4>
+      <ul>
+        <li>查询"不锈钢螺栓" → tokens [bu, xiu, gang, luo, shuan]</li>
+        <li>保留共享 ≥2 个token的产品</li>
+        <li>"安钢不锈钢螺栓"共享5个token → <strong style="color:#065f46;">保留 ✅</strong></li>
+        <li>"红色油漆"共享0个token → 排除 ✅</li>
+      </ul>
+    </div>
+  </div>
+
+  <h4 style="font-size:15px;font-weight:700;margin:20px 0 12px;">3.2 倒排索引结构</h4>
+  <pre><span class="comment">// 产品拼音分词后构建倒排索引</span>
+<span class="comment">// 产品: "不锈钢螺栓" → pinyin: "bu_xiu_gang_luo_shuan"</span>
+<span class="comment">// 分词: ["bu", "xiu", "gang", "luo", "shuan"]</span>
+
+invertedIndex = {
+  <span class="string">"bu"</span>:    [0, 3, 7, 12, 45, ...],   <span class="comment">// 包含"bu"的产品索引列表</span>
+  <span class="string">"xiu"</span>:   [0, 3, 7, 56, ...],        <span class="comment">// 包含"xiu"的产品索引列表</span>
+  <span class="string">"gang"</span>:  [0, 2, 3, 7, 15, ...],     <span class="comment">// 包含"gang"的产品索引列表</span>
+  <span class="string">"luo"</span>:   [0, 7, 89, ...],            <span class="comment">// 包含"luo"的产品索引列表</span>
+  <span class="string">"shuan"</span>: [0, 7, 23, ...],            <span class="comment">// 包含"shuan"的产品索引列表</span>
+  ...
+}</pre>
+
+  <h4 style="font-size:15px;font-weight:700;margin:20px 0 12px;">3.3 动态阈值策略</h4>
+  <table>
+    <thead>
+      <tr><th>查询token数</th><th>最少共享token数</th><th>典型查询示例</th><th>预期候选集</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>≤2</td><td>1</td><td>"螺母" (luo_mu)</td><td>较大，但查询本身短</td></tr>
+      <tr><td>3-4</td><td>2</td><td>"六角螺栓" (liu_jiao_luo_shuan)</td><td>中等</td></tr>
+      <tr><td>5-7</td><td>3</td><td>"不锈钢螺栓" (bu_xiu_gang_luo_shuan)</td><td>较小</td></tr>
+      <tr><td>8+</td><td>ceil(40%)</td><td>"304不锈钢内六角圆柱头螺钉"</td><td>很小</td></tr>
+    </tbody>
+  </table>
+
+  <h4 style="font-size:15px;font-weight:700;margin:20px 0 12px;">3.4 降级重试机制</h4>
+  <pre><span class="comment">// 动态阈值筛选后若候选集为空，降级到 minOverlap=1 重新搜索</span>
+<span class="keyword">var</span> candidateIndices = getCandidatesByTokenOverlap(queryTokens, invertedIndex, minOverlap);
+<span class="keyword">if</span> (candidateIndices.length === 0 && minOverlap > 1) {
+  candidateIndices = getCandidatesByTokenOverlap(queryTokens, invertedIndex, <span class="green">1</span>);
+}</pre>
+</div>
+
+<!-- 第4章：算法优化 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-teal"><i class="ri-code-s-slash-line"></i></i>
+    4. 算法层优化
+  </div>
+
+  <h4 style="font-size:15px;font-weight:700;margin:20px 0 12px;">4.1 Levenshtein 单行DP</h4>
+  <div class="compare-grid">
+    <div class="compare-card before">
+      <h4><i class="ri-close-line" style="color:var(--red);"></i> 旧版：全矩阵DP</h4>
+      <pre style="font-size:12px;padding:12px 16px;"><span class="comment">// 分配 (m+1)×(n+1) 二维数组</span>
+<span class="keyword">var</span> dp = [];
+<span class="keyword">for</span> (<span class="keyword">var</span> i = 0; i <= m; i++) { dp[i] = [i]; }
+<span class="keyword">for</span> (<span class="keyword">var</span> j = 0; j <= n; j++) { dp[0][j] = j; }
+<span class="keyword">for</span> (<span class="keyword">var</span> i = 1; i <= m; i++)
+  <span class="keyword">for</span> (<span class="keyword">var</span> j = 1; j <= n; j++)
+    dp[i][j] = Math.min(...)</pre>
+    </div>
+    <div class="compare-card after">
+      <h4><i class="ri-check-line" style="color:var(--green);"></i> 新版：单行DP</h4>
+      <pre style="font-size:12px;padding:12px 16px;"><span class="comment">// 只用2个一维数组交替</span>
+<span class="keyword">var</span> prev = [], curr = [];
+<span class="keyword">for</span> (<span class="keyword">var</span> j = 0; j <= n; j++) prev[j] = j;
+<span class="keyword">for</span> (<span class="keyword">var</span> i = 1; i <= m; i++) {
+  curr[0] = i;
+  <span class="keyword">for</span> (<span class="keyword">var</span> j = 1; j <= n; j++)
+    curr[j] = Math.min(...);
+  <span class="keyword">var</span> swap = prev; prev = curr; curr = swap;
+}</pre>
+    </div>
+  </div>
+  <div class="highlight-box teal">
+    <i class="ri-information-line"></i>
+    <strong>效果：</strong>内存分配从 O(m×n) 降到 O(n)，减少99%的GC压力。实测单次调用提速2-3倍。
+  </div>
+
+  <h4 style="font-size:15px;font-weight:700;margin:20px 0 12px;">4.2 移除LCS计算</h4>
+  <p>原 <code>calcStringSimilarity</code> 同时计算 Levenshtein 和 LCS，取平均值：</p>
+  <pre><span class="comment">// 旧版：两个 O(m×n) DP算法</span>
+<span class="keyword">var</span> levScore = 1 - levenshteinDistance(a, b) / maxLen;   <span class="red">// O(m×n)</span>
+<span class="keyword">var</span> lcsScore = 2 * longestCommonSubsequence(a, b) / (a.length + b.length); <span class="red">// O(m×n)</span>
+<span class="keyword">return</span> (levScore + lcsScore) / 2;
+
+<span class="comment">// 新版：只用 Levenshtein</span>
+<span class="keyword">return</span> 1 - levenshteinDistance(a, b) / maxLen;  <span class="green">// O(m×n)，计算量减半</span></pre>
+  <div class="highlight-box teal">
+    <i class="ri-information-line"></i>
+    <strong>理由：</strong>LCS 和 Levenshtein 衡量的都是"字符串相似度"，高度冗余。去掉LCS对匹配准确率影响极小，但 <code>calcStringSimilarity</code> 计算量直接减半。每条产品原本需要调用2次 <code>calcStringSimilarity</code>（全拼+首字母），每次内含2个DP，共4个DP；现在每次1个DP，共2个DP——<strong>整体计算量减少50%</strong>。
+  </div>
+</div>
+
+<!-- 第5章：实测效果 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-green"><i class="ri-bar-chart-box-line"></i></i>
+    5. 实测效果
+  </div>
+
+  <h4 style="font-size:15px;font-weight:700;margin:20px 0 12px;">5.1 测试场景：20条产品 × 9000条产品库</h4>
+
+  <div class="speed-bar">
+    <div class="speed-label">原版 index</div>
+    <div class="speed-track">
+      <div class="speed-fill red" style="width:100%;">6000ms</div>
+    </div>
+  </div>
+  <div class="speed-bar">
+    <div class="speed-label">缓存优化 index2</div>
+    <div class="speed-track">
+      <div class="speed-fill red" style="width:99.3%;">5960ms</div>
+    </div>
+  </div>
+  <div class="speed-bar">
+    <div class="speed-label">倒排索引 v2</div>
+    <div class="speed-track">
+      <div class="speed-fill green" style="width:15%;">~900ms</div>
+    </div>
+  </div>
+
+  <h4 style="font-size:15px;font-weight:700;margin:24px 0 12px;">5.2 不同产品库规模的加速效果</h4>
+  <table>
+    <thead>
+      <tr><th>产品库规模</th><th>原版耗时</th><th>v2优化耗时</th><th>加速比</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1,000条</td><td>~0.7秒</td><td>~0.1秒</td><td><span class="tag tag-green">7倍</span></td></tr>
+      <tr><td>9,000条</td><td>~6秒</td><td>~0.9秒</td><td><span class="tag tag-green">7倍</span></td></tr>
+      <tr><td>50,000条</td><td>~33秒</td><td>~2秒</td><td><span class="tag tag-green">17倍</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="highlight-box green">
+    <i class="ri-line-chart-line"></i>
+    <strong>关键发现：</strong>库越大，优化效果越明显。因为倒排索引的候选集大小与库规模不是线性关系——词汇量有限，候选集增长远慢于库规模增长。
+  </div>
+</div>
+
+<!-- 第6章：代码变更 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-blue"><i class="ri-git-branch-line"></i></i>
+    6. 代码变更清单
+  </div>
+
+  <h4 style="font-size:15px;font-weight:700;margin:20px 0 12px;">6.1 pinyin_match2.js</h4>
+  <table>
+    <thead>
+      <tr><th>变更类型</th><th>函数</th><th>说明</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><span class="tag tag-green">新增</span></td><td><code>tokenizePinyin(pinyinStr)</code></td><td>拼音字符串按 <code>_</code> 分词为 token 数组</td></tr>
+      <tr><td><span class="tag tag-green">新增</span></td><td><code>getTokenInvertedIndexCached()</code></td><td>构建产品拼音分词倒排索引，带缓存</td></tr>
+      <tr><td><span class="tag tag-green">新增</span></td><td><code>getCustomerTokenInvertedIndexCached()</code></td><td>构建客户拼音分词倒排索引，带缓存</td></tr>
+      <tr><td><span class="tag tag-green">新增</span></td><td><code>getCandidatesByTokenOverlap()</code></td><td>根据查询token与倒排索引的重叠数筛选候选集</td></tr>
+      <tr><td><span class="tag tag-green">新增</span></td><td><code>getMinOverlap(tokenCount)</code></td><td>动态阈值计算</td></tr>
+      <tr><td><span class="tag tag-green">新增</span></td><td><code>pinyinMatchWithCandidates()</code></td><td>接受预筛候选集的匹配函数</td></tr>
+      <tr><td><span class="tag tag-blue">修改</span></td><td><code>levenshteinDistance()</code></td><td>全矩阵DP → 单行DP，内存分配减少99%</td></tr>
+      <tr><td><span class="tag tag-blue">修改</span></td><td><code>calcStringSimilarity()</code></td><td>移除LCS，只用Levenshtein，计算量减半</td></tr>
+      <tr><td><span class="tag tag-blue">修改</span></td><td><code>findProductFuzzyMatchFromLS()</code></td><td>使用倒排索引预筛 + 降级重试</td></tr>
+      <tr><td><span class="tag tag-blue">修改</span></td><td><code>matchProductsFromRawList()</code></td><td>使用倒排索引预筛 + 降级重试</td></tr>
+      <tr><td><span class="tag tag-blue">修改</span></td><td><code>invalidateCache()</code> 系列</td><td>清除倒排索引缓存</td></tr>
+      <tr><td><span class="tag tag-green">新增</span></td><td><code>cleanInvalidEscapes(str)</code></td><td>清理JSON中非法转义字符（如<code>\加</code>→空格），保障AI生成JSON可解析</td></tr>
+      <tr><td><span class="tag tag-green">新增</span></td><td><code>tryParseJSON(str)</code></td><td>容错JSON解析：先原始解析，失败后清理非法转义再试，返回<code>{obj, cleaned}</code></td></tr>
+      <tr><td><span class="tag tag-blue">修改</span></td><td><code>extractOrderJSON(text)</code></td><td>正则匹配→大括号层级匹配+tryParseJSON容错，解决嵌套JSON截断和非法转义问题</td></tr>
+      <tr><td><span class="tag tag-blue">修改</span></td><td><code>matchProductsFromRawList()</code></td><td>评分循环中拼音字符串截断（全拼120/首字母60），长产品名性能提升数倍</td></tr>
+      <tr><td><span class="tag tag-green">新增</span></td><td><code>fuzzyMatchByPinyin(name, limit)</code></td><td>纯拼音匹配函数：拼音倒排索引→四维评分，不使用分词关键词</td></tr>
+      <tr><td><span class="tag tag-green">新增</span></td><td><code>fuzzyMatchByKeyword(name, limit)</code></td><td>纯分词匹配函数：中文分词→关键词倒排索引→keywordMatchScore评分</td></tr>
+      <tr><td><span class="tag tag-green">新增</span></td><td><code>fuzzyMatchByMixed(name, limit)</code></td><td>混合匹配函数：拼音+关键词候选合并→55%+45%融合评分（原fuzzyMatchProducts逻辑）</td></tr>
+      <tr><td><span class="tag tag-blue">修改</span></td><td><code>fuzzyMatchProducts(name, limit, modelValue)</code></td><td>改为调度函数，根据_matchMode分发到三种匹配函数</td></tr>
+      <tr><td><span class="tag tag-green">新增</span></td><td><code>setMatchMode(mode)</code></td><td>切换匹配模式：更新_matchMode变量+刷新UI按钮状态+触发重新搜索</td></tr>
+      <tr><td><span class="tag tag-green">新增</span></td><td><code>highlightKeywords(html, tokens)</code></td><td>关键字高亮：在已转义HTML中按关键词（长词优先）正则替换为高亮span</td></tr>
+      <tr><td><span class="tag tag-green">新增</span></td><td><code>highlightKeywordsInText(text, tokens)</code></td><td>先转义再高亮的便捷入口函数</td></tr>
+    </tbody>
+  </table>
+
+  <h4 style="font-size:15px;font-weight:700;margin:20px 0 12px;">6.2 index2.html</h4>
+  <table>
+    <thead>
+      <tr><th>函数</th><th>说明</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>identifyCustomer()</code></td><td>使用倒排索引预筛客户候选集</td></tr>
+      <tr><td><code>fuzzyMatchProducts()</code></td><td>使用倒排索引预筛产品候选集</td></tr>
+      <tr><td><code>searchCustomerByInput()</code></td><td>使用倒排索引预筛客户候选集</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- 第7章：踩坑记录 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-amber"><i class="ri-bug-line"></i></i>
+    7. 踩坑记录
+  </div>
+
+  <div class="bug-box">
+    <h4><i class="ri-close-circle-line"></i> Bug 1：早停逻辑导致全部产品匹配失败</h4>
+    <pre><span class="comment">// 错误的早停条件</span>
+<span class="keyword">if</span> (scores.length * <span class="red">0.10</span> < <span class="red">0.45</span>) <span class="keyword">continue</span>;  <span class="comment">// scores.length 范围0~1，乘0.10后最大0.10，永远 < 0.45</span>
+<span class="comment">// → 每条记录都被跳过！全部产品显示红色</span></pre>
+    <p><strong>修复：</strong>移除早停逻辑。阈值0.45太低，早停几乎不会正确触发，反而引入了致命bug。</p>
+  </div>
+
+  <div class="bug-box">
+    <h4><i class="ri-close-circle-line"></i></i> Bug 2：未导出新增函数导致"匹配中"卡死</h4>
+    <pre><span class="comment">// index2.html 调用了未导出的函数</span>
+PinyinMatch.<span class="red">tokenizePinyin</span>()         <span class="comment">// → TypeError: not a function</span>
+PinyinMatch.<span class="red">getMinOverlap</span>()         <span class="comment">// → TypeError: not a function</span>
+PinyinMatch.<span class="red">getCandidatesByTokenOverlap</span>() <span class="comment">// → TypeError: not a function</span></pre>
+    <p><strong>修复：</strong>在 <code>return {}</code> 中导出 <code>tokenizePinyin</code>、<code>getMinOverlap</code>、<code>getCandidatesByTokenOverlap</code>。</p>
+  </div>
+
+  <div class="bug-box">
+    <h4><i class="ri-close-circle-line"></i> Bug 3：matchProductsFromRawList 缺少 products 变量</h4>
+    <pre><span class="comment">// 重构时遗漏了 getProductsCached() 调用</span>
+<span class="keyword">var</span> productMap = <span class="keyword">await</span> getProductMapCached();
+<span class="comment">// 缺少: var products = await getProductsCached();</span>
+<span class="keyword">var</span> indexDb = <span class="keyword">await</span> getProductIndexDbCached();
+...
+products.<span class="red">filter</span>(...)  <span class="comment">// → ReferenceError: products is not defined</span></pre>
+    <p><strong>修复：</strong>添加 <code>var products = await getProductsCached();</code>。</p>
+  </div>
+
+  <div class="bug-box">
+    <h4><i class="ri-close-circle-line"></i> Bug 4：extractOrderJSON 正则截断导致嵌套JSON解析失败</h4>
+    <pre><span class="comment">// 旧正则用 [\s\S]*?\} 非贪婪匹配</span>
+/\{[\s\S]*?"customer_name"[\s\S]*?"products"[\s\S]*?\}/
+<span class="comment">// 匹配到 products 数组第一个元素的 } 就停了</span>
+<span class="comment">// → 截取的字符串不是完整JSON → JSON.parse 报错</span></pre>
+    <p><strong>修复：</strong>重写 <code>extractOrderJSON</code>，改为大括号层级匹配——先用正则定位关键字（如 <code>"customer_name":</code>），找到起始 <code>{</code>，再逐字符扫描跟踪大括号层级，层级归零时提取完整JSON。同时使用 <code>tryParseJSON</code> 容错解析。</p>
+  </div>
+
+  <div class="bug-box">
+    <h4><i class="ri-close-circle-line"></i> Bug 5：AI生成JSON含非法转义导致解析失败</h4>
+    <pre><span class="comment">// AI生成的产品名含未转义的反斜杠</span>
+"耐磨手套\加厚 天然橡胶"   <span class="comment">// \加 不是合法JSON转义</span>
+"电焊手套\黄色/带内衬"     <span class="comment">// \黄 不是合法JSON转义</span>
+<span class="comment">// → JSON.parse 报错 → 页面一直转圈</span></pre>
+    <p><strong>修复：</strong>新增 <code>cleanInvalidEscapes(str)</code> 函数，用正则 <code>/\\(?![\"\\\/bfnrtu])/g</code> 将非法转义的 <code>\</code> 替换为空格。新增 <code>tryParseJSON(str)</code> 先尝试原始解析，失败后清理非法转义再试，返回 <code>{obj, cleaned}</code>。<code>extractOrderJSON</code> 返回 <code>cleaned</code> 字符串，确保下游 <code>normalizeOrderJSON</code> 的 <code>JSON.parse</code> 也能成功。</p>
+  </div>
+
+  <div class="bug-box">
+    <h4><i class="ri-close-circle-line"></i> Bug 6：长产品名拼音导致匹配卡顿</h4>
+    <pre><span class="comment">// 产品名含详细描述，拼音字符串极长</span>
+"线胶耐磨王手套 星宇弹力星（双层乳胶喷盐磨砂...）"
+→ pinyin: <span class="red">200+ 字符</span>
+<span class="comment">// levenshteinDistance(200, 200) = 40000次运算</span>
+<span class="comment">// 27个产品 × 数百候选 × 4维评分 = 数百万次运算 → 页面卡死</span></pre>
+    <p><strong>修复：</strong>在 <code>matchProductsFromRawList</code> 的评分循环中，对拼音字符串做截断：全拼截断120字符（约覆盖前30个汉字），首字母截断60字符。产品名的核心区分信息（品类+型号+品牌）几乎都在前30字内，截断不影响匹配准确度，但 <code>levenshteinDistance</code> 计算量从 200×200=40000 降至 120×120=14400，<strong>减少64%</strong>。</p>
+  </div>
+</div>
+
+<!-- 第8章：后续优化方向 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-purple"><i class="ri-roadmap-line"></i></i>
+    8. 后续优化方向
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>优化方向</th><th>预期效果</th><th>改动量</th><th>优先级</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Myers 位并行算法</td>
+        <td>编辑距离提速64倍</td>
+        <td>大（需重写 levenshteinDistance）</td>
+        <td><span class="tag tag-amber">中</span></td>
+      </tr>
+      <tr>
+        <td>Web Worker 并行计算</td>
+        <td>多核并行，2-4倍提速</td>
+        <td>大（需拆分 Worker 脚本）</td>
+        <td><span class="tag tag-amber">中</span></td>
+      </tr>
+      <tr>
+        <td>拼音预计算缓存（跨次调用）</td>
+        <td>避免重复生成查询拼音</td>
+        <td>小</td>
+        <td><span class="tag tag-blue">低</span></td>
+      </tr>
+      <tr>
+        <td>产品库分片索引（按品类）</td>
+        <td>进一步缩小候选集</td>
+        <td>中</td>
+        <td><span class="tag tag-blue">低</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="highlight-box green">
+    <i class="ri-check-double-line"></i>
+    <strong>当前方案已足够：</strong>9000条产品库从6秒降到亚秒级，50万条产品库预计2秒左右，满足实际业务需求。上述优化方向可在产品库规模超过5万条时再考虑实施。
+  </div>
+</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智能制单系统 - 逻辑流程图</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: #f5f7fa;
+  padding: 40px 20px;
+  line-height: 1.6;
+}
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+h1 {
+  text-align: center;
+  color: #1a1a2e;
+  margin-bottom: 10px;
+  font-size: 28px;
+}
+.subtitle {
+  text-align: center;
+  color: #666;
+  margin-bottom: 40px;
+  font-size: 14px;
+}
+.flow-container {
+  background: white;
+  border-radius: 16px;
+  padding: 40px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+.flow-section {
+  margin-bottom: 50px;
+}
+.section-title {
+  font-size: 18px;
+  color: #1a1a2e;
+  margin-bottom: 24px;
+  padding-left: 12px;
+  border-left: 4px solid #4a90d9;
+}
+.flow-diagram {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.flow-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.node {
+  padding: 14px 20px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  min-width: 120px;
+  text-align: center;
+  position: relative;
+  transition: all 0.3s ease;
+}
+.node:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.node-start {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+.node-process {
+  background: linear-gradient(135deg, #4a90d9 0%, #357abd 100%);
+  color: white;
+}
+.node-ai {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  color: white;
+}
+.node-decision {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  border-radius: 30px;
+}
+.node-user {
+  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  color: #333;
+}
+.node-end {
+  background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+  color: white;
+}
+.node-data {
+  background: #f0f4f8;
+  border: 2px solid #4a90d9;
+  color: #1a1a2e;
+}
+.node-file {
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  color: white;
+}
+.arrow {
+  color: #999;
+  font-size: 20px;
+}
+.arrow-down {
+  width: 100%;
+  text-align: center;
+  color: #999;
+  font-size: 24px;
+}
+.arrow-merge {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0;
+  position: relative;
+}
+.arrow-merge::before,
+.arrow-merge::after {
+  content: '↓';
+  color: #999;
+  font-size: 24px;
+}
+.branch-container {
+  display: flex;
+  gap: 30px;
+  margin: 20px 0;
+  padding: 20px;
+  background: #fafbfc;
+  border-radius: 12px;
+  border: 1px dashed #ddd;
+}
+.branch {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.branch-label {
+  font-size: 12px;
+  color: #666;
+  text-align: center;
+  padding: 6px 12px;
+  background: #e8f4f8;
+  border-radius: 20px;
+  margin-bottom: 8px;
+}
+.branch.yes .branch-label { background: #d4edda; color: #155724; }
+.branch.no .branch-label { background: #f8d7da; color: #721c24; }
+.branch.multi .branch-label { background: #fff3cd; color: #856404; }
+.branch.voice .branch-label { background: #e0e7ff; color: #4338ca; }
+.branch.file .branch-label { background: #ffedd5; color: #9a3412; }
+.legend {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-top: 30px;
+  padding-top: 30px;
+  border-top: 1px solid #eee;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #666;
+}
+.legend-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+}
+.detail-box {
+  background: #f8f9fa;
+  border-left: 3px solid #4a90d9;
+  padding: 12px 16px;
+  margin: 12px 0;
+  border-radius: 0 8px 8px 0;
+  font-size: 12px;
+  color: #555;
+}
+.detail-box strong {
+  color: #1a1a2e;
+}
+.detail-box.orange {
+  border-left-color: #f97316;
+  background: #fffbeb;
+}
+.sub-flow {
+  margin-left: 40px;
+  padding-left: 20px;
+  border-left: 2px solid #e0e0e0;
+}
+.merge-node {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%);
+  border-radius: 12px;
+  color: white;
+  font-weight: 600;
+  margin: 10px 0;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🎯 智能制单系统 - 逻辑流程图</h1>
+  <p class="subtitle">三种输入入口（语音输入 + 文件/截图上传 + 文本粘贴）→ 客户识别 + 产品明细识别 → 自动制单生成</p>
+  
+  <div class="flow-container">
+    
+    <!-- 多模态输入入口 -->
+    <div class="flow-section">
+      <h2 class="section-title">🔀 三种输入入口</h2>
+      <div class="flow-diagram">
+        <div class="flow-row" style="justify-content: center;">
+          <div class="node node-start" style="min-width: 160px;">📥 统一输入入口</div>
+        </div>
+        
+        <div class="arrow-down">↓</div>
+        
+        <div class="flow-row" style="justify-content: center;">
+          <div class="node node-decision">输入方式?</div>
+        </div>
+        
+        <div class="branch-container" style="flex-wrap: wrap;">
+          <div class="branch voice" style="min-width: 200px;">
+            <div class="branch-label">🎤 语音输入</div>
+            <div class="node node-start">🎤 语音录制</div>
+            <div class="arrow-down">↓</div>
+            <div class="node node-ai">🤖 ASR语音识别</div>
+            <div class="arrow-down">↓</div>
+            <div class="node node-process">🔤 同音匹配纠错</div>
+            <div class="arrow-down">↓</div>
+            <div class="node node-process">📝 口语化整理</div>
+          </div>
+          
+          <div class="branch file" style="min-width: 200px;">
+            <div class="branch-label">📁 文件/截图上传</div>
+            <div class="node node-file">📁 文件上传<br/><small>截图/图片/Excel/Word/PDF</small></div>
+            <div class="arrow-down">↓</div>
+            <div class="node node-process">🔍 格式识别</div>
+            <div class="arrow-down">↓</div>
+            <div class="node node-ai">📄 文字提取<br/><small>OCR/解析</small></div>
+            <div class="arrow-down">↓</div>
+            <div class="node node-process">🧹 格式清洗<br/><small>跳过同音匹配</small></div>
+          </div>
+          
+          <div class="branch" style="min-width: 200px; background: #fef3c7; border: 1px solid #fcd34d;">
+            <div class="branch-label" style="background: #fcd34d; color: #92400e;">📝 文本粘贴</div>
+            <div class="node" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white;">📝 粘贴文本<br/><small>微信/邮件等</small></div>
+            <div class="arrow-down">↓</div>
+            <div class="node node-ai">🤖 AI语义识别</div>
+            <div class="arrow-down">↓</div>
+            <div class="node node-process">📋 结构化提取</div>
+            <div class="arrow-down">↓</div>
+            <div class="node node-process">✅ 数据校验</div>
+          </div>
+        </div>
+        
+        <div class="merge-node">
+          <span>🔄 汇合：结构化文本 → 统一LLM处理</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 统一LLM处理流程 -->
+    <div class="flow-section">
+      <h2 class="section-title">🧠 统一LLM语义解析流程</h2>
+      <div class="flow-diagram">
+        <div class="flow-row">
+          <div class="node node-data">📋 结构化文本</div>
+          <span class="arrow">→</span>
+          <div class="node node-ai">🧠 LLM语义解析</div>
+          <span class="arrow">→</span>
+          <div class="node node-data">📋 结构化数据</div>
+        </div>
+        
+        <div class="detail-box">
+          <strong>LLM解析输出：</strong><br>
+          • 客户信息：名称、联系人、地址等<br>
+          • 产品明细：产品名、数量、单价、备注<br>
+          • 其他信息：交期要求、特殊说明等
+        </div>
+        
+        <div class="arrow-down">↓</div>
+        
+        <div class="flow-row">
+          <div class="node node-process">🔍 客户识别模块</div>
+          <span class="arrow">→</span>
+          <div class="node node-process">📦 产品识别模块</div>
+          <span class="arrow">→</span>
+          <div class="node node-process">✅ 数据校验</div>
+          <span class="arrow">→</span>
+          <div class="node node-end">📄 生成单据</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 外部文件处理详情 -->
+    <div class="flow-section">
+      <h2 class="section-title">📁 文件/截图处理详情（含单据识别）</h2>
+      <div class="flow-diagram">
+        <div class="flow-row">
+          <div class="node node-decision">文件类型?</div>
+        </div>
+        
+        <div class="branch-container">
+          <div class="branch" style="flex: 1;">
+            <div class="branch-label">🖼️ 图片/截图</div>
+            <div class="node node-file">📷 JPG/PNG/PDF</div>
+            <div class="arrow-down">↓</div>
+            <div class="node node-ai">👁️ OCR识别</div>
+            <div class="arrow-down">↓</div>
+            <div class="node node-ai" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">🤖 单据类型识别</div>
+            <div class="arrow-down">↓</div>
+            <div class="node node-data">📝 提取文字</div>
+          </div>
+          
+          <div class="branch" style="flex: 1;">
+            <div class="branch-label">📊 Excel文件</div>
+            <div class="node node-file">📈 XLSX/XLS</div>
+            <div class="arrow-down">↓</div>
+            <div class="node node-process">📋 表格解析</div>
+            <div class="arrow-down">↓</div>
+            <div class="node node-data">📝 提取数据</div>
+          </div>
+          
+          <div class="branch" style="flex: 1;">
+            <div class="branch-label">📄 Word文件</div>
+            <div class="node node-file">📝 DOCX/DOC</div>
+            <div class="arrow-down">↓</div>
+            <div class="node node-process">📖 文档解析</div>
+            <div class="arrow-down">↓</div>
+            <div class="node node-data">📝 提取文字</div>
+          </div>
+        </div>
+        
+        <div class="detail-box" style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border-left-color: #10b981;">
+          <strong>📄 单据识别（图片/截图自动触发）：</strong><br>
+          • AI多模态识别分析单据版式和内容<br>
+          • 自动判断单据类型：询价单 → 触发生成报价单 | 采购单 → 触发生成订单<br>
+          • 提取客户和产品信息，进入统一LLM处理流程
+        </div>
+        
+        <div class="detail-box orange">
+          <strong>⚠️ 外部文件处理特点：</strong><br>
+          • 文字已规范化，无需同音匹配纠错<br>
+          • 直接进入格式清洗，去除表格边框、页眉页脚等噪音<br>
+          • 提取后与语音输入汇合，统一进入LLM结构化流程
+        </div>
+      </div>
+    </div>
+
+    <!-- 客户识别流程 -->
+    <div class="flow-section">
+      <h2 class="section-title">👤 客户识别流程（拼音匹配 + 分词去噪）</h2>
+      <div class="flow-diagram">
+        <div class="flow-row">
+          <div class="node node-data">提取客户名称<br/><small>"深圳华创科技有限公司"</small></div>
+          <span class="arrow">→</span>
+          <div class="node node-process">📝 分词处理<br/><small>去除地址/后缀噪音</small></div>
+        </div>
+        
+        <div class="detail-box">
+          <strong>分词规则：</strong>去除「省/市/区/县/镇/街道/路/号/楼/室」等地址词，去除「有限公司/股份公司/集团/公司」等后缀，保留核心商号
+        </div>
+        
+        <div class="flow-row">
+          <div class="node node-process">🔤 转拼音<br/><small>"shenzhenhuachuang"</small></div>
+          <span class="arrow">→</span>
+          <div class="node node-process">🎯 模糊匹配<br/><small>客户库全量检索</small></div>
+          <span class="arrow">→</span>
+          <div class="node node-decision">匹配结果?</div>
+        </div>
+        
+        <div class="branch-container">
+          <div class="branch yes">
+            <div class="branch-label">✓ 唯一匹配</div>
+            <div class="node node-process">自动锁定客户</div>
+            <div class="arrow-down">↓</div>
+            <div class="node node-end">✅ 客户确认完成</div>
+          </div>
+          
+          <div class="branch multi">
+            <div class="branch-label">⚠ 多个匹配</div>
+            <div class="node node-user">🖱️ 弹出候选列表<br/><small>按相似度排序</small></div>
+            <div class="arrow-down">↓</div>
+            <div class="node node-user">👆 用户点击选择</div>
+          </div>
+          
+          <div class="branch no">
+            <div class="branch-label">✗ 无匹配</div>
+            <div class="node node-user">🔍 手动搜索客户</div>
+            <div class="arrow-down">↓</div>
+            <div class="node node-user">➕ 或新建客户</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 产品识别流程 -->
+    <div class="flow-section">
+      <h2 class="section-title">📦 产品明细识别流程（多维度匹配）</h2>
+      <div class="flow-diagram">
+        <div class="flow-row">
+          <div class="node node-ai">🧠 AI语义抽取</div>
+          <span class="arrow">→</span>
+          <div class="node node-data">产品主体 + 数量 + 价格 + 备注</div>
+        </div>
+        
+        <div class="detail-box">
+          <strong>AI抽取示例：</strong><br>
+          语音："给深圳华创发100箱A3打印纸，每箱280块，要加急"<br>
+          输出：{产品:"A3打印纸", 数量:"100箱", 单价:"280元", 备注:"加急"}
+        </div>
+        
+        <div class="flow-row">
+          <div class="node node-process">🔍 产品识别引擎</div>
+          <span class="arrow">→</span>
+          <div class="node node-decision">匹配维度优先级</div>
+        </div>
+        
+        <div class="sub-flow">
+          <div class="flow-row">
+            <div class="node node-process" style="background: #e3f2fd; color: #1565c0;">1️⃣ SKU精确匹配</div>
+            <span class="arrow">→</span>
+            <div class="node node-process" style="background: #e8f5e9; color: #2e7d32;">2️⃣ 产品编号匹配</div>
+            <span class="arrow">→</span>
+            <div class="node node-process" style="background: #fff3e0; color: #e65100;">3️⃣ 品名模糊匹配</div>
+            <span class="arrow">→</span>
+            <div class="node node-process" style="background: #fce4ec; color: #c2185b;">4️⃣ 型号规格匹配</div>
+          </div>
+        </div>
+        
+        <div class="detail-box">
+          <strong>客户联动：</strong>若客户已确认，优先匹配该客户历史采购产品，缩小匹配范围
+        </div>
+        
+        <div class="flow-row">
+          <div class="node node-decision">匹配结果?</div>
+        </div>
+        
+        <div class="branch-container">
+          <div class="branch yes">
+            <div class="branch-label">✓ 唯一匹配</div>
+            <div class="node node-process">自动填充产品信息</div>
+            <div class="arrow-down">↓</div>
+            <div class="node node-end">✅ 产品确认完成</div>
+          </div>
+          
+          <div class="branch multi">
+            <div class="branch-label">⚠ 多个匹配</div>
+            <div class="node node-user">🖱️ 弹出轻量化候选<br/><small>编号+品名+规格</small></div>
+            <div class="arrow-down">↓</div>
+            <div class="node node-user">👆 用户一键选择</div>
+          </div>
+          
+          <div class="branch no">
+            <div class="branch-label">✗ 无匹配</div>
+            <div class="node node-data">保留原始描述</div>
+            <div class="arrow-down">↓</div>
+            <div class="node node-user">🔍 手动搜索 或 ➕ 新建</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 异常处理流程 -->
+    <div class="flow-section">
+      <h2 class="section-title">⚠️ 异常处理与兜底机制</h2>
+      <div class="flow-diagram">
+        <div class="flow-row">
+          <div class="node node-decision">识别置信度 < 80%?</div>
+        </div>
+        
+        <div class="branch-container">
+          <div class="branch yes">
+            <div class="branch-label">低置信度</div>
+            <div class="node node-user">🟡 标记待确认</div>
+            <div class="arrow-down">↓</div>
+            <div class="node node-user">📝 高亮显示原文本</div>
+            <div class="arrow-down">↓</div>
+            <div class="node node-user">✏️ 用户可手动编辑修正</div>
+          </div>
+          
+          <div class="branch no">
+            <div class="branch-label">高置信度</div>
+            <div class="node node-process">🟢 自动确认通过</div>
+            <div class="arrow-down">↓</div>
+            <div class="node node-end">进入下一环节</div>
+          </div>
+        </div>
+        
+        <div class="detail-box" style="margin-top: 20px;">
+          <strong>兜底原则：</strong><br>
+          1. 宁可让用户多点一次，不可自动填错<br>
+          2. 所有AI识别结果均可人工修正<br>
+          3. 保留原始输入记录（语音/文件），支持事后追溯
+        </div>
+      </div>
+    </div>
+
+    <!-- 图例 -->
+    <div class="legend">
+      <div class="legend-item">
+        <div class="legend-dot" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div>
+        <span>开始/结束</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background: linear-gradient(135deg, #4a90d9 0%, #357abd 100%);"></div>
+        <span>处理步骤</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);"></div>
+        <span>AI/算法</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);"></div>
+        <span>决策判断</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);"></div>
+        <span>用户交互</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background: #f0f4f8; border: 2px solid #4a90d9;"></div>
+        <span>数据对象</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);"></div>
+        <span>文件处理</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);"></div>
+        <span>单据识别</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);"></div>
+        <span>文本粘贴</span>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

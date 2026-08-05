@@ -1,0 +1,1435 @@
+{
+  "products": [
+    {
+      "id": "1",
+      "name": "惠普笔记本",
+      "model": "i7-3632QM/GT650M",
+      "spec": "-"
+    },
+    {
+      "id": "2",
+      "name": "爱国者PB106无线存储转接器",
+      "model": "ipb106",
+      "spec": "-"
+    },
+    {
+      "id": "3",
+      "name": "东芝V5 500G",
+      "model": "v5500g",
+      "spec": "-"
+    },
+    {
+      "id": "4",
+      "name": "金士顿Micro SD卡(16G)",
+      "model": "Micro5",
+      "spec": "-"
+    },
+    {
+      "id": "5",
+      "name": "创见SDHC卡 Class4(4GB)",
+      "model": "SDHC5",
+      "spec": "-"
+    },
+    {
+      "id": "6",
+      "name": "金士顿CF(8G)",
+      "model": "CF8G",
+      "spec": "-"
+    },
+    {
+      "id": "7",
+      "name": "金士顿DTW(32G)",
+      "model": "DTW32G",
+      "spec": "-"
+    },
+    {
+      "id": "8",
+      "name": "爱国者迷你王 商务型L8202(16G)",
+      "model": "IP23",
+      "spec": "-"
+    },
+    {
+      "id": "9",
+      "name": "酷睿",
+      "model": "i5-3230M/4G",
+      "spec": "-"
+    },
+    {
+      "id": "10",
+      "name": "联想",
+      "model": "i5-4200M/4G",
+      "spec": "-"
+    },
+    {
+      "id": "11",
+      "name": "防水罩",
+      "model": "FHZ2014",
+      "spec": "基准"
+    },
+    {
+      "id": "12",
+      "name": "传真机",
+      "model": "CZJ5",
+      "spec": "-"
+    },
+    {
+      "id": "13",
+      "name": "喷墨打印机",
+      "model": "PMP2",
+      "spec": "-"
+    },
+    {
+      "id": "14",
+      "name": "针式打印机",
+      "model": "ZSP4",
+      "spec": "-"
+    },
+    {
+      "id": "15",
+      "name": "激光打印机",
+      "model": "JGP3",
+      "spec": "-"
+    },
+    {
+      "id": "16",
+      "name": "扫描仪",
+      "model": "SMY3",
+      "spec": "-"
+    },
+    {
+      "id": "17",
+      "name": "华为",
+      "model": "荣耀3C",
+      "spec": "-"
+    },
+    {
+      "id": "18",
+      "name": "小米",
+      "model": "3代",
+      "spec": "-"
+    },
+    {
+      "id": "20",
+      "name": "笔记本电脑",
+      "model": "",
+      "spec": "-"
+    },
+    {
+      "id": "21",
+      "name": "iPhone5",
+      "model": "",
+      "spec": "-"
+    },
+    {
+      "id": "22",
+      "name": "iPhone6",
+      "model": "",
+      "spec": "-"
+    },
+    {
+      "id": "23",
+      "name": "iPhone6s",
+      "model": "",
+      "spec": "-"
+    },
+    {
+      "id": "24",
+      "name": "iPhone7",
+      "model": "",
+      "spec": "-"
+    },
+    {
+      "id": "25",
+      "name": "iPhone7s",
+      "model": "",
+      "spec": "-"
+    },
+    {
+      "id": "26",
+      "name": "iPhone7s",
+      "model": "128G",
+      "spec": "-"
+    },
+    {
+      "id": "27",
+      "name": "服务费",
+      "model": "",
+      "spec": "-"
+    },
+    {
+      "id": "28",
+      "name": "华为",
+      "model": "not7",
+      "spec": "基准"
+    },
+    {
+      "id": "29",
+      "name": "OPPO",
+      "model": "r9",
+      "spec": "基准"
+    },
+    {
+      "id": "32",
+      "name": "台式电脑",
+      "model": "DN-837A",
+      "spec": "-"
+    },
+    {
+      "id": "33",
+      "name": "三星画面分割器",
+      "model": "SOMC-420T",
+      "spec": "-"
+    },
+    {
+      "id": "34",
+      "name": "水平旋转云台",
+      "model": "ABL10-804",
+      "spec": "-"
+    },
+    {
+      "id": "35",
+      "name": "艾礼安电子围栏",
+      "model": "ABL100-18010",
+      "spec": "-"
+    },
+    {
+      "id": "36",
+      "name": "艾礼安电子围栏",
+      "model": "ABL60-804",
+      "spec": "-"
+    },
+    {
+      "id": "37",
+      "name": "视频会议",
+      "model": "DSNNY DSN-D40",
+      "spec": "-"
+    },
+    {
+      "id": "38",
+      "name": "视频会议",
+      "model": "索尼EVI-D90P",
+      "spec": "-"
+    },
+    {
+      "id": "39",
+      "name": "视频会议",
+      "model": "POLYCOM HDX 6000-720",
+      "spec": "-"
+    },
+    {
+      "id": "40",
+      "name": "萤石（EZVIZ）高清夜视",
+      "model": "C3C",
+      "spec": "-"
+    },
+    {
+      "id": "41",
+      "name": "模拟半球安防监控",
+      "model": "2.8mm",
+      "spec": "-"
+    },
+    {
+      "id": "42",
+      "name": "全方位重型鸭嘴",
+      "model": "S09",
+      "spec": "-"
+    },
+    {
+      "id": "43",
+      "name": "门禁感应器",
+      "model": "DSO009",
+      "spec": "-"
+    },
+    {
+      "id": "44",
+      "name": "工业电源 400W",
+      "model": "FY-400-24",
+      "spec": "-"
+    },
+    {
+      "id": "45",
+      "name": "InterCPU",
+      "model": "i7-6700",
+      "spec": "-"
+    },
+    {
+      "id": "46",
+      "name": "排线",
+      "model": "PM1200",
+      "spec": "基准"
+    },
+    {
+      "id": "47",
+      "name": "散热器Frostflow",
+      "model": "240L-R",
+      "spec": "基准"
+    },
+    {
+      "id": "48",
+      "name": "CPU风扇",
+      "model": "双12CM风扇",
+      "spec": "基准"
+    },
+    {
+      "id": "49",
+      "name": "CPU风扇",
+      "model": "双12CM风扇",
+      "spec": "2*3"
+    },
+    {
+      "id": "50",
+      "name": "防护服",
+      "model": "3M白",
+      "spec": "-"
+    },
+    {
+      "id": "65",
+      "name": "排线",
+      "model": "PM1200",
+      "spec": "10米"
+    },
+    {
+      "id": "66",
+      "name": "排线",
+      "model": "PM1200",
+      "spec": "20米"
+    },
+    {
+      "id": "67",
+      "name": "散热器Frostflow",
+      "model": "240L-R",
+      "spec": "蓝色"
+    },
+    {
+      "id": "68",
+      "name": "散热器Frostflow",
+      "model": "240L-R",
+      "spec": "黄色"
+    },
+    {
+      "id": "72",
+      "name": "加湿器",
+      "model": "ASH-01",
+      "spec": "-"
+    },
+    {
+      "id": "73",
+      "name": "爱图仕Aputure",
+      "model": "VS-1",
+      "spec": "-"
+    },
+    {
+      "id": "74",
+      "name": "得力指纹考勤机",
+      "model": "33068",
+      "spec": "-"
+    },
+    {
+      "id": "75",
+      "name": "人脸识别考勤机",
+      "model": "HW C330",
+      "spec": "-"
+    },
+    {
+      "id": "76",
+      "name": "索尼录音笔",
+      "model": "PCM-M10",
+      "spec": "-"
+    },
+    {
+      "id": "77",
+      "name": "小蚁智能夜视",
+      "model": "VTR5000",
+      "spec": "-"
+    },
+    {
+      "id": "78",
+      "name": "岡祈家用智能燃气报警器",
+      "model": "HM-710",
+      "spec": "-"
+    },
+    {
+      "id": "79",
+      "name": "线路防暴套管",
+      "model": "YL-007",
+      "spec": "-"
+    },
+    {
+      "id": "80",
+      "name": "防爆软管",
+      "model": "高强度黑色",
+      "spec": "-"
+    },
+    {
+      "id": "81",
+      "name": "温度湿度二合一传感器",
+      "model": "G75",
+      "spec": "-"
+    },
+    {
+      "id": "82",
+      "name": "中控门禁一体机",
+      "model": "F8",
+      "spec": "-"
+    },
+    {
+      "id": "83",
+      "name": "安全监控设备QM9800",
+      "model": "MF-850",
+      "spec": "-"
+    },
+    {
+      "id": "84",
+      "name": "监视器控制台",
+      "model": "E392A",
+      "spec": "-"
+    },
+    {
+      "id": "85",
+      "name": "红外探头KL900",
+      "model": "白色",
+      "spec": "-"
+    },
+    {
+      "id": "87",
+      "name": "防水罩",
+      "model": "FHZ2014",
+      "spec": "S"
+    },
+    {
+      "id": "88",
+      "name": "防水罩",
+      "model": "FHZ2014",
+      "spec": "M"
+    },
+    {
+      "id": "89",
+      "name": "防水罩",
+      "model": "FHZ2014",
+      "spec": "L"
+    },
+    {
+      "id": "90",
+      "name": "应急照明",
+      "model": "1小时60W",
+      "spec": "-"
+    },
+    {
+      "id": "91",
+      "name": "主板",
+      "model": "四核工控研能",
+      "spec": "-"
+    },
+    {
+      "id": "92",
+      "name": "内存",
+      "model": "64G",
+      "spec": "-"
+    },
+    {
+      "id": "93",
+      "name": "机箱",
+      "model": "25x60x50",
+      "spec": "-"
+    },
+    {
+      "id": "94",
+      "name": "电源",
+      "model": "2300W",
+      "spec": "-"
+    },
+    {
+      "id": "95",
+      "name": "主机",
+      "model": "NQ5700",
+      "spec": "-"
+    },
+    {
+      "id": "96",
+      "name": "kindle",
+      "model": "黑色",
+      "spec": "-"
+    },
+    {
+      "id": "97",
+      "name": "摄像头-400万半球网络",
+      "model": "DS-2CD2F45F(D)-I(W)(S)",
+      "spec": "-"
+    },
+    {
+      "id": "99",
+      "name": "连防无线烟雾报警器",
+      "model": "配标",
+      "spec": "-"
+    },
+    {
+      "id": "100",
+      "name": "烟雾报警器",
+      "model": "",
+      "spec": "-"
+    },
+    {
+      "id": "101",
+      "name": "遥控器",
+      "model": "报警器",
+      "spec": "-"
+    },
+    {
+      "id": "102",
+      "name": "双遥控多探头报警器红外线防盗器",
+      "model": "KL-8120无线远距离2公里",
+      "spec": "-"
+    },
+    {
+      "id": "103",
+      "name": "电源",
+      "model": "",
+      "spec": "-"
+    },
+    {
+      "id": "106",
+      "name": "手机",
+      "model": "r11s",
+      "spec": "-"
+    },
+    {
+      "id": "107",
+      "name": "双遥控多探头报警器红外线防",
+      "model": "",
+      "spec": "-"
+    },
+    {
+      "id": "108",
+      "name": "15mm木塑197-29-3",
+      "model": "",
+      "spec": "基准"
+    },
+    {
+      "id": "109",
+      "name": "15mm木塑197-29-3",
+      "model": "",
+      "spec": "支"
+    },
+    {
+      "id": "110",
+      "name": "15mm木塑197-29-3",
+      "model": "",
+      "spec": "张"
+    },
+    {
+      "id": "111",
+      "name": "星座气吹",
+      "model": "",
+      "spec": "-"
+    },
+    {
+      "id": "113",
+      "name": "视频会议",
+      "model": "POLYCOM HDX 6000-720",
+      "spec": "-"
+    },
+    {
+      "id": "114",
+      "name": "iPhone7s",
+      "model": "128G",
+      "spec": "-"
+    },
+    {
+      "id": "115",
+      "name": "脚手架",
+      "model": "120x",
+      "spec": "-"
+    },
+    {
+      "id": "116",
+      "name": "脚手架",
+      "model": "120x",
+      "spec": "-"
+    },
+    {
+      "id": "117",
+      "name": "硬件设备",
+      "model": "wr",
+      "spec": "-"
+    },
+    {
+      "id": "118",
+      "name": "InterCPU",
+      "model": "",
+      "spec": "-"
+    },
+    {
+      "id": "119",
+      "name": "先进先出产品_0001",
+      "model": "",
+      "spec": "-"
+    },
+    {
+      "id": "120",
+      "name": "kindle",
+      "model": "s-1",
+      "spec": "-"
+    },
+    {
+      "id": "121",
+      "name": "凌美钢笔",
+      "model": "L-1",
+      "spec": "-"
+    },
+    {
+      "id": "122",
+      "name": "手机话费充值",
+      "model": "",
+      "spec": "-"
+    },
+    {
+      "id": "123",
+      "name": "CRM Plus版",
+      "model": "v10.07",
+      "spec": "-"
+    },
+    {
+      "id": "124",
+      "name": "MES系统",
+      "model": "M-1",
+      "spec": "-"
+    },
+    {
+      "id": "125",
+      "name": "飞利浦显示屏",
+      "model": "F-1",
+      "spec": "-"
+    },
+    {
+      "id": "126",
+      "name": "琳娜贝尔",
+      "model": "",
+      "spec": "-"
+    },
+    {
+      "id": "127",
+      "name": "小米指纹锁",
+      "model": "K8900",
+      "spec": "-"
+    }
+  ],
+  "pinyin": {
+    "1": {
+      "id": "1",
+      "name": "惠普笔记本",
+      "model": "i7-3632QM/GT650M",
+      "spec": "-",
+      "pinyin": "hui_pu_bi_ji_ben_i7-3632qm/gt650m_-",
+      "pinyin_abbr": "hpbjbi7-3632qm/gt650m-"
+    },
+    "2": {
+      "id": "2",
+      "name": "爱国者PB106无线存储转接器",
+      "model": "ipb106",
+      "spec": "-",
+      "pinyin": "ai_guo_zhe_pb106_wu_xian_cun_chu_zhuan_jie_qi_ipb106_-",
+      "pinyin_abbr": "agzpb106wxcczjqipb106-"
+    },
+    "3": {
+      "id": "3",
+      "name": "东芝V5 500G",
+      "model": "v5500g",
+      "spec": "-",
+      "pinyin": "dong_zhi_v5_500g_v5500g_-",
+      "pinyin_abbr": "dzv5500gv5500g-"
+    },
+    "4": {
+      "id": "4",
+      "name": "金士顿Micro SD卡(16G)",
+      "model": "Micro5",
+      "spec": "-",
+      "pinyin": "jin_shi_dun_micro_sd_ka_(16g)_micro5_-",
+      "pinyin_abbr": "jsdmicrosdk(16g)micro5-"
+    },
+    "5": {
+      "id": "5",
+      "name": "创见SDHC卡 Class4(4GB)",
+      "model": "SDHC5",
+      "spec": "-",
+      "pinyin": "chuang_jian_sdhc_ka_class4(4gb)_sdhc5_-",
+      "pinyin_abbr": "cjsdhckclass4(4gb)sdhc5-"
+    },
+    "6": {
+      "id": "6",
+      "name": "金士顿CF(8G)",
+      "model": "CF8G",
+      "spec": "-",
+      "pinyin": "jin_shi_dun_cf(8g)_cf8g_-",
+      "pinyin_abbr": "jsdcf(8g)cf8g-"
+    },
+    "7": {
+      "id": "7",
+      "name": "金士顿DTW(32G)",
+      "model": "DTW32G",
+      "spec": "-",
+      "pinyin": "jin_shi_dun_dtw(32g)_dtw32g_-",
+      "pinyin_abbr": "jsddtw(32g)dtw32g-"
+    },
+    "8": {
+      "id": "8",
+      "name": "爱国者迷你王 商务型L8202(16G)",
+      "model": "IP23",
+      "spec": "-",
+      "pinyin": "ai_guo_zhe_mi_ni_wang_shang_wu_xing_l8202(16g)_ip23_-",
+      "pinyin_abbr": "agzmnwswxl8202(16g)ip23-"
+    },
+    "9": {
+      "id": "9",
+      "name": "酷睿",
+      "model": "i5-3230M/4G",
+      "spec": "-",
+      "pinyin": "ku_rui_i5-3230m/4g_-",
+      "pinyin_abbr": "kri5-3230m/4g-"
+    },
+    "10": {
+      "id": "10",
+      "name": "联想",
+      "model": "i5-4200M/4G",
+      "spec": "-",
+      "pinyin": "lian_xiang_i5-4200m/4g_-",
+      "pinyin_abbr": "lxi5-4200m/4g-"
+    },
+    "11": {
+      "id": "11",
+      "name": "防水罩",
+      "model": "FHZ2014",
+      "spec": "基准",
+      "pinyin": "fang_shui_zhao_fhz2014_ji_zhun",
+      "pinyin_abbr": "fszfhz2014jz"
+    },
+    "12": {
+      "id": "12",
+      "name": "传真机",
+      "model": "CZJ5",
+      "spec": "-",
+      "pinyin": "chuan_zhen_ji_czj5_-",
+      "pinyin_abbr": "czjczj5-"
+    },
+    "13": {
+      "id": "13",
+      "name": "喷墨打印机",
+      "model": "PMP2",
+      "spec": "-",
+      "pinyin": "pen_mo_da_yin_ji_pmp2_-",
+      "pinyin_abbr": "pmdyjpmp2-"
+    },
+    "14": {
+      "id": "14",
+      "name": "针式打印机",
+      "model": "ZSP4",
+      "spec": "-",
+      "pinyin": "zhen_shi_da_yin_ji_zsp4_-",
+      "pinyin_abbr": "zsdyjzsp4-"
+    },
+    "15": {
+      "id": "15",
+      "name": "激光打印机",
+      "model": "JGP3",
+      "spec": "-",
+      "pinyin": "ji_guang_da_yin_ji_jgp3_-",
+      "pinyin_abbr": "jgdyjjgp3-"
+    },
+    "16": {
+      "id": "16",
+      "name": "扫描仪",
+      "model": "SMY3",
+      "spec": "-",
+      "pinyin": "sao_miao_yi_smy3_-",
+      "pinyin_abbr": "smysmy3-"
+    },
+    "17": {
+      "id": "17",
+      "name": "华为",
+      "model": "荣耀3C",
+      "spec": "-",
+      "pinyin": "hua_wei_rong_yao_3c_-",
+      "pinyin_abbr": "hwry3c-"
+    },
+    "18": {
+      "id": "18",
+      "name": "小米",
+      "model": "3代",
+      "spec": "-",
+      "pinyin": "xiao_mi_3_dai_-",
+      "pinyin_abbr": "xm3d-"
+    },
+    "20": {
+      "id": "20",
+      "name": "笔记本电脑",
+      "model": "",
+      "spec": "-",
+      "pinyin": "bi_ji_ben_dian_nao_-",
+      "pinyin_abbr": "bjbdn-"
+    },
+    "21": {
+      "id": "21",
+      "name": "iPhone5",
+      "model": "",
+      "spec": "-",
+      "pinyin": "iphone5_-",
+      "pinyin_abbr": "iphone5-"
+    },
+    "22": {
+      "id": "22",
+      "name": "iPhone6",
+      "model": "",
+      "spec": "-",
+      "pinyin": "iphone6_-",
+      "pinyin_abbr": "iphone6-"
+    },
+    "23": {
+      "id": "23",
+      "name": "iPhone6s",
+      "model": "",
+      "spec": "-",
+      "pinyin": "iphone6s_-",
+      "pinyin_abbr": "iphone6s-"
+    },
+    "24": {
+      "id": "24",
+      "name": "iPhone7",
+      "model": "",
+      "spec": "-",
+      "pinyin": "iphone7_-",
+      "pinyin_abbr": "iphone7-"
+    },
+    "25": {
+      "id": "25",
+      "name": "iPhone7s",
+      "model": "",
+      "spec": "-",
+      "pinyin": "iphone7s_-",
+      "pinyin_abbr": "iphone7s-"
+    },
+    "26": {
+      "id": "26",
+      "name": "iPhone7s",
+      "model": "128G",
+      "spec": "-",
+      "pinyin": "iphone7s_128g_-",
+      "pinyin_abbr": "iphone7s128g-"
+    },
+    "27": {
+      "id": "27",
+      "name": "服务费",
+      "model": "",
+      "spec": "-",
+      "pinyin": "fu_wu_fei_-",
+      "pinyin_abbr": "fwf-"
+    },
+    "28": {
+      "id": "28",
+      "name": "华为",
+      "model": "not7",
+      "spec": "基准",
+      "pinyin": "hua_wei_not7_ji_zhun",
+      "pinyin_abbr": "hwnot7jz"
+    },
+    "29": {
+      "id": "29",
+      "name": "OPPO",
+      "model": "r9",
+      "spec": "基准",
+      "pinyin": "oppo_r9_ji_zhun",
+      "pinyin_abbr": "oppor9jz"
+    },
+    "32": {
+      "id": "32",
+      "name": "台式电脑",
+      "model": "DN-837A",
+      "spec": "-",
+      "pinyin": "tai_shi_dian_nao_dn-837a_-",
+      "pinyin_abbr": "tsdndn-837a-"
+    },
+    "33": {
+      "id": "33",
+      "name": "三星画面分割器",
+      "model": "SOMC-420T",
+      "spec": "-",
+      "pinyin": "san_xing_hua_mian_fen_ge_qi_somc-420t_-",
+      "pinyin_abbr": "sxhmfgqsomc-420t-"
+    },
+    "34": {
+      "id": "34",
+      "name": "水平旋转云台",
+      "model": "ABL10-804",
+      "spec": "-",
+      "pinyin": "shui_ping_xuan_zhuan_yun_tai_abl10-804_-",
+      "pinyin_abbr": "spxzytabl10-804-"
+    },
+    "35": {
+      "id": "35",
+      "name": "艾礼安电子围栏",
+      "model": "ABL100-18010",
+      "spec": "-",
+      "pinyin": "ai_li_an_dian_zi_wei_lan_abl100-18010_-",
+      "pinyin_abbr": "aladzwlabl100-18010-"
+    },
+    "36": {
+      "id": "36",
+      "name": "艾礼安电子围栏",
+      "model": "ABL60-804",
+      "spec": "-",
+      "pinyin": "ai_li_an_dian_zi_wei_lan_abl60-804_-",
+      "pinyin_abbr": "aladzwlabl60-804-"
+    },
+    "37": {
+      "id": "37",
+      "name": "视频会议",
+      "model": "DSNNY DSN-D40",
+      "spec": "-",
+      "pinyin": "shi_pin_hui_yi_dsnny_dsn-d40_-",
+      "pinyin_abbr": "sphydsnnydsn-d40-"
+    },
+    "38": {
+      "id": "38",
+      "name": "视频会议",
+      "model": "索尼EVI-D90P",
+      "spec": "-",
+      "pinyin": "shi_pin_hui_yi_suo_ni_evi-d90p_-",
+      "pinyin_abbr": "sphysnevi-d90p-"
+    },
+    "39": {
+      "id": "39",
+      "name": "视频会议",
+      "model": "POLYCOM HDX 6000-720",
+      "spec": "-",
+      "pinyin": "shi_pin_hui_yi_polycom_hdx_6000-720_-",
+      "pinyin_abbr": "sphypolycomhdx6000-720-"
+    },
+    "40": {
+      "id": "40",
+      "name": "萤石（EZVIZ）高清夜视",
+      "model": "C3C",
+      "spec": "-",
+      "pinyin": "ying_shi_（ezviz）_gao_qing_ye_shi_c3c_-",
+      "pinyin_abbr": "ys（ezviz）gqysc3c-"
+    },
+    "41": {
+      "id": "41",
+      "name": "模拟半球安防监控",
+      "model": "2.8mm",
+      "spec": "-",
+      "pinyin": "mo_ni_ban_qiu_an_fang_jian_kong_2.8mm_-",
+      "pinyin_abbr": "mnbqafjk2.8mm-"
+    },
+    "42": {
+      "id": "42",
+      "name": "全方位重型鸭嘴",
+      "model": "S09",
+      "spec": "-",
+      "pinyin": "quan_fang_wei_zhong_xing_ya_zui_s09_-",
+      "pinyin_abbr": "qfwzxyzs09-"
+    },
+    "43": {
+      "id": "43",
+      "name": "门禁感应器",
+      "model": "DSO009",
+      "spec": "-",
+      "pinyin": "men_jin_gan_ying_qi_dso009_-",
+      "pinyin_abbr": "mjgyqdso009-"
+    },
+    "44": {
+      "id": "44",
+      "name": "工业电源 400W",
+      "model": "FY-400-24",
+      "spec": "-",
+      "pinyin": "gong_ye_dian_yuan_400w_fy-400-24_-",
+      "pinyin_abbr": "gydy400wfy-400-24-"
+    },
+    "45": {
+      "id": "45",
+      "name": "InterCPU",
+      "model": "i7-6700",
+      "spec": "-",
+      "pinyin": "intercpu_i7-6700_-",
+      "pinyin_abbr": "intercpui7-6700-"
+    },
+    "46": {
+      "id": "46",
+      "name": "排线",
+      "model": "PM1200",
+      "spec": "基准",
+      "pinyin": "pai_xian_pm1200_ji_zhun",
+      "pinyin_abbr": "pxpm1200jz"
+    },
+    "47": {
+      "id": "47",
+      "name": "散热器Frostflow",
+      "model": "240L-R",
+      "spec": "基准",
+      "pinyin": "san_re_qi_frostflow_240l-r_ji_zhun",
+      "pinyin_abbr": "srqfrostflow240l-rjz"
+    },
+    "48": {
+      "id": "48",
+      "name": "CPU风扇",
+      "model": "双12CM风扇",
+      "spec": "基准",
+      "pinyin": "cpu_feng_shan_shuang_12cm_feng_shan_ji_zhun",
+      "pinyin_abbr": "cpufss12cmfsjz"
+    },
+    "49": {
+      "id": "49",
+      "name": "CPU风扇",
+      "model": "双12CM风扇",
+      "spec": "2*3",
+      "pinyin": "cpu_feng_shan_shuang_12cm_feng_shan_2*3",
+      "pinyin_abbr": "cpufss12cmfs2*3"
+    },
+    "50": {
+      "id": "50",
+      "name": "防护服",
+      "model": "3M白",
+      "spec": "-",
+      "pinyin": "fang_hu_fu_3m_bai_-",
+      "pinyin_abbr": "fhf3mb-"
+    },
+    "65": {
+      "id": "65",
+      "name": "排线",
+      "model": "PM1200",
+      "spec": "10米",
+      "pinyin": "pai_xian_pm1200_10_mi",
+      "pinyin_abbr": "pxpm120010m"
+    },
+    "66": {
+      "id": "66",
+      "name": "排线",
+      "model": "PM1200",
+      "spec": "20米",
+      "pinyin": "pai_xian_pm1200_20_mi",
+      "pinyin_abbr": "pxpm120020m"
+    },
+    "67": {
+      "id": "67",
+      "name": "散热器Frostflow",
+      "model": "240L-R",
+      "spec": "蓝色",
+      "pinyin": "san_re_qi_frostflow_240l-r_lan_se",
+      "pinyin_abbr": "srqfrostflow240l-rls"
+    },
+    "68": {
+      "id": "68",
+      "name": "散热器Frostflow",
+      "model": "240L-R",
+      "spec": "黄色",
+      "pinyin": "san_re_qi_frostflow_240l-r_huang_se",
+      "pinyin_abbr": "srqfrostflow240l-rhs"
+    },
+    "72": {
+      "id": "72",
+      "name": "加湿器",
+      "model": "ASH-01",
+      "spec": "-",
+      "pinyin": "jia_shi_qi_ash-01_-",
+      "pinyin_abbr": "jsqash-01-"
+    },
+    "73": {
+      "id": "73",
+      "name": "爱图仕Aputure",
+      "model": "VS-1",
+      "spec": "-",
+      "pinyin": "ai_tu_shi_aputure_vs-1_-",
+      "pinyin_abbr": "atsaputurevs-1-"
+    },
+    "74": {
+      "id": "74",
+      "name": "得力指纹考勤机",
+      "model": "33068",
+      "spec": "-",
+      "pinyin": "de_li_zhi_wen_kao_qin_ji_33068_-",
+      "pinyin_abbr": "dlzwkqj33068-"
+    },
+    "75": {
+      "id": "75",
+      "name": "人脸识别考勤机",
+      "model": "HW C330",
+      "spec": "-",
+      "pinyin": "ren_lian_shi_bie_kao_qin_ji_hw_c330_-",
+      "pinyin_abbr": "rlsbkqjhwc330-"
+    },
+    "76": {
+      "id": "76",
+      "name": "索尼录音笔",
+      "model": "PCM-M10",
+      "spec": "-",
+      "pinyin": "suo_ni_lu_yin_bi_pcm-m10_-",
+      "pinyin_abbr": "snlybpcm-m10-"
+    },
+    "77": {
+      "id": "77",
+      "name": "小蚁智能夜视",
+      "model": "VTR5000",
+      "spec": "-",
+      "pinyin": "xiao_yi_zhi_neng_ye_shi_vtr5000_-",
+      "pinyin_abbr": "xyznysvtr5000-"
+    },
+    "78": {
+      "id": "78",
+      "name": "岡祈家用智能燃气报警器",
+      "model": "HM-710",
+      "spec": "-",
+      "pinyin": "gang_qi_jia_yong_zhi_neng_ran_qi_bao_jing_qi_hm-710_-",
+      "pinyin_abbr": "gqjyznrqbjqhm-710-"
+    },
+    "79": {
+      "id": "79",
+      "name": "线路防暴套管",
+      "model": "YL-007",
+      "spec": "-",
+      "pinyin": "xian_lu_fang_bao_tao_guan_yl-007_-",
+      "pinyin_abbr": "xlfbtgyl-007-"
+    },
+    "80": {
+      "id": "80",
+      "name": "防爆软管",
+      "model": "高强度黑色",
+      "spec": "-",
+      "pinyin": "fang_bao_ruan_guan_gao_qiang_du_hei_se_-",
+      "pinyin_abbr": "fbrggqdhs-"
+    },
+    "81": {
+      "id": "81",
+      "name": "温度湿度二合一传感器",
+      "model": "G75",
+      "spec": "-",
+      "pinyin": "wen_du_shi_du_er_he_yi_chuan_gan_qi_g75_-",
+      "pinyin_abbr": "wdsdehycgqg75-"
+    },
+    "82": {
+      "id": "82",
+      "name": "中控门禁一体机",
+      "model": "F8",
+      "spec": "-",
+      "pinyin": "zhong_kong_men_jin_yi_ti_ji_f8_-",
+      "pinyin_abbr": "zkmjytjf8-"
+    },
+    "83": {
+      "id": "83",
+      "name": "安全监控设备QM9800",
+      "model": "MF-850",
+      "spec": "-",
+      "pinyin": "an_quan_jian_kong_she_bei_qm9800_mf-850_-",
+      "pinyin_abbr": "aqjksbqm9800mf-850-"
+    },
+    "84": {
+      "id": "84",
+      "name": "监视器控制台",
+      "model": "E392A",
+      "spec": "-",
+      "pinyin": "jian_shi_qi_kong_zhi_tai_e392a_-",
+      "pinyin_abbr": "jsqkzte392a-"
+    },
+    "85": {
+      "id": "85",
+      "name": "红外探头KL900",
+      "model": "白色",
+      "spec": "-",
+      "pinyin": "hong_wai_tan_tou_kl900_bai_se_-",
+      "pinyin_abbr": "hwttkl900bs-"
+    },
+    "87": {
+      "id": "87",
+      "name": "防水罩",
+      "model": "FHZ2014",
+      "spec": "S",
+      "pinyin": "fang_shui_zhao_fhz2014_s",
+      "pinyin_abbr": "fszfhz2014s"
+    },
+    "88": {
+      "id": "88",
+      "name": "防水罩",
+      "model": "FHZ2014",
+      "spec": "M",
+      "pinyin": "fang_shui_zhao_fhz2014_m",
+      "pinyin_abbr": "fszfhz2014m"
+    },
+    "89": {
+      "id": "89",
+      "name": "防水罩",
+      "model": "FHZ2014",
+      "spec": "L",
+      "pinyin": "fang_shui_zhao_fhz2014_l",
+      "pinyin_abbr": "fszfhz2014l"
+    },
+    "90": {
+      "id": "90",
+      "name": "应急照明",
+      "model": "1小时60W",
+      "spec": "-",
+      "pinyin": "ying_ji_zhao_ming_1_xiao_shi_60w_-",
+      "pinyin_abbr": "yjzm1xs60w-"
+    },
+    "91": {
+      "id": "91",
+      "name": "主板",
+      "model": "四核工控研能",
+      "spec": "-",
+      "pinyin": "zhu_ban_si_he_gong_kong_yan_neng_-",
+      "pinyin_abbr": "zbshgkyn-"
+    },
+    "92": {
+      "id": "92",
+      "name": "内存",
+      "model": "64G",
+      "spec": "-",
+      "pinyin": "nei_cun_64g_-",
+      "pinyin_abbr": "nc64g-"
+    },
+    "93": {
+      "id": "93",
+      "name": "机箱",
+      "model": "25x60x50",
+      "spec": "-",
+      "pinyin": "ji_xiang_25x60x50_-",
+      "pinyin_abbr": "jx25x60x50-"
+    },
+    "94": {
+      "id": "94",
+      "name": "电源",
+      "model": "2300W",
+      "spec": "-",
+      "pinyin": "dian_yuan_2300w_-",
+      "pinyin_abbr": "dy2300w-"
+    },
+    "95": {
+      "id": "95",
+      "name": "主机",
+      "model": "NQ5700",
+      "spec": "-",
+      "pinyin": "zhu_ji_nq5700_-",
+      "pinyin_abbr": "zjnq5700-"
+    },
+    "96": {
+      "id": "96",
+      "name": "kindle",
+      "model": "黑色",
+      "spec": "-",
+      "pinyin": "kindle_hei_se_-",
+      "pinyin_abbr": "kindlehs-"
+    },
+    "97": {
+      "id": "97",
+      "name": "摄像头-400万半球网络",
+      "model": "DS-2CD2F45F(D)-I(W)(S)",
+      "spec": "-",
+      "pinyin": "she_xiang_tou_-400_wan_ban_qiu_wang_luo_ds-2cd2f45f(d)-i(w)(s)_-",
+      "pinyin_abbr": "sxt-400wbqwlds-2cd2f45f(d)-i(w)(s)-"
+    },
+    "99": {
+      "id": "99",
+      "name": "连防无线烟雾报警器",
+      "model": "配标",
+      "spec": "-",
+      "pinyin": "lian_fang_wu_xian_yan_wu_bao_jing_qi_pei_biao_-",
+      "pinyin_abbr": "lfwxywbjqpb-"
+    },
+    "100": {
+      "id": "100",
+      "name": "烟雾报警器",
+      "model": "",
+      "spec": "-",
+      "pinyin": "yan_wu_bao_jing_qi_-",
+      "pinyin_abbr": "ywbjq-"
+    },
+    "101": {
+      "id": "101",
+      "name": "遥控器",
+      "model": "报警器",
+      "spec": "-",
+      "pinyin": "yao_kong_qi_bao_jing_qi_-",
+      "pinyin_abbr": "ykqbjq-"
+    },
+    "102": {
+      "id": "102",
+      "name": "双遥控多探头报警器红外线防盗器",
+      "model": "KL-8120无线远距离2公里",
+      "spec": "-",
+      "pinyin": "shuang_yao_kong_duo_tan_tou_bao_jing_qi_hong_wai_xian_fang_dao_qi_kl-8120_wu_xian_yuan_ju_li_2_gong_li_-",
+      "pinyin_abbr": "sykdttbjqhwxfdqkl-8120wxyjl2gl-"
+    },
+    "103": {
+      "id": "103",
+      "name": "电源",
+      "model": "",
+      "spec": "-",
+      "pinyin": "dian_yuan_-",
+      "pinyin_abbr": "dy-"
+    },
+    "106": {
+      "id": "106",
+      "name": "手机",
+      "model": "r11s",
+      "spec": "-",
+      "pinyin": "shou_ji_r11s_-",
+      "pinyin_abbr": "sjr11s-"
+    },
+    "107": {
+      "id": "107",
+      "name": "双遥控多探头报警器红外线防",
+      "model": "",
+      "spec": "-",
+      "pinyin": "shuang_yao_kong_duo_tan_tou_bao_jing_qi_hong_wai_xian_fang_-",
+      "pinyin_abbr": "sykdttbjqhwxf-"
+    },
+    "108": {
+      "id": "108",
+      "name": "15mm木塑197-29-3",
+      "model": "",
+      "spec": "基准",
+      "pinyin": "15mm_mu_su_197-29-3_ji_zhun",
+      "pinyin_abbr": "15mmms197-29-3jz"
+    },
+    "109": {
+      "id": "109",
+      "name": "15mm木塑197-29-3",
+      "model": "",
+      "spec": "支",
+      "pinyin": "15mm_mu_su_197-29-3_zhi",
+      "pinyin_abbr": "15mmms197-29-3z"
+    },
+    "110": {
+      "id": "110",
+      "name": "15mm木塑197-29-3",
+      "model": "",
+      "spec": "张",
+      "pinyin": "15mm_mu_su_197-29-3_zhang",
+      "pinyin_abbr": "15mmms197-29-3z"
+    },
+    "111": {
+      "id": "111",
+      "name": "星座气吹",
+      "model": "",
+      "spec": "-",
+      "pinyin": "xing_zuo_qi_chui_-",
+      "pinyin_abbr": "xzqc-"
+    },
+    "113": {
+      "id": "113",
+      "name": "视频会议",
+      "model": "POLYCOM HDX 6000-720",
+      "spec": "-",
+      "pinyin": "shi_pin_hui_yi_polycom_hdx_6000-720_-",
+      "pinyin_abbr": "sphypolycomhdx6000-720-"
+    },
+    "114": {
+      "id": "114",
+      "name": "iPhone7s",
+      "model": "128G",
+      "spec": "-",
+      "pinyin": "iphone7s_128g_-",
+      "pinyin_abbr": "iphone7s128g-"
+    },
+    "115": {
+      "id": "115",
+      "name": "脚手架",
+      "model": "120x",
+      "spec": "-",
+      "pinyin": "jiao_shou_jia_120x_-",
+      "pinyin_abbr": "jsj120x-"
+    },
+    "116": {
+      "id": "116",
+      "name": "脚手架",
+      "model": "120x",
+      "spec": "-",
+      "pinyin": "jiao_shou_jia_120x_-",
+      "pinyin_abbr": "jsj120x-"
+    },
+    "117": {
+      "id": "117",
+      "name": "硬件设备",
+      "model": "wr",
+      "spec": "-",
+      "pinyin": "ying_jian_she_bei_wr_-",
+      "pinyin_abbr": "yjsbwr-"
+    },
+    "118": {
+      "id": "118",
+      "name": "InterCPU",
+      "model": "",
+      "spec": "-",
+      "pinyin": "intercpu_-",
+      "pinyin_abbr": "intercpu-"
+    },
+    "119": {
+      "id": "119",
+      "name": "先进先出产品_0001",
+      "model": "",
+      "spec": "-",
+      "pinyin": "xian_jin_xian_chu_chan_pin__0001_-",
+      "pinyin_abbr": "xjxccp_0001-"
+    },
+    "120": {
+      "id": "120",
+      "name": "kindle",
+      "model": "s-1",
+      "spec": "-",
+      "pinyin": "kindle_s-1_-",
+      "pinyin_abbr": "kindles-1-"
+    },
+    "121": {
+      "id": "121",
+      "name": "凌美钢笔",
+      "model": "L-1",
+      "spec": "-",
+      "pinyin": "ling_mei_gang_bi_l-1_-",
+      "pinyin_abbr": "lmgbl-1-"
+    },
+    "122": {
+      "id": "122",
+      "name": "手机话费充值",
+      "model": "",
+      "spec": "-",
+      "pinyin": "shou_ji_hua_fei_chong_zhi_-",
+      "pinyin_abbr": "sjhfcz-"
+    },
+    "123": {
+      "id": "123",
+      "name": "CRM Plus版",
+      "model": "v10.07",
+      "spec": "-",
+      "pinyin": "crm_plus_ban_v10.07_-",
+      "pinyin_abbr": "crmplusbv10.07-"
+    },
+    "124": {
+      "id": "124",
+      "name": "MES系统",
+      "model": "M-1",
+      "spec": "-",
+      "pinyin": "mes_xi_tong_m-1_-",
+      "pinyin_abbr": "mesxtm-1-"
+    },
+    "125": {
+      "id": "125",
+      "name": "飞利浦显示屏",
+      "model": "F-1",
+      "spec": "-",
+      "pinyin": "fei_li_pu_xian_shi_ping_f-1_-",
+      "pinyin_abbr": "flpxspf-1-"
+    },
+    "126": {
+      "id": "126",
+      "name": "琳娜贝尔",
+      "model": "",
+      "spec": "-",
+      "pinyin": "lin_na_bei_er_-",
+      "pinyin_abbr": "lnbe-"
+    },
+    "127": {
+      "id": "127",
+      "name": "小米指纹锁",
+      "model": "K8900",
+      "spec": "-",
+      "pinyin": "xiao_mi_zhi_wen_suo_k8900_-",
+      "pinyin_abbr": "xmzwsk8900-"
+    }
+  },
+  "exportedAt": "2026-05-16T00:12:40.408Z"
+}

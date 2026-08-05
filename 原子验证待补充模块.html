@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>原子验证待补充模块 — 数据值守 MVP Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Noto+Sans+SC:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+<style>
+:root {
+  --bg-primary: #f8f9fb;
+  --bg-secondary: #f0f1f4;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f8f9fb;
+  --border: #e5e7eb;
+  --border-light: #d1d5db;
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+  --text-muted: #9ca3af;
+  --accent: #3b82f6;
+  --accent-light: #60a5fa;
+  --accent-dim: #2563eb;
+  --accent-glow: rgba(59, 130, 246, 0.1);
+  --success: #16a34a;
+  --success-dim: rgba(22, 163, 74, 0.1);
+  --warning: #ea580c;
+  --warning-dim: rgba(234, 88, 12, 0.1);
+  --info: #2563eb;
+  --info-dim: rgba(37, 99, 235, 0.1);
+  --danger: #dc2626;
+  --danger-dim: rgba(220, 38, 38, 0.1);
+  --purple: #7c3aed;
+  --purple-dim: rgba(124, 58, 237, 0.1);
+  --cyan: #0891b2;
+  --cyan-dim: rgba(8, 145, 178, 0.1);
+  --serif: 'Noto Serif SC', serif;
+  --sans: 'Noto Sans SC', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-xs: 4px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html {
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) var(--bg-primary);
+}
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection { background: var(--accent); color: #ffffff; }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(248, 249, 251, 0.9); backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border); transition: transform 0.3s ease;
+}
+nav .nav-inner {
+  max-width: 1200px; margin: 0 auto; padding: 0 40px;
+  display: flex; align-items: center; justify-content: space-between; height: 56px;
+}
+nav .nav-brand { font-family: var(--serif); font-weight: 700; font-size: 16px; color: var(--accent); letter-spacing: 0.5px; }
+nav .nav-links { display: flex; gap: 6px; flex-wrap: wrap; }
+nav .nav-links a {
+  color: var(--text-secondary); text-decoration: none; font-size: 12.5px; font-weight: 500;
+  padding: 6px 12px; border-radius: 6px; transition: all 0.2s ease; letter-spacing: 0.3px;
+}
+nav .nav-links a:hover, nav .nav-links a.active { color: var(--accent); background: var(--accent-glow); }
+
+.hero {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  position: relative; overflow: hidden; padding: 80px 40px;
+}
+.hero::before {
+  content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+  background: radial-gradient(ellipse at 30% 20%, rgba(59, 130, 246, 0.06) 0%, transparent 50%),
+              radial-gradient(ellipse at 70% 80%, rgba(59, 130, 246, 0.04) 0%, transparent 50%);
+  animation: heroGlow 20s ease-in-out infinite alternate;
+}
+@keyframes heroGlow { 0% { transform: translate(0, 0) rotate(0deg); } 100% { transform: translate(-5%, 3%) rotate(3deg); } }
+.hero-grid {
+  position: absolute; inset: 0;
+  background-image: linear-gradient(rgba(0, 0, 0, 0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 0, 0, 0.06) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse at center, black 20%, transparent 70%);
+  -webkit-mask-image: radial-gradient(ellipse at center, black 20%, transparent 70%);
+}
+.hero-content { position: relative; text-align: center; max-width: 800px; }
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--accent-glow); border: 1px solid var(--accent-dim); color: var(--accent);
+  font-size: 11.5px; font-weight: 600; padding: 6px 16px; border-radius: 20px;
+  letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 32px;
+  animation: fadeInUp 0.8s ease both;
+}
+.hero-badge .dot { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; animation: pulse 2s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+.hero h1 {
+  font-family: var(--serif); font-size: clamp(36px, 5.5vw, 64px); font-weight: 900;
+  line-height: 1.15; margin-bottom: 24px; animation: fadeInUp 0.8s ease 0.15s both;
+}
+.hero h1 .accent { color: var(--accent); position: relative; }
+.hero h1 .accent::after { content: ''; position: absolute; bottom: 2px; left: 0; right: 0; height: 3px; background: var(--accent); border-radius: 2px; opacity: 0.35; }
+.hero .subtitle {
+  font-size: 16.5px; color: var(--text-secondary); line-height: 1.85;
+  max-width: 620px; margin: 0 auto 36px; animation: fadeInUp 0.8s ease 0.25s both;
+}
+.hero-meta { display: flex; justify-content: center; gap: 28px; animation: fadeInUp 0.8s ease 0.4s both; }
+.hero-meta .meta-item { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.hero-meta .meta-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; }
+.hero-meta .meta-value { font-family: var(--mono); font-size: 12.5px; color: var(--text-secondary); }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: translateY(0); } }
+
+.container { max-width: 1200px; margin: 0 auto; padding: 0 40px; }
+section { padding: 90px 0; position: relative; }
+.section-header { margin-bottom: 48px; }
+.section-number { font-family: var(--mono); font-size: 11.5px; color: var(--accent); font-weight: 500; letter-spacing: 2px; margin-bottom: 10px; display: block; }
+.section-title { font-family: var(--serif); font-size: clamp(26px, 3.5vw, 38px); font-weight: 700; line-height: 1.25; margin-bottom: 14px; }
+.section-desc { font-size: 15px; color: var(--text-secondary); max-width: 640px; line-height: 1.8; }
+.divider { width: 100%; height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); }
+
+.card-grid { display: grid; gap: 18px; }
+.card-grid-2 { grid-template-columns: repeat(2, 1fr); }
+.card-grid-3 { grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 900px) { .card-grid-2, .card-grid-3 { grid-template-columns: 1fr; } }
+
+.card {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 26px; transition: all 0.3s ease; position: relative; overflow: hidden;
+}
+.card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0; transition: opacity 0.3s ease;
+}
+.card:hover { border-color: var(--border-light); background: var(--bg-card-hover); transform: translateY(-2px); }
+.card:hover::before { opacity: 1; }
+.card-icon i { font-size: 19px; }
+.callout-icon i { font-size: 18px; }
+.card-icon { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 19px; margin-bottom: 16px; }
+.card-icon.accent { background: var(--accent-glow); color: var(--accent); }
+.card-icon.info { background: var(--info-dim); color: var(--info); }
+.card-icon.warning { background: var(--warning-dim); color: var(--warning); }
+.card-icon.danger { background: var(--danger-dim); color: var(--danger); }
+.card-icon.success { background: var(--success-dim); color: var(--success); }
+.card-icon.purple { background: var(--purple-dim); color: var(--purple); }
+.card-icon.cyan { background: var(--cyan-dim); color: var(--cyan); }
+.card h3 { font-family: var(--serif); font-size: 17px; font-weight: 700; margin-bottom: 8px; line-height: 1.4; }
+.card p { color: var(--text-secondary); font-size: 13px; line-height: 1.75; }
+
+.tag { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 4px; font-size: 10.5px; font-weight: 600; letter-spacing: 0.5px; }
+.tag-accent { background: var(--accent-glow); color: var(--accent); }
+.tag-info { background: var(--info-dim); color: var(--info); }
+.tag-warning { background: var(--warning-dim); color: var(--warning); }
+.tag-danger { background: var(--danger-dim); color: var(--danger); }
+.tag-success { background: var(--success-dim); color: var(--success); }
+.tag-purple { background: var(--purple-dim); color: var(--purple); }
+.tag-cyan { background: var(--cyan-dim); color: var(--cyan); }
+
+.feature-detail { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 32px; margin-bottom: 22px; }
+.feature-detail .feature-header { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+.feature-detail .feature-num { font-family: var(--mono); font-size: 30px; font-weight: 700; color: var(--accent); opacity: 0.35; line-height: 1; }
+.feature-detail h3 { font-family: var(--serif); font-size: 20px; font-weight: 700; }
+.feature-detail .feature-body { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+@media (max-width: 900px) { .feature-detail .feature-body { grid-template-columns: 1fr; } }
+.feature-detail .feature-col h4 { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+.feature-detail .feature-col ul { list-style: none; display: flex; flex-direction: column; gap: 7px; }
+.feature-detail .feature-col li { font-size: 13px; color: var(--text-secondary); padding-left: 16px; position: relative; line-height: 1.65; }
+.feature-detail .feature-col li::before { content: '▸'; position: absolute; left: 0; color: var(--accent); font-size: 10px; }
+
+.callout { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px 26px; display: flex; gap: 14px; margin: 22px 0; }
+.callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 2px; }
+.callout-body h4 { font-size: 13.5px; font-weight: 600; margin-bottom: 5px; }
+.callout-body p { font-size: 12.5px; color: var(--text-secondary); line-height: 1.7; }
+.callout.warning { border-left: 3px solid var(--warning); }
+.callout.info { border-left: 3px solid var(--info); }
+.callout.success { border-left: 3px solid var(--success); }
+.callout.danger { border-left: 3px solid var(--danger); }
+.callout.accent { border-left: 3px solid var(--accent); }
+
+.verify-table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+.verify-table thead th {
+  text-align: left; padding: 12px 16px; font-size: 11px; font-weight: 600;
+  color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;
+  border-bottom: 1px solid var(--border); background: var(--bg-secondary);
+}
+.verify-table thead th:first-child { border-radius: var(--radius-sm) 0 0 0; }
+.verify-table thead th:last-child { border-radius: 0 var(--radius-sm) 0 0; }
+.verify-table tbody td {
+  padding: 14px 16px; font-size: 13px; color: var(--text-secondary);
+  border-bottom: 1px solid var(--border); line-height: 1.65; vertical-align: top;
+}
+.verify-table tbody tr:hover { background: var(--bg-card-hover); }
+.verify-table tbody td:first-child { color: var(--text-primary); font-weight: 500; min-width: 160px; }
+.verify-table tbody td:nth-child(2) { min-width: 120px; }
+.verify-table tbody td:last-child { min-width: 240px; }
+
+.status-badge {
+  display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px;
+  border-radius: 20px; font-size: 11px; font-weight: 600;
+}
+.status-badge.pending { background: var(--warning-dim); color: var(--warning); }
+.status-badge.partial { background: var(--info-dim); color: var(--info); }
+.status-badge.done { background: var(--success-dim); color: var(--success); }
+.status-badge.blocked { background: var(--danger-dim); color: var(--danger); }
+
+.priority-badge {
+  display: inline-flex; align-items: center; padding: 2px 8px;
+  border-radius: 4px; font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
+}
+.priority-badge.p0 { background: var(--danger-dim); color: var(--danger); }
+.priority-badge.p1 { background: var(--warning-dim); color: var(--warning); }
+.priority-badge.p2 { background: var(--info-dim); color: var(--info); }
+
+.priority-section { margin-bottom: 32px; }
+.priority-header {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 18px;
+  padding-bottom: 12px; border-bottom: 1px solid var(--border);
+}
+.priority-label {
+  font-family: var(--mono); font-size: 14px; font-weight: 700;
+  padding: 4px 14px; border-radius: 6px; letter-spacing: 1px;
+}
+.priority-label.p0 { background: var(--danger-dim); color: var(--danger); }
+.priority-label.p1 { background: var(--warning-dim); color: var(--warning); }
+.priority-label.p2 { background: var(--info-dim); color: var(--info); }
+.priority-title { font-family: var(--serif); font-size: 18px; font-weight: 700; }
+.priority-desc { font-size: 13px; color: var(--text-secondary); }
+
+.cross-flow {
+  display: flex; align-items: center; gap: 0; overflow-x: auto; padding-bottom: 6px;
+}
+.cross-node {
+  background: var(--bg-card); border: 1px solid var(--border); padding: 18px 22px;
+  min-width: 180px; text-align: center; position: relative;
+}
+.cross-node:first-child { border-radius: var(--radius) 0 0 var(--radius); }
+.cross-node:last-child { border-radius: 0 var(--radius) var(--radius) 0; }
+.cross-node:not(:last-child)::after {
+  content: '→'; position: absolute; right: -13px; top: 50%; transform: translateY(-50%); z-index: 2;
+  color: var(--accent); font-size: 16px; font-weight: 700; background: var(--bg-primary);
+  width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
+  border-radius: 50%; border: 1px solid var(--border);
+}
+.cross-node .node-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; font-weight: 600; }
+.cross-node .node-value { font-size: 13px; font-weight: 600; }
+.cross-node .node-desc { font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
+
+.toc-panel {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 32px; max-width: 600px; margin: 0 auto;
+}
+.toc-title { font-family: var(--serif); font-size: 18px; font-weight: 700; margin-bottom: 20px; text-align: center; }
+.toc-item {
+  display: flex; align-items: center; gap: 12px; padding: 10px 16px;
+  border-radius: var(--radius-sm); transition: all 0.2s ease; text-decoration: none;
+  color: var(--text-secondary); font-size: 13.5px;
+}
+.toc-item:hover { background: var(--accent-glow); color: var(--accent); }
+.toc-num { font-family: var(--mono); font-size: 11px; color: var(--accent); font-weight: 600; min-width: 22px; }
+
+.summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 44px; }
+@media (max-width: 900px) { .summary-grid { grid-template-columns: repeat(2, 1fr); } }
+.summary-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; text-align: center; }
+.summary-card .summary-value { font-family: var(--serif); font-size: 34px; font-weight: 900; line-height: 1; margin-bottom: 7px; }
+.summary-card .summary-label { font-size: 11.5px; color: var(--text-muted); font-weight: 500; letter-spacing: 0.3px; }
+
+.animate-in { opacity: 0; transform: translateY(18px); transition: opacity 0.6s ease, transform 0.6s ease; }
+.animate-in.visible { opacity: 1; transform: translateY(0); }
+
+footer { padding: 40px 0; border-top: 1px solid var(--border); text-align: center; }
+footer p { font-size: 12px; color: var(--text-muted); }
+footer .footer-brand { font-family: var(--serif); font-weight: 700; color: var(--accent); }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <div class="nav-brand">数据值守 · 原子验证</div>
+    <div class="nav-links">
+      <a href="#asr">语音识别</a>
+      <a href="#pinyin">拼音匹配</a>
+      <a href="#cross">交叉验证</a>
+      <a href="#priority">优先级</a>
+    </div>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <div class="hero-badge"><span class="dot"></span>ATOMIC VERIFICATION</div>
+    <h1>原子验证<br><span class="accent">待补充模块</span></h1>
+    <p class="subtitle">针对语音识别技术与拼音识别匹配两大后端数据层核心模块，梳理尚未完成原子级验证的关键环节，明确验证内容与优先级</p>
+    <div class="hero-meta">
+      <div class="meta-item">
+        <span class="meta-label">模块</span>
+        <span class="meta-value">2 大模块</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">验证项</span>
+        <span class="meta-value">23 项</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">P0 阻塞项</span>
+        <span class="meta-value">4 项</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">日期</span>
+        <span class="meta-value">2026-05-12</span>
+      </div>
+    </div>
+
+    <div class="toc-panel" style="margin-top: 48px;">
+      <div class="toc-title">文档目录</div>
+      <a href="#overview" class="toc-item"><span class="toc-num">00</span><span>验证总览</span></a>
+      <a href="#asr" class="toc-item"><span class="toc-num">01</span><span>语音识别技术原子验证</span></a>
+      <a href="#pinyin" class="toc-item"><span class="toc-num">02</span><span>拼音识别匹配原子验证</span></a>
+      <a href="#cross" class="toc-item"><span class="toc-num">03</span><span>交叉验证项</span></a>
+      <a href="#priority" class="toc-item"><span class="toc-num">04</span><span>验证优先级与排期建议</span></a>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="overview">
+  <div class="container">
+    <div class="section-header animate-in">
+      <span class="section-number">00</span>
+      <h2 class="section-title">验证总览</h2>
+      <p class="section-desc">两大后端数据层模块的原子验证全景，量化待验证工作的范围与紧迫度。</p>
+    </div>
+
+    <div class="summary-grid animate-in">
+      <div class="summary-card">
+        <div class="summary-value" style="color: var(--danger);">4</div>
+        <div class="summary-label">P0 阻塞项</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-value" style="color: var(--warning);">5</div>
+        <div class="summary-label">P1 核心验证</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-value" style="color: var(--info);">5</div>
+        <div class="summary-label">P2 优化项</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-value" style="color: var(--purple);">4</div>
+        <div class="summary-label">交叉验证项</div>
+      </div>
+    </div>
+
+    <div class="card-grid card-grid-2 animate-in">
+      <div class="card">
+        <div class="card-icon danger"><i class="ri-mic-line"></i></div>
+        <h3>语音识别技术</h3>
+        <p>ASR 是整个制单链路的第一环，准确率不足则下游 LLM 和字段校验都无法补救。需验证 Coze 语音插件质量基线、阿里云 ASR 接入与热词效果、双轨对比框架、纠错策略。</p>
+        <div style="margin-top: 12px; display: flex; gap: 6px;">
+          <span class="tag tag-danger">链路瓶颈</span>
+          <span class="tag tag-warning">12 项待验证</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-icon purple"><i class="ri-translate-2"></i></div>
+        <h3>拼音识别匹配</h3>
+        <p>拼音索引是解决语音同音字、多音字问题的核心机制。需验证拼音转换基础能力、相似度算法、索引表性能、产品分层匹配、业务权重计算。</p>
+        <div style="margin-top: 12px; display: flex; gap: 6px;">
+          <span class="tag tag-purple">核心机制</span>
+          <span class="tag tag-warning">11 项待验证</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout danger animate-in" style="margin-top: 24px;">
+      <div class="callout-icon"><i class="ri-alert-line"></i></div>
+      <div class="callout-body">
+        <h4>核心判断：ASR 准确率是整个制单链路的瓶颈</h4>
+        <p>语音制单的数据流为 ASR → LLM 提取 → 字段校验 → 单据生成。ASR 是第一环，如果"深圳华创科技"被识别为"深圳华创科捷"，下游 LLM 和字段校验都无法自动修复。因此，<strong>语音识别与拼音匹配的原子验证是 MVP Demo 前必须完成的后端数据层工作</strong>。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="asr">
+  <div class="container">
+    <div class="section-header animate-in">
+      <span class="section-number">01</span>
+      <h2 class="section-title">语音识别技术原子验证</h2>
+      <p class="section-desc">方案已明确五大技术路线和分阶段推荐策略（MVP：Coze 语音插件 + 阿里云 ASR 双轨验证），但以下关键环节尚未完成原子级验证。</p>
+    </div>
+
+    <div class="feature-detail animate-in">
+      <div class="feature-header">
+        <span class="feature-num">01</span>
+        <h3>Coze 语音插件 ASR 质量基线验证</h3>
+      </div>
+      <table class="verify-table">
+        <thead>
+          <tr>
+            <th>验证项</th>
+            <th>当前状态</th>
+            <th>需补充内容</th>
+            <th>优先级</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>中文普通话基础识别率</td>
+            <td><span class="status-badge pending">未验证</span><br>方案定性描述"中文质量好"</td>
+            <td>用标准测试集（含行业术语、客户名、产品名）实测字错率（CER），建立质量基线</td>
+            <td><span class="priority-badge p1">P1</span></td>
+          </tr>
+          <tr>
+            <td>行业术语识别表现</td>
+            <td><span class="status-badge pending">未验证</span><br>方案指出"无法优化ASR质量"</td>
+            <td>测量未加热词时，客户名/产品名的识别准确率，量化与目标（≥95%）的差距</td>
+            <td><span class="priority-badge p1">P1</span></td>
+          </tr>
+          <tr>
+            <td>延迟表现</td>
+            <td><span class="status-badge pending">未验证</span><br>方案指出"延迟受Coze整体链路影响"</td>
+            <td>实测端到端延迟（语音输入→ASR文本输出），确认是否在 3 秒以内</td>
+            <td><span class="priority-badge p1">P1</span></td>
+          </tr>
+          <tr>
+            <td>流式输出支持</td>
+            <td><span class="status-badge pending">未验证</span></td>
+            <td>确认 Coze 语音插件是否支持中间结果实时返回（interim results），影响用户体验</td>
+            <td><span class="priority-badge p2">P2</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="feature-detail animate-in">
+      <div class="feature-header">
+        <span class="feature-num">02</span>
+        <h3>阿里云 ASR 接入与热词验证 <span style="font-size: 12px; font-weight: 500; color: var(--warning); margin-left: 8px;">SaaS场景：热词部分暂不适用</span></h3>
+      </div>
+      <table class="verify-table">
+        <thead>
+          <tr>
+            <th>验证项</th>
+            <th>当前状态</th>
+            <th>需补充内容</th>
+            <th>优先级</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>WebSocket 实时推流接入</td>
+            <td><span class="status-badge blocked">阻塞</span><br>方案有代码片段，未实际跑通</td>
+            <td>前端 MediaRecorder → WebSocket → 阿里云 ASR 完整链路端到端跑通</td>
+            <td><span class="priority-badge p0">P0</span></td>
+          </tr>
+          <tr>
+            <td>热词功能实测 <span style="font-size: 10px; color: var(--warning);">SaaS场景暂不适用</span></td>
+            <td><span class="status-badge blocked">阻塞</span><br>方案定性描述"70%→95%+"</td>
+            <td>用真实客户名/产品名热词列表实测：无热词 vs 有热词的 CER 对比，量化提升幅度。<br><strong>SaaS适配性限制（2026-05-12补充）</strong>：热词配额限制（单表500个/10表共5000个）无法覆盖多租户场景，通用SaaS以拼音索引兜底，热词仅用于大客户专属优化</td>
+            <td><span class="priority-badge p0">P0</span><br><span style="font-size: 10px; color: var(--text-muted);">大客户场景</span></td>
+          </tr>
+          <tr>
+            <td>热词动态注入机制 <span style="font-size: 10px; color: var(--warning);">SaaS场景暂不适用</span></td>
+            <td><span class="status-badge pending">未验证</span><br>方案描述"运行时动态添加"</td>
+            <td>验证热词参数传递方式、生效延迟、热词数量上限、是否支持按会话动态切换。<br><strong>SaaS适配性限制（2026-05-12补充）</strong>：多租户场景下按企业动态切换热词的复杂度和配额限制，通用SaaS以拼音索引兜底</td>
+            <td><span class="priority-badge p0">P0</span><br><span style="font-size: 10px; color: var(--text-muted);">大客户场景</span></td>
+          </tr>
+          <tr>
+            <td>Paraformer 模型验证</td>
+            <td><span class="status-badge pending">未验证</span><br>方案推荐 Paraformer（0.288元/h）</td>
+            <td>对比 Paraformer vs 标准实时 ASR 的识别质量差异，确认性价比是否可接受</td>
+            <td><span class="priority-badge p2">P2</span></td>
+          </tr>
+          <tr>
+            <td>浏览器端 JS SDK 直连</td>
+            <td><span class="status-badge pending">未验证</span><br>方案提到"减少后端中转"</td>
+            <td>验证浏览器端直连 WebSocket 的可行性（CORS、Token 安全性、鉴权流程）</td>
+            <td><span class="priority-badge p1">P1</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="feature-detail animate-in">
+      <div class="feature-header">
+        <span class="feature-num">03</span>
+        <h3>双轨对比验证框架</h3>
+      </div>
+      <table class="verify-table">
+        <thead>
+          <tr>
+            <th>验证项</th>
+            <th>当前状态</th>
+            <th>需补充内容</th>
+            <th>优先级</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>对比测试用例集</td>
+            <td><span class="status-badge pending">未建立</span></td>
+            <td>建立标准测试集：覆盖普通话、行业术语、客户名、产品名、数字金额、口音变体，至少 50 条样本</td>
+            <td><span class="priority-badge p1">P1</span></td>
+          </tr>
+          <tr>
+            <td>量化对比指标</td>
+            <td><span class="status-badge pending">未定义</span></td>
+            <td>定义统一评估指标：CER（字错率）、字段级准确率、端到端延迟、首字延迟</td>
+            <td><span class="priority-badge p1">P1</span></td>
+          </tr>
+          <tr>
+            <td>A/B 测试流程</td>
+            <td><span class="status-badge pending">未设计</span></td>
+            <td>设计同一语音输入分别走 Coze 插件和阿里云 ASR 的对比流程，自动化输出对比报告</td>
+            <td><span class="priority-badge p2">P2</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="feature-detail animate-in">
+      <div class="feature-header">
+        <span class="feature-num">04</span>
+        <h3>ASR 纠错策略验证</h3>
+      </div>
+      <table class="verify-table">
+        <thead>
+          <tr>
+            <th>验证项</th>
+            <th>当前状态</th>
+            <th>需补充内容</th>
+            <th>优先级</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>行业术语纠错</td>
+            <td><span class="status-badge pending">未实现</span><br>方案描述"基于发音相似度修正"</td>
+            <td>实现 ASR 文本→客户库/产品库发音相似度纠错，验证纠错准确率和误纠率</td>
+            <td><span class="priority-badge p2">P2</span></td>
+          </tr>
+          <tr>
+            <td>数字纠错</td>
+            <td><span class="status-badge pending">未实现</span><br>方案描述"常见数字识别错误修正"</td>
+            <td>收集 ASR 数字识别常见错误模式（如"一百"→"1百"→"100"），实现纠错规则并验证</td>
+            <td><span class="priority-badge p2">P2</span></td>
+          </tr>
+          <tr>
+            <td>口语化数字转标准格式</td>
+            <td><span class="status-badge pending">未实现</span><br>方案描述"八十五块→85.00"</td>
+            <td>实现口语化数字→标准金额/数量的转换规则，覆盖常见口语表达并验证</td>
+            <td><span class="priority-badge p2">P2</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="pinyin">
+  <div class="container">
+    <div class="section-header animate-in">
+      <span class="section-number">02</span>
+      <h2 class="section-title">拼音识别匹配原子验证</h2>
+      <p class="section-desc">方案已设计完整的拼音索引匹配算法（含简化版和完整版），但以下关键环节尚未完成原子级验证。</p>
+    </div>
+
+    <div class="feature-detail animate-in">
+      <div class="feature-header">
+        <span class="feature-num">01</span>
+        <h3>拼音转换基础能力验证</h3>
+      </div>
+      <table class="verify-table">
+        <thead>
+          <tr>
+            <th>验证项</th>
+            <th>当前状态</th>
+            <th>需补充内容</th>
+            <th>优先级</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>中文→拼音转换准确率</td>
+            <td><span class="status-badge blocked">阻塞</span><br>方案使用 text_to_pinyin()，未指定库</td>
+            <td>选定拼音库（如 pypinyin），验证含多音字的公司名转换准确率，建立转换质量基线</td>
+            <td><span class="priority-badge p0">P0</span></td>
+          </tr>
+          <tr>
+            <td>多音字全读音展开</td>
+            <td><span class="status-badge blocked">阻塞</span><br>方案设计了"全读音索引"策略</td>
+            <td>实现"重庆重钢"→ chóng qìng chóng gāng + chóng qìng zhòng gāng 的全展开逻辑并验证覆盖度</td>
+            <td><span class="priority-badge p0">P0</span></td>
+          </tr>
+          <tr>
+            <td>拼音+英文混排处理</td>
+            <td><span class="status-badge pending">未验证</span><br>方案描述"中文转拼音，英文保留原字符"</td>
+            <td>验证"A3打印纸""M8内六角螺栓"等中英混排的分词和拼音转换准确性</td>
+            <td><span class="priority-badge p1">P1</span></td>
+          </tr>
+          <tr>
+            <td>拼音首字母缩写</td>
+            <td><span class="status-badge pending">未验证</span><br>方案使用 get_initials() 函数</td>
+            <td>验证首字母提取的准确性，特别是连续辅音、ng 结尾等边界情况</td>
+            <td><span class="priority-badge p1">P1</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="feature-detail animate-in">
+      <div class="feature-header">
+        <span class="feature-num">02</span>
+        <h3>相似度计算算法验证</h3>
+      </div>
+      <table class="verify-table">
+        <thead>
+          <tr>
+            <th>验证项</th>
+            <th>当前状态</th>
+            <th>需补充内容</th>
+            <th>优先级</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>编辑距离（Levenshtein）实现</td>
+            <td><span class="status-badge pending">未实现</span><br>方案中有伪代码</td>
+            <td>实现并验证：对 ASR 识别偏差（增/删/替换1-2个音节）的容忍度，确认得分分布合理</td>
+            <td><span class="priority-badge p0">P0</span></td>
+          </tr>
+          <tr>
+            <td>最长公共子序列（LCS）实现</td>
+            <td><span class="status-badge pending">未实现</span><br>方案中有伪代码</td>
+            <td>实现并验证：对部分匹配场景（如"华创科技"匹配"华创科技有限公司"）的得分合理性</td>
+            <td><span class="priority-badge p0">P0</span></td>
+          </tr>
+          <tr>
+            <td>四维加权评分体系</td>
+            <td><span class="status-badge pending">未验证</span><br>方案定义：拼音40%+首字母25%+长度15%+业务20%</td>
+            <td>用真实数据验证权重分配是否合理，是否存在某维度过强/过弱导致误判，必要时调参</td>
+            <td><span class="priority-badge p1">P1</span></td>
+          </tr>
+          <tr>
+            <td>阈值标定</td>
+            <td><span class="status-badge pending">未验证</span><br>方案定义：≥90%自动确认，70%-90%候选，<70%模糊提示</td>
+            <td>用真实客户数据验证三个阈值区间是否合理，是否存在误判（高相似度但错误匹配、低相似度但正确匹配）</td>
+            <td><span class="priority-badge p1">P1</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="feature-detail animate-in">
+      <div class="feature-header">
+        <span class="feature-num">03</span>
+        <h3>独立索引表与查询性能验证</h3>
+      </div>
+      <table class="verify-table">
+        <thead>
+          <tr>
+            <th>验证项</th>
+            <th>当前状态</th>
+            <th>需补充内容</th>
+            <th>优先级</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>索引表结构设计</td>
+            <td><span class="status-badge partial">有DDL</span><br>方案已给出 SQL DDL</td>
+            <td>建表并导入真实客户数据（目标 5 万条），验证索引结构合理性、字段完整性</td>
+            <td><span class="priority-badge p1">P1</span></td>
+          </tr>
+          <tr>
+            <td>前缀索引效果</td>
+            <td><span class="status-badge pending">未验证</span><br>方案声称"5万→500条"</td>
+            <td>实测 LIKE 'shenzhen hua%' 在 5 万条数据下的查询耗时和筛选率，验证方案数据</td>
+            <td><span class="priority-badge p1">P1</span></td>
+          </tr>
+          <tr>
+            <td>长度过滤效果</td>
+            <td><span class="status-badge pending">未验证</span><br>方案声称"500→300条"</td>
+            <td>实测长度差异 30% 阈值下的过滤率和漏匹配率</td>
+            <td><span class="priority-badge p2">P2</span></td>
+          </tr>
+          <tr>
+            <td>端到端查询耗时</td>
+            <td><span class="status-badge pending">未验证</span><br>方案声称简化版~150-200ms</td>
+            <td>实测 5 万条数据下完整查询流程的 P50/P95/P99 延迟</td>
+            <td><span class="priority-badge p1">P1</span></td>
+          </tr>
+          <tr>
+            <td>多音字索引膨胀率</td>
+            <td><span class="status-badge pending">未评估</span></td>
+            <td>评估全读音展开后索引条目的膨胀倍数，确认存储和查询性能影响</td>
+            <td><span class="priority-badge p2">P2</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="feature-detail animate-in">
+      <div class="feature-header">
+        <span class="feature-num">04</span>
+        <h3>产品分层匹配验证</h3>
+      </div>
+      <table class="verify-table">
+        <thead>
+          <tr>
+            <th>验证项</th>
+            <th>当前状态</th>
+            <th>需补充内容</th>
+            <th>优先级</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>三层匹配策略实现</td>
+            <td><span class="status-badge pending">未实现</span><br>方案设计了粗筛→精匹配→权重排序</td>
+            <td>实现并验证：26 个 SKU → 1 个精确结果的完整流程，确认每层过滤率</td>
+            <td><span class="priority-badge p1">P1</span></td>
+          </tr>
+          <tr>
+            <td>细粒度参数索引</td>
+            <td><span class="status-badge pending">未实现</span><br>方案描述了名称/规格/属性三维度</td>
+            <td>设计产品参数索引表结构，验证参数拆分和匹配逻辑的准确性</td>
+            <td><span class="priority-badge p1">P1</span></td>
+          </tr>
+          <tr>
+            <td>智能补全策略</td>
+            <td><span class="status-badge pending">未验证</span><br>方案定义"唯一匹配自动补全"</td>
+            <td>验证边界情况：何时判定"唯一"、何时弹出候选列表，避免误补全</td>
+            <td><span class="priority-badge p2">P2</span></td>
+          </tr>
+          <tr>
+            <td>大候选集场景</td>
+            <td><span class="status-badge pending">未解决</span><br>方案标注为"后续待解决问题"</td>
+            <td>针对口语描述产生 20-30 个候选产品的场景，验证多轮对话缩小范围的可行性</td>
+            <td><span class="priority-badge p2">P2</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="feature-detail animate-in">
+      <div class="feature-header">
+        <span class="feature-num">05</span>
+        <h3>业务权重计算验证</h3>
+      </div>
+      <table class="verify-table">
+        <thead>
+          <tr>
+            <th>验证项</th>
+            <th>当前状态</th>
+            <th>需补充内容</th>
+            <th>优先级</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>权重因子定义</td>
+            <td><span class="status-badge partial">有框架</span><br>方案列出：创建时间、最近沟通、历史金额</td>
+            <td>定义各因子的归一化公式和权重分配，确保不同量纲的因子可公平加权</td>
+            <td><span class="priority-badge p2">P2</span></td>
+          </tr>
+          <tr>
+            <td>权重排序效果</td>
+            <td><span class="status-badge pending">未验证</span><br>方案示例"华创科技98% > 华创商贸85%"</td>
+            <td>用真实业务数据验证权重排序是否将正确目标排在首位，测量 Top-1 命中率</td>
+            <td><span class="priority-badge p2">P2</span></td>
+          </tr>
+          <tr>
+            <td>冷热数据分离效果</td>
+            <td><span class="status-badge pending">未验证</span><br>方案设计 Redis 缓存热数据</td>
+            <td>验证热数据命中率，确认 8,000 条热数据覆盖日常查询的比例</td>
+            <td><span class="priority-badge p2">P2</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="cross">
+  <div class="container">
+    <div class="section-header animate-in">
+      <span class="section-number">03</span>
+      <h2 class="section-title">交叉验证项</h2>
+      <p class="section-desc">语音识别和拼音匹配在数据流上是上下游关系，以下交叉验证项需特别关注。</p>
+    </div>
+
+    <div class="cross-flow animate-in" style="margin-bottom: 36px;">
+      <div class="cross-node">
+        <div class="node-label">上游</div>
+        <div class="node-value"><i class="ri-mic-line"></i> 语音输入</div>
+        <div class="node-desc">用户口述业务信息</div>
+      </div>
+      <div class="cross-node" style="border-color: var(--accent-dim);">
+        <div class="node-label">模块一</div>
+        <div class="node-value" style="color: var(--accent);">ASR 识别</div>
+        <div class="node-desc">语音→文本转写</div>
+      </div>
+      <div class="cross-node" style="border-color: var(--purple-dim);">
+        <div class="node-label">模块二</div>
+        <div class="node-value" style="color: var(--purple);">拼音匹配</div>
+        <div class="node-desc">文本→索引匹配</div>
+      </div>
+      <div class="cross-node">
+        <div class="node-label">下游</div>
+        <div class="node-value"><i class="ri-file-list-3-line"></i> 单据生成</div>
+        <div class="node-desc">结构化单据输出</div>
+      </div>
+    </div>
+
+    <div class="feature-detail animate-in">
+      <div class="feature-header">
+        <span class="feature-num">→</span>
+        <h3>上下游交叉验证清单</h3>
+      </div>
+      <table class="verify-table">
+        <thead>
+          <tr>
+            <th>交叉验证项</th>
+            <th>说明</th>
+            <th>优先级</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>ASR 错误传播评估</td>
+            <td>ASR 识别错误（同音字替换、音节增删）对拼音匹配得分的影响程度，确认拼音匹配能否有效兜底 ASR 的常见错误模式</td>
+            <td><span class="priority-badge p0">P0</span></td>
+          </tr>
+          <tr>
+            <td>热词→拼音匹配联动 <span style="font-size: 10px; color: var(--warning);">SaaS场景：拼音索引为主</span></td>
+            <td>阿里云 ASR 热词命中后的文本，是否与拼音索引库的条目精确匹配，验证热词和拼音索引的一致性。<br><strong>SaaS场景（2026-05-12补充）</strong>：通用SaaS场景下拼音索引是核心兜底机制，热词仅大客户启用，联动验证降级为大客户专项</td>
+            <td><span class="priority-badge p1">P1</span><br><span style="font-size: 10px; color: var(--text-muted);">大客户场景</span></td>
+          </tr>
+          <tr>
+            <td>端到端准确率验证</td>
+            <td>从语音输入到最终匹配结果的端到端准确率，确认 ASR(≥95%) × 拼音匹配(≥90%) 的联合效果是否满足核心字段≥90%的目标</td>
+            <td><span class="priority-badge p1">P1</span></td>
+          </tr>
+          <tr>
+            <td>延迟叠加验证</td>
+            <td>ASR 延迟(~3s) + 拼音匹配延迟(~150ms) + LLM 提取延迟 的总延迟是否在 30 秒以内</td>
+            <td><span class="priority-badge p1">P1</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout warning animate-in" style="margin-top: 24px;">
+      <div class="callout-icon"><i class="ri-link"></i></div>
+      <div class="callout-body">
+        <h4>交叉验证的核心逻辑</h4>
+        <p>ASR 与拼音匹配并非独立模块——ASR 的错误模式直接决定拼音匹配的难度。如果 ASR 将"华创科技"识别为"华闯科技"，拼音匹配可以兜底（同音）；但如果识别为"华创科捷"（音节替换），拼音匹配也可能失败。因此，<strong>必须用 ASR 的真实输出来测试拼音匹配，而非用人工构造的文本</strong>。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="priority">
+  <div class="container">
+    <div class="section-header animate-in">
+      <span class="section-number">04</span>
+      <h2 class="section-title">验证优先级与排期建议</h2>
+      <p class="section-desc">按阻塞程度和依赖关系排列优先级，P0 为必须优先完成的阻塞项。</p>
+    </div>
+
+    <div class="priority-section animate-in">
+      <div class="priority-header">
+        <span class="priority-label p0">P0</span>
+        <div>
+          <div class="priority-title">阻塞后续开发，必须优先验证</div>
+          <div class="priority-desc">未完成将直接阻塞 MVP Demo 核心流程</div>
+        </div>
+      </div>
+      <div class="card-grid card-grid-2">
+        <div class="card" style="border-left: 3px solid var(--danger);">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+            <span class="tag tag-danger">语音识别</span>
+            <span style="font-size: 11px; color: var(--text-muted);">ASR-01</span>
+          </div>
+          <h3>阿里云 ASR WebSocket 接入端到端跑通</h3>
+          <p>前端 MediaRecorder → WebSocket → 阿里云 ASR → 流式文本返回，完整链路验证。这是方案 B（质量优先验证）的基础设施，不跑通则无法进行任何 ASR 质量对比。</p>
+        </div>
+        <div class="card" style="border-left: 3px solid var(--danger);">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+            <span class="tag tag-danger">语音识别</span>
+            <span style="font-size: 11px; color: var(--text-muted);">ASR-02</span>
+          </div>
+          <h3>阿里云 ASR 热词功能实测 <span style="font-size: 11px; font-weight: 500; color: var(--warning);">SaaS场景暂不适用</span></h3>
+          <p>用真实客户名/产品名热词列表，实测无热词 vs 有热词的 CER 对比。热词是方案选型阿里云 ASR 的决定性因素，必须用数据验证"70%→95%+"的声称。</p>
+          <p style="margin-top: 8px; font-size: 12px; color: var(--text-muted);"><strong>SaaS适配性限制（2026-05-12补充）</strong>：热词配额限制无法覆盖多租户场景，通用SaaS以拼音索引兜底，此验证项仅适用于大客户专属优化场景。</p>
+        </div>
+        <div class="card" style="border-left: 3px solid var(--danger);">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+            <span class="tag tag-purple">拼音匹配</span>
+            <span style="font-size: 11px; color: var(--text-muted);">PY-01</span>
+          </div>
+          <h3>拼音转换库选型与多音字展开验证</h3>
+          <p>选定 pypinyin 库，验证含多音字的公司名转换准确率，实现全读音展开逻辑。这是拼音匹配的基础，不验证则后续所有匹配算法无法测试。</p>
+        </div>
+        <div class="card" style="border-left: 3px solid var(--danger);">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+            <span class="tag tag-purple">拼音匹配</span>
+            <span style="font-size: 11px; color: var(--text-muted);">PY-02</span>
+          </div>
+          <h3>拼音相似度算法实现与阈值标定</h3>
+          <p>实现编辑距离 + LCS 相似度计算，用真实数据验证四维加权评分和三档阈值（90%/70%）的合理性。算法不验证则匹配策略无法落地。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="priority-section animate-in">
+      <div class="priority-header">
+        <span class="priority-label p1">P1</span>
+        <div>
+          <div class="priority-title">核心功能验证，MVP Demo 前必须完成</div>
+          <div class="priority-desc">直接影响 MVP Demo 的演示效果和验收标准</div>
+        </div>
+      </div>
+      <div class="card-grid card-grid-3">
+        <div class="card" style="border-left: 3px solid var(--warning);">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+            <span class="tag tag-danger">语音识别</span>
+          </div>
+          <h3>Coze 语音插件 ASR 质量基线</h3>
+          <p>实测 CER、延迟、行业术语识别率，建立方案 A 的质量基线</p>
+        </div>
+        <div class="card" style="border-left: 3px solid var(--warning);">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+            <span class="tag tag-danger">语音识别</span>
+          </div>
+          <h3>双轨对比测试框架</h3>
+          <p>建立标准测试集和量化指标，实现 A/B 自动化对比</p>
+        </div>
+        <div class="card" style="border-left: 3px solid var(--warning);">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+            <span class="tag tag-purple">拼音匹配</span>
+          </div>
+          <h3>索引表建表与 5 万条性能测试</h3>
+          <p>建表导入真实数据，实测前缀索引效果和端到端查询耗时</p>
+        </div>
+        <div class="card" style="border-left: 3px solid var(--warning);">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+            <span class="tag tag-purple">拼音匹配</span>
+          </div>
+          <h3>产品三层匹配策略实现</h3>
+          <p>实现粗筛→精匹配→权重排序完整流程，验证 26 SKU→1 结果</p>
+        </div>
+        <div class="card" style="border-left: 3px solid var(--warning);">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+            <span class="tag tag-cyan">交叉</span>
+          </div>
+          <h3>ASR→拼音匹配端到端准确率</h3>
+          <p>用 ASR 真实输出测试拼音匹配，验证联合效果是否≥90%</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="priority-section animate-in">
+      <div class="priority-header">
+        <span class="priority-label p2">P2</span>
+        <div>
+          <div class="priority-title">优化项，产品化阶段前完成</div>
+          <div class="priority-desc">不影响 MVP Demo 演示，但影响产品化质量</div>
+        </div>
+      </div>
+      <div class="card-grid card-grid-3">
+        <div class="card" style="border-left: 3px solid var(--info);">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+            <span class="tag tag-danger">语音识别</span>
+          </div>
+          <h3>ASR 纠错策略</h3>
+          <p>行业术语纠错、数字纠错、口语化数字转换</p>
+        </div>
+        <div class="card" style="border-left: 3px solid var(--info);">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+            <span class="tag tag-purple">拼音匹配</span>
+          </div>
+          <h3>业务权重调参与冷热分离</h3>
+          <p>权重因子归一化、Top-1 命中率验证、Redis 缓存效果</p>
+        </div>
+        <div class="card" style="border-left: 3px solid var(--info);">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+            <span class="tag tag-purple">拼音匹配</span>
+          </div>
+          <h3>大候选集产品匹配优化</h3>
+          <p>多轮对话缩小范围、产品图片辅助识别、历史采购推荐</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout accent animate-in" style="margin-top: 32px;">
+      <div class="callout-icon"><i class="ri-pushpin-line"></i></div>
+      <div class="callout-body">
+        <h4>建议排期</h4>
+        <p><strong>P0 阶段（Week 1）</strong>：4 项阻塞项并行推进，语音识别和拼音匹配可同时开展<br>
+        <strong>P1 阶段（Week 2-3）</strong>：5 项核心验证，依赖 P0 完成后展开<br>
+        <strong>P2 阶段（Week 4+）</strong>：5 项优化项，与 Phase 4 集成测试并行推进<br><br>
+        <strong>关键路径</strong>：阿里云 ASR 接入跑通 → 热词实测 → 双轨对比 → 端到端准确率验证，这条路径决定 MVP Demo 的核心质量。</p>
+        <p style="margin-top: 8px;"><strong>SaaS场景关键路径（2026-05-12补充）</strong>：阿里云 ASR 接入跑通 → 拼音索引匹配实现 → 端到端准确率验证。通用SaaS场景下，拼音索引匹配是热词问题的核心兜底方案，优先级高于热词实测。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<footer>
+  <div class="container">
+    <p><span class="footer-brand">数据值守 · 智能制单</span> — 原子验证待补充模块</p>
+    <p style="margin-top: 6px;">技术验证文档 · 2026-05-12</p>
+  </div>
+</footer>
+
+<script>
+const navLinks = document.querySelectorAll('nav .nav-links a');
+const sections = document.querySelectorAll('section[id]');
+
+function updateActiveNav() {
+  let current = '';
+  sections.forEach(section => {
+    const sectionTop = section.offsetTop - 100;
+    if (window.scrollY >= sectionTop) {
+      current = section.getAttribute('id');
+    }
+  });
+  navLinks.forEach(link => {
+    link.classList.remove('active');
+    if (link.getAttribute('href') === '#' + current) {
+      link.classList.add('active');
+    }
+  });
+}
+
+window.addEventListener('scroll', updateActiveNav);
+updateActiveNav();
+
+const animateElements = document.querySelectorAll('.animate-in');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      observer.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+animateElements.forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>

@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>自动确认与人工确认判断条件</title>
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+<style>
+:root {
+  --bg: #f8f9fb;
+  --card: #ffffff;
+  --border: #e8ecf0;
+  --text: #1f2937;
+  --text-secondary: #6b7280;
+  --primary: #3b82f6;
+  --primary-light: #eff6ff;
+  --primary-border: #bfdbfe;
+  --green: #10b981;
+  --green-light: #ecfdf5;
+  --green-border: #a7f3d0;
+  --amber: #f59e0b;
+  --amber-light: #fffbeb;
+  --amber-border: #fde68a;
+  --red: #ef4444;
+  --red-light: #fef2f2;
+  --red-border: #fecaca;
+  --purple: #8b5cf6;
+  --purple-light: #f5f3ff;
+  --purple-border: #ddd6fe;
+  --cyan: #06b6d4;
+  --cyan-light: #ecfeff;
+  --cyan-border: #a5f3fc;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  padding: 32px 20px;
+}
+.container { max-width: 960px; margin: 0 auto; }
+
+.doc-header {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px 48px;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+}
+.doc-header::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #10b981, #3b82f6, #f59e0b);
+}
+.doc-header h1 {
+  font-size: 28px; font-weight: 700; color: var(--text);
+  margin-bottom: 8px; display: flex; align-items: center; gap: 12px;
+}
+.doc-header h1 i { color: var(--green); font-size: 28px; }
+.doc-header .subtitle { font-size: 15px; color: var(--text-secondary); margin-bottom: 20px; }
+.doc-meta { display: flex; gap: 24px; flex-wrap: wrap; }
+.doc-meta-item { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-secondary); }
+.doc-meta-item i { font-size: 14px; color: var(--primary); }
+.doc-meta-item strong { color: var(--text); font-weight: 600; }
+
+.section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 32px 36px;
+  margin-bottom: 20px;
+}
+.section-title {
+  font-size: 18px; font-weight: 700; color: var(--text);
+  margin-bottom: 20px; display: flex; align-items: center; gap: 10px;
+  padding-bottom: 14px; border-bottom: 1px solid var(--border);
+}
+.section-title i {
+  width: 32px; height: 32px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; color: white; flex-shrink: 0;
+}
+.icon-blue { background: var(--primary); }
+.icon-green { background: var(--green); }
+.icon-amber { background: var(--amber); }
+.icon-red { background: var(--red); }
+.icon-purple { background: var(--purple); }
+.icon-cyan { background: var(--cyan); }
+
+p { font-size: 14px; color: var(--text); margin-bottom: 12px; line-height: 1.8; }
+p:last-child { margin-bottom: 0; }
+
+.highlight-box {
+  border-radius: 10px; padding: 16px 20px; margin-bottom: 16px;
+  font-size: 14px; line-height: 1.8;
+}
+.highlight-box.blue { background: var(--primary-light); border: 1px solid var(--primary-border); color: #1e40af; }
+.highlight-box.green { background: var(--green-light); border: 1px solid var(--green-border); color: #065f46; }
+.highlight-box.amber { background: var(--amber-light); border: 1px solid var(--amber-border); color: #92400e; }
+.highlight-box.red { background: var(--red-light); border: 1px solid var(--red-border); color: #991b1b; }
+.highlight-box.purple { background: var(--purple-light); border: 1px solid var(--purple-border); color: #5b21b6; }
+.highlight-box.cyan { background: var(--cyan-light); border: 1px solid var(--cyan-border); color: #155e75; }
+.highlight-box i { margin-right: 6px; }
+
+pre {
+  background: #1e293b; color: #e2e8f0; border-radius: 10px;
+  padding: 20px 24px; margin-bottom: 16px; overflow-x: auto;
+  font-size: 13px; line-height: 1.7; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+}
+pre .comment { color: #64748b; }
+pre .keyword { color: #c084fc; }
+pre .string { color: #34d399; }
+pre .num { color: #fb923c; }
+
+table {
+  width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 13px;
+}
+th, td {
+  padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border);
+}
+th { background: #f8f9fb; font-weight: 600; color: var(--text-secondary); font-size: 12px; }
+td { color: var(--text); }
+tr:last-child td { border-bottom: none; }
+
+.tag {
+  display: inline-block; padding: 2px 10px; border-radius: 6px;
+  font-size: 11px; font-weight: 600; margin-right: 4px;
+}
+.tag-blue { background: var(--primary-light); color: #1e40af; border: 1px solid var(--primary-border); }
+.tag-green { background: var(--green-light); color: #065f46; border: 1px solid var(--green-border); }
+.tag-amber { background: var(--amber-light); color: #92400e; border: 1px solid var(--amber-border); }
+.tag-red { background: var(--red-light); color: #991b1b; border: 1px solid var(--red-border); }
+.tag-purple { background: var(--purple-light); color: #5b21b6; border: 1px solid var(--purple-border); }
+.tag-cyan { background: var(--cyan-light); color: #155e75; border: 1px solid var(--cyan-border); }
+
+.formula-box {
+  background: #f8f9fb;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 16px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: 0.5px;
+}
+.formula-box .op { color: var(--primary); margin: 0 4px; }
+.formula-box .dim { color: var(--purple); }
+.formula-box .weight { color: var(--amber); font-size: 13px; }
+
+.rule-card {
+  border-radius: 12px; padding: 20px 24px; margin-bottom: 14px;
+  border-left: 4px solid;
+  display: flex; gap: 20px; align-items: flex-start;
+}
+.rule-card .rule-left {
+  flex-shrink: 0;
+  text-align: center;
+  min-width: 90px;
+}
+.rule-card .rule-score {
+  font-size: 22px; font-weight: 700; line-height: 1.2;
+}
+.rule-card .rule-label {
+  font-size: 11px; font-weight: 600; margin-top: 4px;
+}
+.rule-card .rule-right { flex: 1; }
+.rule-card .rule-title {
+  font-size: 15px; font-weight: 700; margin-bottom: 6px;
+  display: flex; align-items: center; gap: 8px;
+}
+.rule-card .rule-desc {
+  font-size: 13px; line-height: 1.8; color: var(--text-secondary);
+}
+.rule-card .rule-desc code {
+  background: rgba(0,0,0,0.06); padding: 1px 6px; border-radius: 4px;
+  font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px;
+}
+
+.rule-card.auto { background: var(--green-light); border-left-color: var(--green); }
+.rule-card.auto .rule-score { color: var(--green); }
+.rule-card.auto .rule-label { color: #065f46; }
+.rule-card.pending { background: var(--amber-light); border-left-color: var(--amber); }
+.rule-card.pending .rule-score { color: var(--amber); }
+.rule-card.pending .rule-label { color: #92400e; }
+.rule-card.error { background: var(--red-light); border-left-color: var(--red); }
+.rule-card.error .rule-score { color: var(--red); }
+.rule-card.error .rule-label { color: #991b1b; }
+
+.flow-step {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+}
+.flow-step .step-num {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: white; flex-shrink: 0;
+}
+.flow-step .step-num.green { background: var(--green); }
+.flow-step .step-num.amber { background: var(--amber); }
+.flow-step .step-num.red { background: var(--red); }
+.flow-step .step-num.blue { background: var(--primary); }
+.flow-step .step-num.purple { background: var(--purple); }
+.flow-step .step-text { flex: 1; }
+.flow-step .step-text strong { color: var(--text); }
+.flow-step .step-text .step-sub { color: var(--text-secondary); font-size: 12px; margin-top: 2px; }
+.flow-step .step-result {
+  flex-shrink: 0;
+  font-size: 11px; font-weight: 600;
+  padding: 3px 10px; border-radius: 6px;
+}
+.flow-step .step-result.confirmed { background: var(--green-light); color: #065f46; border: 1px solid var(--green-border); }
+.flow-step .step-result.pending-tag { background: var(--amber-light); color: #92400e; border: 1px solid var(--amber-border); }
+.flow-step .step-result.error-tag { background: var(--red-light); color: #991b1b; border: 1px solid var(--red-border); }
+
+.flow-arrow {
+  text-align: center; color: var(--text-secondary); font-size: 18px; margin: 4px 0;
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="doc-header">
+  <h1><i class="ri-shield-check-line"></i> 自动确认与人工确认判断条件</h1>
+  <div class="subtitle">产品匹配 · 客户匹配 · 同名区分 · 决策流程</div>
+  <div class="doc-meta">
+    <div class="doc-meta-item"><i class="ri-calendar-line"></i> 创建：<strong>2026-05-17</strong></div>
+    <div class="doc-meta-item"><i class="ri-file-code-line"></i> 实现：<strong>index.html / get_cus_pro.html</strong></div>
+    <div class="doc-meta-item"><i class="ri-scales-3-line"></i> 评分模型：<strong>四维加权（35%+25%+30%+10%）</strong></div>
+    <div class="doc-meta-item"><i class="ri-shield-line"></i> 自动确认阈值：<strong>≥90% / 唯一≥80%</strong></div>
+  </div>
+</div>
+
+<!-- 第1章：概述 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-blue ri-information-line"></i> 1. 概述
+  </div>
+  <p>拼音匹配完成后，系统需要决定匹配结果是<strong>自动确认</strong>还是<strong>人工确认</strong>。自动确认意味着系统认为匹配结果足够可靠，无需用户操作；人工确认意味着系统将结果标记为待定，需要用户审核。</p>
+  <div class="highlight-box green">
+    <i class="ri-shield-check-line"></i> <strong>核心原则</strong>：<strong>宁可多等一步，不可错配一条</strong>。自动确认的门槛设计偏保守——只有高置信度或唯一候选时才自动确认，其余一律交给人工。同名多产品必须通过型号/规格区分才能自动确认，否则必须人工选择。
+  </div>
+</div>
+
+<!-- 第2章：评分模型 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-purple ri-radar-line"></i> 2. 评分模型
+  </div>
+  <p>匹配得分由四维加权计算得出（已移除未使用的业务权重维度）：</p>
+  <div class="formula-box">
+    <span class="dim">拼音相似度</span> <span class="op">×</span> <span class="weight">35%</span>
+    <span class="op">+</span> <span class="dim">首字母匹配</span> <span class="op">×</span> <span class="weight">25%</span>
+    <span class="op">+</span> <span class="dim">词袋余弦</span> <span class="op">×</span> <span class="weight">30%</span>
+    <span class="op">+</span> <span class="dim">长度匹配</span> <span class="op">×</span> <span class="weight">10%</span>
+    <span class="op">=</span> 最终得分
+  </div>
+  <table>
+    <tr>
+      <th>维度</th>
+      <th>权重</th>
+      <th>计算方式</th>
+      <th>作用</th>
+    </tr>
+    <tr>
+      <td><strong>拼音相似度</strong></td>
+      <td>35%</td>
+      <td>编辑距离 + LCS 取平均</td>
+      <td>核心匹配信号，全拼级别的字符串相似度</td>
+    </tr>
+    <tr>
+      <td><strong>首字母匹配</strong></td>
+      <td>25%</td>
+      <td>编辑距离 + LCS 取平均</td>
+      <td>短文本快速匹配，对缩写输入敏感</td>
+    </tr>
+    <tr>
+      <td><strong>词袋余弦</strong></td>
+      <td>30%</td>
+      <td>按 <code>_</code> 分词后余弦相似度</td>
+      <td>解决词序不同问题，最稳健的维度</td>
+    </tr>
+    <tr>
+      <td><strong>长度匹配</strong></td>
+      <td>10%</td>
+      <td><code>1 - |lenA - lenB| / maxLen</code></td>
+      <td>防止短查询误匹配长记录</td>
+    </tr>
+  </table>
+  <div class="highlight-box cyan">
+    <i class="ri-information-line"></i> <strong>拼音生成一致性</strong>：查询端和数据库端使用相同的 <code>generatePinyinForText</code> 函数。产品拼音由<strong>品名+型号+规格</strong>合并生成，查询时也合并品名+型号传入，确保两端拼音空间一致。
+  </div>
+  <div class="highlight-box amber">
+    <i class="ri-filter-line"></i> <strong>占位符过滤（isPlaceholder）</strong>：合并生成拼音时，空值、<code>"-"</code>、<code>"[未填写]"</code>、<code>"[空]"</code> 等方括号占位符不参与合并。例如：model=<code>"[未填写]"</code> 表示型号为空，不应生成拼音，否则无意义的占位文本会严重干扰匹配得分（曾导致100%匹配降至55%）。过滤逻辑统一使用 <code>isPlaceholder()</code> 函数：<code>.filter(s =&gt; !isPlaceholder(s))</code>，判断规则：<code>!val || val.trim() === '-' || val.trim() === '[未填写]' || /^\[.*\]$/.test(val.trim())</code>
+  </div>
+</div>
+
+<!-- 第3章：产品自动确认条件 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-green ri-check-double-line"></i> 3. 产品自动确认条件
+  </div>
+  <p>产品匹配在以下5种情况下<strong>自动确认</strong>（<code>status: 'confirmed'</code>）：</p>
+
+  <div class="rule-card auto">
+    <div class="rule-left">
+      <div class="rule-score">≥90%</div>
+      <div class="rule-label"><span class="tag tag-green">自动确认</span></div>
+    </div>
+    <div class="rule-right">
+      <div class="rule-title"><i class="ri-check-line" style="color:var(--green)"></i> 条件1：高分唯一 · 品名匹配</div>
+      <div class="rule-desc">
+        得分≥90% 且同名产品只有1条 → 自动确认<br>
+        <code>matchType: 'exact'</code>（≥95%）或 <code>matchType: 'name'</code>（90%-95%）<br>
+        示例：输入"台式电脑"，数据库中只有1条"台式电脑"产品，得分95% → 自动确认
+      </div>
+    </div>
+  </div>
+
+  <div class="rule-card auto">
+    <div class="rule-left">
+      <div class="rule-score">≥90%</div>
+      <div class="rule-label"><span class="tag tag-green">自动确认</span></div>
+    </div>
+    <div class="rule-right">
+      <div class="rule-title"><i class="ri-cpu-line" style="color:var(--green)"></i> 条件2：同名多产品 · 型号精确匹配</div>
+      <div class="rule-desc">
+        得分≥90% 且同名产品有多条，但输入的型号与某条产品型号<strong>完全一致</strong> → 自动确认<br>
+        <code>matchType: 'sku'</code><br>
+        示例：输入"视频会议 POLYCOM HDX 6000-720"，数据库有3条"视频会议"，其中1条型号为"POLYCOM HDX 6000-720" → 精确匹配该条
+      </div>
+    </div>
+  </div>
+
+  <div class="rule-card auto">
+    <div class="rule-left">
+      <div class="rule-score">≥90%</div>
+      <div class="rule-label"><span class="tag tag-green">自动确认</span></div>
+    </div>
+    <div class="rule-right">
+      <div class="rule-title"><i class="ri-search-eye-line" style="color:var(--green)"></i> 条件3：同名多产品 · 型号部分匹配</div>
+      <div class="rule-desc">
+        得分≥90% 且同名产品有多条，型号不完全一致但存在<strong>双向包含</strong>关系 → 自动确认<br>
+        <code>matchType: 'sku'</code><br>
+        匹配规则：<code>产品型号.indexOf(输入型号) !== -1 || 输入型号.indexOf(产品型号) !== -1</code><br>
+        示例：输入型号"HDX 6000"，产品型号"POLYCOM HDX 6000-720"包含输入 → 部分匹配
+      </div>
+    </div>
+  </div>
+
+  <div class="rule-card auto">
+    <div class="rule-left">
+      <div class="rule-score">≥90%</div>
+      <div class="rule-label"><span class="tag tag-green">自动确认</span></div>
+    </div>
+    <div class="rule-right">
+      <div class="rule-title"><i class="ri-file-list-3-line" style="color:var(--green)"></i> 条件4：同名多产品 · 规格匹配</div>
+      <div class="rule-desc">
+        得分≥90% 且同名产品有多条，型号不匹配但有规格值且<strong>规格包含匹配</strong> → 自动确认<br>
+        <code>matchType: 'sku'</code><br>
+        匹配规则：<code>产品规格.indexOf(输入规格) !== -1</code><br>
+        示例：输入规格"白色"，产品规格"3M白色防护服"包含"白色" → 规格匹配
+      </div>
+    </div>
+  </div>
+
+  <div class="rule-card auto">
+    <div class="rule-left">
+      <div class="rule-score">≥80%</div>
+      <div class="rule-label"><span class="tag tag-green">自动确认</span></div>
+    </div>
+    <div class="rule-right">
+      <div class="rule-title"><i class="ri-user-follow-line" style="color:#059669"></i> 条件5：唯一候选 · 高置信</div>
+      <div class="rule-desc">
+        匹配结果只有1条且得分≥80% → 自动确认<br>
+        <code>matchType: 'name'</code><br>
+        设计理由：只有一个候选且分数较高时，用户确认的概率极高，自动确认减少操作步骤<br>
+        示例：输入"15mm木塑"，只有1条匹配结果得分85% → 自动确认
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 第4章：产品人工确认条件 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-amber ri-hand-heart-line"></i> 4. 产品人工确认条件
+  </div>
+  <p>以下情况返回 <code>status: 'pending'</code>，需要用户手动确认或选择：</p>
+
+  <div class="rule-card pending">
+    <div class="rule-left">
+      <div class="rule-score">≥90%</div>
+      <div class="rule-label"><span class="tag tag-amber">待确认</span></div>
+    </div>
+    <div class="rule-right">
+      <div class="rule-title"><i class="ri-git-merge-line" style="color:var(--amber)"></i> 同名多产品 · 无法区分</div>
+      <div class="rule-desc">
+        得分≥90% 且同名产品有多条，但型号和规格都无法匹配 → <strong>待确认</strong><br>
+        <code>matchType: 'name'</code>，默认推荐第一条高分候选<br>
+        示例：输入"视频会议"（无型号），数据库有3条"视频会议" → 无法区分，需人工选择
+      </div>
+    </div>
+  </div>
+
+  <div class="rule-card pending">
+    <div class="rule-left">
+      <div class="rule-score">70-90%</div>
+      <div class="rule-label"><span class="tag tag-amber">待确认</span></div>
+    </div>
+    <div class="rule-right">
+      <div class="rule-title"><i class="ri-question-line" style="color:var(--amber)"></i> 高置信候选 · 分数不足</div>
+      <div class="rule-desc">
+        最高得分在70%-90%之间 → <strong>待确认</strong>，推荐最高分候选<br>
+        <code>matchType: 'name'</code><br>
+        示例：输入"防护服"，最佳匹配得分78% → 候选推荐，需用户确认
+      </div>
+    </div>
+  </div>
+
+  <div class="rule-card pending">
+    <div class="rule-left">
+      <div class="rule-score">45-70%</div>
+      <div class="rule-label"><span class="tag tag-amber">待确认</span></div>
+    </div>
+    <div class="rule-right">
+      <div class="rule-title"><i class="ri-error-warning-line" style="color:#ea580c"></i> 低置信匹配</div>
+      <div class="rule-desc">
+        得分在45%-70%之间（无论候选数量多少） → <strong>待确认</strong><br>
+        <code>matchType: 'name'</code><br>
+        包括：唯一候选得分45-70%，或多候选最高得分45-70%
+      </div>
+    </div>
+  </div>
+
+  <div class="rule-card error">
+    <div class="rule-left">
+      <div class="rule-score">&lt;45%</div>
+      <div class="rule-label"><span class="tag tag-red">不匹配</span></div>
+    </div>
+    <div class="rule-right">
+      <div class="rule-title"><i class="ri-close-circle-line" style="color:var(--red)"></i> 低于阈值 · 不匹配</div>
+      <div class="rule-desc">
+        得分低于45%（最低阈值）或无候选 → <strong>不匹配</strong><br>
+        <code>status: 'error'</code>，<code>matchType: 'none'</code><br>
+        用户可通过搜索弹窗手动查找，或新建产品
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 第5章：产品匹配决策流程 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-cyan ri-flow-chart"></i> 5. 产品匹配决策流程
+  </div>
+
+  <div class="flow-step">
+    <div class="step-num blue">1</div>
+    <div class="step-text">
+      <strong>合并输入</strong>：品名 + 型号合并为查询文本，与数据库端拼音生成方式一致
+      <div class="step-sub">combinedName = [品名, 型号].join(' ') → generatePinyinForText(combinedName)</div>
+    </div>
+  </div>
+  <div class="flow-arrow">↓</div>
+  <div class="flow-step">
+    <div class="step-num blue">2</div>
+    <div class="step-text">
+      <strong>四维评分</strong>：pinyinMatch(combinedName, indexDb, {threshold: 0.45})
+      <div class="step-sub">返回按得分降序排列的候选列表 candidates[]</div>
+    </div>
+  </div>
+  <div class="flow-arrow">↓</div>
+  <div class="flow-step">
+    <div class="step-num red">3</div>
+    <div class="step-text">
+      <strong>无候选？</strong> → candidates.length === 0
+    </div>
+    <div class="step-result error-tag">不匹配 error</div>
+  </div>
+  <div class="flow-arrow">↓ 有候选</div>
+  <div class="flow-step">
+    <div class="step-num green">4</div>
+    <div class="step-text">
+      <strong>得分≥90%？</strong> → best.score ≥ 0.9
+    </div>
+  </div>
+  <div class="flow-arrow">↓ 是</div>
+  <div class="flow-step">
+    <div class="step-num purple">5</div>
+    <div class="step-text">
+      <strong>同名产品数量？</strong> → sameNameProducts = db.filter(p => p.name === best.name)
+    </div>
+  </div>
+  <div class="flow-arrow">↓</div>
+  <div class="flow-step">
+    <div class="step-num green">6a</div>
+    <div class="step-text">
+      <strong>同名唯一</strong> → 自动确认
+      <div class="step-sub">matchType: ≥95% → 'exact'，90%-95% → 'name'</div>
+    </div>
+    <div class="step-result confirmed">confirmed</div>
+  </div>
+  <div class="flow-arrow">↓ 同名多条</div>
+  <div class="flow-step">
+    <div class="step-num green">6b</div>
+    <div class="step-text">
+      <strong>型号精确匹配？</strong> → model.toLowerCase() === inputModel.toLowerCase()
+    </div>
+    <div class="step-result confirmed">confirmed · sku</div>
+  </div>
+  <div class="flow-arrow">↓ 否</div>
+  <div class="flow-step">
+    <div class="step-num green">6c</div>
+    <div class="step-text">
+      <strong>型号部分匹配？</strong> → 双向包含（产品型号含输入型号 或 输入型号含产品型号）
+    </div>
+    <div class="step-result confirmed">confirmed · sku</div>
+  </div>
+  <div class="flow-arrow">↓ 否</div>
+  <div class="flow-step">
+    <div class="step-num green">6d</div>
+    <div class="step-text">
+      <strong>规格匹配？</strong> → 产品规格.indexOf(输入规格) !== -1
+    </div>
+    <div class="step-result confirmed">confirmed · sku</div>
+  </div>
+  <div class="flow-arrow">↓ 否</div>
+  <div class="flow-step">
+    <div class="step-num amber">6e</div>
+    <div class="step-text">
+      <strong>型号/规格都不匹配</strong> → 无法区分，推荐第一条高分候选，需人工选择
+    </div>
+    <div class="step-result pending-tag">pending · name</div>
+  </div>
+  <div class="flow-arrow">↓ 得分<90%</div>
+  <div class="flow-step">
+    <div class="step-num green">7</div>
+    <div class="step-text">
+      <strong>唯一候选 且 ≥80%？</strong> → matches.length === 1 && best.score ≥ 0.8
+    </div>
+    <div class="step-result confirmed">confirmed · name</div>
+  </div>
+  <div class="flow-arrow">↓ 否</div>
+  <div class="flow-step">
+    <div class="step-num amber">8</div>
+    <div class="step-text">
+      <strong>得分≥70%？</strong> → 候选推荐
+    </div>
+    <div class="step-result pending-tag">pending · name</div>
+  </div>
+  <div class="flow-arrow">↓ 否</div>
+  <div class="flow-step">
+    <div class="step-num amber">9</div>
+    <div class="step-text">
+      <strong>得分≥45%？</strong> → 模糊提示（唯一候选或多候选）
+    </div>
+    <div class="step-result pending-tag">pending · name</div>
+  </div>
+  <div class="flow-arrow">↓ 否</div>
+  <div class="flow-step">
+    <div class="step-num red">10</div>
+    <div class="step-text">
+      <strong>得分<45%</strong> → 不匹配
+    </div>
+    <div class="step-result error-tag">error · none</div>
+  </div>
+</div>
+
+<!-- 第6章：客户匹配条件 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-purple ri-building-line"></i> 6. 客户匹配条件
+  </div>
+  <p>客户匹配与产品匹配使用相同的四维评分模型，但决策逻辑更简单——客户没有"同名多条+型号区分"的场景：</p>
+
+  <table>
+    <tr>
+      <th>条件</th>
+      <th>状态</th>
+      <th>matchType</th>
+      <th>说明</th>
+    </tr>
+    <tr>
+      <td><strong>得分≥90%</strong></td>
+      <td><span class="tag tag-green">confirmed</span></td>
+      <td>exact</td>
+      <td>自动确认，调用 selectCustomer 回填客户信息</td>
+    </tr>
+    <tr>
+      <td><strong>唯一候选 且 ≥80%</strong></td>
+      <td><span class="tag tag-green">confirmed</span></td>
+      <td>exact</td>
+      <td>自动确认，减少操作步骤</td>
+    </tr>
+    <tr>
+      <td><strong>得分70%-90%</strong></td>
+      <td><span class="tag tag-amber">pending</span></td>
+      <td>fuzzy</td>
+      <td>候选推荐，显示客户卡片待用户确认</td>
+    </tr>
+    <tr>
+      <td><strong>得分45%-70%</strong></td>
+      <td><span class="tag tag-amber">pending</span></td>
+      <td>fuzzy</td>
+      <td>模糊匹配，需手动搜索或新建</td>
+    </tr>
+    <tr>
+      <td><strong>得分<45% 或 无候选</strong></td>
+      <td><span class="tag tag-red">error</span></td>
+      <td>none</td>
+      <td>未匹配，需手动搜索或新建</td>
+    </tr>
+  </table>
+
+  <div class="highlight-box purple">
+    <i class="ri-star-line"></i> <strong>客户与产品的关键差异</strong><br>
+    — 客户没有"同名多条+型号区分"逻辑，因为客户名称通常是唯一的<br>
+    — 客户确认后自动调用 <code>selectCustomer</code>，回填标准客户名、地址、联系人<br>
+    — 客户匹配的 <code>matchType</code> 只有 <code>exact</code>、<code>fuzzy</code>、<code>none</code> 三种，没有 <code>sku</code>
+  </div>
+</div>
+
+<!-- 第7章：同名产品区分策略 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-blue ri-git-merge-line"></i> 7. 同名产品区分策略
+  </div>
+  <p>同名多产品是产品匹配中最复杂的场景。系统按以下优先级依次尝试区分：</p>
+
+  <div class="formula-box">
+    <span class="dim">型号精确匹配</span> <span class="op">→</span>
+    <span class="dim">型号部分匹配</span> <span class="op">→</span>
+    <span class="dim">规格匹配</span> <span class="op">→</span>
+    <span style="color:var(--amber);">人工选择</span>
+  </div>
+
+  <table>
+    <tr>
+      <th>优先级</th>
+      <th>匹配方式</th>
+      <th>匹配规则</th>
+      <th>结果</th>
+    </tr>
+    <tr>
+      <td><strong>1</strong></td>
+      <td>型号精确匹配</td>
+      <td><code>产品型号 === 输入型号</code>（不区分大小写）</td>
+      <td><span class="tag tag-green">confirmed · sku</span></td>
+    </tr>
+    <tr>
+      <td><strong>2</strong></td>
+      <td>型号部分匹配</td>
+      <td><code>产品型号.indexOf(输入型号) ≥ 0 || 输入型号.indexOf(产品型号) ≥ 0</code></td>
+      <td><span class="tag tag-green">confirmed · sku</span></td>
+    </tr>
+    <tr>
+      <td><strong>3</strong></td>
+      <td>规格包含匹配</td>
+      <td><code>产品规格.indexOf(输入规格) ≥ 0</code></td>
+      <td><span class="tag tag-green">confirmed · sku</span></td>
+    </tr>
+    <tr>
+      <td><strong>4</strong></td>
+      <td>无法区分</td>
+      <td>以上均不满足</td>
+      <td><span class="tag tag-amber">pending · name</span></td>
+    </tr>
+  </table>
+
+  <div class="highlight-box amber">
+    <i class="ri-alert-line"></i> <strong>为什么型号部分匹配也能自动确认？</strong><br>
+    ASR识别的型号可能不完整（如"HDX 6000" vs "POLYCOM HDX 6000-720"），双向包含匹配能覆盖这种局部匹配场景。但如果是完全无关的型号，不会触发包含匹配，仍会交给人工。
+  </div>
+
+  <div class="highlight-box red">
+    <i class="ri-close-circle-line"></i> <strong>安全兜底</strong>：同名多产品且型号/规格都无法区分时，<strong>绝不自动确认</strong>。系统推荐第一条高分候选，但标记为 <code>pending</code>，必须由用户手动选择正确的型号。
+  </div>
+</div>
+
+<!-- 第8章：完整条件速查表 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-amber ri-table-line"></i> 8. 完整条件速查表
+  </div>
+
+  <p><strong>产品匹配</strong>：</p>
+  <table>
+    <tr>
+      <th>#</th>
+      <th>得分</th>
+      <th>候选数</th>
+      <th>同名</th>
+      <th>型号/规格</th>
+      <th>状态</th>
+      <th>matchType</th>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>≥95%</td>
+      <td>任意</td>
+      <td>唯一</td>
+      <td>—</td>
+      <td><span class="tag tag-green">confirmed</span></td>
+      <td>exact</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>90-95%</td>
+      <td>任意</td>
+      <td>唯一</td>
+      <td>—</td>
+      <td><span class="tag tag-green">confirmed</span></td>
+      <td>name</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>≥90%</td>
+      <td>任意</td>
+      <td>多条</td>
+      <td>型号精确匹配</td>
+      <td><span class="tag tag-green">confirmed</span></td>
+      <td>sku</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>≥90%</td>
+      <td>任意</td>
+      <td>多条</td>
+      <td>型号部分匹配</td>
+      <td><span class="tag tag-green">confirmed</span></td>
+      <td>sku</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>≥90%</td>
+      <td>任意</td>
+      <td>多条</td>
+      <td>规格匹配</td>
+      <td><span class="tag tag-green">confirmed</span></td>
+      <td>sku</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td>≥90%</td>
+      <td>任意</td>
+      <td>多条</td>
+      <td>都不匹配</td>
+      <td><span class="tag tag-amber">pending</span></td>
+      <td>name</td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td>≥80%</td>
+      <td>仅1条</td>
+      <td>—</td>
+      <td>—</td>
+      <td><span class="tag tag-green">confirmed</span></td>
+      <td>name</td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td>70-90%</td>
+      <td>任意</td>
+      <td>—</td>
+      <td>—</td>
+      <td><span class="tag tag-amber">pending</span></td>
+      <td>name</td>
+    </tr>
+    <tr>
+      <td>9</td>
+      <td>45-70%</td>
+      <td>任意</td>
+      <td>—</td>
+      <td>—</td>
+      <td><span class="tag tag-amber">pending</span></td>
+      <td>name</td>
+    </tr>
+    <tr>
+      <td>10</td>
+      <td>&lt;45%</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td><span class="tag tag-red">error</span></td>
+      <td>none</td>
+    </tr>
+  </table>
+
+  <p><strong>客户匹配</strong>：</p>
+  <table>
+    <tr>
+      <th>#</th>
+      <th>得分</th>
+      <th>候选数</th>
+      <th>状态</th>
+      <th>matchType</th>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>≥90%</td>
+      <td>任意</td>
+      <td><span class="tag tag-green">confirmed</span></td>
+      <td>exact</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>≥80%</td>
+      <td>仅1条</td>
+      <td><span class="tag tag-green">confirmed</span></td>
+      <td>exact</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>45-90%</td>
+      <td>任意</td>
+      <td><span class="tag tag-amber">pending</span></td>
+      <td>fuzzy</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>&lt;45%</td>
+      <td>—</td>
+      <td><span class="tag tag-red">error</span></td>
+      <td>none</td>
+    </tr>
+  </table>
+</div>
+
+<!-- 第9章：UI状态映射 -->
+<div class="section">
+  <div class="section-title">
+    <i class="icon-cyan ri-palette-line"></i> 9. UI状态映射
+  </div>
+  <p><strong>status 状态映射</strong>：</p>
+  <table>
+    <tr>
+      <th>status</th>
+      <th>状态文本</th>
+      <th>边框颜色</th>
+      <th>操作按钮</th>
+    </tr>
+    <tr>
+      <td><code>confirmed</code></td>
+      <td>已确认</td>
+      <td>🟢 绿色</td>
+      <td>取消确认 · 重新匹配 · 删除</td>
+    </tr>
+    <tr>
+      <td><code>pending</code></td>
+      <td>待确认</td>
+      <td>🟡 黄色</td>
+      <td>确认 · 重新匹配 · 删除</td>
+    </tr>
+    <tr>
+      <td><code>error</code></td>
+      <td>未匹配</td>
+      <td>🔴 红色</td>
+      <td>新建产品 · 重新匹配 · 删除</td>
+    </tr>
+    <tr>
+      <td><code>new</code></td>
+      <td>新建</td>
+      <td>🟢 绿色</td>
+      <td>取消确认 · 重新匹配 · 删除</td>
+    </tr>
+  </table>
+
+  <p><strong>matchType 匹配类型映射</strong>：</p>
+  <table>
+    <tr>
+      <th>matchType</th>
+      <th>显示文本</th>
+      <th>标签颜色</th>
+      <th>产生场景</th>
+    </tr>
+    <tr>
+      <td><code>exact</code></td>
+      <td>精确匹配</td>
+      <td>🟢 绿色底</td>
+      <td>品名匹配得分 ≥95%，同名唯一产品自动确认</td>
+    </tr>
+    <tr>
+      <td><code>sku</code></td>
+      <td>SKU匹配</td>
+      <td>🔵 蓝色底</td>
+      <td>同名多产品，通过型号精确/部分匹配或规格匹配区分后确认</td>
+    </tr>
+    <tr>
+      <td><code>name</code></td>
+      <td>品名匹配</td>
+      <td>🟡 黄色底</td>
+      <td>品名匹配得分 90%-95%确认，或同名多条无法区分待确认，或候选推荐/模糊提示</td>
+    </tr>
+    <tr>
+      <td><code>code</code></td>
+      <td>编号匹配</td>
+      <td>🟢 绿色底</td>
+      <td>通过产品编号匹配确认</td>
+    </tr>
+    <tr>
+      <td><code>auto</code></td>
+      <td>自动匹配</td>
+      <td>🟢 绿色底</td>
+      <td>重新匹配窗口中得分 ≥90% 自动确认</td>
+    </tr>
+    <tr>
+      <td><code>candidate</code></td>
+      <td>候选推荐</td>
+      <td>🟡 黄色底</td>
+      <td>重新匹配窗口中得分 70%-90%</td>
+    </tr>
+    <tr>
+      <td><code>fuzzy</code></td>
+      <td>模糊匹配</td>
+      <td>🟠 橙色底</td>
+      <td>重新匹配窗口中得分 &lt;70%，或客户匹配 45%-90%</td>
+    </tr>
+    <tr>
+      <td><code>none</code></td>
+      <td>未匹配</td>
+      <td>🔴 红色底</td>
+      <td>得分低于45%阈值，无匹配结果</td>
+    </tr>
+    <tr>
+      <td><code>new</code></td>
+      <td>新建产品</td>
+      <td>🔵 蓝色底</td>
+      <td>用户手动新建产品</td>
+    </tr>
+  </table>
+
+  <div class="highlight-box amber">
+    <i class="ri-alert-line"></i> <strong>注意</strong>：matchType 的所有可能值都必须在 UI 渲染的 <code>matchTypeText</code> 映射中定义，否则会回退显示为"待匹配"，导致已确认的产品仍显示错误的匹配类型标签。
+  </div>
+</div>
+
+</div>
+</body>
+</html>
