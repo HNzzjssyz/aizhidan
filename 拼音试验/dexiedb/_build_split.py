@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-# 一键分离：把 dexiedb/ 根目录的 4 个源文件分离为 dev/（带完整注释）+ prod/（去注释压缩版）
+# 一键构建：从 dev/（带完整注释）读取源文件，去注释生成 prod/（压缩版）
 # 用法：
-#   python3 _build_split.py            # 直接执行：覆盖 dev 和 prod
+#   python3 _build_split.py            # 直接执行：用 dev/ 生成 prod/
 #   python3 _build_split.py --dry-run  # 仅打印将执行的动作，不实际写文件
-#   python3 _build_split.py --watch    # 监听模式：源文件变化时自动重建（按 Ctrl+C 退出）
+#   python3 _build_split.py --watch    # 监听模式：dev/ 文件变化时自动重建 prod/（按 Ctrl+C 退出）
 #   python3 _build_split.py --init     # 监听模式 + 首次运行就构建一次
 import os
 import re
@@ -46,6 +46,20 @@ def strip_js_comments(src):
                 state = 'BLOCK_COMMENT'
                 i += 2
                 continue
+            if c == '/':
+                # 判断是正则字面量还是除法：回看前一个非空白字符
+                prev_char = ''
+                for j in range(len(out) - 1, -1, -1):
+                    if out[j] not in ' \t\n\r':
+                        prev_char = out[j]
+                        break
+                # 这些字符之后的 / 视为正则起始：( , = [ ! & | ? : ; { } + - * % < > ~ ^ 或行首
+                if prev_char == '' or prev_char in '(,=![&|?:;{}+-*%<>~^':
+                    out.append(c)
+                    state = 'REGEX'
+                    i += 1
+                    continue
+                # 否则当除法，落回普通字符处理
             if c == "'":
                 state = 'STRING_SQ'
                 out.append(c); i += 1; continue
@@ -77,6 +91,22 @@ def strip_js_comments(src):
                 continue
             if c == '\n':
                 out.append('\n')  # 保留块注释中的换行，避免破坏代码结构
+            i += 1; continue
+        if state == 'REGEX':
+            out.append(c)
+            if c == '\\' and c2:
+                out.append(c2); i += 2; continue
+            if c == '[':
+                state = 'REGEX_CLASS'
+            elif c == '/' or c == '\n':
+                state = 'NORMAL'
+            i += 1; continue
+        if state == 'REGEX_CLASS':
+            out.append(c)
+            if c == '\\' and c2:
+                out.append(c2); i += 2; continue
+            if c == ']' or c == '\n':
+                state = 'REGEX'
             i += 1; continue
         if state == 'STRING_SQ':
             out.append(c)
@@ -190,22 +220,20 @@ def _build_once(reason='EXECUTE'):
         print('\n[' + time.strftime('%H:%M:%S') + '] 检测到源文件变化 → 开始重建 (' + reason + ')')
     else:
         print('========================================')
-        print(' 一键分离脚本')
-        print(' 源目录: %s' % ROOT)
-        print(' 开发版: %s' % DEV_DIR)
+        print(' 一键构建脚本')
+        print(' 源目录: %s (dev/)' % DEV_DIR)
         print(' 发布版: %s' % PROD_DIR)
         print(' 模式: %s' % ('DRY-RUN' if DRY_RUN else 'EXECUTE'))
         print('========================================')
 
     for fname in SRC_FILES:
-        src_path = os.path.join(ROOT, fname)
+        # 源文件位于 dev/ 目录
+        src_path = os.path.join(DEV_DIR, fname)
         if not os.path.isfile(src_path):
-            print('[SKIP] 源文件不存在: %s' % fname)
+            print('[SKIP] 源文件不存在: dev/%s' % fname)
             continue
         with open(src_path, 'r', encoding='utf-8') as f:
             src_content = f.read()
-        # dev/：原样复制
-        dev_path = os.path.join(DEV_DIR, fname)
         # prod/：去注释
         if fname.endswith('.js'):
             prod_content = process_js(src_content)
@@ -227,35 +255,32 @@ def _build_once(reason='EXECUTE'):
 
         if DRY_RUN:
             continue
-        # 1) dev 目录：原样复制
-        with open(dev_path, 'w', encoding='utf-8') as f:
-            f.write(src_content)
-        # 2) prod 目录：写去注释版
+        # 写 prod 目录（去注释版）
         with open(prod_path, 'w', encoding='utf-8') as f:
             f.write(prod_content)
 
     if DRY_RUN:
         print('\n(DRY-RUN) 仅打印，未实际写文件')
     elif WATCH:
-        print('  ✓ 已更新 dev/ + prod/')
+        print('  ✓ 已更新 prod/')
     else:
         print('\n========================================')
         print(' 完成')
-        print('  开发版目录: %s  (带完整注释)' % DEV_DIR)
+        print('  源目录:     %s  (带完整注释)' % DEV_DIR)
         print('  发布版目录: %s  (去除注释)' % PROD_DIR)
         print('========================================')
 
 
 def _snapshot_mtimes():
-    """记录源文件 + dev/prod 输出 + 本脚本自身的 mtime。返回 dict{path: mtime}。"""
+    """记录源文件（dev/）+ prod/ 输出 + 本脚本自身的 mtime。返回 dict{path: mtime}。"""
     snap = {}
-    # 源文件
+    # 源文件（位于 dev/）
     for fname in SRC_FILES:
-        p = os.path.join(ROOT, fname)
+        p = os.path.join(DEV_DIR, fname)
         if os.path.isfile(p):
             snap[p] = os.path.getmtime(p)
-    # 输出文件（dev/prod 的变化也算变化，但通常跟着源走）
-    for out_dir in (DEV_DIR, PROD_DIR):
+    # 输出文件（prod/ 的变化也算变化，但通常跟着源走）
+    for out_dir in (PROD_DIR,):
         if not os.path.isdir(out_dir):
             continue
         for fname in SRC_FILES:
@@ -269,10 +294,10 @@ def _watch_loop():
     """监听模式：每秒检查 mtime，源文件变化时自动重建。"""
     print('========================================')
     print(' 监听模式已启动')
-    print('  监控文件:')
+    print('  监控文件 (dev/):')
     for f in SRC_FILES:
-        print('    - %s' % f)
-    print('  触发: 任一源文件 mtime 变化 → 重建 dev/ + prod/')
+        print('    - dev/%s' % f)
+    print('  触发: dev/ 任一源文件 mtime 变化 → 重建 prod/')
     print('  防抖: 200ms（编辑器多次保存只构建一次）')
     print('  退出: Ctrl+C')
     print('========================================')
@@ -294,9 +319,9 @@ def _watch_loop():
                     # 跳过本脚本自身（避免改 _build_split.py 触发）
                     if path.endswith(SCRIPT_NAME):
                         continue
-                    # 跳过 dev/ prod/ 输出（它们变是因为我们刚写的）
+                    # 跳过 prod/ 输出（它变是因为我们刚写的）；dev/ 是源，变化必须响应
                     rel = os.path.relpath(path, ROOT)
-                    if rel.startswith('dev' + os.sep) or rel.startswith('prod' + os.sep):
+                    if rel.startswith('prod' + os.sep):
                         continue
                     changed.append(rel)
             if not changed:

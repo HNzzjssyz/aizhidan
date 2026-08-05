@@ -5916,6 +5916,13 @@ async function _autoSelectCustomerByUrl() {
   selectedCustomerId = c.id;
   currentCustomer = [{ id: c.id, name: c.name, similarity: 100, address: c.address || '', contact: c.contact || '' }];
   showCustomerCard({ id: c.id, name: c.name, address: c.address || '', contact: c.contact || '' }, 'confirmed');
+  // URL 指定客户模式：立即显示客户区域，无需等待右侧智能体识别
+  // 让用户一进页面就能看到"当前客户"，心理预期明确
+  // 不显示 productSection/actionBar —— 仍等智能体识别产品后呈现
+  var emptyEl = document.getElementById('emptyState');
+  if (emptyEl) emptyEl.style.display = 'none';
+  var csEl = document.getElementById('customerSection');
+  if (csEl) csEl.style.display = 'block';
   // 客户识别区域只读：禁用点击、隐藏候选弹窗入口
   var cardEl = document.getElementById('customerCard');
   if (cardEl) {

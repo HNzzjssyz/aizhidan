@@ -438,7 +438,7 @@ var PinyinMatch = (function() {
   }
 
   function initDB() {
-    // db 不存在，或者存在但已关闭（Safari 经常自动关 IDB）→ 重建
+
     if (!db) {
       db = new Dexie('PinyinToolDB');
       db.version(1).stores({
@@ -776,7 +776,7 @@ var PinyinMatch = (function() {
       } else {
         var recordFull = (record.pinyin || '').toLowerCase();
         var recordAbbr = (record.pinyin_abbr || '').toLowerCase();
-        // 客户匹配增强：候选的拼音字符串包含输入的拼音字符串（如"上海飞奥德"包含"上海菲奥的"的拼音）
+
         if (recordFull && asrFull && recordFull.indexOf(asrFull) !== -1) {
           scores.pinyin = 0.95; scores.abbr = 0.9; scores.wordBag = 1; scores.length = 0.9;
         } else {

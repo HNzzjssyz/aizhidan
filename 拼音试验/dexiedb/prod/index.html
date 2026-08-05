@@ -1770,7 +1770,6 @@ function importAgentConfig(event) {
   reader.readAsText(file);
 }
 
-// ===== 后端 API 配置 =====
 var API_BASE = '/system';
 
 async function fetchCozeToken() {
@@ -1871,39 +1870,62 @@ function _setupCozeAutoCapture() {
 
   function _tryBind() {
     var cozePanel = document.querySelector('.coze-chat-sdk');
-    if (!cozePanel) { console.log('[auto-capture] 未找到 Coze SDK 面板，1秒后重试'); setTimeout(_tryBind, 1000); return; }
+    if (!cozePanel) {
+      console.log('[auto-capture] 未找到 Coze SDK 面板，1秒后重试');
+      setTimeout(_tryBind, 1000);
+      return;
+    }
 
     console.log('[auto-capture] 已绑定 Coze SDK 面板');
 
     _cozeObserver = new MutationObserver(function(mutations) {
       var shouldScan = false;
       for (var i = 0; i < mutations.length; i++) {
-        if (mutations[i].type === 'childList' || mutations[i].type === 'characterData') { shouldScan = true; break; }
+        if (mutations[i].type === 'childList' || mutations[i].type === 'characterData') {
+          shouldScan = true;
+          break;
+        }
       }
-      if (shouldScan) { _scanCozeMessages(cozePanel); }
+      if (shouldScan) {
+        _scanCozeMessages(cozePanel);
+      }
     });
-    _cozeObserver.observe(cozePanel, { childList: true, subtree: true, characterData: true });
+
+    _cozeObserver.observe(cozePanel, {
+      childList: true,
+      subtree: true,
+      characterData: true
+    });
+
     _cozeGracePeriodEnd = Date.now() + 5000;
-    console.log('[auto-capture] 宽限期已启动，持续5秒（不处理任何消息）');
+    console.log('[auto-capture] 宽限期已启动，持续5秒');
   }
+
   setTimeout(_tryBind, 800);
 }
 
 function _scanCozeMessages(panel) {
+
   if (Date.now() < _cozeGracePeriodEnd) return;
+
   clearTimeout(_cozeStreamTimer);
   _cozeStreamTimer = setTimeout(function() {
     var freshGroups = panel.querySelectorAll('.message-group-wrapper');
     if (freshGroups.length === 0) return;
+
     var currentFirstText = freshGroups[0].innerText || '';
+
     if (!_baselineSet) {
       _baselineSet = true;
       _lastFirstMsgText = currentFirstText;
       console.log('[auto-capture] 基线已设置');
       return;
     }
+
     if (currentFirstText === _lastFirstMsgText) return;
+
     _lastFirstMsgText = currentFirstText;
+
     var candidates = _extractJSONCandidates(currentFirstText);
     for (var ci = candidates.length - 1; ci >= 0; ci--) {
       var json = candidates[ci];
@@ -1924,18 +1946,24 @@ function _extractJSONCandidates(text) {
   var depth = 0;
   var inString = false;
   var escape = false;
+
   for (var i = 0; i < text.length; i++) {
     var ch = text[i];
     if (escape) { escape = false; continue; }
     if (ch === '\\') { escape = true; continue; }
     if (ch === '"') { inString = !inString; continue; }
     if (inString) continue;
-    if (ch === '{') { if (depth === 0) braceStart = i; depth++; }
-    else if (ch === '}') {
+
+    if (ch === '{') {
+      if (depth === 0) braceStart = i;
+      depth++;
+    } else if (ch === '}') {
       depth--;
       if (depth === 0 && braceStart !== -1) {
         var jsonStr = text.substring(braceStart, i + 1);
-        if (jsonStr.length > 20) candidates.push(jsonStr);
+        if (jsonStr.length > 20) {
+          candidates.push(jsonStr);
+        }
         braceStart = -1;
       }
     }
@@ -1946,6 +1974,7 @@ function _extractJSONCandidates(text) {
 function _isCompleteOrderJSON(str) {
   if (!str || str.length < 20) return false;
   if (str[0] !== '{' || str[str.length - 1] !== '}') return false;
+
   var depth = 0;
   var inStr = false;
   var esc = false;
@@ -1959,6 +1988,7 @@ function _isCompleteOrderJSON(str) {
     else if (c === '}') depth--;
   }
   if (depth !== 0) return false;
+
   return str.indexOf('"customer"') !== -1 ||
          str.indexOf('"customer_name"') !== -1 ||
          str.indexOf('"customerName"') !== -1 ||
@@ -2022,8 +2052,6 @@ function injectImageToCozeSDK(e) {
 
 document.addEventListener('paste', injectImageToCozeSDK, true);
 
-// ===== 剪贴板监听逻辑 =====
-
 var lastClipboardContent = '';
 var clipboardPollTimer = null;
 
@@ -2041,6 +2069,7 @@ function isOrderJSON(text) {
 }
 
 function tryReadClipboard() {
+
   if (_cozeObserver) { return; }
   if (!document.hasFocus()) { console.log('[clipboard] 拦截：页面无焦点'); return; }
   if (!navigator.clipboard || !navigator.clipboard.readText) { console.log('[clipboard] 拦截：剪贴板 API 不可用'); return; }
@@ -2122,6 +2151,7 @@ async function handleClipboardText(text) {
 
   var t0 = performance.now();
   try {
+
     var normalized;
     try {
       normalized = PinyinMatch.normalizeOrderJSON(jsonStr);
@@ -2130,13 +2160,14 @@ async function handleClipboardText(text) {
       showToast('订单JSON标准化失败：' + (e1 && e1.message ? e1.message : '格式不规范'), 'error', 5000);
       return;
     }
+
     if (!normalized.products || normalized.products.length === 0) {
       console.log('[订单JSON] 产品为空，跳过（追加模式保留已有数据）');
       return;
     }
     showMatchingLoading();
     await new Promise(function(resolve) { setTimeout(resolve, 30); });
-    // 第 2 步：产品匹配
+
     var matchedProducts;
     try {
       var matchStart = performance.now();
@@ -2164,7 +2195,7 @@ async function handleClipboardText(text) {
       showToast('产品匹配异常：' + (e2 && e2.message ? e2.message : e2), 'error', 5000);
     }
   } catch (e) {
-    // 总兜底（理论上前面已经分步 catch，这里只是为了双保险）
+
     console.error('[订单JSON] 整体解析失败：', e, '\n原始文本：', text);
     showToast('订单Json解析失败：' + (e && e.message ? e.message : e), 'error', 5000);
   }
@@ -2264,7 +2295,7 @@ async function fillOrderDraft(data) {
   document.getElementById('customerSection').style.display = 'block';
   document.getElementById('productSection').style.display = 'block';
   document.getElementById('actionBar').style.display = 'flex';
-  // 新一轮匹配：清空价格缓存
+
   _resetPriceCache();
 
   var recv = data.customer.recv || '';
@@ -2302,6 +2333,7 @@ async function fillOrderDraft(data) {
     return item;
   });
   currentProducts = currentProducts.concat(newItems);
+
   for (var fi = startIndex; fi < currentProducts.length; fi++) {
     if (currentProducts[fi].status === 'confirmed') {
       await fillProductStandardData(currentProducts[fi]);
@@ -2311,15 +2343,15 @@ async function fillOrderDraft(data) {
   updateStats();
 }
 
-// ===== 单据草稿区逻辑 =====
-
 async function identifyCustomer(customerName) {
+
   var urlCuId = new URLSearchParams(location.search).get('cu_id');
   if (urlCuId && selectedCustomerId) {
     console.log('[cu_id] URL 指定客户模式，跳过语音客户识别：', customerName);
     return;
   }
   if (!customerName || !customerName.trim()) {
+
     if (currentCustomer && currentCustomer.length > 0) {
       console.log('[客户] 新JSON无客户名，保留已有客户');
       return;
@@ -2507,8 +2539,6 @@ async function renderProductList() {
     return;
   }
 
-  // 统一税率快捷设置栏（v1.5）已下移到操作按钮上方（见 #taxRateBar）
-  // 这里只负责在有产品时显示工具栏、无产品时隐藏
   _renderTaxRateBar();
 
   var productMap = await getLSProductMap();
@@ -2517,7 +2547,7 @@ async function renderProductList() {
   if (confirmedIds.length > 0) await fetchProductPics(confirmedIds);
 
   container.innerHTML = currentProducts.map(function(product, idx) {
-    // 渲染前重算该行含税字段
+
     if (typeof product.taxRate !== 'number') product.taxRate = 0;
     _recalcProductRowTax(product);
     var productInfo = null;
@@ -2552,8 +2582,6 @@ async function renderProductList() {
     var displaySpec = productInfo.spec || product.matchedSpec || product.originalSpec || '';
     var nameChanged = product.originalName && product.matchedName && product.originalName !== product.matchedName;
 
-    // 把 SKU 拼到品名后面（"品名/SKU"），与响应 goods.name 的格式保持一致
-    // SKU 缺省时（'-'、空）只显示品名
     var displayNameWithSku = displayName + ((displaySku && displaySku !== '-' && displaySku !== '无') ? '/' + displaySku : '');
 
     var actionButtons = product.status === 'error'
@@ -2614,7 +2642,7 @@ async function renderProductList() {
   }).join('');
 
   updateStats();
-  // 列表渲染完成后刷新顶部"总金额"，保证编辑单价/数量后自动更新
+
   updateProductTotalDisplay();
 }
 
@@ -2623,17 +2651,13 @@ function calculateSubtotal(qty, price, discount, taxRate) {
   var qtyNum = parseFloat(String(qty).replace(/[^0-9.]/g, ''));
   var priceNum = parseFloat(String(price).replace(/[^0-9.]/g, ''));
   if (isNaN(qtyNum) || isNaN(priceNum)) return '-';
-  // 修复 v1.5.1：补齐税率参数，使"小计"与制单界面"含税小计"完全一致
-  //   公式：qty × price × d/100 × (1 + taxRate/100)
-  //   顺序：折后不含税 → 折后含税
+
   var d = (typeof discount === 'number' && discount > 0 && discount <= 100) ? discount : 100;
   var t = (typeof taxRate === 'number' && !isNaN(taxRate) && taxRate >= 0) ? taxRate : 0;
   var subtotal = qtyNum * priceNum * d / 100 * (1 + t / 100);
   return '¥' + subtotal.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-// 从 micro_zk 字符串里抽出百分比整数（如 "-RMB40.00(98%)" → 98）
-// 找不到百分比则返回 100（按无折扣处理）
 function _parseDiscount(micro_zk) {
   if (!micro_zk || typeof micro_zk !== 'string') return 100;
   var m = micro_zk.match(/(\d+(?:\.\d+)?)\s*%/);
@@ -2643,13 +2667,11 @@ function _parseDiscount(micro_zk) {
   return Math.round(n);
 }
 
-// 工具：汇总所有产品的总金额（数字，未取整）。同时返回"未折扣原价合计"用于显示"省 ¥X"
-// v1.5 扩展：返回含税总额、税额汇总、不含税合计（混搭税率场景）
 function _calcProductTotal() {
   var result = {
-    total: 0, grossTotal: 0, savedTotal: 0,        // 不含税（旧字段保留）
-    totalWithTax: 0, totalTax: 0, totalNet: 0,     // 含税总金额 / 税额 / 不含税合计
-    hasMixedTax: false, taxRateSet: {}             // 是否有混搭税率 / 各税率行税额
+    total: 0, grossTotal: 0, savedTotal: 0,
+    totalWithTax: 0, totalTax: 0, totalNet: 0,
+    hasMixedTax: false, taxRateSet: {}
   };
   if (!currentProducts || currentProducts.length === 0) return result;
   for (var i = 0; i < currentProducts.length; i++) {
@@ -2660,17 +2682,15 @@ function _calcProductTotal() {
     var d = (typeof p.discount === 'number' && p.discount > 0 && p.discount <= 100) ? p.discount : 100;
     var taxRate = (typeof p.taxRate === 'number' && p.taxRate >= 0) ? p.taxRate : 0;
     var lineGross = qtyNum * priceNum;
-    var lineNet = lineGross * d / 100;                           // 折后不含税
-    // 修复 v1.5.1：税金改为基于"折后价"计算（与用户业务一致）
-    // 旧公式（错误）：lineTaxMoney = qtyNum * priceNum * taxRate / 100  // 基于原价
-    // 新公式：lineTaxMoney = lineNet * taxRate / 100              // 基于折后
+    var lineNet = lineGross * d / 100;
+
     var lineTaxMoney = lineNet * taxRate / 100;
     var lineWithTax = lineNet + lineTaxMoney;
     result.grossTotal += lineGross;
     result.total += lineNet;
     result.totalTax += lineTaxMoney;
     result.totalWithTax += lineWithTax;
-    // 记录各税率行税额（仅 taxRate > 0 才记）
+
     if (taxRate > 0) {
       var k = taxRate + '%';
       if (!result.taxRateSet[k]) result.taxRateSet[k] = 0;
@@ -2683,7 +2703,6 @@ function _calcProductTotal() {
   return result;
 }
 
-// 重算单行的含税字段（税率/含税单价/含税金额）。返回 {unPriceTax, taxMoney, sumWithTax}
 function _recalcProductRowTax(p) {
   if (!p) return null;
   var qtyNum = parseFloat(String(p.qty || '').replace(/[^0-9.]/g, ''));
@@ -2691,9 +2710,7 @@ function _recalcProductRowTax(p) {
   var d = (typeof p.discount === 'number' && p.discount > 0 && p.discount <= 100) ? p.discount : 100;
   var taxRate = (typeof p.taxRate === 'number' && p.taxRate >= 0) ? p.taxRate : 0;
   var unPriceTax = (isNaN(priceNum) || priceNum <= 0) ? 0 : +(priceNum * (1 + taxRate / 100)).toFixed(2);
-  // 修复 v1.5.1：单行税金改为基于"折后价"（与汇总函数 _calcProductTotal 保持一致）
-  // 旧公式（错误）：taxMoney = qtyNum * priceNum * taxRate / 100  // 基于原价
-  // 新公式：taxMoney = qtyNum * priceNum * d / 100 * taxRate / 100
+
   var lineNet = qtyNum * priceNum * d / 100;
   var taxMoney = (isNaN(qtyNum) || isNaN(priceNum) || qtyNum <= 0 || priceNum <= 0)
     ? 0 : +(lineNet * taxRate / 100).toFixed(2);
@@ -2705,8 +2722,6 @@ function _recalcProductRowTax(p) {
   return { unPriceTax: unPriceTax, taxMoney: taxMoney, sumWithTax: sumWithTax };
 }
 
-// 统一应用税率：把所有未手动改过的行的 taxRate 设为新值
-// rate: 0/3/5/6/9/13
 function _applyTaxRateToAll(rate) {
   if (!currentProducts) return 0;
   var n = rate;
@@ -2722,40 +2737,36 @@ function _applyTaxRateToAll(rate) {
   return count;
 }
 
-// 税率档位（中国常见增值税）
 var TAX_RATE_OPTIONS = [0, 3, 5, 6, 9, 13];
 
-// 校验税率是否合法
 function _isValidTaxRate(r) {
   if (typeof r !== 'number' || isNaN(r) || r < 0) return false;
   return TAX_RATE_OPTIONS.indexOf(r) !== -1;
 }
 
-// 格式化税率显示（"13%" / "0%"）
 function _formatTaxRate(r) {
   var n = (typeof r === 'number' && !isNaN(r)) ? r : 0;
   return n + '%';
 }
 
-// 刷新页面顶部的"总金额"显示（v1.5 升级为含税总金额 + 三段式）
 function updateProductTotalDisplay() {
   var totalEl = document.getElementById('productTotalAmount');
   var savedEl = document.getElementById('productSavedAmount');
   if (!totalEl) return;
   var agg = _calcProductTotal();
-  // 优先显示含税总金额（与下单实际金额一致）
+
   if (agg.totalWithTax <= 0) {
     totalEl.textContent = '¥0';
     totalEl.style.color = '#94a3b8';
   } else {
-    // 两位小数 + 千分位（如 ¥609.06 / ¥1,234,567.89），与下单实际金额精确一致
+
     totalEl.textContent = '¥' + agg.totalWithTax.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     totalEl.style.color = '#dc2626';
   }
-  // 副标：显示"不含税 ¥X + 税 ¥Y"或"省 ¥Z"
+
   if (savedEl) {
     if (agg.totalTax > 0.005) {
-      // 有税额：显示"不含税 ¥X + 税 ¥Y" + 原"省 ¥Z"
+
       var baseText = '（不含税 ¥' + Math.round(agg.totalNet).toLocaleString() + ' + 税 ¥' + agg.totalTax.toFixed(2) + '）';
       if (agg.savedTotal > 0.5) {
         baseText += '（原价 ¥' + Math.round(agg.grossTotal).toLocaleString() + '，省 ¥' + Math.round(agg.savedTotal).toLocaleString() + '）';
@@ -2817,7 +2828,7 @@ function editField(el, productIndex, fieldName) {
       product.qty = newValue;
       product._qtyModified = newValue !== originalQty;
     } else if (fieldName === 'discount') {
-      // 折扣：0~100 整数百分比。空值或非法回退到 100。
+
       var n = parseInt(newValue, 10);
       if (isNaN(n) || n <= 0) n = 100;
       if (n > 100) n = 100;
@@ -3456,26 +3467,22 @@ function escapeHtml(str) {
     .replace(/'/g, '&#39;');
 }
 
-// 显示错误详情弹窗：网络异常 + 服务器提示 + 明细处理结果（不展示请求参数和完整响应）
 function showErrorDetailModal(title, requestBody, response, networkError) {
   document.getElementById('errorDetailTitle').textContent = title || '请求失败';
   var body = document.getElementById('errorDetailBody');
 
   var html = '';
 
-  // 1. 网络异常
   if (networkError) {
     html += '<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:10px 12px;margin-bottom:12px;color:#92400e;">' +
       '<strong><i class="ri-wifi-off-line"></i> 网络异常：</strong>' + escapeHtml(networkError) + '</div>';
   }
 
-  // 2. 服务器主消息
   if (response && response.msg) {
     html += '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:10px 12px;margin-bottom:12px;color:#991b1b;">' +
       '<strong><i class="ri-error-warning-line"></i> 服务器提示：</strong>' + escapeHtml(response.msg) + '</div>';
   }
 
-  // 3. ret 明细（每行）
   var retLines = (response && Array.isArray(response.ret)) ? response.ret : [];
   if (retLines.length > 0) {
     html += '<div style="margin-bottom:6px;"><strong style="color:#dc2626;"><i class="ri-list-check-2"></i> 明细处理结果：</strong></div>';
@@ -3489,7 +3496,6 @@ function showErrorDetailModal(title, requestBody, response, networkError) {
 
   body.innerHTML = html || '<div style="color:#9ca3af;text-align:center;padding:20px;">无详细信息</div>';
 
-  // 保存原始数据（请求体/响应仍可在控制台查看 console.log）
   window._lastErrorDetail = {
     title: title,
     requestBody: requestBody,
@@ -3500,7 +3506,6 @@ function showErrorDetailModal(title, requestBody, response, networkError) {
   document.getElementById('errorDetailModal').classList.add('active');
 }
 
-// 复制错误详情到剪贴板（仅复制网络异常/服务器提示/明细结果，不含请求参数和完整响应）
 function copyErrorDetail() {
   var d = window._lastErrorDetail;
   if (!d) return;
@@ -3785,7 +3790,6 @@ function highlightKeywordsInText(text, tokens) {
   return highlightKeywords(PinyinMatch.escapeHtml(text), tokens);
 }
 
-// ===== 产品图片缓存 =====
 var _productPicCache = {};
 
 async function fetchProductPics(ids) {
@@ -3937,9 +3941,8 @@ function resetForm() {
   _autoSelectCustomerByUrl();
 }
 
-// ===== 创建订单（contract_api）=====
 async function createContractOrder() {
-  // 1. 基础校验
+
   var customerNameEl = document.getElementById('customerName');
   var customerName = customerNameEl ? (customerNameEl.textContent || '').trim() : '';
   if (!customerName || customerName === '-' || customerName === '未提供客户名称' || customerName === '未识别到客户') {
@@ -3951,7 +3954,6 @@ async function createContractOrder() {
     return;
   }
 
-  // 2. 数据完整行检测：任一行缺数量/单价/产品ID/未确认 → 弹问题清单，不让创建
   var check = _validateProductsCompleteness();
   if (!check.valid) {
     _showIncompleteDialog(check, '订单');
@@ -3959,7 +3961,6 @@ async function createContractOrder() {
   }
   var validItems = check.validItems;
 
-  // 3. 构造主表与子表
   function _toNum(s) {
     if (s == null) return 0;
     var n = parseFloat(String(s).replace(/[^0-9.]/g, ''));
@@ -3974,21 +3975,11 @@ async function createContractOrder() {
   var mm = String(today.getMonth() + 1).padStart(2, '0');
   var dd = String(today.getDate()).padStart(2, '0');
   var dateStr = yyyy + '-' + mm + '-' + dd;
-  // 订单主题：订单-客户全名-日期
+
   var subject = '订单-' + customerName + '-' + dateStr;
 
-  // 子表：订单接口字段映射
-  //   name  = 产品 id（p.matchedId || p.id）
-  //   amount = 数量, un_price = 单价
-  //   zk    = 折扣（百分比字符串如 "98%"，默认 100%）—— 历史成交价会带过来
-  //   tax_rate/tax_money = 用户设置的税率 + 前端算出的税金（后端会按公式重算 sum）
-  //   un_price_tax = 含税单价
-  //   sum   = 前端预计算（amount*un_price*zk/100 + tax_money），后端会再算一次
   function _toDiscountPct(p) {
-    // 接口规范 [创建订单接口.md L76]：string 类型，百分比格式如 "100%"、"90%"，范围 0~100%
-    // 业务规则 §4：必须用百分号格式；为空默认 100%
-    // 修复：之前用 parseInt 截断小数（如 95.5% → 95%），导致前端 sum 与后端重算不一致
-    // 改为 parseFloat 保留小数，与 L3882 sum 计算保持一致
+
     var raw = p.discount;
     var d = (typeof raw === 'number' && !isNaN(raw) && raw > 0 && raw <= 100) ? raw : parseFloat(raw);
     if (isNaN(d) || d <= 0 || d > 100) d = 100;
@@ -3999,18 +3990,16 @@ async function createContractOrder() {
     var unPrice = _toNum(p.price);
     var qty = _toNum(p.qty);
     var d = (typeof p.discount === 'number' && p.discount > 0 && p.discount <= 100) ? p.discount : 100;
-    // 修复 v1.5.1：税金改为基于"折后价"（与 _recalcProductRowTax / _calcProductTotal 保持一致）
-    // 旧公式（错误）：taxMoney = qty * unPrice * taxRate / 100  // 基于原价
-    // 新公式：taxMoney = qty * unPrice * d / 100 * taxRate / 100
+
     var lineNet = qty * unPrice * d / 100;
     var taxMoney = +(lineNet * taxRate / 100).toFixed(2);
     var unPriceTax = +(unPrice * (1 + taxRate / 100)).toFixed(2);
     var sum = +(lineNet + taxMoney).toFixed(2);
     return {
-      name: _toInteger(p.matchedId || p.id),                       // 产品 id
+      name: _toInteger(p.matchedId || p.id),
       amount: qty,
       un_price: unPrice,
-      zk: _toDiscountPct(p),                                       // 折扣（百分数字符串）
+      zk: _toDiscountPct(p),
       tax_rate: taxRate,
       tax_money: taxMoney,
       un_price_tax: unPriceTax,
@@ -4018,10 +4007,8 @@ async function createContractOrder() {
     };
   });
 
-  // 总额：Σ subdata.sum（含税总金额），与后端重算结果一致
   var totalAmount = subdata.reduce(function(sum, it) { return sum + it.sum; }, 0);
 
-  // 主表：不传 status（让后端默认），其它按文档必填/常用项
   var contractData = {
     number: '',
     subject: subject,
@@ -4031,7 +4018,6 @@ async function createContractOrder() {
     subdata: subdata
   };
 
-  // 4. 二次确认
   showConfirm('确认创建订单？\n客户：' + customerName + '\n明细：' + validItems.length + ' 项\n总额：¥' + totalAmount.toLocaleString(), function() {
     doCreateContractOrder(contractData, validItems.length, totalAmount);
   });
@@ -4046,7 +4032,6 @@ async function doCreateContractOrder(contractData, itemCount, totalAmount) {
     btn.innerHTML = '<i class="ri-loader-4-line" style="animation:spin 1s linear infinite;"></i> 创建中...';
   }
 
-  // 调试日志：打印实际发送的 subdata，便于核对后端接收的 tax_rate / zk 是否正确
   console.log('[订单创建] 实际发送的 subdata 字段：');
   (contractData.subdata || []).forEach(function(s, i) {
     console.log('  [' + (i + 1) + '] name=' + s.name + ', amount=' + s.amount +
@@ -4073,15 +4058,14 @@ async function doCreateContractOrder(contractData, itemCount, totalAmount) {
 
     if (result && result.ok === 1) {
       showToast('订单创建成功', 'success');
-      // 从返回中取订单ID（接口响应 list[0].id 字段；本系统一次创建一条，所以只取第一个）
-      // 优先用 id（数据库主键），其次用 number（业务编号，可能为空）
+
       var newId = '';
       if (result.list && result.list.length > 0 && result.list[0]) {
         newId = result.list[0].id || result.list[0].number || '';
       }
       showContractSuccessModal(contractData.subject, itemCount, totalAmount, newId);
     } else {
-      // 失败：弹窗展示详情
+
       var mainMsg = (result && result.msg) ? result.msg : '创建失败';
       showErrorDetailModal('订单创建失败', requestBody, result, null);
       showToast('创建失败：' + mainMsg + '（请查看详情）', 'error');
@@ -4105,10 +4089,8 @@ function showContractSuccessModal(subject, itemCount, totalAmount, orderId) {
     '<div class="order-detail-row"><span class="order-detail-label">明细数量</span><span class="order-detail-value">' + itemCount + ' 项</span></div>' +
     '<div class="order-detail-row"><span class="order-detail-label">订单总额</span><span class="order-detail-value" style="color:#16a34a;font-size:16px;">¥' + totalAmount.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</span></div>';
 
-  // 设置"完成去视图"按钮的跳转 URL（订单详情页）
   _setGoToViewBtn(orderId ? '/xcrm/contract/contract/detail.xt?id=' + encodeURIComponent(orderId) : '', orderId);
 
-  // 复用现有成功弹窗，修改标题
   var titleEl = document.querySelector('#orderSuccessModal .modal-title');
   if (titleEl) {
     titleEl.textContent = '订单创建成功';
@@ -4117,8 +4099,6 @@ function showContractSuccessModal(subject, itemCount, totalAmount, orderId) {
   document.getElementById('orderSuccessModal').classList.add('active');
 }
 
-// 通用"完成去视图"按钮：另开浏览器窗口跳转到指定 URL
-// 兼容订单（/xcrm/contract/contract/detail.xt）和报价单（/xcrm/tracing/price/detail.xt）
 function goToView() {
   var goBtn = document.getElementById('goToViewBtn');
   if (!goBtn) return;
@@ -4131,9 +4111,6 @@ function goToView() {
   closeModal('orderSuccessModal');
 }
 
-// 设置"完成去视图"按钮的跳转 URL 和启用状态
-// url: 完整的跳转 URL（含 ?id=xxx），传空字符串表示禁用按钮
-// idText: 用于 title 提示（如订单ID/报价单ID）
 function _setGoToViewBtn(url, idText) {
   var goBtn = document.getElementById('goToViewBtn');
   if (!goBtn) return;
@@ -4148,11 +4125,6 @@ function _setGoToViewBtn(url, idText) {
   }
 }
 
-// ===== 一键获取价格（v1.1.2 落地实现）=====
-// 数据来源：参见结论文档/价格获取逻辑.html
-// 接口来源：参见读取数据接口/读取产品的价格.md
-
-// 工具：从响应中提取数据数组（兼容多种返回结构）
 function _extractRows(result) {
   if (!result) return [];
   if (result.ok !== 1) return [];
@@ -4161,14 +4133,12 @@ function _extractRows(result) {
   return [];
 }
 
-// 工具：把任何值安全转为数字（失败返回 0）
 function _toPriceNum(v) {
   if (v === null || v === undefined || v === '') return 0;
   var n = parseFloat(String(v).replace(/[^0-9.\-]/g, ''));
   return isNaN(n) ? 0 : n;
 }
 
-// 工具：通用 load_data 调用（GET 形式，避免与现有 POST 实现冲突）
 async function _loadProductField(productIds, fields) {
   if (!productIds || productIds.length === 0) return { ok: 1, data: [] };
   var idList = productIds.map(function (id) { return parseInt(id, 10); }).filter(function (n) { return !isNaN(n); });
@@ -4188,19 +4158,10 @@ async function _loadProductField(productIds, fields) {
   }
 }
 
-// 工具：拉取 goods（订单明细）表中"当前客户 × 当前产品集合"的最近 N 条记录
-// 依据接口规范：dtname=goods, where=name=产品ID AND cu_id=客户ID, order=id desc
-// 一次性合并多个产品的查询，远端按 id 倒序返回，前端按 name 分组取首条即为"每个产品最近成交"
-//
-// 【字段】goods 表实际存在的字段：id / name(产品ID) / cu_id(客户ID) / un_price / micro_zk / sum
-//   - pro_id 不存在（已在实测中确认：服务端会返回 "字段：[pro_id]未找到"）
-//   - cu_id 是数字客户ID（参见"读取产品的价格.md"示例：cu_id=5754）
-//   - name 是数字产品ID（参见示例：name=125）
 async function _loadHistoryPrices(customerId, productIds, useFlag) {
   if (!customerId) return { ok: 0, msg: '未识别当前客户ID', data: [] };
   if (!productIds || productIds.length === 0) return { ok: 1, data: [] };
 
-  // 1) 产品 ID 去重 + 数字归一
   var idList = [];
   var seen = {};
   for (var i = 0; i < productIds.length; i++) {
@@ -4213,23 +4174,15 @@ async function _loadHistoryPrices(customerId, productIds, useFlag) {
   }
   if (idList.length === 0) return { ok: 1, data: [] };
 
-  // 2) 构造 where：cu_id=客户ID AND (name=产品ID1 OR name=产品ID2 ...)
-  //    cu_id/name 都是数字字段，直接拼接即可
   var nameOrList = idList.map(function (id) { return 'name=' + id; }).join(' OR ');
   var where = 'cu_id=' + customerId + ' AND (' + nameOrList + ')';
 
-  // 3) v1.5.3 两次查询分工：
-  //    - useFlag=true  ：带 flag=1，跳过字段函数，name 字段返回"产品ID"原始值（数字）
-  //                      用于与 currentProducts[].matchedId 做 === 精确比对
-  //    - useFlag=false ：不带 flag，字段函数走数据字典，micro_zk 返回格式化字符串
-  //                      用于解析折扣（"-RMB76.80(88%)"）
-  // 两次查询的 where 相同，行集合一致，用 row.id（记录主键）做关联
   var body = {
     cmd: 'load_data',
     dtname: 'goods',
     field: useFlag
-      ? 'id,name'                                  // 第一次：够用即可（id 关联 + name 产品ID精确比对）
-      : 'id,name,cu_id,un_price,micro_zk,sum',     // 第二次：全字段（含数据字典后的 micro_zk）
+      ? 'id,name'
+      : 'id,name,cu_id,un_price,micro_zk,sum',
     where: where,
     order: 'id desc',
     limit: 200
@@ -4237,7 +4190,6 @@ async function _loadHistoryPrices(customerId, productIds, useFlag) {
   if (useFlag) body.flag = 1;
   var url = API_BASE + '/api.xt';
 
-  // 调试日志：打印完整入参，方便排查为啥查不到数据
   console.log('[一键价格/B] 拉取历史成交价入参' + (useFlag ? ' (flag=1, 第一次)' : ' (第二次)') + '：');
   console.log('  customerId =', JSON.stringify(customerId), '(type:', typeof customerId + ')');
   console.log('  productIds =', JSON.stringify(productIds));
@@ -4264,30 +4216,17 @@ async function _loadHistoryPrices(customerId, productIds, useFlag) {
   }
 }
 
-// 工具：解析 str_ps 字符串为 { 客户类型: 价格 } 字典
-// 例："VIP客户:22 总经销价:34 普通客户:45 "
-// → { 'VIP客户': 22, '总经销价': 34, '普通客户': 45 }
-// 兼容：分隔符可能是普通空格、&nbsp;(\u00A0)、制表符；冒号支持半角/全角
-// 工具：把响应 name 末尾的 "[单位]" 去掉（如 "[套]"、"[个]"、"[件]"，兼容中英文括号）
-// 例：'金士顿CF(8G)/CF8G[个]' → '金士顿CF(8G)/CF8G'
-//     '爱国者迷你王 商务型L8202(16G)/IP23[套]' → '爱国者迷你王 商务型L8202(16G)/IP23'
 function _stripTrailingUnit(s) {
   if (!s || typeof s !== 'string') return '';
   return s.replace(/[\[【（(][^)\]】]*[\]】）)]\s*$/, '').trim();
 }
 
-// 工具：构建"完整产品名"（品名 + "/" + SKU + " " + 规格）
-// 例如：matchedName='隐形眼镜' + matchedSku='美瞳' + matchedSpec='100度' → '隐形眼镜/美瞳 100度'
-// SKU 为空 / '-' / '无' 时只返回品名 + 规格
-// v1.5.2 修复：之前只拼了品名+SKU，丢失了规格（spec）字段，导致同一基准的多个 SKU 产品（如"隐形眼镜/美瞳 100度/200度/300度"）
-// 在历史成交匹配时 fullName 重复，3 个产品中只能匹配到 1 个，其他都判 miss。
-// 现在加入规格字段后，fullName 唯一，能完整提取历史成交数据的价格。
 function _getFullProductName(p) {
   if (!p) return '';
   var name = (p.matchedName || p.originalName || p.pro_name || p.name || '').toString().trim();
   var sku = (p.matchedSku || p.newSku || '').toString().trim();
   var spec = (p.matchedSpec || p.newSpec || p.originalSpec || '').toString().trim();
-  // 拼装"品名[/SKU]"，与响应 goods.name 格式保持一致（响应 name 不一定含规格，故放尾部以便前缀匹配）
+
   var namePart = '';
   if (name) {
     if (sku && sku !== '-' && sku !== '无') {
@@ -4303,21 +4242,21 @@ function _getFullProductName(p) {
 function _parseStrPs(strPs) {
   var dict = {};
   if (!strPs || typeof strPs !== 'string') return dict;
-  // 先把 HTML 实体 nbsp / 全角空格 还原为普通空格
+
   var normalized = strPs
     .replace(/&nbsp;/gi, ' ')
     .replace(/&amp;nbsp;/gi, ' ')
-    .replace(/\u3000/g, ' ')   // 全角空格
-    .replace(/\u00A0/g, ' ');  // 不间断空格 (nbsp)
-  // 用空白字符（包括 &nbsp;）分隔多个 "类型:价格" 对
+    .replace(/\u3000/g, ' ')
+    .replace(/\u00A0/g, ' ');
+
   var parts = normalized.trim().split(/\s+/);
   for (var i = 0; i < parts.length; i++) {
     var p = parts[i];
     if (!p) continue;
-    // 同时支持半角冒号 : 和全角冒号 ：
+
     var idx = p.search(/[:：]/);
     if (idx <= 0) continue;
-    // 用 lastIndexOf 支持 typeName 中含冒号的极端情况
+
     idx = p.lastIndexOf(':') > idx ? p.lastIndexOf(':') : idx;
     var typeName = p.substring(0, idx).trim();
     var priceStr = p.substring(idx + 1).trim();
@@ -4329,7 +4268,6 @@ function _parseStrPs(strPs) {
   return dict;
 }
 
-// 工具：localStorage 读写（带 try-catch 兼容隐私模式）
 var _ls = {
   get: function (key, fallback) {
     try {
@@ -4351,11 +4289,10 @@ var _ls = {
   }
 };
 
-// 记忆比例到 localStorage
 function _rememberRatio(ratio) {
   if (!ratio || isNaN(ratio)) return;
   _ls.set('oneKeyPrice_lastRatio', String(ratio));
-  // 同步追加到历史（去重 + 最多 5 条 + 倒序）
+
   var history = _ls.getJSON('oneKeyPrice_ratioHistory', []);
   history = history.filter(function (r) { return r !== ratio; });
   history.unshift(ratio);
@@ -4363,19 +4300,16 @@ function _rememberRatio(ratio) {
   _ls.setJSON('oneKeyPrice_ratioHistory', history);
 }
 
-// 读取上次的比例值
 function _readLastRatio() {
   var v = _ls.get('oneKeyPrice_lastRatio', '');
   var n = parseFloat(v);
   return isNaN(n) ? null : n;
 }
 
-// 读取比例历史
 function _readRatioHistory() {
   return _ls.getJSON('oneKeyPrice_ratioHistory', []);
 }
 
-// 渲染比例快速选择芯片
 function _renderRatioQuick() {
   var container = document.getElementById('priceRatioQuick');
   if (!container) return;
@@ -4383,19 +4317,18 @@ function _renderRatioQuick() {
   var history = _readRatioHistory();
   var html = [];
 
-  // 上次使用
   if (last !== null) {
     html.push('<span class="price-ratio-chip recent" data-ratio="' + last + '" title="上次使用">'
       + '📌 上次：' + last + '%</span>');
   }
-  // 历史记录（已去重，已在前面排过）
+
   for (var i = 0; i < history.length; i++) {
     var r = history[i];
-    if (r === last) continue; // 已显示
+    if (r === last) continue;
     html.push('<span class="price-ratio-chip" data-ratio="' + r + '">'
       + r + '%</span>');
   }
-  // 常用参考
+
   var defaults = [3, 8, 15];
   for (var j = 0; j < defaults.length; j++) {
     var d = defaults[j];
@@ -4406,7 +4339,6 @@ function _renderRatioQuick() {
   }
   container.innerHTML = html.join('');
 
-  // 绑定点击事件
   var chips = container.querySelectorAll('.price-ratio-chip');
   for (var k = 0; k < chips.length; k++) {
     chips[k].onclick = function () {
@@ -4418,9 +4350,8 @@ function _renderRatioQuick() {
   }
 }
 
-// 主入口：点击"一键获取价格"按钮
 function onClickOneKeyGetPrice() {
-  // 1) 前置校验：所有产品必须匹配完成（confirmed 或 new 均视为匹配）
+
   if (!currentProducts || currentProducts.length === 0) {
     showToast('暂无产品数据', 'warning');
     return;
@@ -4433,16 +4364,13 @@ function onClickOneKeyGetPrice() {
     return;
   }
 
-  // 2) 打开弹窗，重置状态
   openOneKeyPriceModal();
 }
 
-// 打开弹窗
 function openOneKeyPriceModal() {
   var modal = document.getElementById('oneKeyPriceModal');
   if (!modal) return;
 
-  // 重置第一段
   var radios = document.querySelectorAll('input[name="priceSource"]');
   for (var i = 0; i < radios.length; i++) {
     radios[i].checked = false;
@@ -4453,38 +4381,29 @@ function openOneKeyPriceModal() {
   _hideHistorySection();
   _setConfirmBtnEnabled(false);
 
-  // 显示
   modal.style.display = 'flex';
-  // 焦点处理
+
   setTimeout(function () {
     var firstOpt = document.querySelector('.price-option[data-source="A"]');
     if (firstOpt) firstOpt.focus();
   }, 50);
 
-  // 预拉取价格数据：并行拉取 str_ps、buy_price、price（D 走远端 product.price 字段）
-  // B（历史成交）采用"懒加载"：选 B 时再拉，避免对未选 B 的客户白白走远端
   _prefetchPriceData();
 }
 
-// 缓存：
-//   str_ps        : { matchedId: { typeName: price } }
-//   buy_price     : { matchedId: number }
-//   price         : { matchedId: number }  ← D 来源，走远端 product 表
-//   goods_history : { matchedId: latestRow | null }  ← B 来源，按 name(=proId) 分组取首条
-// 同时记录是否完成（用于 UI 提示）
 var _priceCache = { str_ps: null, buy_price: null, price: null, goods_history: null };
-var _priceCacheInFlight = null;  // 防止并发拉取
+var _priceCacheInFlight = null;
 
 function _prefetchPriceData() {
   if (!currentProducts || currentProducts.length === 0) return;
-  if (_priceCacheInFlight) return _priceCacheInFlight;  // 复用进行中的请求
+  if (_priceCacheInFlight) return _priceCacheInFlight;
 
   var productIds = currentProducts.map(function (p) { return p.matchedId; }).filter(function (id) { return id !== null && id !== undefined; });
   if (productIds.length === 0) return;
 
   _priceCacheInFlight = (async function () {
     try {
-      // 并行拉 str_ps / buy_price / price（D 来源也走远端，不再读本地残留）
+
       var tasks = [
         _loadProductField(productIds, ['id', 'str_ps']).then(function (r) {
           var rows = _extractRows(r);
@@ -4525,37 +4444,26 @@ function _prefetchPriceData() {
   return _priceCacheInFlight;
 }
 
-// 懒加载 B（历史成交）数据：仅在选中 B 时调用，单次远端合并查询
-// 返回 Promise<{ ok, msg, grouped: { proId: latestRow | null } }>
-// 参数 customerId：当前客户的数字 ID（goods 表的 cu_id 存的就是客户ID，与读取产品的价格.md 示例一致）
-// v1.5.3 改用"两次查询 + ID 精确比对"算法：
-//   1) 第一次（flag=1）：name 字段是产品ID原始值（数字），用于与 matchedId 做 === 精确比对
-//   2) 第二次（不带 flag）：micro_zk 走数据字典，得到格式化折扣字符串
-//   3) 用 row.id（记录主键，两次查询一致）做关联
 async function _fetchAndCacheHistory(customerId) {
   if (!customerId) return { ok: 0, msg: '未识别当前客户 ID，无法查询历史成交' };
 
   var productIds = currentProducts.map(function (p) { return p.matchedId; }).filter(function (id) { return id !== null && id !== undefined; });
 
-  // 缓存失效检查：上次缓存的 productIds 与当前不一致则强制重建
-  // 避免 currentProducts 增删后 grouped["某id"] 缺失导致 UI 漏显示
   if (_priceCache.goods_history !== null) {
     var cachedKey = _priceCache.goods_history_productIds ? _priceCache.goods_history_productIds.join(',') : '';
     var currentKey = productIds.slice().sort().map(String).join(',');
     if (cachedKey === currentKey) {
       return { ok: 1, grouped: _priceCache.goods_history };
     }
-    // 不一致就清掉缓存、强制重建
+
     _priceCache.goods_history = null;
   }
 
-  // === 两次查询 ===
-  // 第一次：带 flag=1，field 精简为 id,name（name 原始值 = 产品ID，用于精确比对）
   var firstResp = await _loadHistoryPrices(customerId, productIds, true);
   if (firstResp.ok !== 1) {
     return { ok: 0, msg: (firstResp && firstResp.msg) || '历史成交价拉取失败（第一次）' };
   }
-  // 第二次：带 field 全字段，不带 flag（micro_zk 走数据字典）
+
   var secondResp = await _loadHistoryPrices(customerId, productIds, false);
   if (secondResp.ok !== 1) {
     return { ok: 0, msg: (secondResp && secondResp.msg) || '历史成交价拉取失败（第二次）' };
@@ -4564,8 +4472,6 @@ async function _fetchAndCacheHistory(customerId) {
   var firstRows = _extractRows(firstResp);
   var secondRows = _extractRows(secondResp);
 
-  // === 关联：把第二次的格式化数据按 row.id 索引成字典 ===
-  // 行集合两次查询一致（同 where），所以 id 一定能关联上
   var secondById = {};
   for (var si = 0; si < secondRows.length; si++) {
     var sr = secondRows[si];
@@ -4574,8 +4480,6 @@ async function _fetchAndCacheHistory(customerId) {
     }
   }
 
-  // === ID 精确比对：第一次的 name 原始值（产品ID数字） === currentProducts[].matchedId ===
-  // 构造"我们产品 matchedId 集合"，用于 O(1) 命中
   var ourIds = {};
   var ourIdList = [];
   for (var pi = 0; pi < currentProducts.length; pi++) {
@@ -4585,18 +4489,17 @@ async function _fetchAndCacheHistory(customerId) {
     ourIdList.push(pid);
   }
 
-  // 按"我们的产品"分组：服务已按 id desc 倒序，每组首条 = 最近成交
   var grouped = {};
   for (var gi = 0; gi < currentProducts.length; gi++) {
-    grouped[String(currentProducts[gi].matchedId)] = null;  // 默认 miss
+    grouped[String(currentProducts[gi].matchedId)] = null;
   }
   var matchedCount = 0;
-  var matchedLog = [];      // 调试用：记录所有"按 ID 命中"的记录
-  var unmatchedRowIds = [];  // 调试用：响应中未匹配的 name 原始值
+  var matchedLog = [];
+  var unmatchedRowIds = [];
 
   for (var j = 0; j < firstRows.length; j++) {
     var firstRow = firstRows[j];
-    // row.name 在 flag=1 时是产品ID（数字或数字字符串），做归一后与 matchedId 精确比对
+
     var rawName = firstRow.name;
     if (rawName === undefined || rawName === null || rawName === '') continue;
     var pidNum = parseInt(rawName, 10);
@@ -4611,22 +4514,21 @@ async function _fetchAndCacheHistory(customerId) {
       continue;
     }
 
-    // 按 row.id 关联第二次的格式化数据
     var secondRow = secondById[String(firstRow.id)];
     if (!secondRow) {
-      // 极小概率：行集合在两次查询之间变了；记录并跳过
+
       unmatchedRowIds.push('ID_NOT_FOUND_IN_2ND:' + pidKey);
       continue;
     }
 
-    if (grouped[pidKey] === null) {  // 仅取首条（id desc = 最近成交）
+    if (grouped[pidKey] === null) {
       grouped[pidKey] = {
-        recId: firstRow.id,                          // 记录主键（仅展示用）
-        proId: matchedProduct.matchedId,             // 我们的产品 ID
-        proName: _getFullProductName(matchedProduct) || String(secondRow.name || ''),  // 完整品名（品名/SKU 规格）
-        matchType: 'id-exact-v1.5.3',                // 调试用：v1.5.3 改用 ID 精确比对
+        recId: firstRow.id,
+        proId: matchedProduct.matchedId,
+        proName: _getFullProductName(matchedProduct) || String(secondRow.name || ''),
+        matchType: 'id-exact-v1.5.3',
         un_price: _toPriceNum(secondRow.un_price),
-        micro_zk: secondRow.micro_zk || '',          // v1.5.3：从第二次（走数据字典）拿
+        micro_zk: secondRow.micro_zk || '',
         discount: _parseDiscount(secondRow.micro_zk),
         sum: _toPriceNum(secondRow.sum)
       };
@@ -4635,7 +4537,6 @@ async function _fetchAndCacheHistory(customerId) {
     }
   }
 
-  // 调试日志
   console.log('[一键价格/B] 两次查询 + ID 精确比对完成（v1.5.3）：', {
     totalProducts: currentProducts.length,
     ourProductIds: ourIdList,
@@ -4646,21 +4547,18 @@ async function _fetchAndCacheHistory(customerId) {
     unmatchedRowIds: Array.from(new Set(unmatchedRowIds))
   });
   _priceCache.goods_history = grouped;
-  _priceCache.goods_history_productIds = productIds.slice().sort().map(String);  // 记下当前 productIds，缓存命中比对用
+  _priceCache.goods_history_productIds = productIds.slice().sort().map(String);
   return { ok: 1, grouped: grouped };
 }
 
-// 重置价格缓存（在产品列表发生重大变化时调用）
 function _resetPriceCache() {
   _priceCache = { str_ps: null, buy_price: null, price: null, goods_history: null };
   _priceCacheInFlight = null;
 }
 
-// 从缓存读取指定字段的"行"（格式与 _extractRows 一致，但多一个 dict/num 字段）
-// 返回 null 表示缓存未就绪；返回 [] 表示已就绪但无数据
 function _extractRowsFromCache(productIds, fieldName) {
   var cache = _priceCache[fieldName];
-  if (cache === null) return null;  // 未拉取过
+  if (cache === null) return null;
   if (productIds.length === 0) return [];
   var rows = [];
   for (var i = 0; i < productIds.length; i++) {
@@ -4675,19 +4573,16 @@ function _extractRowsFromCache(productIds, fieldName) {
   return rows;
 }
 
-// 获取弹窗当前选中的价格来源
 function _getCurrentPriceSource() {
   var checked = document.querySelector('input[name="priceSource"]:checked');
   return checked ? checked.value : null;
 }
 
-// 关闭弹窗
 function closeOneKeyPriceModal() {
   var modal = document.getElementById('oneKeyPriceModal');
   if (modal) modal.style.display = 'none';
 }
 
-// 更新选项激活样式
 function _updateOptionActiveClass(source) {
   var opts = document.querySelectorAll('#priceSourceOptions .price-option');
   for (var i = 0; i < opts.length; i++) {
@@ -4701,7 +4596,6 @@ function _updateOptionActiveClass(source) {
   }
 }
 
-// 显示/隐藏策略类型第二段
 function _showStrategyTypeSection() {
   var sec = document.getElementById('priceStrategyTypeSection');
   if (sec) sec.style.display = 'block';
@@ -4714,7 +4608,6 @@ function _hideStrategyTypeSection() {
   _hideStrategyDetail();
 }
 
-// 显示/隐藏策略明细面板
 function _hideStrategyDetail() {
   var detail = document.getElementById('priceStrategyDetail');
   if (detail) {
@@ -4725,12 +4618,9 @@ function _hideStrategyDetail() {
   _selectedProductIds = null;
 }
 
-// 全局状态：当前选中的策略类型 + 用户勾选的产品 matchedId 列表
 var _selectedStrategyType = null;
 var _selectedProductIds = null;
 
-// 渲染策略明细面板
-// typeName: 当前选中的策略名（如 "VIP客户价"）
 function _renderStrategyDetail(typeName) {
   var detail = document.getElementById('priceStrategyDetail');
   if (!detail) return;
@@ -4738,13 +4628,11 @@ function _renderStrategyDetail(typeName) {
   var productIds = currentProducts.map(function (p) { return p.matchedId; });
   var rows = _extractRowsFromCache(productIds, 'str_ps');
 
-  // 记录选中的策略
   _selectedStrategyType = typeName;
 
-  // 列出每个产品在该策略下的具体价（含 miss）
   var rowHtml = [];
-  var selectableCount = 0;  // 有该策略价的产品数
-  var productInfo = [];      // [{ product, price, hasStrategy }]
+  var selectableCount = 0;
+  var productInfo = [];
   for (var i = 0; i < currentProducts.length; i++) {
     var p = currentProducts[i];
     var row = rows.find(function (r) { return String(r.id) === String(p.matchedId); });
@@ -4755,10 +4643,8 @@ function _renderStrategyDetail(typeName) {
     productInfo.push({ product: p, price: price || 0, hasStrategy: hasStrategy });
   }
 
-  // 默认全选（miss 的不参与默认勾选）
   _selectedProductIds = productInfo.filter(function (x) { return x.hasStrategy; }).map(function (x) { return x.product.matchedId; });
 
-  // 渲染行
   for (var j = 0; j < productInfo.length; j++) {
     var info = productInfo[j];
     var p = info.product;
@@ -4782,7 +4668,6 @@ function _renderStrategyDetail(typeName) {
     }
   }
 
-  // 面板 HTML：标题 + 全选/全不选按钮 + 列表
   detail.innerHTML =
     '<div class="price-strategy-detail-header">'
     + '<span class="detail-title">「' + _escapeHtml(typeName) + '」共 ' + selectableCount + ' / ' + currentProducts.length + ' 个产品支持</span>'
@@ -4794,22 +4679,19 @@ function _renderStrategyDetail(typeName) {
     + '<div class="price-strategy-detail-list">' + rowHtml.join('') + '</div>';
   detail.style.display = 'block';
 
-  // 绑定复选框变化
   var checks = detail.querySelectorAll('.pcheck');
   for (var k = 0; k < checks.length; k++) {
     checks[k].onchange = _onStrategyProductCheckChange;
   }
-  // 绑定全选/全不选
+
   var btns = detail.querySelectorAll('.detail-btn');
   for (var b = 0; b < btns.length; b++) {
     btns[b].onclick = function () { _onStrategyDetailAction(this.getAttribute('data-act')); };
   }
 
-  // 联动"确认获取"按钮：至少 1 个产品被勾选才启用
   _setConfirmBtnEnabled(_selectedProductIds.length > 0);
 }
 
-// 复选框变化：更新 _selectedProductIds + 确认按钮状态
 function _onStrategyProductCheckChange() {
   var detail = document.getElementById('priceStrategyDetail');
   if (!detail) return;
@@ -4821,7 +4703,6 @@ function _onStrategyProductCheckChange() {
   _setConfirmBtnEnabled(_selectedProductIds.length > 0);
 }
 
-// 全选/全不选
 function _onStrategyDetailAction(act) {
   var detail = document.getElementById('priceStrategyDetail');
   if (!detail) return;
@@ -4833,11 +4714,10 @@ function _onStrategyDetailAction(act) {
   _onStrategyProductCheckChange();
 }
 
-// 显示/隐藏比例输入第二段
 function _showRatioSection() {
   var sec = document.getElementById('priceRatioSection');
   if (sec) sec.style.display = 'block';
-  // 默认填充上次的比例
+
   var input = document.getElementById('priceRatioInput');
   if (input && !input.value) {
     var last = _readLastRatio();
@@ -4852,7 +4732,6 @@ function _hideRatioSection() {
   if (input) input.value = '';
 }
 
-// 显示/隐藏历史成交第二段（B 来源）
 function _showHistorySection() {
   var sec = document.getElementById('priceHistorySection');
   if (sec) sec.style.display = 'block';
@@ -4866,8 +4745,6 @@ function _hideHistorySection() {
   if (list) list.innerHTML = '';
 }
 
-// 控制"确认获取"按钮可用性
-// reason：禁用原因，启用时清空。鼠标悬停在禁用按钮上时会显示，便于用户理解为何不可点
 function _setConfirmBtnEnabled(enabled, reason) {
   var btn = document.getElementById('priceConfirmBtn');
   if (btn) {
@@ -4882,16 +4759,15 @@ function _setConfirmBtnEnabled(enabled, reason) {
   }
 }
 
-// 第二段：选完第一段后，根据来源拉取/渲染第二段面板
 async function _onPriceSourceSelected(source) {
   _hideStrategyTypeSection();
   _hideRatioSection();
   _hideHistorySection();
-  // 修复 v1.5.1：明确禁用原因，便于用户悬停时知道为什么不能点
+
   _setConfirmBtnEnabled(false, '请先选择价格来源');
 
   if (source === 'A') {
-    // A：从缓存读取 str_ps，聚合出可选的策略类型
+
     _showStrategyTypeSection();
     var hint = document.getElementById('priceStrategyTypeHint');
     var list = document.getElementById('priceStrategyTypeList');
@@ -4900,12 +4776,12 @@ async function _onPriceSourceSelected(source) {
     var rows = _extractRowsFromCache(productIds, 'str_ps');
 
     if (rows === null) {
-      // 缓存未就绪（理论上 _prefetchPriceData 应已触发）
+
       if (hint) hint.textContent = '正在拉取...';
       if (list) list.innerHTML = '<span class="price-loading"></span>正在解析价格策略...';
-      // 修复 v1.5.1：显式传 reason，便于用户悬停时知道为何禁用
+
       _setConfirmBtnEnabled(false, '正在拉取价格策略数据...');
-      // 等待预拉取完成后再渲染
+
       _prefetchPriceData().then(function () { if (source === _getCurrentPriceSource()) _onPriceSourceSelected('A'); });
       return;
     }
@@ -4913,13 +4789,12 @@ async function _onPriceSourceSelected(source) {
     if (rows.length === 0) {
       if (hint) hint.textContent = '未拉到数据';
       if (list) list.innerHTML = '<div class="price-strategy-type-empty">未拉到任何产品的价格策略数据</div>';
-      // 修复 v1.5.1：显式传 reason
+
       _setConfirmBtnEnabled(false, '未拉到任何产品的价格策略数据，请尝试其他方式');
       return;
     }
 
-    // 聚合：把所有产品的 str_ps 字典合并
-    var typeSet = {}; // { typeName: { prices: [], count } }
+    var typeSet = {};
     for (var i = 0; i < rows.length; i++) {
       var r = rows[i];
       if (!r.dict) continue;
@@ -4935,12 +4810,11 @@ async function _onPriceSourceSelected(source) {
     if (typeNames.length === 0) {
       if (hint) hint.textContent = '无可用策略';
       if (list) list.innerHTML = '<div class="price-strategy-type-empty">拉取到的产品均未配置价格策略</div>';
-      // 修复 v1.5.1：截图场景——所有产品均无价格策略配置，明确告诉用户为什么不可点
+
       _setConfirmBtnEnabled(false, '拉取到的产品均未配置价格策略，请尝试其他方式');
       return;
     }
 
-    // 渲染芯片：默认显示聚合信息（平均价 + N个产品有），点击展开明细
     if (hint) hint.textContent = '共 ' + typeNames.length + ' 种策略（点 chip 看明细）';
     var html = [];
     var lastStrategy = _ls.get('oneKeyPrice_lastStrategy', null);
@@ -4959,33 +4833,30 @@ async function _onPriceSourceSelected(source) {
     }
     list.innerHTML = html.join('');
 
-    // 隐藏明细面板（每次切换 A 时重置）
     _hideStrategyDetail();
 
-    // 修复 v1.5.1：渲染完芯片后，按钮应保持禁用并提示用户"需点 chip"
     _setConfirmBtnEnabled(false, '请选择价格策略类型（点上方 chip）');
 
-    // 绑定点击：toggle 选中 + 展开/收起明细
     var chips = list.querySelectorAll('.price-strategy-type-chip');
     for (var k = 0; k < chips.length; k++) {
       chips[k].onclick = function () {
         var wasActive = this.classList.contains('active');
-        // 取消所有 chip 的 active
+
         var chipsAll = list.querySelectorAll('.price-strategy-type-chip');
         for (var m = 0; m < chipsAll.length; m++) chipsAll[m].classList.remove('active');
         if (wasActive) {
-          // 再次点击已选中的：取消选中 + 收起明细
+
           _hideStrategyDetail();
           _setConfirmBtnEnabled(false, '请选择价格策略类型（点上方 chip）');
         } else {
-          // 首次点击：选中 + 展开明细
+
           this.classList.add('active');
           _renderStrategyDetail(this.getAttribute('data-type'));
         }
       };
     }
   } else if (source === 'B') {
-    // B：显示历史成交价摘要（懒加载）
+
     _showHistorySection();
     var hint = document.getElementById('priceHistoryHint');
     var summary = document.getElementById('priceHistorySummary');
@@ -4994,45 +4865,43 @@ async function _onPriceSourceSelected(source) {
     if (summary) summary.innerHTML = '<span class="price-history-stat"><span class="price-loading"></span> 加载中</span>';
     if (listEl) listEl.innerHTML = '';
 
-    // 取客户"数字 ID"（cu_id 在 goods 表中存的就是客户ID），与读取产品的价格.md 示例 cu_id=5754 一致
-    // 归一为 number：避免字符串 "107" 与数字 107 混用导致 where 条件不稳定
     var rawCustomerId = selectedCustomerId || (currentCustomer && currentCustomer[0] && currentCustomer[0].id);
     var customerId = (rawCustomerId !== null && rawCustomerId !== undefined) ? parseInt(rawCustomerId, 10) : null;
     if (!customerId || isNaN(customerId)) {
       if (hint) hint.textContent = '未识别客户';
       if (summary) summary.innerHTML = '<span class="price-history-stat miss">未识别当前客户 ID，无法查询历史成交</span>';
-      // 修复 v1.5.1：未识别客户时显式传 reason
+
       _setConfirmBtnEnabled(false, '未识别当前客户 ID，无法查询历史成交');
       return;
     }
 
     _fetchAndCacheHistory(customerId).then(function (r) {
-      // 用户已切换到其他来源则不渲染
+
       if (_getCurrentPriceSource() !== 'B') return;
       _renderHistorySummary(r);
     });
   } else if (source === 'C') {
-    // C：显示比例输入
+
     _showRatioSection();
     var input = document.getElementById('priceRatioInput');
     if (input) {
       input.oninput = _validatePriceConfirm;
       setTimeout(function () { input.focus(); input.select(); }, 50);
     }
-    // 修复 v1.5.1：选 C 后立即校验，避免"默认值已填充但按钮仍禁用"的问题
+
     _validatePriceConfirm();
   } else if (source === 'D') {
-    // D：等待产品表 price 缓存就绪后才允许确认（避免用本地残留价回填）
+
     var productIdsD = currentProducts.map(function (p) { return p.matchedId; });
     var rowsD = _extractRowsFromCache(productIdsD, 'price');
     if (rowsD === null) {
-      // 修复 v1.5.1：缓存未就绪时显式提示，避免按钮被 L4798 残留禁用状态卡住
+
       _setConfirmBtnEnabled(false, '正在拉取产品表标准价...');
       var optDesc = document.querySelector('.price-option[data-source="D"] .price-option-desc');
       var origDesc = optDesc ? optDesc.textContent : '';
       if (optDesc) optDesc.innerHTML = '<span class="price-loading"></span> 正在拉取产品表标准价...';
       _prefetchPriceData().then(function () {
-        // 用户已切换到其他来源则不处理
+
         if (_getCurrentPriceSource() !== 'D') {
           if (optDesc) optDesc.textContent = origDesc;
           return;
@@ -5041,26 +4910,25 @@ async function _onPriceSourceSelected(source) {
         var ready = _extractRowsFromCache(productIdsD, 'price');
         if (ready === null) {
           showToast('产品表标准价拉取失败，请检查网络或重试', 'error');
-          // 修复 v1.5.1：拉取失败时显式传 reason
+
           _setConfirmBtnEnabled(false, '产品表标准价拉取失败，请检查网络或重试');
           return;
         }
         if (ready.length === 0) {
           showToast('当前产品在产品表中均未配置价格', 'warning');
-          // 修复 v1.5.1：拉到空数据时显式传 reason
+
           _setConfirmBtnEnabled(false, '当前产品在产品表中均未配置价格，请尝试其他方式');
           return;
         }
         _setConfirmBtnEnabled(true);
       });
     } else {
-      // 修复 v1.5.1：缓存就绪时显式传 reason 告知为什么禁用
+
       _setConfirmBtnEnabled(rowsD.length > 0, rowsD.length > 0 ? null : '当前产品在产品表中均未配置价格，请尝试其他方式');
     }
   }
 }
 
-// 渲染历史成交价摘要（B 来源）
 function _renderHistorySummary(result) {
   var hint = document.getElementById('priceHistoryHint');
   var summary = document.getElementById('priceHistorySummary');
@@ -5076,7 +4944,6 @@ function _renderHistorySummary(result) {
   var grouped = result.grouped || {};
   var productIds = currentProducts.map(function (p) { return String(p.matchedId); });
 
-  // 统计：hit / miss
   var hitIds = [];
   var missIds = [];
   for (var i = 0; i < productIds.length; i++) {
@@ -5090,7 +4957,6 @@ function _renderHistorySummary(result) {
 
   if (hint) hint.textContent = '命中 ' + hit + ' / ' + total;
 
-  // 摘要统计胶囊
   var sumHtml = [];
   sumHtml.push('<span class="price-history-stat hit">✓ 命中 ' + hit + ' 条</span>');
   if (miss > 0) {
@@ -5098,7 +4964,6 @@ function _renderHistorySummary(result) {
   }
   if (summary) summary.innerHTML = sumHtml.join('');
 
-  // 明细列表：按 currentProducts 顺序展示，命中行绿色，未命中行灰色
   if (!listEl) return;
   if (total === 0) {
     listEl.innerHTML = '<div class="price-history-empty">暂无产品明细</div>';
@@ -5106,8 +4971,7 @@ function _renderHistorySummary(result) {
   }
 
   var rowHtml = [];
-  // 判断 meta（折扣串）是否可显示
-  // 数据库里 micro_zk 可能是：'&nbsp;'、'\u00A0'、空、纯空白、null；都不应展示
+
   function _hasMeta(m) {
     if (m === null || m === undefined) return false;
     var s = String(m);
@@ -5119,7 +4983,7 @@ function _renderHistorySummary(result) {
     var p = currentProducts[k];
     var key = String(p.matchedId);
     var row = grouped[key];
-    // 用"完整产品名"（品名 + "/" + SKU），与响应 goods.name 格式一致，便于用户核对
+
     var nameLabel = _escapeHtml(_getFullProductName(p) || p.matchedName || p.pro_name || p.originalName || p.name || ('产品 #' + key));
     if (row && row.un_price > 0) {
       var meta = 'ID:' + _escapeHtml(row.recId);
@@ -5143,17 +5007,15 @@ function _renderHistorySummary(result) {
   }
   listEl.innerHTML = rowHtml.join('');
 
-  // 至少有 1 条命中才允许确认；全部未命中提示用户改用其他方式
   if (hit > 0) {
     _setConfirmBtnEnabled(true);
   } else {
     if (hint) hint.textContent = '0 / ' + total + '（无历史）';
-    // 修复 v1.5.1：无历史命中时显式传 reason
+
     _setConfirmBtnEnabled(false, '当前客户未成交过这些产品，请尝试其他方式');
   }
 }
 
-// 校验"确认获取"按钮
 function _validatePriceConfirm() {
   var checked = document.querySelector('input[name="priceSource"]:checked');
   if (!checked) { _setConfirmBtnEnabled(false); return; }
@@ -5162,7 +5024,7 @@ function _validatePriceConfirm() {
     var activeChip = document.querySelector('#priceStrategyTypeList .price-strategy-type-chip.active');
     _setConfirmBtnEnabled(!!activeChip);
   } else if (source === 'B') {
-    // B：仅在历史缓存就绪且有命中时启用
+
     var grouped = _priceCache.goods_history;
     if (!grouped) { _setConfirmBtnEnabled(false); return; }
     var hasHit = false;
@@ -5182,7 +5044,6 @@ function _validatePriceConfirm() {
   }
 }
 
-// HTML 转义
 function _escapeHtml(s) {
   if (s === null || s === undefined) return '';
   return String(s)
@@ -5777,11 +5638,13 @@ async function _autoSelectCustomerByUrl() {
   if (selectedCustomerId) return;
   var cuId = new URLSearchParams(location.search).get('cu_id');
   if (!cuId) return;
+
   if (!/^\d+$/.test(cuId)) {
     console.warn('[cu_id] 无效的 cu_id 参数:', cuId);
     showToast('URL 指定的客户 ID 无效', 'warning');
     return;
   }
+
   var c = null;
   try {
     console.log('[cu_id] 通过 API 查询客户 cu_id=' + cuId);
@@ -5813,6 +5676,12 @@ async function _autoSelectCustomerByUrl() {
   selectedCustomerId = c.id;
   currentCustomer = [{ id: c.id, name: c.name, similarity: 100, address: c.address || '', contact: c.contact || '' }];
   showCustomerCard({ id: c.id, name: c.name, address: c.address || '', contact: c.contact || '' }, 'confirmed');
+
+  var emptyEl = document.getElementById('emptyState');
+  if (emptyEl) emptyEl.style.display = 'none';
+  var csEl = document.getElementById('customerSection');
+  if (csEl) csEl.style.display = 'block';
+
   var cardEl = document.getElementById('customerCard');
   if (cardEl) {
     cardEl.onclick = null;
@@ -5837,6 +5706,7 @@ PinyinMatch.init().then(function() {
   });
 
   _autoSelectCustomerByUrl();
+
   setTimeout(function () {
     PinyinSync.autoSyncIfNeeded({
       thresholdHours: 1,
