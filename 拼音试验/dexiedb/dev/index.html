@@ -2277,15 +2277,25 @@ function showMatchProgress(data) {
 
     var matchHtml = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;"><i class="ri-check-double-line" style="color:#16a34a;font-size:16px;"></i><span style="font-size:13px;font-weight:600;color:#16a34a;">匹配完成</span></div>';
 
-    matchHtml += '<div style="font-size:12px;margin-bottom:6px;"><strong>客户：</strong>' + data.customer.originalName + ' → ';
-    if (customerMatchType === 'exact') {
-      matchHtml += '<span style="color:#16a34a;">' + document.getElementById('customerName').textContent + '</span>（精确匹配）';
-    } else if (customerMatchType === 'fuzzy') {
-      matchHtml += '<span style="color:#f59e0b;">' + document.getElementById('customerName').textContent + '</span>（模糊匹配）';
+    var cuId = new URLSearchParams(location.search).get('cu_id');
+    if (cuId) {
+      // cu_id 模式：客户由链接指定，AI识别的客户名被忽略
+      matchHtml += '<div style="font-size:12px;margin-bottom:6px;"><strong>客户：</strong><span style="color:#16a34a;">' + document.getElementById('customerName').textContent + '</span>（链接指定）';
+      if (data.customer && data.customer.originalName) {
+        matchHtml += ' <span style="color:#9ca3af;font-size:11px;">已忽略AI识别：' + PinyinMatch.escapeHtml(data.customer.originalName) + '</span>';
+      }
+      matchHtml += '</div>';
     } else {
-      matchHtml += '<span style="color:#ef4444;">未匹配</span>';
+      matchHtml += '<div style="font-size:12px;margin-bottom:6px;"><strong>客户：</strong>' + data.customer.originalName + ' → ';
+      if (customerMatchType === 'exact') {
+        matchHtml += '<span style="color:#16a34a;">' + document.getElementById('customerName').textContent + '</span>（精确匹配）';
+      } else if (customerMatchType === 'fuzzy') {
+        matchHtml += '<span style="color:#f59e0b;">' + document.getElementById('customerName').textContent + '</span>（模糊匹配）';
+      } else {
+        matchHtml += '<span style="color:#ef4444;">未匹配</span>';
+      }
+      matchHtml += '</div>';
     }
-    matchHtml += '</div>';
 
     matchHtml += '<div style="font-size:12px;margin-bottom:4px;"><strong>产品：</strong>';
     matchHtml += '<span style="color:#16a34a;">' + confirmedCount + '个确认</span>';
