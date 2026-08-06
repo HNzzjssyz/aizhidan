@@ -1043,6 +1043,11 @@ body {
   50% { opacity: 0.5; transform: scale(1.15); }
 }
 
+@keyframes pulse-bar {
+  0% { margin-left: -40%; }
+  100% { margin-left: 100%; }
+}
+
 
 .paste-btn:hover { background:#059669; }
 .search-input-wrapper { position:relative; margin-bottom:12px; }
@@ -1112,9 +1117,8 @@ body {
       <span style="font-size:13px;font-weight:600;color:#333;">拼音数据</span>
     </div>
     <span id="pinyinDataStatus" style="font-size:12px;color:#9ca3af;flex:1;"></span>
-    <button onclick="window.open('get_cus_pro.html','_blank')" style="padding:6px 14px;background:#8b5cf6;color:white;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px;white-space:nowrap;">
-      <i class="ri-external-link-line" style="font-size:13px;"></i>
-      <span>打开拼音工具</span>
+    <button onclick="window.open('get_cus_pro.html','_blank')" style="padding:5px 10px;background:#f8fafc;color:#475569;border:1px solid #e2e8f0;border-radius:6px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:4px;" title="打开拼音工具">
+      <i class="ri-external-link-line" style="font-size:14px;"></i>
     </button>
   </div>
 
@@ -5659,10 +5663,57 @@ window.onclick = function(event) {
   }
 };
 
+// ===== 冷启动同步进度提示 =====
+
+// 渲染同步进度（文字 + 进度条）
+function _renderSyncProgress(title, current, total, subtext) {
+  var el = document.getElementById('pinyinDataStatus');
+  var panel = document.getElementById('pinyinDataPanel');
+  if (!el) return;
+  el.style.display = 'block';
+  el.style.flex = '1';
+  var pct = (total > 0) ? Math.round(current / total * 100) : 0;
+  var barColor = '#3b82f6';
+  var html = '<div style="font-size:12px;color:#374151;margin-bottom:4px;">📥 ' + PinyinMatch.escapeHtml(title);
+  if (total > 0) html += ' <strong>' + current + '/' + total + '</strong>';
+  if (subtext) html += ' <span style="color:#9ca3af;font-size:11px;">' + PinyinMatch.escapeHtml(subtext) + '</span>';
+  html += '</div>';
+  if (total > 0) {
+    html += '<div style="height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden;">' +
+            '<div style="height:100%;width:' + pct + '%;background:' + barColor + ';border-radius:3px;transition:width 0.3s ease;"></div>' +
+            '</div>' +
+            '<div style="font-size:11px;color:#9ca3af;margin-top:2px;">' + pct + '%</div>';
+  } else {
+    // total=0 时显示不定脉冲条
+    html += '<div style="height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden;">' +
+            '<div style="height:100%;width:40%;background:' + barColor + ';border-radius:3px;animation:pulse-bar 1.5s ease-in-out infinite;"></div>' +
+            '</div>';
+  }
+  el.innerHTML = html;
+  if (panel) { panel.style.borderLeft = '4px solid ' + barColor; panel.style.background = '#eff6ff'; }
+}
+
+// 空窗期提示：init 完成后、同步启动前
+async function _showPinyinPreparing() {
+  // 已有本地数据则跳过（不需要"正在准备"）
+  if (await hasPinyinData()) return;
+  var el = document.getElementById('pinyinDataStatus');
+  var panel = document.getElementById('pinyinDataPanel');
+  if (!el) return;
+  el.style.display = 'block';
+  el.style.flex = '1';
+  el.innerHTML = '<div style="font-size:12px;color:#3b82f6;display:flex;align-items:center;gap:6px;">' +
+                  '<svg style="width:14px;height:14px;animation:pulse-warning 1.5s ease-in-out infinite;" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>' +
+                  '正在准备拼音数据...' +
+                  '</div>';
+  if (panel) { panel.style.borderLeft = '4px solid #3b82f6'; panel.style.background = '#eff6ff'; }
+}
+
 async function refreshPinyinStatus() {
   var el = document.getElementById('pinyinDataStatus');
   var panel = document.getElementById('pinyinDataPanel');
   if (!el) return;
+  el.style.display = '';  // 恢复默认（span），清除进度渲染时的 block
   // 读取最后同步时间（存储为 UTC，解析时显式加 'Z'）
   var lastSync = await PinyinMatch.getSyncStatusAsync('sync_time');
   var lastSyncHtml = '';
@@ -5675,7 +5726,7 @@ async function refreshPinyinStatus() {
     else if (ageMin < 60) ageStr = ageMin + ' 分钟前';
     else if (ageMin < 24 * 60) ageStr = Math.floor(ageMin / 60) + ' 小时前';
     else ageStr = Math.floor(ageMin / (60 * 24)) + ' 天前';
-    lastSyncHtml = ' · <span style="color:#9ca3af;"><i class="ri-time-line"></i> 同步于 ' + ageStr + ' <a href="get_cus_pro.html" style="color:#3b82f6;text-decoration:none;margin-left:4px;" title="点击跳转拼音工具同步">同步</a></span>';
+    lastSyncHtml = ' · <span style="color:#9ca3af;"><i class="ri-time-line"></i> 同步于 ' + ageStr + '</span>';
   }
   if (await hasPinyinData()) {
     var stats = await getPinyinDataStats();
@@ -5945,6 +5996,8 @@ async function _autoSelectCustomerByUrl() {
 
 PinyinMatch.init().then(function() {
   refreshPinyinStatus();
+  // 空窗期提示：init 完成后立即显示"正在准备拼音数据"，避免 2 秒内静态"未就绪"
+  _showPinyinPreparing();
   initCozeSDK();
   // 监听跨标签同步完成事件，刷新本地缓存
   PinyinSync.init();
@@ -5967,7 +6020,10 @@ PinyinMatch.init().then(function() {
       thresholdHours: 1,
       hooks: {
         onLog: function (msg) { console.log('[auto-sync]', msg); },
-        onToast: function (msg, type) { showToast('自动同步：' + msg, type); }
+        onToast: function (msg, type) { showToast('自动同步：' + msg, type); },
+        onProgress: function (title, current, total, subtext) {
+          _renderSyncProgress(title, current, total, subtext);
+        }
       }
     }).then(function (r) {
       // 不论 skipped 与否，刷新一次状态（即使跳过，也能让"刚刚"等显示更新）
